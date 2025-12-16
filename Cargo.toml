@@ -1,0 +1,54 @@
+[package]
+name = "icedxdy"
+description = "A shadcn-inspired component library for Iced"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[features]
+default = []
+
+[dependencies]
+icedxdy_core.workspace = true
+icedxdy_fonts.workspace = true
+iced.workspace = true
+iced_core.workspace = true
+iced_widget.workspace = true
+
+[workspace]
+members = [
+  "core",
+  "fonts",
+  "examples/browser",
+]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Andy Gayton <andy@thecollective.dev>"]
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/airstrike/icedxdy"
+categories = ["gui"]
+keywords = ["gui", "ui", "graphics", "interface", "widgets", "shadcn"]
+rust-version = "1.85"
+
+[workspace.dependencies]
+icedxdy = { path = "." }
+icedxdy_core = { path = "./core" }
+icedxdy_fonts = { path = "./fonts" }
+
+iced = "0.15.0-dev"
+iced_core = "0.15.0-dev"
+iced_widget = "0.15.0-dev"
+
+[patch.crates-io]
+iced.git = "https://github.com/airstrike/iced.git"
+iced.branch = "blessed-component"
+iced_core.git = "https://github.com/airstrike/iced.git"
+iced_core.branch = "blessed-component"
+iced_widget.git = "https://github.com/airstrike/iced.git"
+iced_widget.branch = "blessed-component"

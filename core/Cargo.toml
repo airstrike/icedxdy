@@ -1,0 +1,13 @@
+[package]
+name = "icedxdy_core"
+description = "Core types for icedxdy - design tokens, colors, and theme definitions"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+iced_core.workspace = true
