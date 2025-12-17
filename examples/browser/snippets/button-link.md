@@ -1,5 +1,5 @@
 ```rust
 use icedxdy::button;
 
-button::link("Link")
+button::link("Link").on_press(Message::Click)
 ```

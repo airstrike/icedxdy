@@ -10,5 +10,5 @@ mod palette;
 
 pub use color::{oklch, oklch_alpha, Color};
 pub use constants::*;
-pub use design::Design;
+pub use design::{Design, FontFamily};
 pub use palette::{Palette, SemanticColor};

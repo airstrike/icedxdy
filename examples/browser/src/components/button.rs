@@ -1,8 +1,11 @@
-use iced::widget::{column, container, markdown, row, text};
+use iced::widget::{column, container, markdown, row, space, text};
 use iced::{Element, Fill, Task};
 use std::path::PathBuf;
 
 use icedxdy::{button, theme, Theme};
+
+/// Minimum width for snippet containers (invisible spacer hack)
+const MIN_SNIPPET_WIDTH: f32 = 350.0;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -74,17 +77,14 @@ impl State {
     pub fn new() -> (Self, Task<Message>) {
         let snippets: Vec<_> = Variant::ALL.iter().map(|v| (*v, None)).collect();
 
-        let tasks: Vec<_> = Variant::ALL
-            .iter()
-            .map(|variant| {
-                let variant = *variant;
-                let path = variant.snippet_path();
-                Task::perform(
-                    async move { tokio::fs::read_to_string(path).await.map_err(|e| e.to_string()) },
-                    move |result| Message::SnippetLoaded(variant, result),
-                )
-            })
-            .collect();
+        let tasks = Variant::ALL.iter().map(|variant| {
+            let variant = *variant;
+            let path = variant.snippet_path();
+            Task::perform(
+                async move { tokio::fs::read_to_string(path).await.map_err(|e| e.to_string()) },
+                move |result| Message::SnippetLoaded(variant, result),
+            )
+        });
 
         (Self { snippets }, Task::batch(tasks))
     }
@@ -105,10 +105,7 @@ impl State {
     }
 
     pub fn view(&self) -> Element<'_, Message, Theme> {
-        let mut left_items = Vec::new();
-        let mut right_items = Vec::new();
-
-        for (i, (variant, snippet)) in self.snippets.iter().enumerate() {
+        row(self.snippets.iter().map(|(variant, snippet)| {
             let button_view = container(variant.view())
                 .center_x(Fill)
                 .center_y(Fill)
@@ -125,20 +122,16 @@ impl State {
                 })
                 .unwrap_or_else(|| text("Loading...").into());
 
-            let item = column![button_view, code_view].spacing(8).into();
+            // Invisible spacer enforces minimum width while column uses Fill
+            let min_width = space().width(MIN_SNIPPET_WIDTH).height(0);
 
-            if i % 2 == 0 {
-                left_items.push(item);
-            } else {
-                right_items.push(item);
-            }
-        }
-
-        row![
-            column(left_items).spacing(24).width(Fill),
-            column(right_items).spacing(24).width(Fill),
-        ]
+            column![button_view, code_view, min_width]
+                .spacing(8)
+                .width(Fill)
+                .into()
+        }))
         .spacing(24)
+        .wrap()
         .into()
     }
 }

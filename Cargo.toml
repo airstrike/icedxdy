@@ -11,6 +11,7 @@ keywords.workspace = true
 
 [features]
 default = []
+markdown = ["iced_widget/markdown"]
 
 [dependencies]
 icedxdy_core.workspace = true

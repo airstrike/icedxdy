@@ -31,3 +31,9 @@ pub fn muted(theme: &Theme) -> Style {
         color: Some(theme.palette().muted.foreground.into()),
     }
 }
+
+pub fn link(theme: &Theme) -> Style {
+    Style {
+        color: Some(theme.palette().primary.base.into()),
+    }
+}

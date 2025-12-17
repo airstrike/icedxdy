@@ -2,9 +2,54 @@
 //!
 //! Design contains the palette, the derived iced Theme, and font families.
 
+use iced_core::font::Weight;
 use iced_core::Font;
 
 use crate::palette::Palette;
+
+/// Font family with weight variants
+#[derive(Debug, Clone)]
+pub struct FontFamily {
+    /// Regular weight
+    pub regular: Font,
+    /// Medium weight
+    pub medium: Font,
+    /// Semibold weight
+    pub semibold: Font,
+    /// Bold weight
+    pub bold: Font,
+}
+
+impl FontFamily {
+    /// Create a font family from a font name with all weight variants
+    pub fn from_name(name: &'static str) -> Self {
+        Self {
+            regular: Font {
+                weight: Weight::Normal,
+                ..Font::with_name(name)
+            },
+            medium: Font {
+                weight: Weight::Medium,
+                ..Font::with_name(name)
+            },
+            semibold: Font {
+                weight: Weight::Semibold,
+                ..Font::with_name(name)
+            },
+            bold: Font {
+                weight: Weight::Bold,
+                ..Font::with_name(name)
+            },
+        }
+    }
+}
+
+impl Default for FontFamily {
+    fn default() -> Self {
+        // Inter is the default UI font for icedxdy
+        Self::from_name("Inter")
+    }
+}
 
 /// Complete design configuration
 ///
@@ -18,8 +63,8 @@ pub struct Design {
     pub palette: Palette,
     /// The iced Theme derived from this design's palette
     pub theme: iced_core::Theme,
-    /// Primary/sans font for UI text
-    pub font_sans: Font,
+    /// Sans-serif font family for UI text
+    pub font_sans: FontFamily,
     /// Monospace font for code
     pub font_mono: Font,
 }
@@ -42,7 +87,7 @@ impl Design {
             name,
             palette,
             theme,
-            font_sans: Font::DEFAULT,
+            font_sans: FontFamily::default(),
             font_mono: Font::MONOSPACE,
         }
     }
@@ -57,8 +102,8 @@ impl Design {
         Self::new("Dark", Palette::dark())
     }
 
-    /// Set the sans (UI) font
-    pub fn with_font_sans(mut self, font: Font) -> Self {
+    /// Set the sans (UI) font family
+    pub fn with_font_sans(mut self, font: FontFamily) -> Self {
         self.font_sans = font;
         self
     }

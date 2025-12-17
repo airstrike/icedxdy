@@ -12,11 +12,38 @@
 //! button::link("Learn more").on_press(Message::Navigate)
 //! ```
 
+use iced_core::text::Span;
+use iced_core::Font;
 use iced_widget::button::Button;
-use iced_widget::text::Text;
+use iced_widget::text::{Rich, Text};
 
 use crate::theme;
 use crate::Theme;
+
+/// A link widget that looks like a text link with underline on hover
+pub struct Link {
+    label: String,
+}
+
+impl Link {
+    /// Create a new link with the given label
+    pub fn new(label: impl ToString) -> Self {
+        Self {
+            label: label.to_string(),
+        }
+    }
+
+    /// Set the message to produce when the link is clicked
+    pub fn on_press<'a, Message: Clone + 'a>(
+        self,
+        message: Message,
+    ) -> Rich<'a, Message, Message, Theme> {
+        let span: Span<'a, Message, Font> = Span::new(self.label).link(message);
+        Rich::with_spans([span])
+            .on_link_click(|msg| msg)
+            .style(theme::text::link)
+    }
+}
 
 /// Primary button - main call to action
 ///
@@ -53,9 +80,13 @@ pub fn destructive<'a, Message>(label: impl ToString) -> Button<'a, Message, The
     Button::new(Text::new(label.to_string())).style(theme::button::destructive)
 }
 
-/// Link button - text-only, looks like a link
+/// Link - text that looks and acts like a link
 ///
-/// Primary text color, no background
-pub fn link<'a, Message>(label: impl ToString) -> Button<'a, Message, Theme> {
-    Button::new(Text::new(label.to_string())).style(theme::button::link)
+/// Primary text color, underline on hover. Uses rich_text with native click handling.
+///
+/// ```ignore
+/// button::link("Learn more").on_press(Message::Navigate)
+/// ```
+pub fn link(label: impl ToString) -> Link {
+    Link::new(label)
 }

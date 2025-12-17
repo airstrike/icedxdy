@@ -6,6 +6,7 @@
 pub mod button;
 pub mod checkbox;
 pub mod container;
+#[cfg(feature = "markdown")]
 pub mod markdown;
 pub mod rule;
 pub mod scrollable;

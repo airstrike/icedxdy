@@ -1,18 +1,29 @@
 mod components;
 
-use iced::widget::{column, container, mouse_area, row, scrollable};
+use iced::widget::{column, container, mouse_area, row, scrollable, space};
 use iced::{Element, Fill, Task};
 
-use icedxdy::{separator, text, Theme};
+use icedxdy::{button, fonts, separator, text, Theme};
 
 fn main() -> iced::Result {
+    // Initialize font names before use
+    fonts::set();
+
+    let settings = iced::Settings {
+        default_font: fonts::INTER.get(),
+        fonts: fonts::load(),
+        ..Default::default()
+    };
+
     iced::application(App::new, App::update, App::view)
         .title("icedxdy • components browser")
         .theme(App::theme)
+        .settings(settings)
         .run()
 }
 
 struct App {
+    dark_mode: bool,
     section: Section,
     button: components::button::State,
     text: components::text::State,
@@ -45,6 +56,7 @@ impl Section {
 
 #[derive(Debug, Clone)]
 enum Message {
+    ToggleTheme,
     SelectSection(Section),
     Button(components::button::Message),
     Text(components::text::Message),
@@ -57,6 +69,7 @@ impl App {
 
         (
             Self {
+                dark_mode: false,
                 section: Section::default(),
                 button,
                 text,
@@ -70,6 +83,10 @@ impl App {
 
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::ToggleTheme => {
+                self.dark_mode = !self.dark_mode;
+                Task::none()
+            }
             Message::SelectSection(section) => {
                 self.section = section;
                 Task::none()
@@ -80,6 +97,15 @@ impl App {
     }
 
     fn view(&self) -> Element<Message, Theme> {
+        // Header with branding and theme toggle
+        let branding = text::h4("icedxdy");
+        let theme_label = if self.dark_mode { "Light" } else { "Dark" };
+        let theme_toggle = button::ghost(theme_label).on_press(Message::ToggleTheme);
+        let header = row![branding, space::horizontal(), theme_toggle]
+            .padding(16)
+            .align_y(iced::Center);
+
+        // Sidebar
         let sidebar_header = text::muted("Components");
 
         let sidebar_items = column(Section::ALL.iter().map(|section| {
@@ -103,6 +129,7 @@ impl App {
         )
         .height(Fill);
 
+        // Main content
         let title = text::h1(self.section.title());
         let description = text::muted(self.section.description());
 
@@ -119,13 +146,21 @@ impl App {
 
         let main = scrollable(content).width(Fill).height(Fill);
 
-        row![sidebar, separator::vertical(), main]
+        let body = row![sidebar, separator::vertical(), main]
+            .width(Fill)
+            .height(Fill);
+
+        column![header, separator::horizontal(), body]
             .width(Fill)
             .height(Fill)
             .into()
     }
 
     fn theme(&self) -> Theme {
-        Theme::default()
+        if self.dark_mode {
+            Theme::dark()
+        } else {
+            Theme::light()
+        }
     }
 }
