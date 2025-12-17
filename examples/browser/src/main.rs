@@ -6,12 +6,11 @@ use iced::{Element, Fill, Task};
 use icedxdy::{button, fonts, separator, text, Theme};
 
 fn main() -> iced::Result {
-    // Initialize font names before use
     fonts::set();
 
     let settings = iced::Settings {
         default_font: fonts::INTER.get(),
-        fonts: fonts::load(),
+        fonts: fonts::load_bytes(),
         ..Default::default()
     };
 

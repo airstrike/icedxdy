@@ -11,3 +11,4 @@ keywords.workspace = true
 
 [dependencies]
 iced_core.workspace = true
+iced_runtime.workspace = true

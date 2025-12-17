@@ -46,8 +46,8 @@ impl FontFamily {
 
 impl Default for FontFamily {
     fn default() -> Self {
-        // Inter is the default UI font for icedxdy
-        Self::from_name("Inter")
+        // Inter Tight is the default UI font for icedxdy
+        Self::from_name("Inter Tight")
     }
 }
 

@@ -44,6 +44,7 @@ icedxdy_fonts = { path = "./fonts" }
 
 iced = "0.15.0-dev"
 iced_core = "0.15.0-dev"
+iced_runtime = "0.15.0-dev"
 iced_widget = "0.15.0-dev"
 
 [patch.crates-io]
@@ -51,5 +52,7 @@ iced.git = "https://github.com/airstrike/iced.git"
 iced.branch = "blessed-component"
 iced_core.git = "https://github.com/airstrike/iced.git"
 iced_core.branch = "blessed-component"
+iced_runtime.git = "https://github.com/airstrike/iced.git"
+iced_runtime.branch = "blessed-component"
 iced_widget.git = "https://github.com/airstrike/iced.git"
 iced_widget.branch = "blessed-component"

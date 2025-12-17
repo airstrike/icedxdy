@@ -1424,6 +1424,7 @@ name = "icedxdy_fonts"
 version = "0.1.0"
 dependencies = [
  "iced_core",
+ "iced_runtime",
 ]
 
 [[package]]
