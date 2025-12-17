@@ -16,8 +16,18 @@ impl Catalog for Theme {
     }
 }
 
-pub fn default(theme: &Theme) -> Style {
+pub fn default(_theme: &Theme) -> Style {
+    Style { color: None }
+}
+
+pub fn foreground(theme: &Theme) -> Style {
     Style {
         color: Some(theme.palette().foreground.into()),
+    }
+}
+
+pub fn muted(theme: &Theme) -> Style {
+    Style {
+        color: Some(theme.palette().muted.foreground.into()),
     }
 }

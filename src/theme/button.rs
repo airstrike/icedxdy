@@ -195,7 +195,7 @@ pub fn destructive(theme: &Theme, status: Status) -> Style {
     }
 }
 
-/// Link button: text-primary (underline on hover not supported in iced button)
+/// Link button: text-primary (underline on hover not supported, using opacity instead)
 pub fn link(theme: &Theme, status: Status) -> Style {
     let p = theme.palette();
 
@@ -207,7 +207,15 @@ pub fn link(theme: &Theme, status: Status) -> Style {
     };
 
     match status {
-        Status::Active | Status::Hovered | Status::Pressed => base,
+        Status::Active => base,
+        Status::Hovered => Style {
+            text_color: p.primary.base.alpha(0.8).into(),
+            ..base
+        },
+        Status::Pressed => Style {
+            text_color: p.primary.base.alpha(0.7).into(),
+            ..base
+        },
         Status::Disabled => Style {
             text_color: p.primary.base.alpha(0.5).into(),
             ..base

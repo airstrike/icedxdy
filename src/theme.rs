@@ -4,7 +4,12 @@
 //! for various iced widgets with shadcn-inspired styling.
 
 pub mod button;
+pub mod checkbox;
 pub mod container;
+pub mod markdown;
+pub mod rule;
+pub mod scrollable;
+pub mod table;
 pub mod text;
 
 use icedxdy_core::Design;

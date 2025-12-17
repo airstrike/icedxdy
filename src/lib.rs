@@ -3,6 +3,9 @@
 //! This library provides a design system and themed components for Iced applications,
 //! inspired by the shadcn/ui design system.
 
+pub mod button;
+pub mod separator;
+pub mod text;
 pub mod theme;
 
 pub use icedxdy_core as core;

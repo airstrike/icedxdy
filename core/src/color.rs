@@ -155,4 +155,5 @@ mod tests {
         assert!((g - 0.0).abs() < 0.01);
         assert!((b - 0.0).abs() < 0.01);
     }
+
 }
