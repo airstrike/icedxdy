@@ -15,7 +15,6 @@ markdown = ["iced_widget/markdown"]
 
 [dependencies]
 icedxdy_core.workspace = true
-icedxdy_fonts.workspace = true
 iced.workspace = true
 iced_core.workspace = true
 iced_widget.workspace = true
@@ -23,7 +22,6 @@ iced_widget.workspace = true
 [workspace]
 members = [
   "core",
-  "fonts",
   "examples/browser",
 ]
 
@@ -40,7 +38,6 @@ rust-version = "1.85"
 [workspace.dependencies]
 icedxdy = { path = "." }
 icedxdy_core = { path = "./core" }
-icedxdy_fonts = { path = "./fonts" }
 
 iced = "0.15.0-dev"
 iced_core = "0.15.0-dev"
@@ -49,10 +46,11 @@ iced_widget = "0.15.0-dev"
 
 [patch.crates-io]
 iced.git = "https://github.com/airstrike/iced.git"
-iced.branch = "blessed-component"
+iced.branch = "dev"
 iced_core.git = "https://github.com/airstrike/iced.git"
-iced_core.branch = "blessed-component"
+iced_core.branch = "dev"
 iced_runtime.git = "https://github.com/airstrike/iced.git"
-iced_runtime.branch = "blessed-component"
+iced_runtime.branch = "dev"
 iced_widget.git = "https://github.com/airstrike/iced.git"
-iced_widget.branch = "blessed-component"
+iced_widget.branch = "dev"
+cosmic-text = { git = "https://github.com/airstrike/cosmic-text", branch = "dev" }
