@@ -3,11 +3,9 @@ pub use crate::element::{self, Element, IntoElement};
 pub use crate::size::Size;
 pub use crate::text::{self, Text};
 
-use crate::element::Element as XdyElement;
-
 /// Create a [`Button`] with the given content and default style.
 pub fn button<'a, Message: Clone + 'a>(
-    content: impl Into<XdyElement<'a, Message>>,
+    content: impl Into<Element<'a, Message>>,
 ) -> Button<'a, Message> {
     crate::button::button(content)
 }

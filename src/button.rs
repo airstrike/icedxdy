@@ -3,15 +3,43 @@
 //! # Example
 //!
 //! ```ignore
-//! use icedxdy::button;
+//! use icedxdy::widget::button;
 //!
-//! button::primary("Submit").on_press(Message::Submit)
-//! button::primary("Go").size(Size::Lg).on_press(Message::Go)
-//! button::icon(icon::chevron_right()).on_press(Message::Next)
+//! button("Submit").on_press(Message::Submit)
+//! button("Go").size(Size::Lg).on_press(Message::Go)
+//! button![icon::git_branch(), "New Branch"].on_press(Message::Go)
+//! button::outline("Outline").on_press(Message::Nav)
+//! button::icon(wrap(icon::chevron_right())).on_press(Message::Next)
 //! ```
 
 mod helpers;
 pub use helpers::*;
+
+/// Create a button with one or more children.
+///
+/// With a single argument, behaves like `button(content)`.
+/// With multiple arguments, lays them out in a centered row with spacing.
+///
+/// ```ignore
+/// button!["Submit"]
+/// button![icon::mail(), "Login with Email"]
+/// button![icon::loader_circle(), "Generating"].on_press(Message::Go)
+/// ```
+#[macro_export]
+macro_rules! button {
+    ($single:expr $(,)?) => {
+        $crate::button::button($single)
+    };
+    ($($child:expr),+ $(,)?) => {
+        $crate::button::button(
+            $crate::element::Element::new(
+                $crate::row::Row::with_children([
+                    $(Into::<$crate::element::Element<'_, _>>::into($child)),+
+                ])
+            )
+        )
+    };
+}
 
 use iced_core::text::Span;
 use iced_core::Font;

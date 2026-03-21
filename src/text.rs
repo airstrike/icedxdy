@@ -12,7 +12,6 @@
 
 use iced_core::font::Weight;
 use iced_core::text::{Fragment, IntoFragment};
-use iced_core::Font as IcedFont;
 use iced_widget::text::Style;
 use iced_widget::Renderer;
 
@@ -85,9 +84,9 @@ impl<'a> Text<'a> {
         }
 
         if let Some(weight) = self.weight {
-            widget = widget.font(IcedFont {
+            widget = widget.font(iced_core::Font {
                 weight,
-                ..IcedFont::DEFAULT
+                ..iced_core::Font::DEFAULT
             });
         }
 

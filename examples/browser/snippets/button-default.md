@@ -1,3 +1,3 @@
 ```rust
-button::primary("Button")
+button("Button")
 ```

@@ -2,7 +2,8 @@ use iced::widget::{column, container, markdown, row};
 use iced::{Element, Fill, Task};
 use std::path::PathBuf;
 
-use icedxdy::widget::{button, text, Size};
+use icedxdy::button;
+use icedxdy::widget::{text, Size};
 use icedxdy::{theme, wrap, Theme};
 
 use crate::icon;
@@ -92,44 +93,26 @@ impl Example {
 
     fn view<'a>(&self) -> Element<'a, Message, Theme> {
         match self {
-            // Size: xs, sm, default, lg — each with arrow-up-right icon
             Example::Size => {
                 row![
-                    button(wrap(
-                        row![text("Extra Small"), icon::arrow_up_right().size(12)]
-                            .spacing(6)
-                            .align_y(iced::Center),
-                    ))
-                    .size(Size::Xs)
-                    .on_press(Message::Pressed),
-                    button(wrap(
-                        row![text("Small"), icon::arrow_up_right().size(14)]
-                            .spacing(6)
-                            .align_y(iced::Center),
-                    ))
-                    .size(Size::Sm)
-                    .on_press(Message::Pressed),
-                    button(wrap(
-                        row![text("Default"), icon::arrow_up_right().size(14)]
-                            .spacing(6)
-                            .align_y(iced::Center),
-                    ))
-                    .on_press(Message::Pressed),
-                    button(wrap(
-                        row![text("Large"), icon::arrow_up_right().size(16)]
-                            .spacing(8)
-                            .align_y(iced::Center),
-                    ))
-                    .size(Size::Lg)
-                    .on_press(Message::Pressed),
+                    button!["Extra Small", icon::arrow_up_right().size(12)]
+                        .size(Size::Xs)
+                        .on_press(Message::Pressed),
+                    button!["Small", icon::arrow_up_right().size(14)]
+                        .size(Size::Sm)
+                        .on_press(Message::Pressed),
+                    button!["Default", icon::arrow_up_right().size(14)]
+                        .on_press(Message::Pressed),
+                    button!["Large", icon::arrow_up_right().size(16)]
+                        .size(Size::Lg)
+                        .on_press(Message::Pressed),
                 ]
                 .spacing(16)
                 .align_y(iced::Center)
                 .into()
             }
 
-            Example::Default => button("Button").on_press(Message::Pressed).into(),
-
+            Example::Default => button!["Button"].on_press(Message::Pressed).into(),
             Example::Outline => button::outline("Outline").on_press(Message::Pressed).into(),
             Example::Secondary => {
                 button::secondary("Secondary").on_press(Message::Pressed).into()
@@ -140,37 +123,23 @@ impl Example {
             }
             Example::Link => button::link("Link").on_press(Message::Pressed).into(),
 
-            // Icon-only button
             Example::Icon => button::icon(wrap(icon::arrow_up_right().size(16)))
                 .on_press(Message::Pressed)
                 .into(),
 
-            // Button with icon + text
-            Example::WithIcon => button(wrap(
-                row![icon::git_branch().size(16), text("New Branch")]
-                    .spacing(8)
-                    .align_y(iced::Center),
-            ))
-            .on_press(Message::Pressed)
-            .into(),
+            Example::WithIcon => {
+                button![icon::git_branch().size(16), "New Branch"]
+                    .on_press(Message::Pressed)
+                    .into()
+            }
 
-            // Rounded icon button
             Example::Rounded => button::icon(wrap(icon::arrow_up().size(16)))
                 .on_press(Message::Pressed)
                 .into(),
 
-            // Spinner / loading buttons
             Example::Spinner => row![
-                button(wrap(
-                    row![icon::loader_circle().size(16), text("Generating")]
-                        .spacing(8)
-                        .align_y(iced::Center),
-                )),
-                button(wrap(
-                    row![text("Downloading"), icon::loader_circle().size(16)]
-                        .spacing(8)
-                        .align_y(iced::Center),
-                )),
+                button![icon::loader_circle().size(16), "Generating"],
+                button!["Downloading", icon::loader_circle().size(16)],
             ]
             .spacing(16)
             .into(),

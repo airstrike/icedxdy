@@ -6,7 +6,6 @@
 //! - chroma: 0.0 (gray) to ~0.4 (vivid)
 //! - hue: 0-360 degrees
 
-use iced_core::Color as IcedColor;
 
 /// A color in OKLCH color space
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -91,10 +90,10 @@ impl Color {
     }
 }
 
-impl From<Color> for IcedColor {
+impl From<Color> for iced_core::Color {
     fn from(color: Color) -> Self {
         let (r, g, b) = color.to_srgb();
-        IcedColor::from_rgba(r, g, b, color.a)
+        iced_core::Color::from_rgba(r, g, b, color.a)
     }
 }
 

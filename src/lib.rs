@@ -6,6 +6,7 @@
 pub mod button;
 pub mod card;
 pub mod element;
+pub mod row;
 pub mod separator;
 pub mod size;
 pub mod text;

@@ -1,3 +1,3 @@
 ```rust
-button::primary(wrap(row![icon::git_branch(), text("New Branch")]))
+button![icon::git_branch(), "New Branch"]
 ```

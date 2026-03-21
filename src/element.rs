@@ -83,3 +83,32 @@ impl<'a, Message: 'a> From<&'a str> for Element<'a, Message> {
         Element::new(crate::text::Text::new(s))
     }
 }
+
+// String → our Element (via our Text, so size propagation works)
+impl<'a, Message: 'a> From<String> for Element<'a, Message> {
+    fn from(s: String) -> Self {
+        Element::new(crate::text::Text::new(s))
+    }
+}
+
+// Cow<str> → our Element (via our Text, so size propagation works)
+impl<'a, Message: 'a> From<std::borrow::Cow<'a, str>> for Element<'a, Message> {
+    fn from(s: std::borrow::Cow<'a, str>) -> Self {
+        Element::new(crate::text::Text::new(s))
+    }
+}
+
+// iced Text widget → our Element (opaque)
+impl<'a, Message: 'a> From<iced_widget::Text<'a, Theme, Renderer>> for Element<'a, Message> {
+    fn from(t: iced_widget::Text<'a, Theme, Renderer>) -> Self {
+        wrap(t)
+    }
+}
+
+// Our Text → our Element
+impl<'a, Message: 'a> From<crate::text::Text<'a>> for Element<'a, Message> {
+    fn from(t: crate::text::Text<'a>) -> Self {
+        Element::new(t)
+    }
+}
+

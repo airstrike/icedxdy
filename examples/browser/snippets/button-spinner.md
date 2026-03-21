@@ -1,5 +1,4 @@
 ```rust
-button::outline(row![spinner(), "Submit"])
-    .size(Size::Sm)
-    .disabled(true)
+button![icon::loader_circle(), "Generating"]
+button!["Downloading", icon::loader_circle()]
 ```

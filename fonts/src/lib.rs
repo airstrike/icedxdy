@@ -39,7 +39,6 @@ use std::borrow::Cow;
 use std::sync::OnceLock;
 
 use iced_core::font::{Error, Stretch, Style, Weight};
-use iced_core::Font as IcedFont;
 use iced_runtime::font;
 use iced_runtime::Task;
 
@@ -58,7 +57,7 @@ pub struct Font {
     weight: Weight,
     style: Style,
     stretch: Stretch,
-    inner: OnceLock<IcedFont>,
+    inner: OnceLock<iced_core::Font>,
 }
 
 impl Font {
@@ -76,27 +75,27 @@ impl Font {
     fn set(&self, name: &str) {
         let name = Box::leak(name.to_string().into_boxed_str());
 
-        let _ = self.inner.set(IcedFont {
+        let _ = self.inner.set(iced_core::Font {
             weight: self.weight,
             stretch: self.stretch,
             style: self.style,
-            ..IcedFont::new(name)
+            ..iced_core::Font::new(name)
         });
     }
 
     /// Get the underlying iced Font
-    pub fn get(&self) -> IcedFont {
+    pub fn get(&self) -> iced_core::Font {
         *self.inner.get().expect("fonts must be initialized with set() on startup")
     }
 }
 
-impl From<Font> for IcedFont {
+impl From<Font> for iced_core::Font {
     fn from(value: Font) -> Self {
         value.get()
     }
 }
 
-impl From<&Font> for IcedFont {
+impl From<&Font> for iced_core::Font {
     fn from(value: &Font) -> Self {
         value.get()
     }
@@ -172,7 +171,7 @@ pub fn lookup(name: &str) -> Option<&'static Font> {
 }
 
 /// Look up a font by name with a specific weight
-pub fn lookup_weight(name: &str, weight: Weight) -> Option<IcedFont> {
+pub fn lookup_weight(name: &str, weight: Weight) -> Option<iced_core::Font> {
     match name.to_lowercase().as_str() {
         "inter" | "inter tight" => Some(match weight {
             Weight::Normal => INTER.get(),
