@@ -46,9 +46,9 @@ use iced_core::Font;
 use iced_widget::text::Rich;
 
 use crate::element::{Element, IntoElement};
-use crate::theme;
+use icedxdy_core::theme;
 use crate::Size;
-use crate::Theme;
+use icedxdy_core::Theme;
 
 type StyleFn = fn(&Theme, iced_widget::button::Status) -> iced_widget::button::Style;
 
@@ -57,7 +57,7 @@ type StyleFn = fn(&Theme, iced_widget::button::Status) -> iced_widget::button::S
 /// Holds a [`Size`] which is propagated to its content when converting
 /// to an `iced::Element`. This means a `Size::Lg` button automatically
 /// gets larger text, larger icons, etc.
-pub struct Button<'a, Message, Theme = crate::Theme, Renderer = iced_widget::Renderer>
+pub struct Button<'a, Message, Theme = icedxdy_core::Theme, Renderer = iced_widget::Renderer>
 where
     Renderer: iced_core::Renderer,
     Theme: iced_widget::button::Catalog,
@@ -65,6 +65,8 @@ where
     content: Element<'a, Message, Theme, Renderer>,
     size: Size,
     weight: crate::Weight,
+    square: bool,
+    rounded: bool,
     style: Theme::Class<'a>,
     on_press: Option<Message>,
 }
@@ -77,6 +79,8 @@ pub fn button<'a, Message: Clone + 'a>(
         content: content.into(),
         size: Size::Default,
         weight: crate::Weight::Medium,
+        square: false,
+        rounded: false,
         style: Box::new(theme::button::default),
         on_press: None,
     }
@@ -86,6 +90,19 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// Set the size variant
     pub fn size(mut self, size: impl Into<Size>) -> Self {
         self.size = size.into();
+        self
+    }
+
+    /// Make the button square (equal width and height).
+    /// Used for icon-only buttons. Size determines the dimensions.
+    pub fn square(mut self) -> Self {
+        self.square = true;
+        self
+    }
+
+    /// Make the button fully rounded (pill/circle shape).
+    pub fn rounded(mut self) -> Self {
+        self.rounded = true;
         self
     }
 
@@ -116,11 +133,32 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
         btn.content.size(btn.size);
         btn.content.weight(btn.weight);
 
-        // Build the iced button
         let size = btn.size;
-        let mut iced_btn = iced_widget::button::Button::new(btn.content.into_iced())
-            .padding(size.padding())
-            .style(move |t, s| (btn.style)(t, s));
+        let content = btn.content.into_iced();
+
+        // Square buttons center content in a fixed-size box
+        let mut iced_btn = if btn.square {
+            let side = size.height();
+            let centered = iced_widget::center(content);
+
+            iced_widget::button::Button::new(centered)
+                .width(side)
+                .height(side)
+                .padding(0)
+        } else {
+            iced_widget::button::Button::new(content)
+                .height(size.height())
+                .padding(size.padding())
+        };
+
+        let rounded = btn.rounded;
+        iced_btn = iced_btn.style(move |t, s| {
+            let mut style = (btn.style)(t, s);
+            if rounded {
+                style.border.radius = (u32::MAX as f32).into();
+            }
+            style
+        });
 
         if let Some(on_press) = btn.on_press {
             iced_btn = iced_btn.on_press(on_press);

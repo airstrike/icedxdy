@@ -3,22 +3,17 @@
 //! This library provides a design system and themed components for Iced applications,
 //! inspired by the shadcn/ui design system.
 
-pub mod button;
 pub mod card;
-pub mod element;
-pub mod row;
 pub mod separator;
-pub mod size;
-pub mod text;
-pub mod theme;
-pub mod weight;
-pub mod widget;
 
 pub use icedxdy_core as core;
+pub use icedxdy_core::{Color, Design, FontFamily, Palette, Theme};
+pub use icedxdy_core::theme;
 
-// Re-export key types at the crate root
-pub use icedxdy_core::{Color, Design, FontFamily, Palette};
-pub use element::wrap;
-pub use size::Size;
-pub use theme::Theme;
-pub use weight::Weight;
+#[allow(hidden_glob_reexports)]
+pub mod widget {
+    pub use icedxdy_widget::*;
+}
+
+pub use widget::Size;
+pub use widget::Weight;

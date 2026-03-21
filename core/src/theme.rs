@@ -16,7 +16,7 @@ pub mod text;
 pub mod text_input;
 pub mod combo_box;
 
-use icedxdy_core::Design;
+use crate::Design;
 
 /// Theme for icedxdy components
 ///
@@ -48,7 +48,7 @@ impl Theme {
     }
 
     /// Get the palette
-    pub fn palette(&self) -> &icedxdy_core::Palette {
+    pub fn palette(&self) -> &crate::Palette {
         &self.design.palette
     }
 

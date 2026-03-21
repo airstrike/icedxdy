@@ -1,7 +1,8 @@
 use iced::widget::column;
 use iced::{Element, Task};
 
-use icedxdy::{text, Theme};
+use icedxdy::widget::text;
+use icedxdy::Theme;
 
 #[derive(Debug, Clone)]
 pub enum Message {}

@@ -6,7 +6,8 @@ use iced::widget::{column, combo_box, container, mouse_area, row, scrollable, sp
 use iced::{Element, Fill, Font, Pixels, Task};
 use iced_widget::button::Button;
 
-use icedxdy::{separator, text, Theme};
+use icedxdy::widget::text;
+use icedxdy::{separator, Theme};
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
@@ -17,7 +18,7 @@ fn main() -> iced::Result {
 }
 
 /// Fonts to pin at the top of the font list
-const PINNED_FONTS: &[&str] = &["Inter", "Geist"];
+const PINNED_FONTS: &[&str] = &["Geist", "Inter"];
 
 struct App {
     dark_mode: bool,
@@ -69,7 +70,7 @@ impl App {
         let (btn, button_task) = components::button::State::new();
         let (txt, text_task) = components::text::State::new();
 
-        let default_font = "Inter".to_string();
+        let default_font = "Geist".to_string();
 
         (
             Self {
@@ -141,7 +142,11 @@ impl App {
                 fonts::Message::CatalogLoaded(Ok(catalog)) => {
                     self.fount.set_google_catalog(catalog);
                     self.rebuild_font_list();
-                    Task::none()
+                    fonts::load(
+                        self.current_font.clone(),
+                        self.fount.google_catalog(),
+                    )
+                    .map(Message::Font)
                 }
                 fonts::Message::CatalogLoaded(Err(_)) => Task::none(),
                 fonts::Message::Loaded(name, Err(e)) => {
@@ -198,19 +203,20 @@ impl App {
                 .on_press(Message::SelectSection(*section))
                 .into()
         }))
-        .spacing(8);
+        .spacing(2);
 
         let sidebar = scrollable(
             column![sidebar_header, sidebar_items]
                 .spacing(16)
-                .padding(24)
-                .width(200),
+                .padding([24, 16])
+                .width(256),
         )
         .height(Fill);
 
         // Main content
         let title = text::h1(self.section.title());
-        let description = text::muted(self.section.description());
+        let description = text::p(self.section.description())
+            .style(icedxdy::theme::text::muted);
 
         let preview = container(match self.section {
             Section::Button => self.button.view().map(Message::Button),
@@ -219,7 +225,7 @@ impl App {
         .width(Fill);
 
         let content = column![title, description, preview]
-            .spacing(16)
+            .spacing(24)
             .padding(32)
             .width(Fill);
 

@@ -1,6 +1,5 @@
 use crate::element::Element;
-use crate::theme;
-use crate::Size;
+use icedxdy_core::theme;
 
 use super::{button, Button, Link};
 
@@ -39,12 +38,12 @@ pub fn destructive<'a, Message: Clone + 'a>(
     button(content).style(theme::button::destructive)
 }
 
-/// Icon-only button with outline style and square (Icon) size
+/// Icon-only button with outline style and square sizing
 pub fn icon<'a, Message: Clone + 'a>(
     content: impl Into<Element<'a, Message>>,
 ) -> Button<'a, Message> {
     button(content)
-        .size(Size::Icon)
+        .square()
         .style(theme::button::outline)
 }
 

@@ -21,7 +21,7 @@ use iced_widget::container::Container;
 use iced_widget::Column;
 use iced_widget::Row;
 
-use crate::text;
+use crate::widget::text;
 use crate::theme;
 use crate::Theme;
 

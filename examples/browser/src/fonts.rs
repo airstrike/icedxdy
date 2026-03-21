@@ -18,7 +18,6 @@ pub fn init() -> Task<Message> {
             .map(Result::ok)
             .and_then(Task::done)
             .map(Message::SystemFontsLoaded),
-        load("Inter Tight".into(), None),
     ])
 }
 

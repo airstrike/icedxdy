@@ -5,7 +5,7 @@
 //! to children before the final conversion to `iced::Element`.
 
 use crate::Size;
-use crate::Theme;
+use icedxdy_core::Theme;
 use crate::Weight;
 use iced_widget::Renderer;
 
@@ -53,38 +53,36 @@ impl<'a, Message: 'a, T: 'a, R: 'a> Element<'a, Message, T, R> {
     }
 }
 
-/// Wrapper for any `iced::Element` that doesn't participate in our styling.
-struct Opaque<'a, Message, T, R>(iced_core::Element<'a, Message, T, R>);
-
+// iced::Element → IntoElement (no-op size/weight, just pass through)
 impl<'a, Message: 'a, T: 'a, R: iced_core::Renderer + 'a>
-    IntoElement<'a, Message, T, R> for Opaque<'a, Message, T, R>
+    IntoElement<'a, Message, T, R> for iced_core::Element<'a, Message, T, R>
 {
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, T, R> {
-        self.0
+        *self
     }
 }
 
-// Any iced::Element → our Element (opaque, no styling hooks)
+// iced::Element → our Element
 impl<'a, Message: 'a, T: 'a, R: iced_core::Renderer + 'a>
     From<iced_core::Element<'a, Message, T, R>> for Element<'a, Message, T, R>
 {
     fn from(e: iced_core::Element<'a, Message, T, R>) -> Self {
-        Element::new(Opaque(e))
+        Element::new(e)
     }
 }
 
-/// Wrap any iced widget into our Element (opaque, no size propagation).
-///
-/// Use this when passing raw iced widgets (Row, iced text, icons, etc.)
-/// to our button helpers:
-///
-/// ```ignore
-/// button::primary(wrap(row![icon::mail(), text("Login")]))
-/// ```
-pub fn wrap<'a, Message: 'a>(
-    widget: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
-) -> Element<'a, Message> {
-    Element::new(Opaque(widget.into()))
+// iced Text widget → IntoElement (no-op size/weight — icons keep their own font)
+impl<'a, Message: 'a> IntoElement<'a, Message> for iced_widget::Text<'a, Theme, Renderer> {
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        (*self).into()
+    }
+}
+
+// iced Text widget → our Element
+impl<'a, Message: 'a> From<iced_widget::Text<'a, Theme, Renderer>> for Element<'a, Message> {
+    fn from(t: iced_widget::Text<'a, Theme, Renderer>) -> Self {
+        Element::new(t)
+    }
 }
 
 // &str → our Element (via our Text, so size propagation works)
@@ -108,13 +106,6 @@ impl<'a, Message: 'a> From<std::borrow::Cow<'a, str>> for Element<'a, Message> {
     }
 }
 
-// iced Text widget → our Element (opaque)
-impl<'a, Message: 'a> From<iced_widget::Text<'a, Theme, Renderer>> for Element<'a, Message> {
-    fn from(t: iced_widget::Text<'a, Theme, Renderer>) -> Self {
-        wrap(t)
-    }
-}
-
 // Our Text → our Element
 impl<'a, Message: 'a> From<crate::text::Text<'a>> for Element<'a, Message> {
     fn from(t: crate::text::Text<'a>) -> Self {
@@ -122,3 +113,16 @@ impl<'a, Message: 'a> From<crate::text::Text<'a>> for Element<'a, Message> {
     }
 }
 
+// Our Button → our Element
+impl<'a, Message: Clone + 'a> From<crate::button::Button<'a, Message>> for Element<'a, Message> {
+    fn from(b: crate::button::Button<'a, Message>) -> Self {
+        Element::new(b)
+    }
+}
+
+// Our Row → our Element
+impl<'a, Message: 'a> From<crate::row::Row<'a, Message>> for Element<'a, Message> {
+    fn from(r: crate::row::Row<'a, Message>) -> Self {
+        Element::new(r)
+    }
+}

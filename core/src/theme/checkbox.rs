@@ -5,7 +5,7 @@ pub use iced_widget::checkbox::{Catalog, Status, Style, StyleFn};
 use iced_core::Border;
 
 use super::Theme;
-use icedxdy_core::radius;
+use crate::radius;
 
 impl Catalog for Theme {
     type Class<'a> = StyleFn<'a, Self>;

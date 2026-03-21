@@ -1,15 +1,15 @@
-use iced::widget::{column, container, markdown, row};
+use iced::widget::{column, container, markdown};
 use iced::{Element, Fill, Task};
 use std::path::PathBuf;
 
-use icedxdy::button;
-use icedxdy::widget::{text, Size};
-use icedxdy::{theme, wrap, Theme};
+use icedxdy::widget::{button, row, text};
+use icedxdy::Size::*;
+use icedxdy::{theme, Theme};
 
 use crate::icon;
 
-/// Height for preview containers
-const PREVIEW_HEIGHT: f32 = 150.0;
+/// Height for preview containers (shadcn uses h-72 = 288px)
+const PREVIEW_HEIGHT: f32 = 288.0;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -21,6 +21,7 @@ pub enum Message {
 /// Examples matching shadcn docs order exactly
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Example {
+    Demo,
     Size,
     Default,
     Outline,
@@ -36,6 +37,7 @@ pub enum Example {
 
 impl Example {
     const ALL: &[Example] = &[
+        Example::Demo,
         Example::Size,
         Example::Default,
         Example::Outline,
@@ -51,6 +53,7 @@ impl Example {
 
     fn snippet_path(&self) -> PathBuf {
         let name = match self {
+            Example::Demo => "button-demo",
             Example::Size => "button-size",
             Example::Default => "button-default",
             Example::Outline => "button-outline",
@@ -68,6 +71,7 @@ impl Example {
 
     fn title(&self) -> &'static str {
         match self {
+            Example::Demo => "Button",
             Example::Size => "Size",
             Example::Default => "Default",
             Example::Outline => "Outline",
@@ -93,22 +97,58 @@ impl Example {
 
     fn view<'a>(&self) -> Element<'a, Message, Theme> {
         match self {
-            Example::Size => {
+            Example::Demo => {
                 row![
-                    button!["Extra Small", icon::arrow_up_right().size(12)]
-                        .size(Size::Xs)
-                        .on_press(Message::Pressed),
-                    button!["Small", icon::arrow_up_right().size(14)]
-                        .size(Size::Sm)
-                        .on_press(Message::Pressed),
-                    button!["Default", icon::arrow_up_right().size(14)]
-                        .on_press(Message::Pressed),
-                    button!["Large", icon::arrow_up_right().size(16)]
-                        .size(Size::Lg)
+                    button::outline("Button").on_press(Message::Pressed),
+                    button::icon(icon::arrow_up())
                         .on_press(Message::Pressed),
                 ]
+                .spacing(8)
+                .into()
+            }
+
+            Example::Size => {
+                row![
+                    row![
+                        button::outline("Extra Small")
+                            .size(Xs)
+                            .on_press(Message::Pressed),
+                        button::icon(icon::arrow_up_right())
+                            .size(Xs)
+                            .on_press(Message::Pressed),
+                    ]
+                    .spacing(8)
+,
+                    row![
+                        button::outline("Small")
+                            .size(Sm)
+                            .on_press(Message::Pressed),
+                        button::icon(icon::arrow_up_right())
+                            .size(Sm)
+                            .on_press(Message::Pressed),
+                    ]
+                    .spacing(8)
+,
+                    row![
+                        button::outline("Default")
+                            .on_press(Message::Pressed),
+                        button::icon(icon::arrow_up_right())
+                            .on_press(Message::Pressed),
+                    ]
+                    .spacing(8)
+,
+                    row![
+                        button::outline("Large")
+                            .size(Lg)
+                            .on_press(Message::Pressed),
+                        button::icon(icon::arrow_up_right())
+                            .size(Lg)
+                            .on_press(Message::Pressed),
+                    ]
+                    .spacing(8)
+,
+                ]
                 .spacing(16)
-                .align_y(iced::Center)
                 .into()
             }
 
@@ -123,23 +163,26 @@ impl Example {
             }
             Example::Link => button::link("Link").on_press(Message::Pressed).into(),
 
-            Example::Icon => button::icon(wrap(icon::arrow_up_right().size(16)))
+            Example::Icon => button::icon(icon::arrow_up_right())
                 .on_press(Message::Pressed)
                 .into(),
 
             Example::WithIcon => {
-                button![icon::git_branch().size(16), "New Branch"]
+                button![icon::git_branch(), "New Branch"]
                     .on_press(Message::Pressed)
                     .into()
             }
 
-            Example::Rounded => button::icon(wrap(icon::arrow_up().size(16)))
+            Example::Rounded => button::icon(icon::arrow_up())
+                .rounded()
                 .on_press(Message::Pressed)
                 .into(),
 
             Example::Spinner => row![
-                button![icon::loader_circle().size(16), "Generating"],
-                button!["Downloading", icon::loader_circle().size(16)],
+                button![icon::loader_circle(), "Generating"]
+                    .style(theme::button::outline),
+                button!["Downloading", icon::loader_circle()]
+                    .style(theme::button::secondary),
             ]
             .spacing(16)
             .into(),
@@ -186,43 +229,15 @@ impl State {
     }
 
     pub fn view(&self) -> Element<'_, Message, Theme> {
-        // Demo section - top showcase (matches shadcn hero: outline + icon)
-        let demo = container(
-            row![
-                button::outline("Button").on_press(Message::Pressed),
-                button::icon(wrap(icon::chevron_right().size(16)))
-                    .on_press(Message::Pressed),
-            ]
-            .spacing(8),
-        )
-        .center_x(Fill)
-        .center_y(Fill)
-        .width(Fill)
-        .height(PREVIEW_HEIGHT)
-        .style(theme::container::card);
-
-        let demo_code = text("button::outline(\"Button\")");
-
-        let demo_section = column![demo, demo_code].spacing(12);
-
-        // Examples header
-        let examples_header = text::h2("Examples");
-
-        // Individual examples
-        let examples = column(self.snippets.iter().map(|(example, snippet)| {
-            let header = text::h3(example.title());
-
-            let mut section = column![header].spacing(4);
-
-            if let Some(desc) = example.description() {
-                section = section.push(text::muted(desc));
-            }
+        let sections = column(self.snippets.iter().map(|(example, snippet)| {
+            let is_demo = *example == Example::Demo;
 
             let preview = container(example.view())
                 .center_x(Fill)
                 .center_y(Fill)
                 .width(Fill)
                 .height(PREVIEW_HEIGHT)
+                .padding(40)
                 .style(theme::container::card);
 
             let code: Element<'_, Message, Theme> = snippet
@@ -234,15 +249,67 @@ impl State {
                 })
                 .unwrap_or_else(|| text("Loading...").into());
 
-            section = section.push(preview).push(code);
+            if is_demo {
+                column![preview, code].spacing(16).into()
+            } else {
+                let mut section = column![text::h3(example.title())].spacing(16);
 
-            section.spacing(12).into()
+                if let Some(desc) = example.description() {
+                    section = section.push(text::p(desc).style(theme::text::muted));
+                }
+
+                section.push(preview).push(code).spacing(16).into()
+            }
         }))
-        .spacing(32);
+        .spacing(48);
 
-        column![demo_section, examples_header, examples]
-            .spacing(32)
-            .width(Fill)
+        // "Examples" header between demo and the rest
+        let demo = &sections;
+        let _ = demo; // sections includes Demo as first item
+
+        // Split: first item is demo, rest are examples
+        // Actually, let's just render with the h2 between demo and examples
+        let mut items: Vec<Element<'_, Message, Theme>> = Vec::new();
+
+        for (i, (example, snippet)) in self.snippets.iter().enumerate() {
+            let preview = container(example.view())
+                .center_x(Fill)
+                .center_y(Fill)
+                .width(Fill)
+                .height(PREVIEW_HEIGHT)
+                .padding(40)
+                .style(theme::container::card);
+
+            let code: Element<'_, Message, Theme> = snippet
+                .as_ref()
+                .map(|s| {
+                    markdown::view(s, &iced::Theme::TokyoNight)
+                        .map(Message::LinkClicked)
+                        .into()
+                })
+                .unwrap_or_else(|| text("Loading...").into());
+
+            if *example == Example::Demo {
+                items.push(column![preview, code].spacing(16).into());
+            } else {
+                if i == 1 {
+                    // Insert "Examples" header before first non-demo example
+                    items.push(text::h2("Examples").into());
+                }
+
+                let mut section = column![text::h3(example.title())].spacing(16);
+
+                if let Some(desc) = example.description() {
+                    section = section.push(text::p(desc).style(theme::text::muted));
+                }
+
+                items.push(section.push(preview).push(code).spacing(16).into());
+            }
+        }
+
+        column(items)
+            .spacing(48)
+            .max_width(640)
             .into()
     }
 }

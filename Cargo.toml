@@ -11,10 +11,12 @@ keywords.workspace = true
 
 [features]
 default = []
-markdown = ["iced_widget/markdown"]
+markdown = ["icedxdy_core/markdown"]
+spinner = ["icedxdy_widget/spinner"]
 
 [dependencies]
 icedxdy_core.workspace = true
+icedxdy_widget.workspace = true
 iced.workspace = true
 iced_core.workspace = true
 iced_widget.workspace = true
@@ -22,6 +24,7 @@ iced_widget.workspace = true
 [workspace]
 members = [
   "core",
+  "widget",
   "examples/browser",
 ]
 
@@ -38,6 +41,7 @@ rust-version = "1.85"
 [workspace.dependencies]
 icedxdy = { path = "." }
 icedxdy_core = { path = "./core" }
+icedxdy_widget = { path = "./widget" }
 
 iced = "0.15.0-dev"
 iced_core = "0.15.0-dev"

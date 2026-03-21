@@ -9,5 +9,10 @@ repository.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
+[features]
+default = []
+markdown = ["iced_widget/markdown"]
+
 [dependencies]
 iced_core.workspace = true
+iced_widget.workspace = true

@@ -16,9 +16,9 @@ use iced_widget::text::Style;
 use iced_widget::Renderer;
 
 use crate::element::IntoElement;
-use crate::theme;
+use icedxdy_core::theme;
 use crate::Size;
-use crate::Theme;
+use icedxdy_core::Theme;
 
 /// Font sizes based on Tailwind/shadcn scale
 pub mod size {
@@ -131,29 +131,29 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
 
 pub fn h1<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
-        .size(size::XL4)
-        .bold()
-        .style(theme::text::foreground)
-}
-
-pub fn h2<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
-    Text::new(content)
         .size(size::XL3)
         .semibold()
         .style(theme::text::foreground)
 }
 
+pub fn h2<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
+    Text::new(content)
+        .size(size::XL)
+        .medium()
+        .style(theme::text::foreground)
+}
+
 pub fn h3<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
-        .size(size::XL2)
-        .semibold()
+        .size(size::LG)
+        .medium()
         .style(theme::text::foreground)
 }
 
 pub fn h4<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
-        .size(size::XL)
-        .semibold()
+        .size(size::BASE)
+        .medium()
         .style(theme::text::foreground)
 }
 
