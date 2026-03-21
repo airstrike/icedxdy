@@ -38,7 +38,7 @@
 use std::borrow::Cow;
 use std::sync::OnceLock;
 
-use iced_core::font::{Stretch, Style, Weight};
+use iced_core::font::{Error, Stretch, Style, Weight};
 use iced_core::Font as IcedFont;
 use iced_runtime::font;
 use iced_runtime::Task;
@@ -80,7 +80,7 @@ impl Font {
             weight: self.weight,
             stretch: self.stretch,
             style: self.style,
-            ..IcedFont::with_name(name)
+            ..IcedFont::new(name)
         });
     }
 
@@ -124,7 +124,7 @@ pub fn set() {
 ///     (App::default(), fonts::load().map(|_| Message::FontsLoaded))
 /// }
 /// ```
-pub fn load() -> Task<Result<(), font::Error>> {
+pub fn load() -> Task<Result<(), Error>> {
     set(); // Initialize font name mappings
 
     Task::batch([

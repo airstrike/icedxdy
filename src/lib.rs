@@ -10,7 +10,6 @@ pub mod text;
 pub mod theme;
 
 pub use icedxdy_core as core;
-pub use icedxdy_fonts as fonts;
 
 // Re-export key types at the crate root
 pub use icedxdy_core::{Color, Design, FontFamily, Palette};

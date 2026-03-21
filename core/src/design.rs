@@ -24,22 +24,10 @@ impl FontFamily {
     /// Create a font family from a font name with all weight variants
     pub fn from_name(name: &'static str) -> Self {
         Self {
-            regular: Font {
-                weight: Weight::Normal,
-                ..Font::with_name(name)
-            },
-            medium: Font {
-                weight: Weight::Medium,
-                ..Font::with_name(name)
-            },
-            semibold: Font {
-                weight: Weight::Semibold,
-                ..Font::with_name(name)
-            },
-            bold: Font {
-                weight: Weight::Bold,
-                ..Font::with_name(name)
-            },
+            regular: Font::new(name).weight(Weight::Normal),
+            medium: Font::new(name).weight(Weight::Medium),
+            semibold: Font::new(name).weight(Weight::Semibold),
+            bold: Font::new(name).weight(Weight::Bold),
         }
     }
 }
@@ -61,6 +49,8 @@ pub struct Design {
     pub name: String,
     /// Color palette
     pub palette: Palette,
+    /// The seed used to generate the iced Theme
+    pub seed: iced_core::theme::palette::Seed,
     /// The iced Theme derived from this design's palette
     pub theme: iced_core::Theme,
     /// Sans-serif font family for UI text
@@ -73,19 +63,20 @@ impl Design {
     /// Create a new design with the given name and palette
     pub fn new(name: impl Into<String>, palette: Palette) -> Self {
         let name = name.into();
-        let iced_palette = iced_core::theme::Palette {
+        let seed = iced_core::theme::palette::Seed {
             background: palette.background.into(),
             text: palette.foreground.into(),
             primary: palette.primary.base.into(),
-            success: palette.accent.base.into(), // Using accent for success
+            success: palette.accent.base.into(),
             danger: palette.destructive.base.into(),
-            warning: palette.secondary.base.into(), // Using secondary for warning
+            warning: palette.secondary.base.into(),
         };
-        let theme = iced_core::Theme::custom(name.clone(), iced_palette);
+        let theme = iced_core::Theme::custom(name.clone(), seed);
 
         Self {
             name,
             palette,
+            seed,
             theme,
             font_sans: FontFamily::default(),
             font_mono: Font::MONOSPACE,

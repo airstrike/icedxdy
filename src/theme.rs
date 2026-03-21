@@ -70,7 +70,6 @@ impl iced_core::theme::Base for Theme {
     }
 
     fn mode(&self) -> iced_core::theme::Mode {
-        // Determine mode based on background lightness
         let bg = self.design.palette.background;
         if bg.l < 0.5 {
             iced_core::theme::Mode::Dark
@@ -90,7 +89,7 @@ impl iced_core::theme::Base for Theme {
         }
     }
 
-    fn palette(&self) -> Option<iced_core::theme::Palette> {
-        Some(self.design.theme.palette())
+    fn seed(&self) -> Option<iced_core::theme::palette::Seed> {
+        Some(self.design.seed)
     }
 }

@@ -1,23 +1,28 @@
 mod components;
+mod fonts;
+mod icon;
 
 use iced::widget::{column, container, mouse_area, row, scrollable, space};
-use iced::{Element, Fill, Task};
+use iced::{Element, Fill, Font, Task};
+use iced_widget::button::Button;
 
-use icedxdy::{button, fonts, separator, text, Theme};
+use icedxdy::{separator, text, Theme};
+
+const INTER_REGULAR: &[u8] = include_bytes!("../../../fonts/assets/InterTight-Regular.ttf");
+const INTER_MEDIUM: &[u8] = include_bytes!("../../../fonts/assets/InterTight-Medium.ttf");
+const INTER_SEMIBOLD: &[u8] = include_bytes!("../../../fonts/assets/InterTight-SemiBold.ttf");
+const INTER_BOLD: &[u8] = include_bytes!("../../../fonts/assets/InterTight-Bold.ttf");
 
 fn main() -> iced::Result {
-    fonts::set();
-
-    let settings = iced::Settings {
-        default_font: fonts::INTER.get(),
-        fonts: fonts::load_bytes(),
-        ..Default::default()
-    };
-
     iced::application(App::new, App::update, App::view)
         .title("icedxdy • components browser")
         .theme(App::theme)
-        .settings(settings)
+        .font(icon::FONT)
+        .font(INTER_REGULAR)
+        .font(INTER_MEDIUM)
+        .font(INTER_SEMIBOLD)
+        .font(INTER_BOLD)
+        .default_font(Font::new("Inter Tight"))
         .run()
 }
 
@@ -26,6 +31,7 @@ struct App {
     section: Section,
     button: components::button::State,
     text: components::text::State,
+    fount: fount::Fount,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -59,23 +65,26 @@ enum Message {
     SelectSection(Section),
     Button(components::button::Message),
     Text(components::text::Message),
+    Font(fonts::Message),
 }
 
 impl App {
     fn new() -> (Self, Task<Message>) {
-        let (button, button_task) = components::button::State::new();
-        let (text, text_task) = components::text::State::new();
+        let (btn, button_task) = components::button::State::new();
+        let (txt, text_task) = components::text::State::new();
 
         (
             Self {
                 dark_mode: false,
                 section: Section::default(),
-                button,
-                text,
+                button: btn,
+                text: txt,
+                fount: fount::Fount::new(),
             },
             Task::batch([
                 button_task.map(Message::Button),
                 text_task.map(Message::Text),
+                fonts::init().map(Message::Font),
             ]),
         )
     }
@@ -92,14 +101,42 @@ impl App {
             }
             Message::Button(msg) => self.button.update(msg).map(Message::Button),
             Message::Text(msg) => self.text.update(msg).map(Message::Text),
+            Message::Font(msg) => match msg {
+                fonts::Message::SystemFontsLoaded(families) => {
+                    let names: Vec<String> = families
+                        .into_iter()
+                        .map(|f| f.to_string())
+                        .filter(|name| !name.starts_with('.'))
+                        .collect();
+                    self.fount.set_system_families(names);
+                    Task::none()
+                }
+                fonts::Message::CatalogLoaded(Ok(catalog)) => {
+                    self.fount.set_google_catalog(catalog);
+                    Task::none()
+                }
+                fonts::Message::CatalogLoaded(Err(_)) => Task::none(),
+                fonts::Message::Loaded(name, Err(e)) => {
+                    eprintln!("Font loading failed ({name}): {e}");
+                    Task::none()
+                }
+                fonts::Message::Loaded(_, Ok(())) => Task::none(),
+            },
         }
     }
 
-    fn view(&self) -> Element<Message, Theme> {
-        // Header with branding and theme toggle
+    fn view(&self) -> Element<'_, Message, Theme> {
         let branding = text::h4("icedxdy");
-        let theme_label = if self.dark_mode { "Light" } else { "Dark" };
-        let theme_toggle = button::ghost(theme_label).on_press(Message::ToggleTheme);
+        let theme_icon = if self.dark_mode {
+            icon::sun().size(16)
+        } else {
+            icon::moon().size(16)
+        };
+        let theme_toggle: Element<'_, Message, Theme> = Button::new(theme_icon)
+            .padding([4, 8])
+            .style(icedxdy::theme::button::ghost)
+            .on_press(Message::ToggleTheme)
+            .into();
         let header = row![branding, space::horizontal(), theme_toggle]
             .padding(16)
             .align_y(iced::Center);
