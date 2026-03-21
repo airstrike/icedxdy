@@ -8,10 +8,13 @@ pub mod checkbox;
 pub mod container;
 #[cfg(feature = "markdown")]
 pub mod markdown;
+pub mod menu;
 pub mod rule;
 pub mod scrollable;
 pub mod table;
 pub mod text;
+pub mod text_input;
+pub mod combo_box;
 
 use icedxdy_core::Design;
 

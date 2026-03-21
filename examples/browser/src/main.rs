@@ -2,29 +2,22 @@ mod components;
 mod fonts;
 mod icon;
 
-use iced::widget::{column, container, mouse_area, row, scrollable, space};
-use iced::{Element, Fill, Font, Task};
+use iced::widget::{column, combo_box, container, mouse_area, row, scrollable, space};
+use iced::{Element, Fill, Font, Pixels, Task};
 use iced_widget::button::Button;
 
 use icedxdy::{separator, text, Theme};
-
-const INTER_REGULAR: &[u8] = include_bytes!("../../../fonts/assets/InterTight-Regular.ttf");
-const INTER_MEDIUM: &[u8] = include_bytes!("../../../fonts/assets/InterTight-Medium.ttf");
-const INTER_SEMIBOLD: &[u8] = include_bytes!("../../../fonts/assets/InterTight-SemiBold.ttf");
-const INTER_BOLD: &[u8] = include_bytes!("../../../fonts/assets/InterTight-Bold.ttf");
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
         .title("icedxdy • components browser")
         .theme(App::theme)
         .font(icon::FONT)
-        .font(INTER_REGULAR)
-        .font(INTER_MEDIUM)
-        .font(INTER_SEMIBOLD)
-        .font(INTER_BOLD)
-        .default_font(Font::new("Inter Tight"))
         .run()
 }
+
+/// Fonts to pin at the top of the font list
+const PINNED_FONTS: &[&str] = &["Inter", "Geist"];
 
 struct App {
     dark_mode: bool,
@@ -32,6 +25,8 @@ struct App {
     button: components::button::State,
     text: components::text::State,
     fount: fount::Fount,
+    font_list: combo_box::State<String>,
+    current_font: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -63,6 +58,7 @@ impl Section {
 enum Message {
     ToggleTheme,
     SelectSection(Section),
+    FontSelected(String),
     Button(components::button::Message),
     Text(components::text::Message),
     Font(fonts::Message),
@@ -73,6 +69,8 @@ impl App {
         let (btn, button_task) = components::button::State::new();
         let (txt, text_task) = components::text::State::new();
 
+        let default_font = "Inter".to_string();
+
         (
             Self {
                 dark_mode: false,
@@ -80,6 +78,8 @@ impl App {
                 button: btn,
                 text: txt,
                 fount: fount::Fount::new(),
+                font_list: combo_box::State::new(vec![default_font.clone()]),
+                current_font: default_font,
             },
             Task::batch([
                 button_task.map(Message::Button),
@@ -87,6 +87,20 @@ impl App {
                 fonts::init().map(Message::Font),
             ]),
         )
+    }
+
+    fn rebuild_font_list(&mut self) {
+        let mut names = self.fount.families();
+
+        // Move pinned fonts to the top (in reverse so first pinned ends up first)
+        for &pinned in PINNED_FONTS.iter().rev() {
+            if let Some(pos) = names.iter().position(|n| n == pinned) {
+                let name = names.remove(pos);
+                names.insert(0, name);
+            }
+        }
+
+        self.font_list = combo_box::State::new(names);
     }
 
     fn update(&mut self, message: Message) -> Task<Message> {
@@ -99,6 +113,18 @@ impl App {
                 self.section = section;
                 Task::none()
             }
+            Message::FontSelected(name) => {
+                self.current_font = name.clone();
+
+                if self.fount.system_families().contains(&name) {
+                    // System font — already available
+                    let name: &'static str = Box::leak(name.into_boxed_str());
+                    iced::font::set_defaults(Font::new(name), Pixels(14.0))
+                } else {
+                    // Google Font — load it
+                    fonts::load(name, self.fount.google_catalog()).map(Message::Font)
+                }
+            }
             Message::Button(msg) => self.button.update(msg).map(Message::Button),
             Message::Text(msg) => self.text.update(msg).map(Message::Text),
             Message::Font(msg) => match msg {
@@ -109,10 +135,12 @@ impl App {
                         .filter(|name| !name.starts_with('.'))
                         .collect();
                     self.fount.set_system_families(names);
+                    self.rebuild_font_list();
                     Task::none()
                 }
                 fonts::Message::CatalogLoaded(Ok(catalog)) => {
                     self.fount.set_google_catalog(catalog);
+                    self.rebuild_font_list();
                     Task::none()
                 }
                 fonts::Message::CatalogLoaded(Err(_)) => Task::none(),
@@ -120,13 +148,26 @@ impl App {
                     eprintln!("Font loading failed ({name}): {e}");
                     Task::none()
                 }
-                fonts::Message::Loaded(_, Ok(())) => Task::none(),
+                fonts::Message::Loaded(name, Ok(())) => {
+                    let name: &'static str = Box::leak(name.into_boxed_str());
+                    iced::font::set_defaults(Font::new(name), Pixels(14.0))
+                }
             },
         }
     }
 
     fn view(&self) -> Element<'_, Message, Theme> {
         let branding = text::h4("icedxdy");
+
+        let font_selector = combo_box(
+            &self.font_list,
+            "Font…",
+            Some(&self.current_font),
+            Message::FontSelected,
+        )
+        .width(160)
+        .size(12);
+
         let theme_icon = if self.dark_mode {
             icon::sun().size(16)
         } else {
@@ -137,7 +178,9 @@ impl App {
             .style(icedxdy::theme::button::ghost)
             .on_press(Message::ToggleTheme)
             .into();
-        let header = row![branding, space::horizontal(), theme_toggle]
+
+        let header = row![branding, space::horizontal(), font_selector, theme_toggle]
+            .spacing(8)
             .padding(16)
             .align_y(iced::Center);
 

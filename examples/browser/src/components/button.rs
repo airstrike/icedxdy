@@ -2,7 +2,7 @@ use iced::widget::{column, container, markdown, row, text};
 use iced::{Element, Fill, Task};
 use std::path::PathBuf;
 
-use icedxdy::{button, text as xdy_text, theme, Theme};
+use icedxdy::{button, text as xdy_text, theme, wrap, Size, Theme};
 
 use crate::icon;
 
@@ -86,11 +86,11 @@ impl Example {
             Example::Size => {
                 row![
                     button::outline("Small")
-                        .padding(button::Size::Sm.padding())
+                        .size(Size::Sm)
                         .on_press(Message::Pressed),
                     button::outline("Default").on_press(Message::Pressed),
                     button::outline("Large")
-                        .padding(button::Size::Lg.padding())
+                        .size(Size::Lg)
                         .on_press(Message::Pressed),
                 ]
                 .spacing(32)
@@ -109,30 +109,30 @@ impl Example {
             Example::Link => button::link("Link").on_press(Message::Pressed).into(),
 
             // Icon-only button
-            Example::Icon => button::icon(icon::chevron_right().size(16))
+            Example::Icon => button::icon(wrap(icon::chevron_right().size(16)))
                 .on_press(Message::Pressed)
                 .into(),
 
             // Button with icon + text
-            Example::WithIcon => button::secondary(
+            Example::WithIcon => button::secondary(wrap(
                 row![icon::mail().size(16), text("Login with Email")]
                     .spacing(8)
                     .align_y(iced::Center),
-            )
+            ))
             .on_press(Message::Pressed)
             .into(),
 
             // Rounded icon button
-            Example::Rounded => button::icon(icon::chevron_right().size(16))
+            Example::Rounded => button::icon(wrap(icon::chevron_right().size(16)))
                 .on_press(Message::Pressed)
                 .into(),
 
             // Spinner / loading button
-            Example::Spinner => button::primary(
+            Example::Spinner => button::primary(wrap(
                 row![icon::loader_circle().size(16), text("Please wait")]
                     .spacing(8)
                     .align_y(iced::Center),
-            )
+            ))
             .on_press(Message::Pressed)
             .into(),
         }
@@ -182,7 +182,7 @@ impl State {
         let demo = container(
             row![
                 button::outline("Button").on_press(Message::Pressed),
-                button::icon(icon::chevron_right().size(16))
+                button::icon(wrap(icon::chevron_right().size(16)))
                     .on_press(Message::Pressed),
             ]
             .spacing(8),

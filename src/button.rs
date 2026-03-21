@@ -1,58 +1,107 @@
 //! Button components
 //!
-//! Semantic button helpers based on shadcn/ui button variants.
-//!
 //! # Example
 //!
 //! ```ignore
 //! use icedxdy::button;
 //!
 //! button::primary("Submit").on_press(Message::Submit)
-//! button::destructive("Delete").on_press(Message::Delete)
-//! button::outline("Settings").on_press(Message::Nav)
-//! button::icon(icon::chevron_right().size(16)).on_press(Message::Next)
+//! button::primary("Go").size(Size::Lg).on_press(Message::Go)
+//! button::icon(icon::chevron_right()).on_press(Message::Next)
 //! ```
 
-use iced_core::text::Span;
-use iced_core::{Element, Font, Padding};
-use iced_widget::button::Button;
-use iced_widget::text::Rich;
-use iced_widget::Renderer;
+mod helpers;
+pub use helpers::*;
 
+use iced_core::text::Span;
+use iced_core::Font;
+use iced_widget::text::Rich;
+
+use crate::element::{Element, IntoElement};
 use crate::theme;
+use crate::Size;
 use crate::Theme;
 
-/// Button size variants matching shadcn/ui
+type StyleFn = fn(&Theme, iced_widget::button::Status) -> iced_widget::button::Style;
+
+/// A button that wraps our [`Element`] system.
 ///
-/// Each size defines its own padding. The `Icon` variant uses equal
-/// padding on all sides to produce a square button.
-#[derive(Debug, Clone, Copy, Default)]
-pub enum Size {
-    Sm,
-    #[default]
-    Default,
-    Lg,
-    Icon,
+/// Holds a [`Size`] which is propagated to its content when converting
+/// to an `iced::Element`. This means a `Size::Lg` button automatically
+/// gets larger text, larger icons, etc.
+pub struct Button<'a, Message, Theme = crate::Theme, Renderer = iced_widget::Renderer>
+where
+    Renderer: iced_core::Renderer,
+    Theme: iced_widget::button::Catalog,
+{
+    content: Element<'a, Message, Theme, Renderer>,
+    size: Size,
+    style: Theme::Class<'a>,
+    on_press: Option<Message>,
 }
 
-impl Size {
-    /// Padding for this size, matching shadcn: sm=`py-1 px-3`, default=`py-2 px-4`,
-    /// lg=`py-2 px-8`, icon=`p-2`
-    pub const fn padding(self) -> Padding {
-        match self {
-            Size::Sm => Padding { top: 4.0, bottom: 4.0, left: 12.0, right: 12.0 },
-            Size::Default => Padding { top: 8.0, bottom: 8.0, left: 16.0, right: 16.0 },
-            Size::Lg => Padding { top: 8.0, bottom: 8.0, left: 32.0, right: 32.0 },
-            Size::Icon => Padding { top: 8.0, bottom: 8.0, left: 8.0, right: 8.0 },
-        }
+/// Create a button with default size and style
+pub fn button<'a, Message: Clone + 'a>(
+    content: impl Into<Element<'a, Message>>,
+) -> Button<'a, Message> {
+    Button {
+        content: content.into(),
+        size: Size::Default,
+        style: Box::new(theme::button::default),
+        on_press: None,
     }
 }
 
-/// Create a button with default size padding
-pub fn button<'a, Message>(
-    content: impl Into<Element<'a, Message, Theme, Renderer>>,
-) -> Button<'a, Message, Theme> {
-    Button::new(content).padding(Size::Default.padding())
+impl<'a, Message: Clone + 'a> Button<'a, Message> {
+    /// Set the size variant
+    pub fn size(mut self, size: impl Into<Size>) -> Self {
+        self.size = size.into();
+        self
+    }
+
+    /// Set the style
+    pub fn style(mut self, style: StyleFn) -> Self {
+        self.style = Box::new(style);
+        self
+    }
+
+    /// Set the on_press message
+    pub fn on_press(mut self, message: Message) -> Self {
+        self.on_press = Some(message);
+        self
+    }
+}
+
+impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
+    for iced_core::Element<'a, Message, Theme, iced_widget::Renderer>
+{
+    fn from(mut btn: Button<'a, Message>) -> Self {
+        // Propagate size to content
+        btn.content.size(btn.size);
+
+        // Build the iced button
+        let size = btn.size;
+        let mut iced_btn = iced_widget::button::Button::new(btn.content.into_iced())
+            .padding(size.padding())
+            .style(move |t, s| (btn.style)(t, s));
+
+        if let Some(on_press) = btn.on_press {
+            iced_btn = iced_btn.on_press(on_press);
+        }
+
+        iced_btn.into()
+    }
+}
+
+// Our Button is also an IntoElement so it can be nested
+impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Button<'a, Message> {
+    fn size(&mut self, size: Size) {
+        self.size = size;
+    }
+
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, iced_widget::Renderer> {
+        (*self).into()
+    }
 }
 
 /// A link widget that looks like a text link with underline on hover
@@ -76,53 +125,4 @@ impl Link {
             .on_link_click(|msg| msg)
             .style(theme::text::link)
     }
-}
-
-/// Primary button (bg-primary text-primary-foreground)
-pub fn primary<'a, Message>(
-    content: impl Into<Element<'a, Message, Theme, Renderer>>,
-) -> Button<'a, Message, Theme> {
-    button(content).style(theme::button::default)
-}
-
-/// Secondary button (bg-secondary text-secondary-foreground)
-pub fn secondary<'a, Message>(
-    content: impl Into<Element<'a, Message, Theme, Renderer>>,
-) -> Button<'a, Message, Theme> {
-    button(content).style(theme::button::secondary)
-}
-
-/// Outline button (border bg-background hover:bg-accent)
-pub fn outline<'a, Message>(
-    content: impl Into<Element<'a, Message, Theme, Renderer>>,
-) -> Button<'a, Message, Theme> {
-    button(content).style(theme::button::outline)
-}
-
-/// Ghost button (hover:bg-accent)
-pub fn ghost<'a, Message>(
-    content: impl Into<Element<'a, Message, Theme, Renderer>>,
-) -> Button<'a, Message, Theme> {
-    button(content).style(theme::button::ghost)
-}
-
-/// Destructive button (bg-destructive text-destructive-foreground)
-pub fn destructive<'a, Message>(
-    content: impl Into<Element<'a, Message, Theme, Renderer>>,
-) -> Button<'a, Message, Theme> {
-    button(content).style(theme::button::destructive)
-}
-
-/// Icon-only button with outline style and square padding
-pub fn icon<'a, Message>(
-    content: impl Into<Element<'a, Message, Theme, Renderer>>,
-) -> Button<'a, Message, Theme> {
-    button(content)
-        .padding(Size::Icon.padding())
-        .style(theme::button::outline)
-}
-
-/// Link - text with underline on hover
-pub fn link(label: impl ToString) -> Link {
-    Link::new(label)
 }

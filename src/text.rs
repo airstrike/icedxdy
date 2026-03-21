@@ -1,7 +1,5 @@
 //! Typography components
 //!
-//! Semantic helpers for headings, paragraphs, and more.
-//!
 //! # Example
 //!
 //! ```ignore
@@ -14,11 +12,13 @@
 
 use iced_core::font::Weight;
 use iced_core::text::{Fragment, IntoFragment};
-use iced_core::{Element, Font as IcedFont, Pixels};
+use iced_core::Font as IcedFont;
 use iced_widget::text::Style;
 use iced_widget::Renderer;
 
+use crate::element::IntoElement;
 use crate::theme;
+use crate::Size;
 use crate::Theme;
 
 /// Font sizes based on Tailwind/shadcn scale
@@ -51,8 +51,8 @@ impl<'a> Text<'a> {
         }
     }
 
-    pub fn size(mut self, size: impl Into<Pixels>) -> Self {
-        self.size = Some(size.into().0);
+    pub fn size(mut self, size: impl Into<Size>) -> Self {
+        self.size = Some(size.into().text_size());
         self
     }
 
@@ -75,28 +75,48 @@ impl<'a> Text<'a> {
         self.style = Some(style);
         self
     }
-}
 
-impl<'a, Message: 'a> From<Text<'a>> for Element<'a, Message, Theme, Renderer> {
-    fn from(t: Text<'a>) -> Self {
-        let mut widget = iced_widget::text(t.fragment);
+    /// Build the iced text widget
+    fn build(self) -> iced_widget::Text<'a, Theme, Renderer> {
+        let mut widget = iced_widget::text(self.fragment);
 
-        if let Some(size) = t.size {
+        if let Some(size) = self.size {
             widget = widget.size(size);
         }
 
-        if let Some(weight) = t.weight {
+        if let Some(weight) = self.weight {
             widget = widget.font(IcedFont {
                 weight,
                 ..IcedFont::DEFAULT
             });
         }
 
-        if let Some(style) = t.style {
+        if let Some(style) = self.style {
             widget = widget.style(style);
         }
 
-        widget.into()
+        widget
+    }
+}
+
+impl<'a, Message: 'a> From<Text<'a>> for iced_core::Element<'a, Message, Theme, Renderer> {
+    fn from(t: Text<'a>) -> Self {
+        t.build().into()
+    }
+}
+
+impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
+    fn size(&mut self, size: Size) {
+        // Only apply if user didn't set an explicit size
+        if self.size.is_none() {
+            self.size = Some(size.text_size());
+        }
+    }
+
+    fn into_element(
+        self: Box<Self>,
+    ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        self.build().into()
     }
 }
 
