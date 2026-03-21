@@ -1,5 +1,4 @@
 ```rust
-button::outline(icon::arrow_up())
-    .size(Size::Icon)
-    .rounded()
+button::icon(wrap(icon::arrow_up()))
+    // TODO: .rounded() for rounded-full style
 ```

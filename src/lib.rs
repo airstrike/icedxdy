@@ -10,6 +10,7 @@ pub mod separator;
 pub mod size;
 pub mod text;
 pub mod theme;
+pub mod widget;
 
 pub use icedxdy_core as core;
 

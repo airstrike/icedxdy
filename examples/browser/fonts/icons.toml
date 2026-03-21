@@ -1,8 +1,11 @@
 module = "icon"
 
 [icons]
-chevron_right = "chevron-right"
-loader_circle = "loader-circle"
-mail           = "mail"
-moon           = "moon"
-sun            = "sun"
+arrow_up          = "arrow-up"
+arrow_up_right    = "arrow-up-right"
+chevron_right     = "chevron-right"
+git_branch        = "git-branch"
+loader_circle     = "loader-circle"
+mail              = "mail"
+moon              = "moon"
+sun               = "sun"

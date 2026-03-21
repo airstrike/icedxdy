@@ -1,4 +1,3 @@
 ```rust
-button::outline(row![icon::git_branch(), "New Branch"])
-    .size(Size::Sm)
+button::primary(wrap(row![icon::git_branch(), text("New Branch")]))
 ```

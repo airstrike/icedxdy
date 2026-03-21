@@ -1,8 +1,9 @@
-use iced::widget::{column, container, markdown, row, text};
+use iced::widget::{column, container, markdown, row};
 use iced::{Element, Fill, Task};
 use std::path::PathBuf;
 
-use icedxdy::{button, text as xdy_text, theme, wrap, Size, Theme};
+use icedxdy::widget::{button, text, Size};
+use icedxdy::{theme, wrap, Theme};
 
 use crate::icon;
 
@@ -33,7 +34,6 @@ pub enum Example {
 }
 
 impl Example {
-    // Exact order from https://ui.shadcn.com/docs/components/button
     const ALL: &[Example] = &[
         Example::Size,
         Example::Default,
@@ -81,23 +81,55 @@ impl Example {
         }
     }
 
+    fn description(&self) -> Option<&'static str> {
+        match self {
+            Example::Size => Some("Use the size prop to change the size of the button."),
+            Example::Rounded => Some("Use rounded styling to make the button circular."),
+            Example::Spinner => Some("Show a loading spinner inside the button."),
+            _ => None,
+        }
+    }
+
     fn view<'a>(&self) -> Element<'a, Message, Theme> {
         match self {
+            // Size: xs, sm, default, lg — each with arrow-up-right icon
             Example::Size => {
                 row![
-                    button::outline("Small")
-                        .size(Size::Sm)
-                        .on_press(Message::Pressed),
-                    button::outline("Default").on_press(Message::Pressed),
-                    button::outline("Large")
-                        .size(Size::Lg)
-                        .on_press(Message::Pressed),
+                    button(wrap(
+                        row![text("Extra Small"), icon::arrow_up_right().size(12)]
+                            .spacing(6)
+                            .align_y(iced::Center),
+                    ))
+                    .size(Size::Xs)
+                    .on_press(Message::Pressed),
+                    button(wrap(
+                        row![text("Small"), icon::arrow_up_right().size(14)]
+                            .spacing(6)
+                            .align_y(iced::Center),
+                    ))
+                    .size(Size::Sm)
+                    .on_press(Message::Pressed),
+                    button(wrap(
+                        row![text("Default"), icon::arrow_up_right().size(14)]
+                            .spacing(6)
+                            .align_y(iced::Center),
+                    ))
+                    .on_press(Message::Pressed),
+                    button(wrap(
+                        row![text("Large"), icon::arrow_up_right().size(16)]
+                            .spacing(8)
+                            .align_y(iced::Center),
+                    ))
+                    .size(Size::Lg)
+                    .on_press(Message::Pressed),
                 ]
-                .spacing(32)
+                .spacing(16)
+                .align_y(iced::Center)
                 .into()
             }
 
-            Example::Default => button::primary("Button").on_press(Message::Pressed).into(),
+            Example::Default => button("Button").on_press(Message::Pressed).into(),
+
             Example::Outline => button::outline("Outline").on_press(Message::Pressed).into(),
             Example::Secondary => {
                 button::secondary("Secondary").on_press(Message::Pressed).into()
@@ -109,13 +141,13 @@ impl Example {
             Example::Link => button::link("Link").on_press(Message::Pressed).into(),
 
             // Icon-only button
-            Example::Icon => button::icon(wrap(icon::chevron_right().size(16)))
+            Example::Icon => button::icon(wrap(icon::arrow_up_right().size(16)))
                 .on_press(Message::Pressed)
                 .into(),
 
             // Button with icon + text
-            Example::WithIcon => button::secondary(wrap(
-                row![icon::mail().size(16), text("Login with Email")]
+            Example::WithIcon => button(wrap(
+                row![icon::git_branch().size(16), text("New Branch")]
                     .spacing(8)
                     .align_y(iced::Center),
             ))
@@ -123,17 +155,24 @@ impl Example {
             .into(),
 
             // Rounded icon button
-            Example::Rounded => button::icon(wrap(icon::chevron_right().size(16)))
+            Example::Rounded => button::icon(wrap(icon::arrow_up().size(16)))
                 .on_press(Message::Pressed)
                 .into(),
 
-            // Spinner / loading button
-            Example::Spinner => button::primary(wrap(
-                row![icon::loader_circle().size(16), text("Please wait")]
-                    .spacing(8)
-                    .align_y(iced::Center),
-            ))
-            .on_press(Message::Pressed)
+            // Spinner / loading buttons
+            Example::Spinner => row![
+                button(wrap(
+                    row![icon::loader_circle().size(16), text("Generating")]
+                        .spacing(8)
+                        .align_y(iced::Center),
+                )),
+                button(wrap(
+                    row![text("Downloading"), icon::loader_circle().size(16)]
+                        .spacing(8)
+                        .align_y(iced::Center),
+                )),
+            ]
+            .spacing(16)
             .into(),
         }
     }
@@ -178,7 +217,7 @@ impl State {
     }
 
     pub fn view(&self) -> Element<'_, Message, Theme> {
-        // Demo section - top showcase
+        // Demo section - top showcase (matches shadcn hero: outline + icon)
         let demo = container(
             row![
                 button::outline("Button").on_press(Message::Pressed),
@@ -198,11 +237,17 @@ impl State {
         let demo_section = column![demo, demo_code].spacing(12);
 
         // Examples header
-        let examples_header = xdy_text::h2("Examples");
+        let examples_header = text::h2("Examples");
 
         // Individual examples
         let examples = column(self.snippets.iter().map(|(example, snippet)| {
-            let header = xdy_text::h3(example.title());
+            let header = text::h3(example.title());
+
+            let mut section = column![header].spacing(4);
+
+            if let Some(desc) = example.description() {
+                section = section.push(text::muted(desc));
+            }
 
             let preview = container(example.view())
                 .center_x(Fill)
@@ -220,9 +265,9 @@ impl State {
                 })
                 .unwrap_or_else(|| text("Loading...").into());
 
-            column![header, preview, code]
-                .spacing(12)
-                .into()
+            section = section.push(preview).push(code);
+
+            section.spacing(12).into()
         }))
         .spacing(32);
 

@@ -1,4 +1,3 @@
 ```rust
-button::outline(icon::arrow_up())
-    .size(Size::Icon)
+button::icon(wrap(icon::arrow_up_right()))
 ```
