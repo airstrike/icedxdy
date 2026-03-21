@@ -11,6 +11,7 @@ pub mod separator;
 pub mod size;
 pub mod text;
 pub mod theme;
+pub mod weight;
 pub mod widget;
 
 pub use icedxdy_core as core;
@@ -20,3 +21,4 @@ pub use icedxdy_core::{Color, Design, FontFamily, Palette};
 pub use element::wrap;
 pub use size::Size;
 pub use theme::Theme;
+pub use weight::Weight;

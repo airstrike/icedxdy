@@ -35,6 +35,7 @@ pub mod size {
 /// Text widget wrapper with semantic styling
 pub struct Text<'a> {
     fragment: Fragment<'a>,
+    font: Option<iced_core::Font>,
     size: Option<f32>,
     weight: Option<Weight>,
     style: Option<fn(&Theme) -> Style>,
@@ -44,6 +45,7 @@ impl<'a> Text<'a> {
     pub fn new(content: impl IntoFragment<'a>) -> Self {
         Self {
             fragment: content.into_fragment(),
+            font: None,
             size: None,
             weight: None,
             style: None,
@@ -55,19 +57,21 @@ impl<'a> Text<'a> {
         self
     }
 
-    pub fn medium(mut self) -> Self {
-        self.weight = Some(Weight::Medium);
+    pub fn weight(mut self, weight: impl Into<crate::Weight>) -> Self {
+        self.weight = Some(weight.into().into());
         self
     }
 
-    pub fn semibold(mut self) -> Self {
-        self.weight = Some(Weight::Semibold);
-        self
+    pub fn medium(self) -> Self {
+        self.weight(crate::Weight::Medium)
     }
 
-    pub fn bold(mut self) -> Self {
-        self.weight = Some(Weight::Bold);
-        self
+    pub fn semibold(self) -> Self {
+        self.weight(crate::Weight::Semibold)
+    }
+
+    pub fn bold(self) -> Self {
+        self.weight(crate::Weight::Bold)
     }
 
     pub fn style(mut self, style: fn(&Theme) -> Style) -> Self {
@@ -83,11 +87,12 @@ impl<'a> Text<'a> {
             widget = widget.size(size);
         }
 
+        if let Some(font) = self.font {
+            widget = widget.font(font);
+        }
+
         if let Some(weight) = self.weight {
-            widget = widget.font(iced_core::Font {
-                weight,
-                ..iced_core::Font::DEFAULT
-            });
+            widget = widget.weight(weight);
         }
 
         if let Some(style) = self.style {
@@ -106,9 +111,14 @@ impl<'a, Message: 'a> From<Text<'a>> for iced_core::Element<'a, Message, Theme, 
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
     fn size(&mut self, size: Size) {
-        // Only apply if user didn't set an explicit size
         if self.size.is_none() {
             self.size = Some(size.text_size());
+        }
+    }
+
+    fn weight(&mut self, weight: crate::Weight) {
+        if self.weight.is_none() {
+            self.weight = Some(weight.into());
         }
     }
 

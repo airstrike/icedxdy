@@ -52,6 +52,12 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Row<'a, Message> {
         }
     }
 
+    fn weight(&mut self, weight: crate::Weight) {
+        for child in &mut self.children {
+            child.weight(weight);
+        }
+    }
+
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         let mut row = iced_widget::Row::new()
             .spacing(self.spacing)

@@ -6,6 +6,7 @@
 
 use crate::Size;
 use crate::Theme;
+use crate::Weight;
 use iced_widget::Renderer;
 
 /// Trait for icedxdy widgets.
@@ -16,6 +17,10 @@ pub trait IntoElement<'a, Message, T = Theme, R = Renderer>: 'a {
     /// Parent is telling you what size context you live in.
     /// Implementors should respect explicit user overrides (no-op if already set).
     fn size(&mut self, _size: Size) {}
+
+    /// Parent is telling you what font weight to use.
+    /// Implementors should respect explicit user overrides (no-op if already set).
+    fn weight(&mut self, _weight: Weight) {}
 
     /// Consume self and produce an iced Element.
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, T, R>;
@@ -35,6 +40,11 @@ impl<'a, Message: 'a, T: 'a, R: 'a> Element<'a, Message, T, R> {
     /// Push a size hint down to the wrapped widget.
     pub fn size(&mut self, size: Size) {
         self.0.size(size);
+    }
+
+    /// Push a font weight hint down to the wrapped widget.
+    pub fn weight(&mut self, weight: Weight) {
+        self.0.weight(weight);
     }
 
     /// Convert into an `iced::Element`.

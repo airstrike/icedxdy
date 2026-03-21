@@ -64,6 +64,7 @@ where
 {
     content: Element<'a, Message, Theme, Renderer>,
     size: Size,
+    weight: crate::Weight,
     style: Theme::Class<'a>,
     on_press: Option<Message>,
 }
@@ -75,6 +76,7 @@ pub fn button<'a, Message: Clone + 'a>(
     Button {
         content: content.into(),
         size: Size::Default,
+        weight: crate::Weight::Medium,
         style: Box::new(theme::button::default),
         on_press: None,
     }
@@ -84,6 +86,12 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// Set the size variant
     pub fn size(mut self, size: impl Into<Size>) -> Self {
         self.size = size.into();
+        self
+    }
+
+    /// Set the font weight
+    pub fn weight(mut self, weight: impl Into<crate::Weight>) -> Self {
+        self.weight = weight.into();
         self
     }
 
@@ -104,8 +112,9 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
     for iced_core::Element<'a, Message, Theme, iced_widget::Renderer>
 {
     fn from(mut btn: Button<'a, Message>) -> Self {
-        // Propagate size to content
+        // Propagate size and weight to content
         btn.content.size(btn.size);
+        btn.content.weight(btn.weight);
 
         // Build the iced button
         let size = btn.size;
