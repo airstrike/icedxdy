@@ -9,16 +9,51 @@
 //!
 //! button::primary("Submit").on_press(Message::Submit)
 //! button::destructive("Delete").on_press(Message::Delete)
-//! button::link("Learn more").on_press(Message::Navigate)
+//! button::outline("Settings").on_press(Message::Nav)
+//! button::icon(icon::chevron_right().size(16)).on_press(Message::Next)
 //! ```
 
 use iced_core::text::Span;
-use iced_core::Font;
+use iced_core::{Element, Font, Padding};
 use iced_widget::button::Button;
-use iced_widget::text::{Rich, Text};
+use iced_widget::text::Rich;
+use iced_widget::Renderer;
 
 use crate::theme;
 use crate::Theme;
+
+/// Button size variants matching shadcn/ui
+///
+/// Each size defines its own padding. The `Icon` variant uses equal
+/// padding on all sides to produce a square button.
+#[derive(Debug, Clone, Copy, Default)]
+pub enum Size {
+    Sm,
+    #[default]
+    Default,
+    Lg,
+    Icon,
+}
+
+impl Size {
+    /// Padding for this size, matching shadcn: sm=`py-1 px-3`, default=`py-2 px-4`,
+    /// lg=`py-2 px-8`, icon=`p-2`
+    pub const fn padding(self) -> Padding {
+        match self {
+            Size::Sm => Padding { top: 4.0, bottom: 4.0, left: 12.0, right: 12.0 },
+            Size::Default => Padding { top: 8.0, bottom: 8.0, left: 16.0, right: 16.0 },
+            Size::Lg => Padding { top: 8.0, bottom: 8.0, left: 32.0, right: 32.0 },
+            Size::Icon => Padding { top: 8.0, bottom: 8.0, left: 8.0, right: 8.0 },
+        }
+    }
+}
+
+/// Create a button with default size padding
+pub fn button<'a, Message>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> Button<'a, Message, Theme> {
+    Button::new(content).padding(Size::Default.padding())
+}
 
 /// A link widget that looks like a text link with underline on hover
 pub struct Link {
@@ -26,14 +61,12 @@ pub struct Link {
 }
 
 impl Link {
-    /// Create a new link with the given label
     pub fn new(label: impl ToString) -> Self {
         Self {
             label: label.to_string(),
         }
     }
 
-    /// Set the message to produce when the link is clicked
     pub fn on_press<'a, Message: Clone + 'a>(
         self,
         message: Message,
@@ -45,48 +78,51 @@ impl Link {
     }
 }
 
-/// Primary button - main call to action
-///
-/// Dark background, light text (bg-primary text-primary-foreground)
-pub fn primary<'a, Message>(label: impl ToString) -> Button<'a, Message, Theme> {
-    Button::new(Text::new(label.to_string())).style(theme::button::default)
+/// Primary button (bg-primary text-primary-foreground)
+pub fn primary<'a, Message>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> Button<'a, Message, Theme> {
+    button(content).style(theme::button::default)
 }
 
-/// Secondary button - secondary actions
-///
-/// Muted background (bg-secondary text-secondary-foreground)
-pub fn secondary<'a, Message>(label: impl ToString) -> Button<'a, Message, Theme> {
-    Button::new(Text::new(label.to_string())).style(theme::button::secondary)
+/// Secondary button (bg-secondary text-secondary-foreground)
+pub fn secondary<'a, Message>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> Button<'a, Message, Theme> {
+    button(content).style(theme::button::secondary)
 }
 
-/// Outline button - bordered, transparent background
-///
-/// Border only, hover shows accent (border bg-background hover:bg-accent)
-pub fn outline<'a, Message>(label: impl ToString) -> Button<'a, Message, Theme> {
-    Button::new(Text::new(label.to_string())).style(theme::button::outline)
+/// Outline button (border bg-background hover:bg-accent)
+pub fn outline<'a, Message>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> Button<'a, Message, Theme> {
+    button(content).style(theme::button::outline)
 }
 
-/// Ghost button - minimal, transparent
-///
-/// No background until hover (hover:bg-accent)
-pub fn ghost<'a, Message>(label: impl ToString) -> Button<'a, Message, Theme> {
-    Button::new(Text::new(label.to_string())).style(theme::button::ghost)
+/// Ghost button (hover:bg-accent)
+pub fn ghost<'a, Message>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> Button<'a, Message, Theme> {
+    button(content).style(theme::button::ghost)
 }
 
-/// Destructive button - dangerous actions
-///
-/// Red background (bg-destructive text-destructive-foreground)
-pub fn destructive<'a, Message>(label: impl ToString) -> Button<'a, Message, Theme> {
-    Button::new(Text::new(label.to_string())).style(theme::button::destructive)
+/// Destructive button (bg-destructive text-destructive-foreground)
+pub fn destructive<'a, Message>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> Button<'a, Message, Theme> {
+    button(content).style(theme::button::destructive)
 }
 
-/// Link - text that looks and acts like a link
-///
-/// Primary text color, underline on hover. Uses rich_text with native click handling.
-///
-/// ```ignore
-/// button::link("Learn more").on_press(Message::Navigate)
-/// ```
+/// Icon-only button with outline style and square padding
+pub fn icon<'a, Message>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> Button<'a, Message, Theme> {
+    button(content)
+        .padding(Size::Icon.padding())
+        .style(theme::button::outline)
+}
+
+/// Link - text with underline on hover
 pub fn link(label: impl ToString) -> Link {
     Link::new(label)
 }

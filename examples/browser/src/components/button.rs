@@ -1,88 +1,158 @@
-use iced::widget::{column, container, markdown, row, space, text};
+use iced::widget::{column, container, markdown, row, text};
 use iced::{Element, Fill, Task};
 use std::path::PathBuf;
 
-use icedxdy::{button, theme, Theme};
+use icedxdy::{button, text as xdy_text, theme, Theme};
 
-/// Minimum width for snippet containers (invisible spacer hack)
-const MIN_SNIPPET_WIDTH: f32 = 350.0;
+use crate::icon;
+
+/// Height for preview containers
+const PREVIEW_HEIGHT: f32 = 150.0;
 
 #[derive(Debug, Clone)]
 pub enum Message {
     Pressed,
-    SnippetLoaded(Variant, Result<String, String>),
+    SnippetLoaded(Example, Result<String, String>),
     LinkClicked(markdown::Uri),
 }
 
+/// Examples matching shadcn docs order exactly
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Variant {
+pub enum Example {
+    Size,
     Default,
-    Secondary,
     Outline,
+    Secondary,
     Ghost,
     Destructive,
     Link,
+    Icon,
+    WithIcon,
+    Rounded,
+    Spinner,
 }
 
-impl Variant {
-    const ALL: &[Variant] = &[
-        Variant::Default,
-        Variant::Secondary,
-        Variant::Outline,
-        Variant::Ghost,
-        Variant::Destructive,
-        Variant::Link,
+impl Example {
+    // Exact order from https://ui.shadcn.com/docs/components/button
+    const ALL: &[Example] = &[
+        Example::Size,
+        Example::Default,
+        Example::Outline,
+        Example::Secondary,
+        Example::Ghost,
+        Example::Destructive,
+        Example::Link,
+        Example::Icon,
+        Example::WithIcon,
+        Example::Rounded,
+        Example::Spinner,
     ];
 
     fn snippet_path(&self) -> PathBuf {
         let name = match self {
-            Variant::Default => "button-default",
-            Variant::Secondary => "button-secondary",
-            Variant::Outline => "button-outline",
-            Variant::Ghost => "button-ghost",
-            Variant::Destructive => "button-destructive",
-            Variant::Link => "button-link",
+            Example::Size => "button-size",
+            Example::Default => "button-default",
+            Example::Outline => "button-outline",
+            Example::Secondary => "button-secondary",
+            Example::Ghost => "button-ghost",
+            Example::Destructive => "button-destructive",
+            Example::Link => "button-link",
+            Example::Icon => "button-icon",
+            Example::WithIcon => "button-with-icon",
+            Example::Rounded => "button-rounded",
+            Example::Spinner => "button-spinner",
         };
         PathBuf::from(format!("examples/browser/snippets/{}.md", name))
     }
 
-    fn label(&self) -> &'static str {
+    fn title(&self) -> &'static str {
         match self {
-            Variant::Default => "Button",
-            Variant::Secondary => "Secondary",
-            Variant::Outline => "Outline",
-            Variant::Ghost => "Ghost",
-            Variant::Destructive => "Destructive",
-            Variant::Link => "Link",
+            Example::Size => "Size",
+            Example::Default => "Default",
+            Example::Outline => "Outline",
+            Example::Secondary => "Secondary",
+            Example::Ghost => "Ghost",
+            Example::Destructive => "Destructive",
+            Example::Link => "Link",
+            Example::Icon => "Icon",
+            Example::WithIcon => "With Icon",
+            Example::Rounded => "Rounded",
+            Example::Spinner => "Spinner",
         }
     }
 
     fn view<'a>(&self) -> Element<'a, Message, Theme> {
         match self {
-            Variant::Default => button::primary(self.label()).on_press(Message::Pressed).into(),
-            Variant::Secondary => button::secondary(self.label()).on_press(Message::Pressed).into(),
-            Variant::Outline => button::outline(self.label()).on_press(Message::Pressed).into(),
-            Variant::Ghost => button::ghost(self.label()).on_press(Message::Pressed).into(),
-            Variant::Destructive => button::destructive(self.label()).on_press(Message::Pressed).into(),
-            Variant::Link => button::link(self.label()).on_press(Message::Pressed).into(),
+            Example::Size => {
+                row![
+                    button::outline("Small")
+                        .padding(button::Size::Sm.padding())
+                        .on_press(Message::Pressed),
+                    button::outline("Default").on_press(Message::Pressed),
+                    button::outline("Large")
+                        .padding(button::Size::Lg.padding())
+                        .on_press(Message::Pressed),
+                ]
+                .spacing(32)
+                .into()
+            }
+
+            Example::Default => button::primary("Button").on_press(Message::Pressed).into(),
+            Example::Outline => button::outline("Outline").on_press(Message::Pressed).into(),
+            Example::Secondary => {
+                button::secondary("Secondary").on_press(Message::Pressed).into()
+            }
+            Example::Ghost => button::ghost("Ghost").on_press(Message::Pressed).into(),
+            Example::Destructive => {
+                button::destructive("Destructive").on_press(Message::Pressed).into()
+            }
+            Example::Link => button::link("Link").on_press(Message::Pressed).into(),
+
+            // Icon-only button
+            Example::Icon => button::icon(icon::chevron_right().size(16))
+                .on_press(Message::Pressed)
+                .into(),
+
+            // Button with icon + text
+            Example::WithIcon => button::secondary(
+                row![icon::mail().size(16), text("Login with Email")]
+                    .spacing(8)
+                    .align_y(iced::Center),
+            )
+            .on_press(Message::Pressed)
+            .into(),
+
+            // Rounded icon button
+            Example::Rounded => button::icon(icon::chevron_right().size(16))
+                .on_press(Message::Pressed)
+                .into(),
+
+            // Spinner / loading button
+            Example::Spinner => button::primary(
+                row![icon::loader_circle().size(16), text("Please wait")]
+                    .spacing(8)
+                    .align_y(iced::Center),
+            )
+            .on_press(Message::Pressed)
+            .into(),
         }
     }
 }
 
 pub struct State {
-    snippets: Vec<(Variant, Option<Vec<markdown::Item>>)>,
+    snippets: Vec<(Example, Option<Vec<markdown::Item>>)>,
 }
 
 impl State {
     pub fn new() -> (Self, Task<Message>) {
-        let snippets: Vec<_> = Variant::ALL.iter().map(|v| (*v, None)).collect();
+        let snippets: Vec<_> = Example::ALL.iter().map(|v| (*v, None)).collect();
 
-        let tasks = Variant::ALL.iter().map(|variant| {
-            let variant = *variant;
-            let path = variant.snippet_path();
+        let tasks = Example::ALL.iter().map(|example| {
+            let example = *example;
+            let path = example.snippet_path();
             Task::perform(
                 async move { tokio::fs::read_to_string(path).await.map_err(|e| e.to_string()) },
-                move |result| Message::SnippetLoaded(variant, result),
+                move |result| Message::SnippetLoaded(example, result),
             )
         });
 
@@ -92,28 +162,56 @@ impl State {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::Pressed => Task::none(),
-            Message::SnippetLoaded(variant, result) => {
-                if let Some((_, snippet)) = self.snippets.iter_mut().find(|(v, _)| *v == variant) {
+            Message::SnippetLoaded(example, result) => {
+                if let Some((_, snippet)) = self.snippets.iter_mut().find(|(e, _)| *e == example) {
                     if let Ok(content) = result {
                         *snippet = Some(markdown::parse(&content).collect());
                     }
                 }
                 Task::none()
             }
-            Message::LinkClicked(_) => Task::none(),
+            Message::LinkClicked(url) => {
+                let _ = url;
+                Task::none()
+            }
         }
     }
 
     pub fn view(&self) -> Element<'_, Message, Theme> {
-        row(self.snippets.iter().map(|(variant, snippet)| {
-            let button_view = container(variant.view())
+        // Demo section - top showcase
+        let demo = container(
+            row![
+                button::outline("Button").on_press(Message::Pressed),
+                button::icon(icon::chevron_right().size(16))
+                    .on_press(Message::Pressed),
+            ]
+            .spacing(8),
+        )
+        .center_x(Fill)
+        .center_y(Fill)
+        .width(Fill)
+        .height(PREVIEW_HEIGHT)
+        .style(theme::container::card);
+
+        let demo_code = text("button::outline(\"Button\")");
+
+        let demo_section = column![demo, demo_code].spacing(12);
+
+        // Examples header
+        let examples_header = xdy_text::h2("Examples");
+
+        // Individual examples
+        let examples = column(self.snippets.iter().map(|(example, snippet)| {
+            let header = xdy_text::h3(example.title());
+
+            let preview = container(example.view())
                 .center_x(Fill)
                 .center_y(Fill)
                 .width(Fill)
-                .height(150)
+                .height(PREVIEW_HEIGHT)
                 .style(theme::container::card);
 
-            let code_view: Element<'_, Message, Theme> = snippet
+            let code: Element<'_, Message, Theme> = snippet
                 .as_ref()
                 .map(|items| {
                     markdown::view(items, &iced::Theme::TokyoNight)
@@ -122,16 +220,15 @@ impl State {
                 })
                 .unwrap_or_else(|| text("Loading...").into());
 
-            // Invisible spacer enforces minimum width while column uses Fill
-            let min_width = space().width(MIN_SNIPPET_WIDTH).height(0);
-
-            column![button_view, code_view, min_width]
-                .spacing(8)
-                .width(Fill)
+            column![header, preview, code]
+                .spacing(12)
                 .into()
         }))
-        .spacing(24)
-        .wrap()
-        .into()
+        .spacing(32);
+
+        column![demo_section, examples_header, examples]
+            .spacing(32)
+            .width(Fill)
+            .into()
     }
 }
