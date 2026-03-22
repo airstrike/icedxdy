@@ -320,11 +320,18 @@ where
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
+        // 1px top + 1px bottom for press-down effect (active:translate-y-px)
+        // At rest, button is centered. On press, quad shifts down 1px.
+        let padding = Padding {
+            top: self.padding.top + 1.0,
+            bottom: self.padding.bottom + 1.0,
+            ..self.padding
+        };
         layout::padded(
             limits,
             self.width,
             self.height,
-            self.padding,
+            padding,
             |limits| {
                 self.content.as_widget_mut().layout(
                     &mut tree.children[0],
@@ -546,39 +553,57 @@ where
             theme.style(&self.class, status)
         };
 
-        if style.background.is_some()
-            || style.border.width > 0.0
-            || style.shadow.color.a > 0.0
-        {
-            renderer.fill_quad(
-                renderer::Quad {
-                    bounds,
-                    border: style.border,
-                    shadow: style.shadow,
-                    snap: style.snap,
-                },
-                style
-                    .background
-                    .unwrap_or(Background::Color(Color::TRANSPARENT)),
-            );
-        }
+        // 1px press-down effect (active:translate-y-px)
+        // Layout has 1px top + 1px bottom extra padding.
+        // At rest: draw translated by (0, 0). On press: translated by (0, 1).
+        let press_y = if status == Status::Pressed { 1.0 } else { 0.0 };
 
-        let viewport = if self.clip {
-            bounds.intersection(viewport).unwrap_or(*viewport)
-        } else {
-            *viewport
+        // Visual button bounds (inside the 1px top/bottom margin)
+        let visual_bounds = Rectangle {
+            y: bounds.y + 1.0,
+            height: bounds.height - 2.0,
+            ..bounds
         };
 
-        self.content.as_widget().draw(
-            &tree.children[0],
-            renderer,
-            theme,
-            &renderer::Style {
-                text_color: style.text_color,
+        // Translate everything down by press_y
+        renderer.with_translation(
+            Vector::new(0.0, press_y),
+            |renderer| {
+                if style.background.is_some()
+                    || style.border.width > 0.0
+                    || style.shadow.color.a > 0.0
+                {
+                    renderer.fill_quad(
+                        renderer::Quad {
+                            bounds: visual_bounds,
+                            border: style.border,
+                            shadow: style.shadow,
+                            snap: style.snap,
+                        },
+                        style
+                            .background
+                            .unwrap_or(Background::Color(Color::TRANSPARENT)),
+                    );
+                }
+
+                let viewport = if self.clip {
+                    visual_bounds.intersection(viewport).unwrap_or(*viewport)
+                } else {
+                    *viewport
+                };
+
+                self.content.as_widget().draw(
+                    &tree.children[0],
+                    renderer,
+                    theme,
+                    &renderer::Style {
+                        text_color: style.text_color,
+                    },
+                    content_layout,
+                    cursor,
+                    &viewport,
+                );
             },
-            content_layout,
-            cursor,
-            &viewport,
         );
     }
 
