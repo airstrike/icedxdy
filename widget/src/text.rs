@@ -38,6 +38,7 @@ pub struct Text<'a> {
     font: Option<iced_core::Font>,
     size: Option<f32>,
     weight: Option<Weight>,
+    letter_spacing: Option<iced_core::Em>,
     style: Option<fn(&Theme) -> Style>,
 }
 
@@ -48,6 +49,7 @@ impl<'a> Text<'a> {
             font: None,
             size: None,
             weight: None,
+            letter_spacing: None,
             style: None,
         }
     }
@@ -74,6 +76,11 @@ impl<'a> Text<'a> {
         self.weight(crate::Weight::Bold)
     }
 
+    pub fn letter_spacing(mut self, spacing: impl Into<iced_core::Em>) -> Self {
+        self.letter_spacing = Some(spacing.into());
+        self
+    }
+
     pub fn style(mut self, style: fn(&Theme) -> Style) -> Self {
         self.style = Some(style);
         self
@@ -93,6 +100,10 @@ impl<'a> Text<'a> {
 
         if let Some(weight) = self.weight {
             widget = widget.weight(weight);
+        }
+
+        if let Some(letter_spacing) = self.letter_spacing {
+            widget = widget.letter_spacing(letter_spacing);
         }
 
         if let Some(style) = self.style {
@@ -133,6 +144,7 @@ pub fn h1<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::XL3)
         .semibold()
+        .letter_spacing(-0.025)
         .style(theme::text::foreground)
 }
 
@@ -140,6 +152,7 @@ pub fn h2<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::XL)
         .medium()
+        .letter_spacing(-0.025)
         .style(theme::text::foreground)
 }
 
@@ -147,6 +160,7 @@ pub fn h3<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::LG)
         .medium()
+        .letter_spacing(-0.025)
         .style(theme::text::foreground)
 }
 
@@ -154,6 +168,7 @@ pub fn h4<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::BASE)
         .medium()
+        .letter_spacing(-0.025)
         .style(theme::text::foreground)
 }
 

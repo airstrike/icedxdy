@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 371a4414b14e4d6bf83c440625752030955e172a13bc754345d43c2d9bffc85e
+// 3b584cca7d3e88cae4967656aa8eb53859fefc4c2f0b6b2528c5ce1dc9beec3f
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -11,7 +11,6 @@ pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
 pub const ALL_ICONS: &[(&str, &str)] = &[
     ("arrow_up", "\u{E04A}"),
     ("arrow_up_right", "\u{E04D}"),
-    ("chevron_right", "\u{E06F}"),
     ("git_branch", "\u{E0E2}"),
     ("moon", "\u{E11E}"),
     ("sun", "\u{E178}"),
@@ -29,13 +28,6 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E04D}")
-}
-
-pub fn chevron_right<'a, Theme>() -> Text<'a, Theme>
-where
-    Theme: text::Catalog + 'a,
-{
-    icon("\u{E06F}")
 }
 
 pub fn git_branch<'a, Theme>() -> Text<'a, Theme>

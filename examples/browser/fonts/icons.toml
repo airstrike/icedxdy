@@ -3,7 +3,6 @@ module = "icon"
 [icons]
 arrow_up          = "arrow-up"
 arrow_up_right    = "arrow-up-right"
-chevron_right     = "chevron-right"
 git_branch        = "git-branch"
 moon              = "moon"
 sun               = "sun"

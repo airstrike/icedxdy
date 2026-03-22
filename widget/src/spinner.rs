@@ -4,8 +4,6 @@
 // Original: https://github.com/iced-rs/iced/tree/master/examples/loading_spinners
 // License: MIT
 
-mod easing;
-
 use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
