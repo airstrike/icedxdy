@@ -23,21 +23,12 @@ use std::time::Duration;
 
 
 /// The style of a [`Spinner`].
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Style {
-    /// The track color (background circle).
-    pub track_color: Color,
-    /// The bar color (spinning arc).
-    pub bar_color: Color,
-}
-
-impl Default for Style {
-    fn default() -> Self {
-        Self {
-            track_color: Color::TRANSPARENT,
-            bar_color: Color::BLACK,
-        }
-    }
+    /// The track color (background circle). `None` = transparent.
+    pub track_color: Option<Color>,
+    /// The bar color (spinning arc). `None` = inherit parent text color.
+    pub bar_color: Option<Color>,
 }
 
 /// The theme catalog of a [`Spinner`].
@@ -67,14 +58,9 @@ impl Catalog for Theme {
     }
 }
 
-/// Default spinner style — uses foreground color, inherits from parent text_color
-/// at draw time if bar_color is not explicitly set.
-pub fn default(theme: &Theme) -> Style {
-    let p = theme.palette();
-    Style {
-        track_color: Color::TRANSPARENT,
-        bar_color: p.foreground.into(),
-    }
+/// Default spinner style — inherits parent text color.
+pub fn default(_theme: &Theme) -> Style {
+    Style::default()
 }
 
 /// A circular loading spinner.
@@ -100,7 +86,7 @@ impl<'a> Spinner<'a> {
         Self {
             size: 16.0,
             bar_height: 2.0,
-            rotation_duration: Duration::from_secs(2),
+            rotation_duration: Duration::from_millis(1200),
             class: <Theme as Catalog>::default(),
         }
     }
@@ -235,14 +221,8 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
         let bounds = layout.bounds();
         let catalog_style = theme.style(&self.class);
 
-        // Use parent text_color as bar color when catalog returns foreground
-        // (this makes the spinner match button text automatically)
-        let bar_color = if catalog_style.bar_color == Color::BLACK {
-            style.text_color
-        } else {
-            catalog_style.bar_color
-        };
-        let track_color = catalog_style.track_color;
+        let bar_color = catalog_style.bar_color.unwrap_or(style.text_color);
+        let track_color = catalog_style.track_color.unwrap_or(Color::TRANSPARENT);
 
         let geometry = state.cache.draw(renderer, bounds.size(), |frame| {
             let track_radius = frame.width() / 2.0 - self.bar_height;
@@ -257,7 +237,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
 
             // Fixed arc length (3/4 circle), just rotates
             let start = Radians(state.animation.angle() * 2.0 * PI);
-            let arc_length = Radians(PI * 1.5);
+            let arc_length = Radians(PI * 1.75);
 
             let mut builder = canvas::path::Builder::new();
             builder.arc(canvas::path::Arc {

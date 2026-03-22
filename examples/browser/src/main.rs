@@ -12,6 +12,7 @@ use icedxdy::{separator, Theme};
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
         .title("icedxdy • components browser")
+        .antialiasing(true)
         .theme(App::theme)
         .font(icon::FONT)
         .run()
