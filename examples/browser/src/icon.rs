@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// edbfd0acaaf9d168777ab6e2ca4d006a6d8218fbb30bfb8393f0e9b1bfc4a432
+// 371a4414b14e4d6bf83c440625752030955e172a13bc754345d43c2d9bffc85e
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -13,7 +13,6 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("arrow_up_right", "\u{E04D}"),
     ("chevron_right", "\u{E06F}"),
     ("git_branch", "\u{E0E2}"),
-    ("loader_circle", "\u{E10A}"),
     ("moon", "\u{E11E}"),
     ("sun", "\u{E178}"),
 ];
@@ -44,13 +43,6 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E0E2}")
-}
-
-pub fn loader_circle<'a, Theme>() -> Text<'a, Theme>
-where
-    Theme: text::Catalog + 'a,
-{
-    icon("\u{E10A}")
 }
 
 pub fn moon<'a, Theme>() -> Text<'a, Theme>

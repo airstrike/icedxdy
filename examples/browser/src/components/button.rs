@@ -178,14 +178,17 @@ impl Example {
                 .on_press(Message::Pressed)
                 .into(),
 
-            Example::Spinner => row![
-                button![icon::loader_circle(), "Generating"]
-                    .style(theme::button::outline),
-                button!["Downloading", icon::loader_circle()]
-                    .style(theme::button::secondary),
-            ]
-            .spacing(16)
-            .into(),
+            Example::Spinner => {
+                use icedxdy::widget::spinner;
+                row![
+                    button![spinner(), "Generating"]
+                        .style(theme::button::outline),
+                    button!["Downloading", spinner()]
+                        .style(theme::button::secondary),
+                ]
+                .spacing(16)
+                .into()
+            }
         }
     }
 }

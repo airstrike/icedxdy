@@ -6,14 +6,12 @@
 
 mod easing;
 
-use easing::Easing;
-
 use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
 use iced_core::widget::tree::{self, Tree};
 use iced_core::{
-    Element, Event, Layout, Length, Radians, Rectangle, Shell, Size, Vector, Widget,
+    Color, Element, Event, Layout, Length, Radians, Rectangle, Shell, Size, Vector, Widget,
 };
 use iced_widget::canvas;
 use iced_widget::Renderer;
@@ -23,24 +21,78 @@ use icedxdy_core::Theme;
 use std::f32::consts::PI;
 use std::time::Duration;
 
-const MIN_ANGLE: Radians = Radians(PI / 8.0);
-const WRAP_ANGLE: Radians = Radians(2.0 * PI - PI / 4.0);
-const BASE_ROTATION_SPEED: u32 = u32::MAX / 80;
+
+/// The style of a [`Spinner`].
+#[derive(Debug, Clone, Copy)]
+pub struct Style {
+    /// The track color (background circle).
+    pub track_color: Color,
+    /// The bar color (spinning arc).
+    pub bar_color: Color,
+}
+
+impl Default for Style {
+    fn default() -> Self {
+        Self {
+            track_color: Color::TRANSPARENT,
+            bar_color: Color::BLACK,
+        }
+    }
+}
+
+/// The theme catalog of a [`Spinner`].
+pub trait Catalog {
+    /// The style class.
+    type Class<'a>;
+
+    /// The default class.
+    fn default<'a>() -> Self::Class<'a>;
+
+    /// The style for a class.
+    fn style(&self, class: &Self::Class<'_>) -> Style;
+}
+
+/// A styling function for a [`Spinner`].
+pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme) -> Style + 'a>;
+
+impl Catalog for Theme {
+    type Class<'a> = StyleFn<'a, Self>;
+
+    fn default<'a>() -> Self::Class<'a> {
+        Box::new(default)
+    }
+
+    fn style(&self, class: &Self::Class<'_>) -> Style {
+        class(self)
+    }
+}
+
+/// Default spinner style — uses foreground color, inherits from parent text_color
+/// at draw time if bar_color is not explicitly set.
+pub fn default(theme: &Theme) -> Style {
+    let p = theme.palette();
+    Style {
+        track_color: Color::TRANSPARENT,
+        bar_color: p.foreground.into(),
+    }
+}
 
 /// A circular loading spinner.
 ///
 /// ```ignore
-/// use icedxdy::spinner;
+/// use icedxdy::widget::spinner;
 ///
 /// spinner()
 /// spinner().size(24).bar_height(2.0)
 /// ```
-pub struct Spinner<'a> {
+pub struct Spinner<'a, Theme = icedxdy_core::Theme>
+where
+    Theme: Catalog,
+{
     size: f32,
     bar_height: f32,
-    easing: &'a Easing,
-    cycle_duration: Duration,
     rotation_duration: Duration,
+    class: Theme::Class<'a>,
 }
 
 impl<'a> Spinner<'a> {
@@ -48,9 +100,8 @@ impl<'a> Spinner<'a> {
         Self {
             size: 16.0,
             bar_height: 2.0,
-            easing: &easing::STANDARD,
-            cycle_duration: Duration::from_millis(600),
             rotation_duration: Duration::from_secs(2),
+            class: <Theme as Catalog>::default(),
         }
     }
 
@@ -64,13 +115,13 @@ impl<'a> Spinner<'a> {
         self
     }
 
-    pub fn cycle_duration(mut self, duration: Duration) -> Self {
-        self.cycle_duration = duration / 2;
+    pub fn rotation_duration(mut self, duration: Duration) -> Self {
+        self.rotation_duration = duration;
         self
     }
 
-    pub fn rotation_duration(mut self, duration: Duration) -> Self {
-        self.rotation_duration = duration;
+    pub fn style(mut self, style: impl Fn(&Theme) -> Style + 'a) -> Self {
+        self.class = Box::new(style);
         self
     }
 }
@@ -86,108 +137,33 @@ pub fn spinner<'a>() -> Spinner<'a> {
     Spinner::new()
 }
 
-// --- Animation state machine ---
+// --- Animation ---
 
 #[derive(Clone, Copy)]
-enum Animation {
-    Expanding {
-        start: iced_core::time::Instant,
-        progress: f32,
-        rotation: u32,
-        last: iced_core::time::Instant,
-    },
-    Contracting {
-        start: iced_core::time::Instant,
-        progress: f32,
-        rotation: u32,
-        last: iced_core::time::Instant,
-    },
+struct Animation {
+    rotation: u32,
+    last: iced_core::time::Instant,
 }
 
 impl Default for Animation {
     fn default() -> Self {
-        let now = iced_core::time::Instant::now();
-        Self::Expanding {
-            start: now,
-            progress: 0.0,
+        Self {
             rotation: 0,
-            last: now,
+            last: iced_core::time::Instant::now(),
         }
     }
 }
 
 impl Animation {
-    fn next(&self, additional_rotation: u32, now: iced_core::time::Instant) -> Self {
-        match self {
-            Self::Expanding { rotation, .. } => Self::Contracting {
-                start: now,
-                progress: 0.0,
-                rotation: rotation.wrapping_add(additional_rotation),
-                last: now,
-            },
-            Self::Contracting { rotation, .. } => Self::Expanding {
-                start: now,
-                progress: 0.0,
-                rotation: rotation.wrapping_add(
-                    BASE_ROTATION_SPEED.wrapping_add(
-                        (f64::from(WRAP_ANGLE / (2.0 * Radians::PI)) * u32::MAX as f64) as u32,
-                    ),
-                ),
-                last: now,
-            },
-        }
+    fn advance(&mut self, rotation_duration: Duration, now: iced_core::time::Instant) {
+        let dt = (now - self.last).as_secs_f32();
+        let additional = (dt / rotation_duration.as_secs_f32() * u32::MAX as f32) as u32;
+        self.rotation = self.rotation.wrapping_add(additional);
+        self.last = now;
     }
 
-    fn start(&self) -> iced_core::time::Instant {
-        match self {
-            Self::Expanding { start, .. } | Self::Contracting { start, .. } => *start,
-        }
-    }
-
-    fn last(&self) -> iced_core::time::Instant {
-        match self {
-            Self::Expanding { last, .. } | Self::Contracting { last, .. } => *last,
-        }
-    }
-
-    fn timed_transition(
-        &self,
-        cycle_duration: Duration,
-        rotation_duration: Duration,
-        now: iced_core::time::Instant,
-    ) -> Self {
-        let elapsed = now.duration_since(self.start());
-        let additional_rotation = ((now - self.last()).as_secs_f32()
-            / rotation_duration.as_secs_f32()
-            * u32::MAX as f32) as u32;
-
-        if elapsed > cycle_duration {
-            self.next(additional_rotation, now)
-        } else {
-            let progress = elapsed.as_secs_f32() / cycle_duration.as_secs_f32();
-            match self {
-                Self::Expanding { start, rotation, .. } => Self::Expanding {
-                    start: *start,
-                    progress,
-                    rotation: rotation.wrapping_add(additional_rotation),
-                    last: now,
-                },
-                Self::Contracting { start, rotation, .. } => Self::Contracting {
-                    start: *start,
-                    progress,
-                    rotation: rotation.wrapping_add(additional_rotation),
-                    last: now,
-                },
-            }
-        }
-    }
-
-    fn rotation(&self) -> f32 {
-        match self {
-            Self::Expanding { rotation, .. } | Self::Contracting { rotation, .. } => {
-                *rotation as f32 / u32::MAX as f32
-            }
-        }
+    fn angle(&self) -> f32 {
+        self.rotation as f32 / u32::MAX as f32
     }
 }
 
@@ -237,11 +213,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
         let state = tree.state.downcast_mut::<State>();
 
         if let Event::Window(iced_core::window::Event::RedrawRequested(now)) = event {
-            state.animation = state.animation.timed_transition(
-                self.cycle_duration,
-                self.rotation_duration,
-                *now,
-            );
+            state.animation.advance(self.rotation_duration, *now);
             state.cache.clear();
             shell.request_redraw();
         }
@@ -252,7 +224,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
         tree: &Tree,
         renderer: &mut Renderer,
         theme: &Theme,
-        _style: &renderer::Style,
+        style: &renderer::Style,
         layout: Layout<'_>,
         _cursor: mouse::Cursor,
         _viewport: &Rectangle,
@@ -261,10 +233,16 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
 
         let state = tree.state.downcast_ref::<State>();
         let bounds = layout.bounds();
-        let palette = theme.palette();
+        let catalog_style = theme.style(&self.class);
 
-        let track_color = iced_core::Color::TRANSPARENT;
-        let bar_color: iced_core::Color = palette.foreground.into();
+        // Use parent text_color as bar color when catalog returns foreground
+        // (this makes the spinner match button text automatically)
+        let bar_color = if catalog_style.bar_color == Color::BLACK {
+            style.text_color
+        } else {
+            catalog_style.bar_color
+        };
+        let track_color = catalog_style.track_color;
 
         let geometry = state.cache.draw(renderer, bounds.size(), |frame| {
             let track_radius = frame.width() / 2.0 - self.bar_height;
@@ -277,29 +255,17 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
                     .with_width(self.bar_height),
             );
 
-            let mut builder = canvas::path::Builder::new();
-            let start = Radians(state.animation.rotation() * 2.0 * PI);
+            // Fixed arc length (3/4 circle), just rotates
+            let start = Radians(state.animation.angle() * 2.0 * PI);
+            let arc_length = Radians(PI * 1.5);
 
-            match state.animation {
-                Animation::Expanding { progress, .. } => {
-                    builder.arc(canvas::path::Arc {
-                        center: frame.center(),
-                        radius: track_radius,
-                        start_angle: start,
-                        end_angle: start
-                            + MIN_ANGLE
-                            + WRAP_ANGLE * self.easing.y_at_x(progress),
-                    });
-                }
-                Animation::Contracting { progress, .. } => {
-                    builder.arc(canvas::path::Arc {
-                        center: frame.center(),
-                        radius: track_radius,
-                        start_angle: start + WRAP_ANGLE * self.easing.y_at_x(progress),
-                        end_angle: start + MIN_ANGLE + WRAP_ANGLE,
-                    });
-                }
-            }
+            let mut builder = canvas::path::Builder::new();
+            builder.arc(canvas::path::Arc {
+                center: frame.center(),
+                radius: track_radius,
+                start_angle: start,
+                end_angle: start + arc_length,
+            });
 
             frame.stroke(
                 &builder.build(),

@@ -32,3 +32,9 @@ pub fn text<'a>(content: impl iced_core::text::IntoFragment<'a>) -> Text<'a> {
 pub fn row<'a, Message: 'a>() -> Row<'a, Message> {
     Row::new()
 }
+
+/// Create a [`Spinner`].
+#[cfg(feature = "spinner")]
+pub fn spinner<'a>() -> spinner::Spinner<'a> {
+    spinner::Spinner::new()
+}

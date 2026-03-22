@@ -1,8 +1,8 @@
 ```rust
-use icedxdy::widget::{button, row};
+use icedxdy::widget::{button, row, spinner};
 
 row![
-    button::outline![icon::loader_circle(), "Generating"],
-    button::secondary!["Downloading", icon::loader_circle()],
+    button::outline![spinner(), "Generating"],
+    button::secondary!["Downloading", spinner()],
 ]
 ```

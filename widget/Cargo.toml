@@ -9,6 +9,7 @@ repository.workspace = true
 [features]
 default = []
 canvas = ["iced_widget/canvas"]
+crisp = []
 spinner = ["canvas", "dep:lyon_algorithms"]
 
 [dependencies]

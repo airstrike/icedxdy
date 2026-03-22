@@ -246,11 +246,28 @@ where
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone)]
 struct State {
     is_focused: bool,
     was_focused: bool,
     is_pressed: bool,
+    hover: crate::core::Animation<bool>,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            is_focused: false,
+            was_focused: false,
+            is_pressed: false,
+            hover: crate::core::Animation::new(false)
+                .easing(crate::core::animation::Easing::Custom(
+                    // cubic-bezier(0.4, 0, 0.2, 1) — shadcn's transition-all
+                    |t| cubic_bezier(0.4, 0.0, 0.2, 1.0, t),
+                ))
+                .duration(std::time::Duration::from_millis(150)),
+        }
+    }
 }
 
 impl operation::Focusable for State {
@@ -449,8 +466,19 @@ where
             _ => {}
         }
 
-        let state = tree.state.downcast_ref::<State>();
+        let state = tree.state.downcast_mut::<State>();
         let is_hovered = cursor.is_over(layout.bounds());
+
+        // Animate hover transitions
+        if let Event::Window(window::Event::RedrawRequested(now)) = event {
+            let should_hover = is_hovered && self.on_press.is_some();
+            if should_hover != state.hover.value() {
+                state.hover.go_mut(should_hover, *now);
+            }
+            if state.hover.is_animating(*now) {
+                shell.request_redraw();
+            }
+        }
 
         let current_status = if self.on_press.is_none() {
             Status::Disabled
@@ -483,8 +511,40 @@ where
     ) {
         let bounds = layout.bounds();
         let content_layout = layout.children().next().unwrap();
-        let style =
-            theme.style(&self.class, self.status.unwrap_or(Status::Disabled));
+        let state = tree.state.downcast_ref::<State>();
+
+        let status = self.status.unwrap_or(Status::Disabled);
+        let now = crate::core::time::Instant::now();
+
+        let style = if state.hover.is_animating(now) {
+            // Animating: interpolate between active and hovered styles
+            let active = theme.style(&self.class, Status::Active);
+            let hovered = theme.style(&self.class, Status::Hovered);
+
+            fn bg_color(style: &Style) -> Option<Color> {
+                style.background
+                    .map(|b| match b { Background::Color(c) => c, _ => Color::TRANSPARENT })
+            }
+
+            let hovered_bg = bg_color(&hovered).unwrap_or(Color::TRANSPARENT);
+            // For active bg: if None (transparent), use the hovered color with 0 alpha
+            // so we interpolate the alpha channel cleanly without color shift
+            let active_bg = bg_color(&active)
+                .unwrap_or(Color { a: 0.0, ..hovered_bg });
+
+            let bg = state.hover.interpolate(active_bg, hovered_bg, now);
+            let text = state.hover.interpolate(active.text_color, hovered.text_color, now);
+
+            Style {
+                background: Some(Background::Color(bg)),
+                text_color: text,
+                border: if state.hover.value() { hovered.border } else { active.border },
+                shadow: if state.hover.value() { hovered.shadow } else { active.shadow },
+                snap: active.snap,
+            }
+        } else {
+            theme.style(&self.class, status)
+        };
 
         if style.background.is_some()
             || style.border.width > 0.0
@@ -1010,4 +1070,39 @@ fn disabled(style: Style) -> Style {
         text_color: style.text_color.scale_alpha(0.5),
         ..style
     }
+}
+
+/// Attempt to evaluate a cubic-bezier curve at parameter `t`.
+///
+/// Control points: P0=(0,0), P1=(x1,y1), P2=(x2,y2), P3=(1,1).
+/// Uses Newton's method to find the `t` parameter for the given `x`, then
+/// evaluates `y` at that parameter.
+fn cubic_bezier(x1: f32, y1: f32, x2: f32, y2: f32, x: f32) -> f32 {
+    if x <= 0.0 { return 0.0; }
+    if x >= 1.0 { return 1.0; }
+
+    // Find t for the given x using Newton's method
+    let mut t = x;
+    for _ in 0..8 {
+        let t2 = t * t;
+        let t3 = t2 * t;
+        // B(t) for x = 3(1-t)²t·x1 + 3(1-t)t²·x2 + t³
+        let bx = 3.0 * (1.0 - t) * (1.0 - t) * t * x1
+            + 3.0 * (1.0 - t) * t2 * x2
+            + t3;
+        // B'(t) for x
+        let dbx = 3.0 * (1.0 - t) * (1.0 - t) * x1
+            + 6.0 * (1.0 - t) * t * (x2 - x1)
+            + 3.0 * t2 * (1.0 - x2);
+        if dbx.abs() < 1e-6 { break; }
+        t -= (bx - x) / dbx;
+        t = t.clamp(0.0, 1.0);
+    }
+
+    // Evaluate y at t
+    let t2 = t * t;
+    let t3 = t2 * t;
+    3.0 * (1.0 - t) * (1.0 - t) * t * y1
+        + 3.0 * (1.0 - t) * t2 * y2
+        + t3
 }

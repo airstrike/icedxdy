@@ -126,3 +126,12 @@ impl<'a, Message: 'a> From<crate::row::Row<'a, Message>> for Element<'a, Message
         Element::new(r)
     }
 }
+
+// Spinner → our Element
+#[cfg(feature = "spinner")]
+impl<'a, Message: 'a> From<crate::spinner::Spinner<'a>> for Element<'a, Message> {
+    fn from(s: crate::spinner::Spinner<'a>) -> Self {
+        let iced_el: iced_core::Element<'a, Message, Theme, Renderer> = s.into();
+        Element::new(iced_el)
+    }
+}
