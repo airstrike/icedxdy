@@ -168,15 +168,28 @@ impl Example {
                 .into(),
 
             Example::WithIcon => {
-                button![icon::git_branch(), "New Branch"]
-                    .on_press(Message::Pressed)
-                    .into()
+                row![
+                    button![icon::git_branch(), "New Branch"]
+                        .style(theme::button::outline)
+                        .on_press(Message::Pressed),
+                    button!["Fork", icon::git_branch()]
+                        .style(theme::button::outline)
+                        .on_press(Message::Pressed),
+                ]
+                .spacing(8)
+                .into()
             }
 
-            Example::Rounded => button::icon(icon::arrow_up())
-                .rounded()
-                .on_press(Message::Pressed)
-                .into(),
+            Example::Rounded => {
+                row![
+                    button!["Get Started"].rounded().on_press(Message::Pressed),
+                    button::icon(icon::arrow_up())
+                        .rounded()
+                        .on_press(Message::Pressed),
+                ]
+                .spacing(8)
+                .into()
+            }
 
             Example::Spinner => {
                 use icedxdy::widget::spinner;
@@ -232,46 +245,6 @@ impl State {
     }
 
     pub fn view(&self) -> Element<'_, Message, Theme> {
-        let sections = column(self.snippets.iter().map(|(example, snippet)| {
-            let is_demo = *example == Example::Demo;
-
-            let preview = container(example.view())
-                .center_x(Fill)
-                .center_y(Fill)
-                .width(Fill)
-                .height(PREVIEW_HEIGHT)
-                .padding(40)
-                .style(theme::container::card);
-
-            let code: Element<'_, Message, Theme> = snippet
-                .as_ref()
-                .map(|items| {
-                    markdown::view(items, &iced::Theme::TokyoNight)
-                        .map(Message::LinkClicked)
-                        .into()
-                })
-                .unwrap_or_else(|| text("Loading...").into());
-
-            if is_demo {
-                column![preview, code].spacing(16).into()
-            } else {
-                let mut section = column![text::h3(example.title())].spacing(16);
-
-                if let Some(desc) = example.description() {
-                    section = section.push(text::p(desc).style(theme::text::muted));
-                }
-
-                section.push(preview).push(code).spacing(16).into()
-            }
-        }))
-        .spacing(48);
-
-        // "Examples" header between demo and the rest
-        let demo = &sections;
-        let _ = demo; // sections includes Demo as first item
-
-        // Split: first item is demo, rest are examples
-        // Actually, let's just render with the h2 between demo and examples
         let mut items: Vec<Element<'_, Message, Theme>> = Vec::new();
 
         for (i, (example, snippet)) in self.snippets.iter().enumerate() {
@@ -281,7 +254,7 @@ impl State {
                 .width(Fill)
                 .height(PREVIEW_HEIGHT)
                 .padding(40)
-                .style(theme::container::card);
+                .style(theme::container::card_preview);
 
             let code: Element<'_, Message, Theme> = snippet
                 .as_ref()
@@ -292,11 +265,18 @@ impl State {
                 })
                 .unwrap_or_else(|| text("Loading...").into());
 
+            let code = container(code).padding([8, 12]);
+
+            let card = container(
+                column![preview, code]
+            )
+            .style(theme::container::card_muted)
+            .width(Fill);
+
             if *example == Example::Demo {
-                items.push(column![preview, code].spacing(16).into());
+                items.push(card.into());
             } else {
                 if i == 1 {
-                    // Insert "Examples" header before first non-demo example
                     items.push(text::h2("Examples").into());
                 }
 
@@ -306,7 +286,7 @@ impl State {
                     section = section.push(text::p(desc).style(theme::text::muted));
                 }
 
-                items.push(section.push(preview).push(code).spacing(16).into());
+                items.push(section.push(card).spacing(16).into());
             }
         }
 

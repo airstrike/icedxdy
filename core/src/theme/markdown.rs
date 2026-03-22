@@ -7,6 +7,6 @@ use super::Theme;
 
 impl Catalog for Theme {
     fn code_block<'a>() -> <Self as container::Catalog>::Class<'a> {
-        Box::new(super::container::card)
+        Box::new(super::container::code_block)
     }
 }

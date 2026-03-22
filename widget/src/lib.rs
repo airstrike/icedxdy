@@ -3,6 +3,7 @@ use iced_core as core;
 pub mod button;
 pub mod element;
 pub mod row;
+pub mod separator;
 pub mod size;
 #[cfg(feature = "spinner")]
 pub mod spinner;

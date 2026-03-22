@@ -1,5 +1,11 @@
 ```rust
-use icedxdy::widget::button;
+use icedxdy::widget::{button, row};
+use icedxdy::theme;
 
-button![icon::git_branch(), "New Branch"]
+row![
+    button![icon::git_branch(), "New Branch"]
+        .style(theme::button::outline),
+    button!["Fork", icon::git_branch()]
+        .style(theme::button::outline),
+]
 ```

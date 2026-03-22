@@ -6,8 +6,8 @@ use iced::widget::{column, combo_box, container, mouse_area, row, scrollable, sp
 use iced::{Element, Fill, Font, Pixels, Task};
 use iced_widget::button::Button;
 
-use icedxdy::widget::text;
-use icedxdy::{separator, Theme};
+use icedxdy::widget::{separator, text};
+use icedxdy::Theme;
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
