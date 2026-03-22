@@ -9,6 +9,21 @@ use iced_widget::button::Button;
 use icedxdy::widget::{separator, text};
 use icedxdy::Theme;
 
+fn is_dark_mode() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("defaults")
+            .args(["read", "-g", "AppleInterfaceStyle"])
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "Dark")
+            .unwrap_or(true) // default to dark
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        true // default to dark on other platforms
+    }
+}
+
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
         .title("icedxdy • components browser")
@@ -75,7 +90,7 @@ impl App {
 
         (
             Self {
-                dark_mode: false,
+                dark_mode: is_dark_mode(),
                 section: Section::default(),
                 button: btn,
                 text: txt,
