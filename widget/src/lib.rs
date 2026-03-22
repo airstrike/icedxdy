@@ -1,3 +1,5 @@
+use iced_core as core;
+
 pub mod button;
 pub mod element;
 pub mod row;
