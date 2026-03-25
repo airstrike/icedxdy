@@ -62,6 +62,12 @@ impl<'a, Message: 'a> From<Row<'a, Message>>
     }
 }
 
+impl<'a, Message: 'a> From<Row<'a, Message>> for crate::Element<'a, Message> {
+    fn from(r: Row<'a, Message>) -> Self {
+        crate::Element::new(r)
+    }
+}
+
 impl<'a, Message: 'a> IntoElement<'a, Message> for Row<'a, Message> {
     fn size(&mut self, size: Size) {
         // Set gap from size if user didn't set explicit spacing

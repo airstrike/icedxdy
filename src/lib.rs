@@ -15,6 +15,7 @@ pub mod widget {
     pub use icedxdy_widget::*;
 }
 
+pub use widget::Element;
 pub use widget::Size;
 pub use widget::Weight;
 

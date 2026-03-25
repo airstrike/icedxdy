@@ -2,12 +2,11 @@ mod components;
 mod fonts;
 mod icon;
 
-use iced::widget::{column, combo_box, container, mouse_area, row, scrollable, space};
-use iced::{Element, Fill, Font, Pixels, Task};
-use iced_widget::button::Button;
+use iced::widget::{column, combo_box, row, scrollable, space};
+use iced::{Fill, Font, Pixels, Task};
 
-use icedxdy::widget::{separator, text};
-use icedxdy::Theme;
+use icedxdy::widget::{button, container, separator, text};
+use icedxdy::{theme, Theme};
 
 fn is_dark_mode() -> bool {
     #[cfg(target_os = "macos")]
@@ -177,7 +176,7 @@ impl App {
         }
     }
 
-    fn view(&self) -> Element<'_, Message, Theme> {
+    fn view(&self) -> iced::Element<'_, Message, Theme> {
         let branding = text::h4("icedxdy");
 
         let font_selector = combo_box(
@@ -194,11 +193,9 @@ impl App {
         } else {
             icon::moon().size(16)
         };
-        let theme_toggle: Element<'_, Message, Theme> = Button::new(theme_icon)
-            .padding([4, 8])
-            .style(icedxdy::theme::button::ghost)
-            .on_press(Message::ToggleTheme)
-            .into();
+        let theme_toggle = button(theme_icon)
+            .style(theme::button::ghost)
+            .on_press(Message::ToggleTheme);
 
         let header = row![branding, space::horizontal(), font_selector, theme_toggle]
             .spacing(8)
@@ -206,16 +203,17 @@ impl App {
             .align_y(iced::Center);
 
         // Sidebar
-        let sidebar_header = text::muted("Components");
+        let sidebar_header = container(text::muted("Components")).padding([0, 8]);
 
         let sidebar_items = column(Section::ALL.iter().map(|section| {
             let is_active = *section == self.section;
-            let label = if is_active {
-                text::small(section.title())
+            let (label, style): (_, fn(&Theme, _) -> _) = if is_active {
+                (text::small(section.title()).medium(), theme::button::sidebar_active)
             } else {
-                text::muted(section.title())
+                (text::small(section.title()), theme::button::sidebar)
             };
-            mouse_area(label)
+            button(label)
+                .style(style)
                 .on_press(Message::SelectSection(*section))
                 .into()
         }))
@@ -224,15 +222,15 @@ impl App {
         let sidebar = scrollable(
             column![sidebar_header, sidebar_items]
                 .spacing(16)
-                .padding([24, 16])
-                .width(256),
+                .padding([24, 8])
+                .width(288),
         )
         .height(Fill);
 
         // Main content
         let title = text::h1(self.section.title());
         let description = text::p(self.section.description())
-            .style(icedxdy::theme::text::muted);
+            .style(theme::text::muted);
 
         let preview = container(match self.section {
             Section::Button => self.button.view().map(Message::Button),
@@ -245,11 +243,33 @@ impl App {
             .padding(32)
             .width(Fill);
 
-        let main = scrollable(content).width(Fill).height(Fill);
+        let thin_scrollbar = scrollable::Scrollbar::default()
+            .width(1)
+            .scroller_width(2);
 
-        let body = row![sidebar, separator::vertical(), main]
+        let mut main = scrollable(content)
+            .direction(scrollable::Direction::Vertical(thin_scrollbar))
             .width(Fill)
             .height(Fill);
+
+        // Attach scrollable id for Button section's scroll-to support
+        if self.section == Section::Button {
+            main = main.id(self.button.scrollable_id());
+        }
+
+        let body = match self.section {
+            Section::Button => {
+                let on_this_page = self.button.on_this_page().map(Message::Button);
+                row![sidebar, separator::vertical(), main, on_this_page]
+                    .width(Fill)
+                    .height(Fill)
+            }
+            _ => {
+                row![sidebar, separator::vertical(), main]
+                    .width(Fill)
+                    .height(Fill)
+            }
+        };
 
         column![header, separator::horizontal(), body]
             .width(Fill)

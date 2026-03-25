@@ -1,12 +1,25 @@
-use iced::widget::{column, container, markdown};
-use iced::{Element, Fill, Task};
+mod default;
+mod demo;
+mod destructive;
+mod ghost;
+mod icon;
+mod link;
+mod outline;
+mod rounded;
+mod secondary;
+mod size;
+mod spinner;
+mod with_icon;
+
+use std::collections::HashSet;
 use std::path::PathBuf;
 
-use icedxdy::widget::{button, row, text};
-use icedxdy::Size::*;
-use icedxdy::{theme, Theme};
+use iced::widget::{column, container, markdown, operation, scrollable, Id};
+use iced::{Fill, Font, Pixels, Task};
 
-use crate::icon;
+use icedxdy::widget::operation::position;
+use icedxdy::widget::text;
+use icedxdy::{theme, Element, Theme};
 
 /// Height for preview containers (shadcn uses h-72 = 288px)
 const PREVIEW_HEIGHT: f32 = 288.0;
@@ -16,6 +29,10 @@ pub enum Message {
     Pressed,
     SnippetLoaded(Example, Result<String, String>),
     LinkClicked(markdown::Uri),
+    ExampleShown(usize),
+    ExampleHidden(usize),
+    ScrollTo(usize),
+    ScrollResult(Option<iced::Rectangle>),
 }
 
 /// Examples matching shadcn docs order exactly
@@ -95,119 +112,46 @@ impl Example {
         }
     }
 
-    fn view<'a>(&self) -> Element<'a, Message, Theme> {
+    fn id(&self) -> &'static str {
         match self {
-            Example::Demo => {
-                row![
-                    button::outline("Button").on_press(Message::Pressed),
-                    button::icon(icon::arrow_up())
-                        .on_press(Message::Pressed),
-                ]
-                .spacing(8)
-                .into()
-            }
+            Example::Demo => "demo",
+            Example::Size => "size",
+            Example::Default => "default",
+            Example::Outline => "outline",
+            Example::Secondary => "secondary",
+            Example::Ghost => "ghost",
+            Example::Destructive => "destructive",
+            Example::Link => "link",
+            Example::Icon => "icon",
+            Example::WithIcon => "with-icon",
+            Example::Rounded => "rounded",
+            Example::Spinner => "spinner",
+        }
+    }
 
-            Example::Size => {
-                row![
-                    row![
-                        button::outline("Extra Small")
-                            .size(Xs)
-                            .on_press(Message::Pressed),
-                        button::icon(icon::arrow_up_right())
-                            .size(Xs)
-                            .on_press(Message::Pressed),
-                    ]
-                    .spacing(8)
-,
-                    row![
-                        button::outline("Small")
-                            .size(Sm)
-                            .on_press(Message::Pressed),
-                        button::icon(icon::arrow_up_right())
-                            .size(Sm)
-                            .on_press(Message::Pressed),
-                    ]
-                    .spacing(8)
-,
-                    row![
-                        button::outline("Default")
-                            .on_press(Message::Pressed),
-                        button::icon(icon::arrow_up_right())
-                            .on_press(Message::Pressed),
-                    ]
-                    .spacing(8)
-,
-                    row![
-                        button::outline("Large")
-                            .size(Lg)
-                            .on_press(Message::Pressed),
-                        button::icon(icon::arrow_up_right())
-                            .size(Lg)
-                            .on_press(Message::Pressed),
-                    ]
-                    .spacing(8)
-,
-                ]
-                .spacing(16)
-                .into()
-            }
-
-            Example::Default => button!["Button"].on_press(Message::Pressed).into(),
-            Example::Outline => button::outline("Outline").on_press(Message::Pressed).into(),
-            Example::Secondary => {
-                button::secondary("Secondary").on_press(Message::Pressed).into()
-            }
-            Example::Ghost => button::ghost("Ghost").on_press(Message::Pressed).into(),
-            Example::Destructive => {
-                button::destructive("Destructive").on_press(Message::Pressed).into()
-            }
-            Example::Link => button::link("Link").on_press(Message::Pressed).into(),
-
-            Example::Icon => button::icon(icon::arrow_up_right())
-                .on_press(Message::Pressed)
-                .into(),
-
-            Example::WithIcon => {
-                row![
-                    button![icon::git_branch(), "New Branch"]
-                        .style(theme::button::outline)
-                        .on_press(Message::Pressed),
-                    button!["Fork", icon::git_branch()]
-                        .style(theme::button::outline)
-                        .on_press(Message::Pressed),
-                ]
-                .spacing(8)
-                .into()
-            }
-
-            Example::Rounded => {
-                row![
-                    button!["Get Started"].rounded().on_press(Message::Pressed),
-                    button::icon(icon::arrow_up())
-                        .rounded()
-                        .on_press(Message::Pressed),
-                ]
-                .spacing(8)
-                .into()
-            }
-
-            Example::Spinner => {
-                use icedxdy::widget::spinner;
-                row![
-                    button![spinner(), "Generating"]
-                        .style(theme::button::outline),
-                    button!["Downloading", spinner()]
-                        .style(theme::button::secondary),
-                ]
-                .spacing(16)
-                .into()
-            }
+    fn view<'a>(&self) -> Element<'a, Message> {
+        match self {
+            Example::Demo => demo::view(),
+            Example::Size => size::view(),
+            Example::Default => default::view(),
+            Example::Outline => outline::view(),
+            Example::Secondary => secondary::view(),
+            Example::Ghost => ghost::view(),
+            Example::Destructive => destructive::view(),
+            Example::Link => link::view(),
+            Example::Icon => icon::view(),
+            Example::WithIcon => with_icon::view(),
+            Example::Rounded => rounded::view(),
+            Example::Spinner => spinner::view(),
         }
     }
 }
 
 pub struct State {
     snippets: Vec<(Example, Option<Vec<markdown::Item>>)>,
+    visible: HashSet<usize>,
+    column_id: position::Id,
+    scrollable_id: Id,
 }
 
 impl State {
@@ -223,7 +167,15 @@ impl State {
             )
         });
 
-        (Self { snippets }, Task::batch(tasks))
+        (
+            Self {
+                snippets,
+                visible: HashSet::new(),
+                column_id: position::Id::unique(),
+                scrollable_id: Id::unique(),
+            },
+            Task::batch(tasks),
+        )
     }
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
@@ -241,11 +193,40 @@ impl State {
                 let _ = url;
                 Task::none()
             }
+            Message::ExampleShown(idx) => {
+                self.visible.insert(idx);
+                Task::none()
+            }
+            Message::ExampleHidden(idx) => {
+                self.visible.remove(&idx);
+                Task::none()
+            }
+            Message::ScrollTo(idx) => {
+                position::find_position(
+                    self.column_id.clone(),
+                    idx,
+                )
+                .map(Message::ScrollResult)
+            }
+            Message::ScrollResult(Some(bounds)) => {
+                operation::scroll_to(
+                    self.scrollable_id.clone(),
+                    scrollable::AbsoluteOffset {
+                        x: 0.0,
+                        y: bounds.y,
+                    },
+                )
+            }
+            Message::ScrollResult(None) => Task::none(),
         }
     }
 
-    pub fn view(&self) -> Element<'_, Message, Theme> {
-        let mut items: Vec<Element<'_, Message, Theme>> = Vec::new();
+    pub fn scrollable_id(&self) -> Id {
+        self.scrollable_id.clone()
+    }
+
+    pub fn view(&self) -> Element<'_, Message> {
+        let mut items: Vec<icedxdy::widget::Element<'_, Message>> = Vec::new();
 
         for (i, (example, snippet)) in self.snippets.iter().enumerate() {
             let preview = container(example.view())
@@ -256,16 +237,26 @@ impl State {
                 .padding(40)
                 .style(theme::container::card_preview);
 
-            let code: Element<'_, Message, Theme> = snippet
+            let code: Element<'_, Message> = snippet
                 .as_ref()
                 .map(|s| {
-                    markdown::view(s, &iced::Theme::TokyoNight)
+                    let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
+                    style.code_block_font = Font::MONOSPACE;
+
+                    let settings = markdown::Settings {
+                        code_size: Pixels(13.0),
+                        ..markdown::Settings::with_style(style)
+                    };
+
+                    markdown::view(s, settings)
                         .map(Message::LinkClicked)
                         .into()
                 })
                 .unwrap_or_else(|| text("Loading...").into());
 
-            let code = container(code).padding([8, 12]);
+            let code = container(code)
+                .padding([12, 16])
+                .style(theme::container::code_block);
 
             let card = container(
                 column![preview, code]
@@ -274,10 +265,17 @@ impl State {
             .width(Fill);
 
             if *example == Example::Demo {
-                items.push(card.into());
+                let sensored: Element<'_, Message> =
+                    iced::widget::sensor(card)
+                        .on_show(move |_| Message::ExampleShown(i))
+                        .on_hide(Message::ExampleHidden(i))
+                        .into();
+                items.push(sensored.into());
             } else {
                 if i == 1 {
-                    items.push(text::h2("Examples").into());
+                    let heading: Element<'_, Message> =
+                        text::h2("Examples").into();
+                    items.push(heading.into());
                 }
 
                 let mut section = column![text::h3(example.title())].spacing(16);
@@ -286,13 +284,65 @@ impl State {
                     section = section.push(text::p(desc).style(theme::text::muted));
                 }
 
-                items.push(section.push(card).spacing(16).into());
+                let section_card: Element<'_, Message> =
+                    section.push(card).spacing(16).into();
+
+                let sensored: Element<'_, Message> =
+                    iced::widget::sensor(section_card)
+                        .on_show(move |_| Message::ExampleShown(i))
+                        .on_hide(Message::ExampleHidden(i))
+                        .into();
+                items.push(sensored.into());
             }
         }
 
-        column(items)
+        icedxdy::widget::column(items)
             .spacing(48)
-            .max_width(640)
+            .max_width(640.0)
+            .width(Fill)
+            .id(self.column_id.clone())
+            .into()
+    }
+
+    pub fn on_this_page(&self) -> Element<'_, Message> {
+        use icedxdy::widget::button;
+        use theme::button::{Status, Style};
+
+        // App-level style: shadcn TOC uses plain anchors with
+        // text-muted-foreground / hover:text-foreground, no backgrounds
+        let toc_style = move |theme: &Theme, status: Status| {
+            let p = theme.palette();
+            let text_color = match status {
+                Status::Active => p.muted.foreground,
+                _ => p.foreground,
+            };
+            Style {
+                background: None,
+                text_color: text_color.into(),
+                ..Default::default()
+            }
+        };
+
+        let nav_items = Example::ALL.iter().enumerate().skip(1).map(|(i, example)| {
+            let is_visible = self.visible.contains(&i);
+            let label = if is_visible {
+                text::small(example.title()).medium()
+            } else {
+                text::small(example.title())
+            };
+            button(label)
+                .style(toc_style)
+                .on_press(Message::ScrollTo(i))
+                .into()
+        });
+
+        let header = text::muted("On This Page");
+
+        column![header]
+            .push(column(nav_items).spacing(2))
+            .spacing(16)
+            .padding([24, 8])
+            .width(200)
             .into()
     }
 }

@@ -74,6 +74,27 @@ pub fn card_muted(theme: &Theme) -> Style {
     }
 }
 
-pub fn code_block(_theme: &Theme) -> Style {
-    Style::default()
+pub fn code_block(theme: &Theme) -> Style {
+    let p = theme.palette();
+    let is_dark = p.background.l < 0.5;
+    let bg = if is_dark {
+        // Dark mode: use the very dark background (darker than muted card)
+        p.background
+    } else {
+        // Light mode: use muted background for subtle contrast
+        p.muted.base
+    };
+    Style {
+        background: Some(bg.into()),
+        border: Border {
+            radius: iced_core::border::Radius {
+                top_left: 0.0,
+                top_right: 0.0,
+                bottom_left: radius::LG,
+                bottom_right: radius::LG,
+            },
+            ..Default::default()
+        },
+        ..Default::default()
+    }
 }

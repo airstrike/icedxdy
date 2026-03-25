@@ -224,6 +224,65 @@ pub fn destructive(theme: &Theme, status: Status) -> Style {
     }
 }
 
+/// Sidebar: inactive sidebar item
+/// No bg at rest, bg-accent on hover, text muted→accent-foreground
+pub fn sidebar(theme: &Theme, status: Status) -> Style {
+    let p = theme.palette();
+
+    let base = Style {
+        background: None,
+        text_color: p.muted.foreground.into(),
+        border: Border {
+            radius: radius::SM.into(),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+
+    match status {
+        Status::Active => base,
+        Status::Hovered => Style {
+            background: Some(p.accent.base.into()),
+            text_color: p.accent.foreground.into(),
+            ..base
+        },
+        Status::Pressed => Style {
+            background: Some(p.accent.base.into()),
+            text_color: p.accent.foreground.into(),
+            ..base
+        },
+        Status::Disabled => Style {
+            text_color: p.muted.foreground.alpha(0.5).into(),
+            ..base
+        },
+    }
+}
+
+/// Sidebar active: currently selected sidebar item
+/// bg-accent always, text-accent-foreground
+pub fn sidebar_active(theme: &Theme, status: Status) -> Style {
+    let p = theme.palette();
+
+    let base = Style {
+        background: Some(p.accent.base.into()),
+        text_color: p.accent.foreground.into(),
+        border: Border {
+            radius: radius::SM.into(),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+
+    match status {
+        Status::Active | Status::Hovered | Status::Pressed => base,
+        Status::Disabled => Style {
+            background: Some(p.accent.base.alpha(0.5).into()),
+            text_color: p.accent.foreground.alpha(0.5).into(),
+            ..base
+        },
+    }
+}
+
 /// Link: text-primary underline-offset-4 hover:underline
 /// No bg, no border. Opacity fallback since iced lacks underline.
 pub fn link(theme: &Theme, status: Status) -> Style {

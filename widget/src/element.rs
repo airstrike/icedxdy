@@ -51,6 +51,19 @@ impl<'a, Message: 'a, T: 'a, R: 'a> Element<'a, Message, T, R> {
     pub fn into_iced(self) -> iced_core::Element<'a, Message, T, R> {
         self.0.into_element()
     }
+
+    /// Map the message type, like `iced::Element::map`.
+    pub fn map<B: 'a>(
+        self,
+        f: impl Fn(Message) -> B + 'a,
+    ) -> Element<'a, B, T, R>
+    where
+        Message: 'a,
+        T: 'a,
+        R: iced_core::Renderer + 'a,
+    {
+        Element::from(self.into_iced().map(f))
+    }
 }
 
 // iced::Element → IntoElement (no-op size/weight, just pass through)
@@ -71,19 +84,44 @@ impl<'a, Message: 'a, T: 'a, R: iced_core::Renderer + 'a>
     }
 }
 
-// iced Text widget → IntoElement (no-op size/weight — icons keep their own font)
-impl<'a, Message: 'a> IntoElement<'a, Message> for iced_widget::Text<'a, Theme, Renderer> {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
-        (*self).into()
+// our Element → iced::Element
+impl<'a, Message: 'a, T: 'a, R: iced_core::Renderer + 'a>
+    From<Element<'a, Message, T, R>> for iced_core::Element<'a, Message, T, R>
+{
+    fn from(e: Element<'a, Message, T, R>) -> Self {
+        e.into_iced()
     }
 }
 
-// iced Text widget → our Element
-impl<'a, Message: 'a> From<iced_widget::Text<'a, Theme, Renderer>> for Element<'a, Message> {
-    fn from(t: iced_widget::Text<'a, Theme, Renderer>) -> Self {
-        Element::new(t)
-    }
+/// Implement [`IntoElement`] and `From<W> for Element` for an iced widget type.
+///
+/// This gives the widget no-op size/weight propagation and wraps it
+/// in an `iced::Element` on conversion.
+macro_rules! into_element {
+    ($ty:ty) => {
+        into_element!($ty where);
+    };
+    ($ty:ty where $($bounds:tt)*) => {
+        impl<'a, Message: 'a $($bounds)*> IntoElement<'a, Message> for $ty {
+            fn into_element(
+                self: Box<Self>,
+            ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+                iced_core::Element::new(*self)
+            }
+        }
+
+        impl<'a, Message: 'a $($bounds)*> From<$ty> for Element<'a, Message> {
+            fn from(w: $ty) -> Self {
+                Element::new(w)
+            }
+        }
+    };
 }
+
+into_element!(iced_widget::Text<'a, Theme, Renderer>);
+into_element!(iced_widget::text::Rich<'a, Message, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Column<'a, Message, Theme, Renderer>);
+into_element!(iced_widget::Sensor<'a, (), Message, Theme, Renderer>);
 
 // &str → our Element (via our Text, so size propagation works)
 impl<'a, Message: 'a> From<&'a str> for Element<'a, Message> {
@@ -106,32 +144,3 @@ impl<'a, Message: 'a> From<std::borrow::Cow<'a, str>> for Element<'a, Message> {
     }
 }
 
-// Our Text → our Element
-impl<'a, Message: 'a> From<crate::text::Text<'a>> for Element<'a, Message> {
-    fn from(t: crate::text::Text<'a>) -> Self {
-        Element::new(t)
-    }
-}
-
-// Our Button → our Element
-impl<'a, Message: Clone + 'a> From<crate::button::Button<'a, Message>> for Element<'a, Message> {
-    fn from(b: crate::button::Button<'a, Message>) -> Self {
-        Element::new(b)
-    }
-}
-
-// Our Row → our Element
-impl<'a, Message: 'a> From<crate::row::Row<'a, Message>> for Element<'a, Message> {
-    fn from(r: crate::row::Row<'a, Message>) -> Self {
-        Element::new(r)
-    }
-}
-
-// Spinner → our Element
-#[cfg(feature = "spinner")]
-impl<'a, Message: 'a> From<crate::spinner::Spinner<'a>> for Element<'a, Message> {
-    fn from(s: crate::spinner::Spinner<'a>) -> Self {
-        let iced_el: iced_core::Element<'a, Message, Theme, Renderer> = s.into();
-        Element::new(iced_el)
-    }
-}

@@ -120,6 +120,12 @@ impl<'a, Message: 'a> From<Text<'a>> for iced_core::Element<'a, Message, Theme, 
     }
 }
 
+impl<'a, Message: 'a> From<Text<'a>> for crate::Element<'a, Message> {
+    fn from(t: Text<'a>) -> Self {
+        crate::Element::new(t)
+    }
+}
+
 impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
     fn size(&mut self, size: Size) {
         if self.size.is_none() {

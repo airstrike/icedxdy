@@ -139,6 +139,12 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
     }
 }
 
+impl<'a, Message: Clone + 'a> From<Button<'a, Message>> for crate::Element<'a, Message> {
+    fn from(b: Button<'a, Message>) -> Self {
+        crate::Element::new(b)
+    }
+}
+
 impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Button<'a, Message> {
     fn size(&mut self, size: Size) {
         self.size = size;

@@ -265,3 +265,9 @@ impl<'a, Message: 'a> From<Spinner<'a>> for Element<'a, Message, Theme, Renderer
         Self::new(spinner)
     }
 }
+
+impl<'a, Message: 'a> From<Spinner<'a>> for crate::Element<'a, Message> {
+    fn from(s: Spinner<'a>) -> Self {
+        crate::Element::new(Element::new(s))
+    }
+}
