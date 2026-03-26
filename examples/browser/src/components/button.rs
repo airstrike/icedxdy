@@ -308,9 +308,16 @@ impl State {
         use icedxdy::widget::button;
         use theme::button::{Status, Style};
 
-        // App-level style: shadcn TOC uses plain anchors with
-        // text-muted-foreground / hover:text-foreground, no backgrounds
-        let toc_style = move |theme: &Theme, status: Status| {
+        // shadcn TOC: plain anchors, muted when inactive, foreground when active
+        let toc_active = move |theme: &Theme, _status: Status| {
+            let p = theme.palette();
+            Style {
+                background: None,
+                text_color: p.foreground.into(),
+                ..Default::default()
+            }
+        };
+        let toc_inactive = move |theme: &Theme, status: Status| {
             let p = theme.palette();
             let text_color = match status {
                 Status::Active => p.muted.foreground,
@@ -325,18 +332,16 @@ impl State {
 
         let nav_items = Example::ALL.iter().enumerate().skip(1).map(|(i, example)| {
             let is_visible = self.visible.contains(&i);
-            let label = if is_visible {
-                text::small(example.title()).medium()
-            } else {
-                text::small(example.title())
-            };
-            button(label)
-                .style(toc_style)
+            let style = if is_visible { toc_active } else { toc_inactive };
+            button(example.title())
+                .size(icedxdy::Size::Sm)
+                .style(style)
                 .on_press(Message::ScrollTo(i))
                 .into()
         });
 
-        let header = text::muted("On This Page");
+        let header = container(text::muted("On This Page"))
+            .padding([0, 8]);
 
         column![header]
             .push(column(nav_items).spacing(2))

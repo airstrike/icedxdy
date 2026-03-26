@@ -6,6 +6,7 @@ use iced::widget::{column, combo_box, row, scrollable, space};
 use iced::{Fill, Font, Pixels, Task};
 
 use icedxdy::widget::{button, container, separator, text};
+use icedxdy::Size::*;
 use icedxdy::{theme, Theme};
 
 fn is_dark_mode() -> bool {
@@ -207,12 +208,13 @@ impl App {
 
         let sidebar_items = column(Section::ALL.iter().map(|section| {
             let is_active = *section == self.section;
-            let (label, style): (_, fn(&Theme, _) -> _) = if is_active {
-                (text::small(section.title()).medium(), theme::button::sidebar_active)
+            let style: fn(&Theme, _) -> _ = if is_active {
+                theme::button::sidebar_active
             } else {
-                (text::small(section.title()), theme::button::sidebar)
+                theme::button::sidebar
             };
-            button(label)
+            button(section.title())
+                .size(Sm)
                 .style(style)
                 .on_press(Message::SelectSection(*section))
                 .into()
@@ -223,7 +225,7 @@ impl App {
             column![sidebar_header, sidebar_items]
                 .spacing(16)
                 .padding([24, 8])
-                .width(288),
+                .width(220),
         )
         .height(Fill);
 
@@ -260,12 +262,12 @@ impl App {
         let body = match self.section {
             Section::Button => {
                 let on_this_page = self.button.on_this_page().map(Message::Button);
-                row![sidebar, separator::vertical(), main, on_this_page]
+                row![sidebar, main, on_this_page]
                     .width(Fill)
                     .height(Fill)
             }
             _ => {
-                row![sidebar, separator::vertical(), main]
+                row![sidebar, main]
                     .width(Fill)
                     .height(Fill)
             }
