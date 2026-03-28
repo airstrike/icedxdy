@@ -46,6 +46,7 @@ icedxdy_widget = { path = "./widget" }
 iced = "0.15.0-dev"
 iced_core = "0.15.0-dev"
 iced_runtime = "0.15.0-dev"
+iced_selector = "0.15.0-dev"
 iced_widget = "0.15.0-dev"
 
 [patch.crates-io]
@@ -55,6 +56,8 @@ iced_core.git = "https://github.com/airstrike/iced.git"
 iced_core.branch = "dev"
 iced_runtime.git = "https://github.com/airstrike/iced.git"
 iced_runtime.branch = "dev"
+iced_selector.git = "https://github.com/airstrike/iced.git"
+iced_selector.branch = "dev"
 iced_widget.git = "https://github.com/airstrike/iced.git"
 iced_widget.branch = "dev"
 cosmic-text = { git = "https://github.com/airstrike/cosmic-text", branch = "dev" }

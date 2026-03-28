@@ -20,6 +20,19 @@ impl SemanticColor {
     }
 }
 
+/// Sidebar-specific color palette
+///
+/// Based on shadcn/ui's sidebar CSS variables.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SidebarPalette {
+    pub background: Color,
+    pub foreground: Color,
+    pub primary: SemanticColor,
+    pub accent: SemanticColor,
+    pub border: Color,
+    pub ring: Color,
+}
+
 /// Complete color palette for a theme
 ///
 /// Based on shadcn/ui's CSS variable naming convention.
@@ -52,6 +65,9 @@ pub struct Palette {
     pub input: Color,
     /// Focus ring color
     pub ring: Color,
+
+    /// Sidebar colors
+    pub sidebar: SidebarPalette,
 }
 
 impl Palette {
@@ -73,6 +89,15 @@ impl Palette {
             border: oklch(0.922, 0.0, 0.0),
             input: oklch(0.922, 0.0, 0.0),
             ring: oklch(0.708, 0.0, 0.0),
+
+            sidebar: SidebarPalette {
+                background: oklch(0.985, 0.0, 0.0),
+                foreground: oklch(0.337, 0.013, 286.0),
+                primary: SemanticColor::new(oklch(0.205, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
+                accent: SemanticColor::new(oklch(0.967, 0.001, 286.0), oklch(0.205, 0.015, 286.0)),
+                border: oklch(0.930, 0.006, 250.0),
+                ring: oklch(0.623, 0.170, 255.0),
+            },
         }
     }
 
@@ -94,6 +119,15 @@ impl Palette {
             border: oklch_alpha(1.0, 0.0, 0.0, 0.1),
             input: oklch_alpha(1.0, 0.0, 0.0, 0.15),
             ring: oklch(0.556, 0.0, 0.0),
+
+            sidebar: SidebarPalette {
+                background: oklch(0.205, 0.015, 286.0),
+                foreground: oklch(0.967, 0.001, 286.0),
+                primary: SemanticColor::new(oklch(0.922, 0.0, 0.0), oklch(0.205, 0.0, 0.0)),
+                accent: SemanticColor::new(oklch(0.269, 0.009, 286.0), oklch(0.967, 0.001, 286.0)),
+                border: oklch(0.269, 0.009, 286.0),
+                ring: oklch(0.623, 0.170, 255.0),
+            },
         }
     }
 }

@@ -105,6 +105,7 @@ where
     height: Length,
     padding: Padding,
     clip: bool,
+    translate: bool,
     class: Theme::Class<'a>,
     status: Option<Status>,
 }
@@ -145,6 +146,7 @@ where
             height: size.height.fluid(),
             padding: DEFAULT_PADDING,
             clip: false,
+            translate: true,
             class: Theme::default(),
             status: None,
         }
@@ -225,6 +227,16 @@ where
     /// overflow.
     pub fn clip(mut self, clip: bool) -> Self {
         self.clip = clip;
+        self
+    }
+
+    /// Whether to translate the content down by 1px on press.
+    ///
+    /// Defaults to `true`. Set to `false` for non-button elements styled
+    /// as buttons (e.g. sidebar menu items).
+    #[must_use]
+    pub fn translate(mut self, translate: bool) -> Self {
+        self.translate = translate;
         self
     }
 
@@ -320,12 +332,15 @@ where
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
-        // 1px top + 1px bottom for press-down effect (active:translate-y-px)
-        // At rest, button is centered. On press, quad shifts down 1px.
-        let padding = Padding {
-            top: self.padding.top + 1.0,
-            bottom: self.padding.bottom + 1.0,
-            ..self.padding
+        // When translate is on: 1px top + 1px bottom for press-down effect
+        let padding = if self.translate {
+            Padding {
+                top: self.padding.top + 1.0,
+                bottom: self.padding.bottom + 1.0,
+                ..self.padding
+            }
+        } else {
+            self.padding
         };
         layout::padded(
             limits,
@@ -554,15 +569,19 @@ where
         };
 
         // 1px press-down effect (active:translate-y-px)
-        // Layout has 1px top + 1px bottom extra padding.
+        // Layout has 1px top + 1px bottom extra padding when translate is on.
         // At rest: draw translated by (0, 0). On press: translated by (0, 1).
-        let press_y = if status == Status::Pressed { 1.0 } else { 0.0 };
+        let press_y = if self.translate && status == Status::Pressed { 1.0 } else { 0.0 };
 
-        // Visual button bounds (inside the 1px top/bottom margin)
-        let visual_bounds = Rectangle {
-            y: bounds.y + 1.0,
-            height: bounds.height - 2.0,
-            ..bounds
+        // Visual button bounds (inside the 1px top/bottom margin when translate is on)
+        let visual_bounds = if self.translate {
+            Rectangle {
+                y: bounds.y + 1.0,
+                height: bounds.height - 2.0,
+                ..bounds
+            }
+        } else {
+            bounds
         };
 
         // Translate everything down by press_y

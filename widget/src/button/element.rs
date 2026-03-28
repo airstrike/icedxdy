@@ -42,6 +42,7 @@ where
     weight: crate::Weight,
     square: bool,
     rounded: bool,
+    translate: bool,
     style: Theme::Class<'a>,
     on_press: Option<Message>,
 }
@@ -56,6 +57,7 @@ pub fn button<'a, Message: Clone + 'a>(
         weight: crate::Weight::Medium,
         square: false,
         rounded: false,
+        translate: true,
         style: Box::new(theme::button::default),
         on_press: None,
     }
@@ -77,6 +79,15 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// Make the button fully rounded (pill/circle shape).
     pub fn rounded(mut self) -> Self {
         self.rounded = true;
+        self
+    }
+
+    /// Whether to translate down 1px on press. Defaults to `true`.
+    ///
+    /// Set to `false` for sidebar menu items or other elements styled
+    /// as buttons that shouldn't have a press-down effect.
+    pub fn translate(mut self, translate: bool) -> Self {
+        self.translate = translate;
         self
     }
 
@@ -120,6 +131,8 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
                 .height(h)
                 .padding(size.padding())
         };
+
+        iced_btn = iced_btn.translate(btn.translate);
 
         let rounded = btn.rounded;
         iced_btn = iced_btn.style(move |t: &Theme, s: super::widget::Status| {

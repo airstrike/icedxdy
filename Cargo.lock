@@ -1564,8 +1564,17 @@ dependencies = [
  "bytes",
  "iced_core",
  "iced_futures",
+ "iced_selector",
  "raw-window-handle",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "iced_selector"
+version = "0.15.0-dev"
+source = "git+https://github.com/airstrike/iced.git?branch=dev#86cfd797c606a5c55be3ed9ace34c246ab12a601"
+dependencies = [
+ "iced_core",
 ]
 
 [[package]]

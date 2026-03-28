@@ -1,8 +1,4 @@
-// FIXME: make tracking generic at compile time — default to no-tracking,
-// opt-in to position tracking via generics. For now, always track when `.id()` is set.
-
 use crate::element::{Element, IntoElement};
-use crate::operation::position;
 use crate::Size;
 use icedxdy_core::Theme;
 use iced_core::alignment::{self, Alignment};
@@ -10,9 +6,9 @@ use iced_core::layout::{self, flex, Layout};
 use iced_core::mouse;
 use iced_core::overlay;
 use iced_core::renderer;
-use iced_core::widget::{Operation, Tree, tree};
+use iced_core::widget::{Operation, Tree, Widget};
 use iced_core::{
-    Event, Length, Padding, Pixels, Rectangle, Shell, Vector, Widget,
+    Event, Length, Padding, Pixels, Rectangle, Shell, Vector,
 };
 use iced_widget::Renderer;
 
@@ -33,13 +29,11 @@ macro_rules! column {
     };
 }
 
-/// A column of icedxdy elements that participates in size propagation
-/// and supports position tracking.
+/// A column of icedxdy elements that participates in size propagation.
 pub struct Column<'a, Message> {
     children: Vec<Element<'a, Message>>,
     spacing: Option<f32>,
     max_width: f32,
-    id: Option<position::Id>,
     width: Length,
     height: Length,
     padding: Padding,
@@ -53,7 +47,6 @@ impl<'a, Message: 'a> Column<'a, Message> {
             children: Vec::new(),
             spacing: None,
             max_width: f32::INFINITY,
-            id: None,
             width: Length::Shrink,
             height: Length::Shrink,
             padding: Padding::ZERO,
@@ -78,15 +71,6 @@ impl<'a, Message: 'a> Column<'a, Message> {
     /// Sets the maximum width of the [`Column`].
     pub fn max_width(mut self, max_width: f32) -> Self {
         self.max_width = max_width;
-        self
-    }
-
-    /// Sets the [`Id`](position::Id) of the [`Column`] for position tracking.
-    ///
-    /// When set, the [`Column`] tracks the layout bounds of each child widget.
-    /// Use [`position::find_position`] to query a child's position by index.
-    pub fn id(mut self, id: position::Id) -> Self {
-        self.id = Some(id);
         self
     }
 
@@ -167,7 +151,6 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Column<'a, Message> {
             .collect();
 
         let widget = ColumnWidget {
-            id: self.id,
             spacing: self.spacing.unwrap_or(8.0),
             max_width: self.max_width,
             width: self.width,
@@ -185,13 +168,7 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Column<'a, Message> {
 // ColumnWidget — the actual Widget impl (private)
 // ---------------------------------------------------------------------------
 
-#[derive(Default)]
-struct WidgetState {
-    positions: position::State,
-}
-
 struct ColumnWidget<'a, Message> {
-    id: Option<position::Id>,
     spacing: f32,
     max_width: f32,
     width: Length,
@@ -202,14 +179,6 @@ struct ColumnWidget<'a, Message> {
 }
 
 impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
-    fn tag(&self) -> tree::Tag {
-        tree::Tag::of::<WidgetState>()
-    }
-
-    fn state(&self) -> tree::State {
-        tree::State::new(WidgetState::default())
-    }
-
     fn children(&self) -> Vec<Tree> {
         self.children.iter().map(Tree::new).collect()
     }
@@ -233,7 +202,7 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
     ) -> layout::Node {
         let limits = limits.max_width(self.max_width);
 
-        let node = layout::flex::resolve(
+        layout::flex::resolve(
             flex::Axis::Vertical,
             renderer,
             &limits,
@@ -244,17 +213,7 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
             self.align,
             &mut self.children,
             &mut tree.children,
-        );
-
-        if self.id.is_some() {
-            let state = tree.state.downcast_mut::<WidgetState>();
-            state.positions.clear();
-            for (i, child) in node.children().iter().enumerate() {
-                state.positions.set(i, child.bounds());
-            }
-        }
-
-        node
+        )
     }
 
     fn operate(
@@ -264,9 +223,6 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
         renderer: &Renderer,
         operation: &mut dyn Operation,
     ) {
-        let id = self.id.as_ref().map(|id| &id.0);
-
-        operation.container(id, layout.bounds());
         operation.traverse(&mut |operation| {
             self.children
                 .iter_mut()
@@ -278,11 +234,6 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
                         .operate(state, layout, renderer, operation);
                 });
         });
-
-        if id.is_some() {
-            let state = tree.state.downcast_mut::<WidgetState>();
-            operation.custom(id, layout.bounds(), &mut state.positions);
-        }
     }
 
     fn update(

@@ -14,12 +14,12 @@ mod with_icon;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use iced::widget::{column, container, markdown, operation, scrollable, Id};
+use iced::widget::{Id, column, container, markdown};
 use iced::{Fill, Font, Pixels, Task};
 
-use icedxdy::widget::operation::position;
+use icedxdy::widget::operation::scroll;
 use icedxdy::widget::text;
-use icedxdy::{theme, Element, Theme};
+use icedxdy::{Element, Theme, theme};
 
 /// Height for preview containers (shadcn uses h-72 = 288px)
 const PREVIEW_HEIGHT: f32 = 288.0;
@@ -32,7 +32,6 @@ pub enum Message {
     ExampleShown(usize),
     ExampleHidden(usize),
     ScrollTo(usize),
-    ScrollResult(Option<iced::Rectangle>),
 }
 
 /// Examples matching shadcn docs order exactly
@@ -112,23 +111,6 @@ impl Example {
         }
     }
 
-    fn id(&self) -> &'static str {
-        match self {
-            Example::Demo => "demo",
-            Example::Size => "size",
-            Example::Default => "default",
-            Example::Outline => "outline",
-            Example::Secondary => "secondary",
-            Example::Ghost => "ghost",
-            Example::Destructive => "destructive",
-            Example::Link => "link",
-            Example::Icon => "icon",
-            Example::WithIcon => "with-icon",
-            Example::Rounded => "rounded",
-            Example::Spinner => "spinner",
-        }
-    }
-
     fn view<'a>(&self) -> Element<'a, Message> {
         match self {
             Example::Demo => demo::view(),
@@ -150,19 +132,24 @@ impl Example {
 pub struct State {
     snippets: Vec<(Example, Option<Vec<markdown::Item>>)>,
     visible: HashSet<usize>,
-    column_id: position::Id,
+    example_ids: Vec<Id>,
     scrollable_id: Id,
 }
 
 impl State {
     pub fn new() -> (Self, Task<Message>) {
         let snippets: Vec<_> = Example::ALL.iter().map(|v| (*v, None)).collect();
+        let example_ids: Vec<Id> = Example::ALL.iter().map(|_| Id::unique()).collect();
 
         let tasks = Example::ALL.iter().map(|example| {
             let example = *example;
             let path = example.snippet_path();
             Task::perform(
-                async move { tokio::fs::read_to_string(path).await.map_err(|e| e.to_string()) },
+                async move {
+                    tokio::fs::read_to_string(path)
+                        .await
+                        .map_err(|e| e.to_string())
+                },
                 move |result| Message::SnippetLoaded(example, result),
             )
         });
@@ -171,7 +158,7 @@ impl State {
             Self {
                 snippets,
                 visible: HashSet::new(),
-                column_id: position::Id::unique(),
+                example_ids,
                 scrollable_id: Id::unique(),
             },
             Task::batch(tasks),
@@ -202,22 +189,8 @@ impl State {
                 Task::none()
             }
             Message::ScrollTo(idx) => {
-                position::find_position(
-                    self.column_id.clone(),
-                    idx,
-                )
-                .map(Message::ScrollResult)
+                scroll::scroll_into_view(self.scrollable_id.clone(), self.example_ids[idx].clone())
             }
-            Message::ScrollResult(Some(bounds)) => {
-                operation::scroll_to(
-                    self.scrollable_id.clone(),
-                    scrollable::AbsoluteOffset {
-                        x: 0.0,
-                        y: bounds.y,
-                    },
-                )
-            }
-            Message::ScrollResult(None) => Task::none(),
         }
     }
 
@@ -248,9 +221,7 @@ impl State {
                         ..markdown::Settings::with_style(style)
                     };
 
-                    markdown::view(s, settings)
-                        .map(Message::LinkClicked)
-                        .into()
+                    markdown::view(s, settings).map(Message::LinkClicked).into()
                 })
                 .unwrap_or_else(|| text("Loading...").into());
 
@@ -258,23 +229,20 @@ impl State {
                 .padding([12, 16])
                 .style(theme::container::code_block);
 
-            let card = container(
-                column![preview, code]
-            )
-            .style(theme::container::card_muted)
-            .width(Fill);
+            let card = container(column![preview, code])
+                .style(theme::container::card_muted)
+                .width(Fill);
 
             if *example == Example::Demo {
-                let sensored: Element<'_, Message> =
-                    iced::widget::sensor(card)
-                        .on_show(move |_| Message::ExampleShown(i))
-                        .on_hide(Message::ExampleHidden(i))
-                        .into();
+                let with_id = container(card).id(self.example_ids[i].clone());
+                let sensored: Element<'_, Message> = iced::widget::sensor(with_id)
+                    .on_show(move |_| Message::ExampleShown(i))
+                    .on_hide(Message::ExampleHidden(i))
+                    .into();
                 items.push(sensored.into());
             } else {
                 if i == 1 {
-                    let heading: Element<'_, Message> =
-                        text::h2("Examples").into();
+                    let heading: Element<'_, Message> = text::h2("Examples").into();
                     items.push(heading.into());
                 }
 
@@ -284,14 +252,13 @@ impl State {
                     section = section.push(text::p(desc).style(theme::text::muted));
                 }
 
-                let section_card: Element<'_, Message> =
-                    section.push(card).spacing(16).into();
+                let section_card: Element<'_, Message> = section.push(card).spacing(16).into();
 
-                let sensored: Element<'_, Message> =
-                    iced::widget::sensor(section_card)
-                        .on_show(move |_| Message::ExampleShown(i))
-                        .on_hide(Message::ExampleHidden(i))
-                        .into();
+                let with_id = container(section_card).id(self.example_ids[i].clone());
+                let sensored: Element<'_, Message> = iced::widget::sensor(with_id)
+                    .on_show(move |_| Message::ExampleShown(i))
+                    .on_hide(Message::ExampleHidden(i))
+                    .into();
                 items.push(sensored.into());
             }
         }
@@ -300,7 +267,6 @@ impl State {
             .spacing(48)
             .max_width(640.0)
             .width(Fill)
-            .id(self.column_id.clone())
             .into()
     }
 
@@ -335,13 +301,13 @@ impl State {
             let style = if is_visible { toc_active } else { toc_inactive };
             button(example.title())
                 .size(icedxdy::Size::Sm)
+                .translate(false)
                 .style(style)
                 .on_press(Message::ScrollTo(i))
                 .into()
         });
 
-        let header = container(text::muted("On This Page"))
-            .padding([0, 8]);
+        let header = container(text::muted("On This Page")).padding([0, 8]);
 
         column![header]
             .push(column(nav_items).spacing(2))

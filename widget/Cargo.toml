@@ -15,6 +15,6 @@ spinner = ["canvas", "dep:lyon_algorithms"]
 [dependencies]
 icedxdy_core.workspace = true
 iced_core.workspace = true
-iced_runtime.workspace = true
+iced_runtime = { workspace = true, features = ["selector"] }
 iced_widget.workspace = true
 lyon_algorithms = { version = "1.0", optional = true }

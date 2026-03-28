@@ -215,6 +215,7 @@ impl App {
             };
             button(section.title())
                 .size(Sm)
+                .translate(false)
                 .style(style)
                 .on_press(Message::SelectSection(*section))
                 .into()
@@ -224,7 +225,7 @@ impl App {
         let sidebar = scrollable(
             column![sidebar_header, sidebar_items]
                 .spacing(16)
-                .padding([24, 8])
+                .padding([24, 13])
                 .width(220),
         )
         .height(Fill);

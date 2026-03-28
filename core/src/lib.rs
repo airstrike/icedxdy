@@ -12,5 +12,5 @@ pub mod theme;
 pub use color::{oklch, oklch_alpha, Color};
 pub use constants::*;
 pub use design::{Design, FontFamily};
-pub use palette::{Palette, SemanticColor};
+pub use palette::{Palette, SemanticColor, SidebarPalette};
 pub use theme::Theme;
