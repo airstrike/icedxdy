@@ -7,8 +7,6 @@ use icedxdy_core::theme;
 use crate::Size;
 use icedxdy_core::Theme;
 
-type StyleFn = fn(&Theme, iced_widget::button::Status) -> iced_widget::button::Style;
-
 use super::widget;
 
 fn default(theme: &Theme, status: widget::Status) -> widget::Style {
@@ -98,7 +96,10 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     }
 
     /// Set the style
-    pub fn style(mut self, style: StyleFn) -> Self {
+    pub fn style(
+        mut self,
+        style: impl Fn(&icedxdy_core::Theme, iced_widget::button::Status) -> iced_widget::button::Style + 'a,
+    ) -> Self {
         self.style = Box::new(style);
         self
     }

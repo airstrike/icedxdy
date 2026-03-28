@@ -11,7 +11,7 @@ mod size;
 mod spinner;
 mod with_icon;
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 
 use iced::widget::{Id, column, container, markdown};
@@ -131,7 +131,7 @@ impl Example {
 
 pub struct State {
     snippets: Vec<(Example, Option<Vec<markdown::Item>>)>,
-    visible: HashSet<usize>,
+    visible: BTreeSet<usize>,
     example_ids: Vec<Id>,
     scrollable_id: Id,
 }
@@ -157,7 +157,7 @@ impl State {
         (
             Self {
                 snippets,
-                visible: HashSet::new(),
+                visible: BTreeSet::new(),
                 example_ids,
                 scrollable_id: Id::unique(),
             },
@@ -238,6 +238,7 @@ impl State {
                 let sensored: Element<'_, Message> = iced::widget::sensor(with_id)
                     .on_show(move |_| Message::ExampleShown(i))
                     .on_hide(Message::ExampleHidden(i))
+                    .anticipate(50)
                     .into();
                 items.push(sensored.into());
             } else {
@@ -258,6 +259,7 @@ impl State {
                 let sensored: Element<'_, Message> = iced::widget::sensor(with_id)
                     .on_show(move |_| Message::ExampleShown(i))
                     .on_hide(Message::ExampleHidden(i))
+                    .anticipate(50)
                     .into();
                 items.push(sensored.into());
             }
@@ -274,35 +276,36 @@ impl State {
         use icedxdy::widget::button;
         use theme::button::{Status, Style};
 
-        // shadcn TOC: plain anchors, muted when inactive, foreground when active
-        let toc_active = move |theme: &Theme, _status: Status| {
-            let p = theme.palette();
-            Style {
-                background: None,
-                text_color: p.foreground.into(),
-                ..Default::default()
+        // Alpha per item: center of visible set = 1.0, edges = 0.5, not visible = 0.25.
+        let count = self.visible.len();
+        let alpha_for = |i: usize| -> f32 {
+            if count == 0 || !self.visible.contains(&i) {
+                return 0.25;
             }
-        };
-        let toc_inactive = move |theme: &Theme, status: Status| {
-            let p = theme.palette();
-            let text_color = match status {
-                Status::Active => p.muted.foreground,
-                _ => p.foreground,
-            };
-            Style {
-                background: None,
-                text_color: text_color.into(),
-                ..Default::default()
-            }
+            let rank = self.visible.iter().position(|&v| v == i).unwrap();
+            let center = (count - 1) as f32 / 2.0;
+            let distance = (rank as f32 - center).abs() / center.max(1.0);
+            1.0 - 0.5 * distance
         };
 
         let nav_items = Example::ALL.iter().enumerate().skip(1).map(|(i, example)| {
-            let is_visible = self.visible.contains(&i);
-            let style = if is_visible { toc_active } else { toc_inactive };
+            let alpha = alpha_for(i);
+            let toc_style = move |theme: &Theme, status: Status| {
+                let p = theme.palette();
+                let base_color = match status {
+                    Status::Active => p.foreground.alpha(alpha),
+                    _ => p.foreground,
+                };
+                Style {
+                    background: None,
+                    text_color: base_color.into(),
+                    ..Default::default()
+                }
+            };
             button(example.title())
                 .size(icedxdy::Size::Sm)
                 .translate(false)
-                .style(style)
+                .style(toc_style)
                 .on_press(Message::ScrollTo(i))
                 .into()
         });
