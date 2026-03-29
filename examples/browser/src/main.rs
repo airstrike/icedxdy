@@ -5,9 +5,9 @@ mod icon;
 use iced::widget::{column, combo_box, row, scrollable, space};
 use iced::{Fill, Font, Pixels, Task};
 
-use icedxdy::widget::{button, container, separator, text};
 use icedxdy::Size::*;
-use icedxdy::{theme, Theme};
+use icedxdy::widget::{button, container, rule, separator, text};
+use icedxdy::{Theme, theme};
 
 fn is_dark_mode() -> bool {
     #[cfg(target_os = "macos")]
@@ -158,11 +158,8 @@ impl App {
                 fonts::Message::CatalogLoaded(Ok(catalog)) => {
                     self.fount.set_google_catalog(catalog);
                     self.rebuild_font_list();
-                    fonts::load(
-                        self.current_font.clone(),
-                        self.fount.google_catalog(),
-                    )
-                    .map(Message::Font)
+                    fonts::load(self.current_font.clone(), self.fount.google_catalog())
+                        .map(Message::Font)
                 }
                 fonts::Message::CatalogLoaded(Err(_)) => Task::none(),
                 fonts::Message::Loaded(name, Err(e)) => {
@@ -194,9 +191,7 @@ impl App {
         } else {
             icon::moon().size(16)
         };
-        let theme_toggle = button(theme_icon)
-            .style(theme::button::ghost)
-            .on_press(Message::ToggleTheme);
+        let theme_toggle = button::ghost(theme_icon).on_press(Message::ToggleTheme);
 
         let header = row![branding, space::horizontal(), font_selector, theme_toggle]
             .spacing(8)
@@ -226,14 +221,13 @@ impl App {
             column![sidebar_header, sidebar_items]
                 .spacing(16)
                 .padding([24, 13])
-                .width(220),
+                .width(150),
         )
         .height(Fill);
 
         // Main content
         let title = text::h1(self.section.title());
-        let description = text::p(self.section.description())
-            .style(theme::text::muted);
+        let description = text::p(self.section.description()).style(theme::text::muted);
 
         let preview = container(match self.section {
             Section::Button => self.button.view().map(Message::Button),
@@ -241,37 +235,51 @@ impl App {
         })
         .width(Fill);
 
-        let content = column![title, description, preview]
-            .spacing(24)
-            .padding(32)
-            .width(Fill);
+        let content = container(
+            column![title, description, preview]
+                .spacing(24)
+                .padding(32)
+                .width(600),
+        )
+        .center_x(Fill);
 
-        let thin_scrollbar = scrollable::Scrollbar::default()
-            .width(1)
-            .scroller_width(2);
+        let thin_scrollbar = scrollable::Scrollbar::default().width(1).scroller_width(2);
 
-        let mut main = scrollable(content)
+        let main = scrollable(content)
             .direction(scrollable::Direction::Vertical(thin_scrollbar))
-            .width(Fill)
             .height(Fill);
 
         // Attach scrollable id for Button section's scroll-to support
-        if self.section == Section::Button {
-            main = main.id(self.button.scrollable_id());
-        }
+        let main = if self.section == Section::Button {
+            main.id(self.button.scrollable_id())
+        } else {
+            main
+        };
+
+        let sidebar_divider = rule::vertical(1).style(|theme: &Theme| {
+            use iced::gradient::Linear;
+            use std::f32::consts::PI;
+            let border = theme.palette().border;
+            rule::Style {
+                background: Linear::new(PI)
+                    .add_stop(0.0, iced::Color::TRANSPARENT)
+                    .add_stop(0.5, border.into())
+                    .add_stop(1.0, iced::Color::TRANSPARENT)
+                    .into(),
+                ..rule::Style::default()
+            }
+        });
 
         let body = match self.section {
             Section::Button => {
                 let on_this_page = self.button.on_this_page().map(Message::Button);
-                row![sidebar, main, on_this_page]
+                row![sidebar, sidebar_divider, main, on_this_page]
                     .width(Fill)
                     .height(Fill)
             }
-            _ => {
-                row![sidebar, main]
-                    .width(Fill)
-                    .height(Fill)
-            }
+            _ => row![sidebar, sidebar_divider, main]
+                .width(Fill)
+                .height(Fill),
         };
 
         column![header, separator::horizontal(), body]

@@ -227,11 +227,11 @@ pub fn destructive(theme: &Theme, status: Status) -> Style {
 /// Sidebar: inactive sidebar item
 /// No bg at rest, bg-accent on hover, text muted→accent-foreground
 pub fn sidebar(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let sb = &theme.palette().sidebar;
 
     let base = Style {
         background: None,
-        text_color: p.muted.foreground.into(),
+        text_color: sb.foreground.into(),
         border: Border {
             radius: radius::SM.into(),
             ..Default::default()
@@ -242,24 +242,24 @@ pub fn sidebar(theme: &Theme, status: Status) -> Style {
     match status {
         Status::Active => base,
         Status::Hovered => Style {
-            background: Some(p.accent.base.into()),
-            text_color: p.accent.foreground.into(),
+            background: Some(sb.accent.base.into()),
+            text_color: sb.accent.foreground.into(),
             ..base
         },
         Status::Pressed => Style {
-            background: Some(p.accent.base.into()),
-            text_color: p.accent.foreground.into(),
+            background: Some(sb.accent.base.into()),
+            text_color: sb.accent.foreground.into(),
             ..base
         },
         Status::Disabled => Style {
-            text_color: p.muted.foreground.alpha(0.5).into(),
+            text_color: sb.foreground.alpha(0.5).into(),
             ..base
         },
     }
 }
 
 /// Sidebar active: currently selected sidebar item
-/// bg-accent always, text-accent-foreground
+/// Uses main accent (brighter) not sidebar-accent, matching shadcn docs-sidebar
 pub fn sidebar_active(theme: &Theme, status: Status) -> Style {
     let p = theme.palette();
 

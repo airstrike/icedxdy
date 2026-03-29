@@ -6,6 +6,7 @@ pub mod container;
 pub mod element;
 pub mod operation;
 pub mod row;
+pub mod rule;
 pub mod separator;
 pub mod size;
 #[cfg(feature = "spinner")]

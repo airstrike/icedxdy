@@ -1,4 +1,4 @@
-//! Rule styling
+//! Rule styling (iced's rule — needed for markdown Catalog compatibility)
 
 pub use iced_widget::rule::{Catalog, FillMode, Style, StyleFn};
 

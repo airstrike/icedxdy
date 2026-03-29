@@ -121,6 +121,7 @@ macro_rules! into_element {
 into_element!(iced_widget::Text<'a, Theme, Renderer>);
 into_element!(iced_widget::text::Rich<'a, Message, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Column<'a, Message, Theme, Renderer>);
+into_element!(iced_widget::Scrollable<'a, Message, Theme, Renderer>);
 into_element!(iced_widget::Sensor<'a, (), Message, Theme, Renderer>);
 
 // &str → our Element (via our Text, so size propagation works)
