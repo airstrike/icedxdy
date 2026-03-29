@@ -15,7 +15,7 @@ use iced_core::text::{Fragment, IntoFragment};
 use iced_widget::text::Style;
 use iced_widget::Renderer;
 
-use crate::element::IntoElement;
+use crate::component::IntoElement;
 use icedxdy_core::theme;
 use crate::Size;
 use icedxdy_core::Theme;
@@ -120,9 +120,9 @@ impl<'a, Message: 'a> From<Text<'a>> for iced_core::Element<'a, Message, Theme, 
     }
 }
 
-impl<'a, Message: 'a> From<Text<'a>> for crate::Element<'a, Message> {
+impl<'a, Message: 'a> From<Text<'a>> for crate::Component<'a, Message> {
     fn from(t: Text<'a>) -> Self {
-        crate::Element::new(t)
+        crate::Component::new(t)
     }
 }
 

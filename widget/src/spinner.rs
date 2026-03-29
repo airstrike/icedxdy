@@ -266,8 +266,8 @@ impl<'a, Message: 'a> From<Spinner<'a>> for Element<'a, Message, Theme, Renderer
     }
 }
 
-impl<'a, Message: 'a> From<Spinner<'a>> for crate::Element<'a, Message> {
+impl<'a, Message: 'a> From<Spinner<'a>> for crate::Component<'a, Message> {
     fn from(s: Spinner<'a>) -> Self {
-        crate::Element::new(Element::new(s))
+        crate::Component::new(Element::new(s))
     }
 }

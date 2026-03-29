@@ -35,9 +35,9 @@ macro_rules! button {
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::button(
-            $crate::element::Element::new(
+            $crate::component::Component::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::element::Element<'_, _>>::into($child)),+
+                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
                 ])
             )
         )

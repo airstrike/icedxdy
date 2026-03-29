@@ -1,7 +1,7 @@
-use crate::element::{Element, IntoElement};
 use crate::Size;
-use icedxdy_core::Theme;
+use crate::component::{Component, IntoElement};
 use iced_widget::Renderer;
+use icedxdy_core::Theme;
 
 /// Create a [`Row`] with the given children.
 ///
@@ -15,14 +15,14 @@ macro_rules! row {
     };
     ($($child:expr),+ $(,)?) => {
         $crate::row::Row::with_children([
-            $(Into::<$crate::element::Element<'_, _>>::into($child)),+
+            $(Into::<$crate::component::Component<'_, _>>::into($child)),+
         ])
     };
 }
 
 /// A row of icedxdy elements that participates in size propagation.
 pub struct Row<'a, Message> {
-    children: Vec<Element<'a, Message>>,
+    children: Vec<Component<'a, Message>>,
     spacing: Option<f32>,
 }
 
@@ -34,7 +34,7 @@ impl<'a, Message: 'a> Row<'a, Message> {
         }
     }
 
-    pub fn with_children(children: impl IntoIterator<Item = Element<'a, Message>>) -> Self {
+    pub fn with_children(children: impl IntoIterator<Item = Component<'a, Message>>) -> Self {
         Self {
             children: children.into_iter().collect(),
             spacing: None,
@@ -42,7 +42,7 @@ impl<'a, Message: 'a> Row<'a, Message> {
     }
 
     /// Push our own Element.
-    pub fn push(mut self, child: Element<'a, Message>) -> Self {
+    pub fn push(mut self, child: Component<'a, Message>) -> Self {
         self.children.push(child);
         self
     }
@@ -54,17 +54,15 @@ impl<'a, Message: 'a> Row<'a, Message> {
 }
 
 // Our Row → iced Element (so it can be used in iced's column![], container, etc.)
-impl<'a, Message: 'a> From<Row<'a, Message>>
-    for iced_core::Element<'a, Message, Theme, Renderer>
-{
+impl<'a, Message: 'a> From<Row<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(row: Row<'a, Message>) -> Self {
         Box::new(row).into_element()
     }
 }
 
-impl<'a, Message: 'a> From<Row<'a, Message>> for crate::Element<'a, Message> {
+impl<'a, Message: 'a> From<Row<'a, Message>> for crate::Component<'a, Message> {
     fn from(r: Row<'a, Message>) -> Self {
-        crate::Element::new(r)
+        crate::Component::new(r)
     }
 }
 

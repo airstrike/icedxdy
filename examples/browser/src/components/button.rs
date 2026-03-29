@@ -19,7 +19,7 @@ use iced::{Fill, Font, Pixels, Task};
 
 use icedxdy::widget::operation::scroll;
 use icedxdy::widget::text;
-use icedxdy::{Element, Theme, theme};
+use icedxdy::{Component, Theme, theme};
 
 /// Height for preview containers (shadcn uses h-72 = 288px)
 const PREVIEW_HEIGHT: f32 = 288.0;
@@ -111,7 +111,7 @@ impl Example {
         }
     }
 
-    fn view<'a>(&self) -> Element<'a, Message> {
+    fn view<'a>(&self) -> Component<'a, Message> {
         match self {
             Example::Demo => demo::view(),
             Example::Size => size::view(),
@@ -198,8 +198,8 @@ impl State {
         self.scrollable_id.clone()
     }
 
-    pub fn view(&self) -> Element<'_, Message> {
-        let mut items: Vec<icedxdy::widget::Element<'_, Message>> = Vec::new();
+    pub fn view(&self) -> Component<'_, Message> {
+        let mut items: Vec<icedxdy::widget::Component<'_, Message>> = Vec::new();
 
         for (i, (example, snippet)) in self.snippets.iter().enumerate() {
             let preview = container(example.view())
@@ -210,7 +210,7 @@ impl State {
                 .padding(40)
                 .style(theme::container::card_preview);
 
-            let code: Element<'_, Message> = snippet
+            let code: Component<'_, Message> = snippet
                 .as_ref()
                 .map(|s| {
                     let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
@@ -235,7 +235,7 @@ impl State {
 
             if *example == Example::Demo {
                 let with_id = container(card).id(self.example_ids[i].clone());
-                let sensored: Element<'_, Message> = iced::widget::sensor(with_id)
+                let sensored: Component<'_, Message> = iced::widget::sensor(with_id)
                     .on_show(move |_| Message::ExampleShown(i))
                     .on_hide(Message::ExampleHidden(i))
                     .anticipate(50)
@@ -243,7 +243,7 @@ impl State {
                 items.push(sensored.into());
             } else {
                 if i == 1 {
-                    let heading: Element<'_, Message> = text::h2("Examples").into();
+                    let heading: Component<'_, Message> = text::h2("Examples").into();
                     items.push(heading.into());
                 }
 
@@ -253,10 +253,10 @@ impl State {
                     section = section.push(text::p(desc).style(theme::text::muted));
                 }
 
-                let section_card: Element<'_, Message> = section.push(card).spacing(16).into();
+                let section_card: Component<'_, Message> = section.push(card).spacing(16).into();
 
                 let with_id = container(section_card).id(self.example_ids[i].clone());
-                let sensored: Element<'_, Message> = iced::widget::sensor(with_id)
+                let sensored: Component<'_, Message> = iced::widget::sensor(with_id)
                     .on_show(move |_| Message::ExampleShown(i))
                     .on_hide(Message::ExampleHidden(i))
                     .anticipate(50)
@@ -272,7 +272,7 @@ impl State {
             .into()
     }
 
-    pub fn on_this_page(&self) -> Element<'_, Message> {
+    pub fn on_this_page(&self) -> Component<'_, Message> {
         use icedxdy::widget::button;
         use theme::button::{Status, Style};
 

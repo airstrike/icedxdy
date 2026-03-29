@@ -1,4 +1,4 @@
-use crate::element::{Element, IntoElement};
+use crate::component::{Component, IntoElement};
 use crate::Size;
 use icedxdy_core::Theme;
 use iced_core::{Length, Padding, Pixels};
@@ -11,7 +11,7 @@ use iced_widget::Renderer;
 /// container(text::h1("Hello")).padding(16).center_x(Fill)
 /// ```
 pub struct Container<'a, Message> {
-    content: Element<'a, Message>,
+    content: Component<'a, Message>,
     width: Length,
     height: Length,
     max_width: f32,
@@ -22,7 +22,7 @@ pub struct Container<'a, Message> {
 }
 
 impl<'a, Message: 'a> Container<'a, Message> {
-    pub fn new(content: impl Into<Element<'a, Message>>) -> Self {
+    pub fn new(content: impl Into<Component<'a, Message>>) -> Self {
         Self {
             content: content.into(),
             width: Length::Shrink,

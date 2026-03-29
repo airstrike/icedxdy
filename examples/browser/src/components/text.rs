@@ -2,7 +2,7 @@ use iced::widget::column;
 use iced::Task;
 
 use icedxdy::widget::text;
-use icedxdy::Element;
+use icedxdy::Component;
 
 #[derive(Debug, Clone)]
 pub enum Message {}
@@ -18,7 +18,7 @@ impl State {
         Task::none()
     }
 
-    pub fn view(&self) -> Element<'_, Message> {
+    pub fn view(&self) -> Component<'_, Message> {
         column![
             text::h1("Heading 1"),
             text::h2("Heading 2"),

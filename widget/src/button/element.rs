@@ -1,11 +1,11 @@
-use iced_core::text::Span;
 use iced_core::Font;
+use iced_core::text::Span;
 use iced_widget::text::Rich;
 
-use crate::element::{Element, IntoElement};
-use icedxdy_core::theme;
 use crate::Size;
+use crate::component::{Component, IntoElement};
 use icedxdy_core::Theme;
+use icedxdy_core::theme;
 
 use super::widget;
 
@@ -35,7 +35,7 @@ where
     Renderer: iced_core::Renderer,
     Theme: iced_widget::button::Catalog,
 {
-    content: Element<'a, Message, Theme, Renderer>,
+    content: Component<'a, Message, Theme, Renderer>,
     size: Size,
     weight: crate::Weight,
     square: bool,
@@ -48,7 +48,7 @@ where
 
 /// Create a button with default size and style
 pub fn button<'a, Message: Clone + 'a>(
-    content: impl Into<Element<'a, Message>>,
+    content: impl Into<Component<'a, Message>>,
 ) -> Button<'a, Message> {
     Button {
         content: content.into(),
@@ -106,7 +106,8 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// Set the style
     pub fn style(
         mut self,
-        style: impl Fn(&icedxdy_core::Theme, iced_widget::button::Status) -> iced_widget::button::Style + 'a,
+        style: impl Fn(&icedxdy_core::Theme, iced_widget::button::Status) -> iced_widget::button::Style
+        + 'a,
     ) -> Self {
         self.style = Box::new(style);
         self
@@ -164,9 +165,9 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> From<Button<'a, Message>> for crate::Element<'a, Message> {
+impl<'a, Message: Clone + 'a> From<Button<'a, Message>> for crate::Component<'a, Message> {
     fn from(b: Button<'a, Message>) -> Self {
-        crate::Element::new(b)
+        crate::Component::new(b)
     }
 }
 
@@ -175,7 +176,9 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Button<'a, Message> {
         self.size = size;
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, iced_widget::Renderer> {
+    fn into_element(
+        self: Box<Self>,
+    ) -> iced_core::Element<'a, Message, Theme, iced_widget::Renderer> {
         (*self).into()
     }
 }
