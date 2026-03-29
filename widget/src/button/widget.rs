@@ -106,6 +106,7 @@ where
     padding: Padding,
     clip: bool,
     translate: bool,
+    interaction: Option<mouse::Interaction>,
     class: Theme::Class<'a>,
     status: Option<Status>,
 }
@@ -147,6 +148,7 @@ where
             padding: DEFAULT_PADDING,
             clip: false,
             translate: true,
+            interaction: None,
             class: Theme::default(),
             status: None,
         }
@@ -237,6 +239,13 @@ where
     #[must_use]
     pub fn translate(mut self, translate: bool) -> Self {
         self.translate = translate;
+        self
+    }
+
+    /// Sets the [`mouse::Interaction`] to use when hovering the [`Button`].
+    #[must_use]
+    pub fn interaction(mut self, interaction: mouse::Interaction) -> Self {
+        self.interaction = Some(interaction);
         self
     }
 
@@ -634,10 +643,8 @@ where
         _viewport: &Rectangle,
         _renderer: &Renderer,
     ) -> mouse::Interaction {
-        let is_mouse_over = cursor.is_over(layout.bounds());
-
-        if is_mouse_over && self.on_press.is_some() {
-            mouse::Interaction::default()
+        if cursor.is_over(layout.bounds()) && self.on_press.is_some() {
+            self.interaction.unwrap_or_default()
         } else {
             mouse::Interaction::default()
         }

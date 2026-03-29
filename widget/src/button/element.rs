@@ -41,6 +41,7 @@ where
     square: bool,
     rounded: bool,
     translate: bool,
+    interaction: Option<iced_core::mouse::Interaction>,
     style: Theme::Class<'a>,
     on_press: Option<Message>,
 }
@@ -56,6 +57,7 @@ pub fn button<'a, Message: Clone + 'a>(
         square: false,
         rounded: false,
         translate: true,
+        interaction: None,
         style: Box::new(theme::button::default),
         on_press: None,
     }
@@ -86,6 +88,12 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// as buttons that shouldn't have a press-down effect.
     pub fn translate(mut self, translate: bool) -> Self {
         self.translate = translate;
+        self
+    }
+
+    /// Set the mouse interaction (cursor) when hovering.
+    pub fn interaction(mut self, interaction: iced_core::mouse::Interaction) -> Self {
+        self.interaction = Some(interaction);
         self
     }
 
@@ -134,6 +142,9 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
         };
 
         iced_btn = iced_btn.translate(btn.translate);
+        if let Some(interaction) = btn.interaction {
+            iced_btn = iced_btn.interaction(interaction);
+        }
 
         let rounded = btn.rounded;
         iced_btn = iced_btn.style(move |t: &Theme, s: super::widget::Status| {

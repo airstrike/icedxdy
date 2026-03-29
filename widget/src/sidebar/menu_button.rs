@@ -17,6 +17,7 @@
 //!     .on_press(Message::Settings)
 //! ```
 
+use iced_core::mouse::Interaction;
 use iced_core::{Alignment, Border, Length};
 use iced_widget::button::{Status, Style};
 use iced_widget::tooltip::Position;
@@ -262,7 +263,9 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             .padding(btn.size.padding())
         };
 
-        raw_btn = raw_btn.translate(false);
+        raw_btn = raw_btn
+            .translate(false)
+            .interaction(Interaction::Pointer);
 
         // Style: convert iced button::Style → our widget::Style via Into
         let active = btn.active;
