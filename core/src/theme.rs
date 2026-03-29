@@ -3,6 +3,8 @@
 //! The Theme wraps a Design and implements the Catalog traits
 //! for various iced widgets with shadcn-inspired styling.
 
+pub mod alert;
+pub mod badge;
 pub mod button;
 pub mod checkbox;
 pub mod container;

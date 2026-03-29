@@ -1,9 +1,12 @@
 use iced_core as core;
 
+pub mod alert;
+pub mod badge;
 pub mod button;
 pub mod column;
 pub mod component;
 pub mod container;
+pub mod input;
 pub mod operation;
 pub mod row;
 pub mod rule;
@@ -14,9 +17,12 @@ pub mod spinner;
 pub mod text;
 pub mod weight;
 
+pub use alert::Alert;
+pub use badge::Badge;
 pub use button::Button;
 pub use column::Column;
 pub use component::{Component, IntoElement};
+pub use input::Input;
 pub use row::Row;
 pub use size::Size;
 pub use text::Text;
@@ -51,6 +57,26 @@ pub fn container<'a, Message: 'a>(
 /// Create a [`Row`].
 pub fn row<'a, Message: 'a>() -> Row<'a, Message> {
     Row::new()
+}
+
+/// Create a [`Badge`] with the given content.
+pub fn badge<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Badge<'a, Message> {
+    badge::badge(content)
+}
+
+/// Create an [`Alert`].
+pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
+    alert::alert()
+}
+
+/// Create an [`Input`].
+pub fn input<'a, Message: Clone + 'a>(
+    placeholder: &'a str,
+    value: &'a str,
+) -> Input<'a, Message> {
+    input::input(placeholder, value)
 }
 
 /// Create a [`Spinner`].

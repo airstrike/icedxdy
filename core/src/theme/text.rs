@@ -37,3 +37,9 @@ pub fn link(theme: &Theme) -> Style {
         color: Some(theme.palette().primary.base.into()),
     }
 }
+
+pub fn destructive(theme: &Theme) -> Style {
+    Style {
+        color: Some(theme.palette().destructive.base.into()),
+    }
+}

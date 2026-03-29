@@ -41,6 +41,9 @@ struct App {
     section: Section,
     button: components::button::State,
     text: components::text::State,
+    badge: components::badge::State,
+    input: components::input::State,
+    alert: components::alert::State,
     fount: fount::Fount,
     font_list: combo_box::State<String>,
     current_font: String,
@@ -50,15 +53,27 @@ struct App {
 enum Section {
     #[default]
     Button,
+    Badge,
+    Input,
+    Alert,
     Text,
 }
 
 impl Section {
-    const ALL: &[Section] = &[Section::Button, Section::Text];
+    const ALL: &[Section] = &[
+        Section::Button,
+        Section::Badge,
+        Section::Input,
+        Section::Alert,
+        Section::Text,
+    ];
 
     fn title(&self) -> &'static str {
         match self {
             Section::Button => "Button",
+            Section::Badge => "Badge",
+            Section::Input => "Input",
+            Section::Alert => "Alert",
             Section::Text => "Text",
         }
     }
@@ -66,6 +81,9 @@ impl Section {
     fn description(&self) -> &'static str {
         match self {
             Section::Button => "Displays a button or a component that looks like a button.",
+            Section::Badge => "Displays a badge or a component that looks like a badge.",
+            Section::Input => "Displays a form input field or a component that looks like an input.",
+            Section::Alert => "Displays a callout for important information.",
             Section::Text => "Typography components for headings, paragraphs, and more.",
         }
     }
@@ -77,6 +95,9 @@ enum Message {
     SelectSection(Section),
     FontSelected(String),
     Button(components::button::Message),
+    Badge(components::badge::Message),
+    Input(components::input::Message),
+    Alert(components::alert::Message),
     Text(components::text::Message),
     Font(fonts::Message),
 }
@@ -85,6 +106,10 @@ impl App {
     fn new() -> (Self, Task<Message>) {
         let (btn, button_task) = components::button::State::new();
         let (txt, text_task) = components::text::State::new();
+        use components::{alert, badge, input};
+        let (bdg, badge_task) = badge::State::new();
+        let (inp, input_task) = input::State::new();
+        let (alt, alert_task) = alert::State::new();
 
         let default_font = "Geist".to_string();
 
@@ -94,6 +119,9 @@ impl App {
                 section: Section::default(),
                 button: btn,
                 text: txt,
+                badge: bdg,
+                input: inp,
+                alert: alt,
                 fount: fount::Fount::new(),
                 font_list: combo_box::State::new(vec![default_font.clone()]),
                 current_font: default_font,
@@ -101,6 +129,9 @@ impl App {
             Task::batch([
                 button_task.map(Message::Button),
                 text_task.map(Message::Text),
+                badge_task.map(Message::Badge),
+                input_task.map(Message::Input),
+                alert_task.map(Message::Alert),
                 fonts::init().map(Message::Font),
             ]),
         )
@@ -143,6 +174,9 @@ impl App {
                 }
             }
             Message::Button(msg) => self.button.update(msg).map(Message::Button),
+            Message::Badge(msg) => self.badge.update(msg).map(Message::Badge),
+            Message::Input(msg) => self.input.update(msg).map(Message::Input),
+            Message::Alert(msg) => self.alert.update(msg).map(Message::Alert),
             Message::Text(msg) => self.text.update(msg).map(Message::Text),
             Message::Font(msg) => match msg {
                 fonts::Message::SystemFontsLoaded(families) => {
@@ -231,6 +265,9 @@ impl App {
 
         let preview = container(match self.section {
             Section::Button => self.button.view().map(Message::Button),
+            Section::Badge => self.badge.view().map(Message::Badge),
+            Section::Input => self.input.view().map(Message::Input),
+            Section::Alert => self.alert.view().map(Message::Alert),
             Section::Text => self.text.view().map(Message::Text),
         })
         .width(Fill);
