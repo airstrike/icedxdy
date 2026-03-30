@@ -1,13 +1,15 @@
-mod components;
+mod component;
+mod example;
 mod fonts;
 mod icon;
+mod page;
 
-use iced::widget::{column, combo_box, row, scrollable, space};
+use iced::widget::{column, combo_box, container, markdown, row, scrollable, sensor, space};
 use iced::{Fill, Font, Pixels, Task};
 
+use icedxdy::widget::{button, rule, separator, text};
+use icedxdy::{Component, Theme, theme};
 use icedxdy::Size::*;
-use icedxdy::widget::{button, container, rule, separator, text};
-use icedxdy::{Theme, theme};
 
 fn is_dark_mode() -> bool {
     #[cfg(target_os = "macos")]
@@ -26,114 +28,73 @@ fn is_dark_mode() -> bool {
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
-        .title("icedxdy • components browser")
+        .title("icedxdy \u{2022} components browser")
         .antialiasing(true)
         .theme(App::theme)
         .font(icon::FONT)
         .run()
 }
 
+/// Height for preview containers (shadcn uses h-72 = 288px)
+const PREVIEW_HEIGHT: f32 = 288.0;
+
 /// Fonts to pin at the top of the font list
 const PINNED_FONTS: &[&str] = &["Geist", "Inter"];
 
 struct App {
     dark_mode: bool,
-    section: Section,
-    button: components::button::State,
-    text: components::text::State,
-    badge: components::badge::State,
-    input: components::input::State,
-    alert: components::alert::State,
+    current_page: usize,
+    pages: Vec<Box<dyn page::Page>>,
+    // Font management
     fount: fount::Fount,
     font_list: combo_box::State<String>,
     current_font: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-enum Section {
-    #[default]
-    Button,
-    Badge,
-    Input,
-    Alert,
-    Text,
-}
-
-impl Section {
-    const ALL: &[Section] = &[
-        Section::Button,
-        Section::Badge,
-        Section::Input,
-        Section::Alert,
-        Section::Text,
-    ];
-
-    fn title(&self) -> &'static str {
-        match self {
-            Section::Button => "Button",
-            Section::Badge => "Badge",
-            Section::Input => "Input",
-            Section::Alert => "Alert",
-            Section::Text => "Text",
-        }
-    }
-
-    fn description(&self) -> &'static str {
-        match self {
-            Section::Button => "Displays a button or a component that looks like a button.",
-            Section::Badge => "Displays a badge or a component that looks like a badge.",
-            Section::Input => "Displays a form input field or a component that looks like an input.",
-            Section::Alert => "Displays a callout for important information.",
-            Section::Text => "Typography components for headings, paragraphs, and more.",
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
-enum Message {
+pub enum Message {
     ToggleTheme,
-    SelectSection(Section),
+    SelectPage(usize),
     FontSelected(String),
-    Button(components::button::Message),
-    Badge(components::badge::Message),
-    Input(components::input::Message),
-    Alert(components::alert::Message),
-    Text(components::text::Message),
+    Page(usize, page::Event),
     Font(fonts::Message),
 }
 
 impl App {
     fn new() -> (Self, Task<Message>) {
-        let (btn, button_task) = components::button::State::new();
-        let (txt, text_task) = components::text::State::new();
-        use components::{alert, badge, input};
-        let (bdg, badge_task) = badge::State::new();
-        let (inp, input_task) = input::State::new();
-        let (alt, alert_task) = alert::State::new();
+        let mut pages: Vec<Box<dyn page::Page>> = Vec::new();
+        let mut tasks: Vec<Task<Message>> = Vec::new();
+
+        use component::{alert, badge, button, input, text};
+
+        let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
+            button::ButtonPage::new,
+            badge::BadgePage::new,
+            input::InputPage::new,
+            alert::AlertPage::new,
+            text::TextPage::new,
+        ];
+
+        for (i, ctor) in constructors.into_iter().enumerate() {
+            let page = ctor(i);
+            tasks.push(page.init());
+            pages.push(page);
+        }
 
         let default_font = "Geist".to_string();
+
+        tasks.push(fonts::init().map(Message::Font));
 
         (
             Self {
                 dark_mode: is_dark_mode(),
-                section: Section::default(),
-                button: btn,
-                text: txt,
-                badge: bdg,
-                input: inp,
-                alert: alt,
+                current_page: 0,
+                pages,
                 fount: fount::Fount::new(),
                 font_list: combo_box::State::new(vec![default_font.clone()]),
                 current_font: default_font,
             },
-            Task::batch([
-                button_task.map(Message::Button),
-                text_task.map(Message::Text),
-                badge_task.map(Message::Badge),
-                input_task.map(Message::Input),
-                alert_task.map(Message::Alert),
-                fonts::init().map(Message::Font),
-            ]),
+            Task::batch(tasks),
         )
     }
 
@@ -157,27 +118,27 @@ impl App {
                 self.dark_mode = !self.dark_mode;
                 Task::none()
             }
-            Message::SelectSection(section) => {
-                self.section = section;
+            Message::SelectPage(page) => {
+                self.current_page = page;
                 Task::none()
             }
             Message::FontSelected(name) => {
                 self.current_font = name.clone();
 
                 if self.fount.system_families().contains(&name) {
-                    // System font — already available
                     let name: &'static str = Box::leak(name.into_boxed_str());
                     iced::font::set_defaults(Font::new(name), Pixels(14.0))
                 } else {
-                    // Google Font — load it
                     fonts::load(name, self.fount.google_catalog()).map(Message::Font)
                 }
             }
-            Message::Button(msg) => self.button.update(msg).map(Message::Button),
-            Message::Badge(msg) => self.badge.update(msg).map(Message::Badge),
-            Message::Input(msg) => self.input.update(msg).map(Message::Input),
-            Message::Alert(msg) => self.alert.update(msg).map(Message::Alert),
-            Message::Text(msg) => self.text.update(msg).map(Message::Text),
+            Message::Page(i, event) => {
+                if let Some(page) = self.pages.get_mut(i) {
+                    page.update(event)
+                } else {
+                    Task::none()
+                }
+            }
             Message::Font(msg) => match msg {
                 fonts::Message::SystemFontsLoaded(families) => {
                     let names: Vec<String> = families
@@ -208,12 +169,159 @@ impl App {
         }
     }
 
+    /// Generic page content: title, description, example cards with previews and code.
+    fn view_page(&self) -> Component<'_, Message> {
+        let page_index = self.current_page;
+        let page = &*self.pages[page_index];
+        let meta = page.meta();
+
+        let mut items: Vec<Component<'_, Message>> = Vec::new();
+
+        for (i, example_meta) in meta.examples.iter().enumerate() {
+            let preview = container(page.preview(i))
+                .center_x(Fill)
+                .center_y(Fill)
+                .width(Fill)
+                .height(PREVIEW_HEIGHT)
+                .padding(40)
+                .style(theme::container::card_preview);
+
+            let has_snippet = !example_meta.snippet.is_empty();
+
+            let card: Component<'_, Message> = if has_snippet {
+                let code: Component<'_, Message> = page
+                    .snippets()[i]
+                    .as_ref()
+                    .map(|s| {
+                        let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
+                        style.code_block_font = Font::MONOSPACE;
+
+                        let settings = markdown::Settings {
+                            code_size: Pixels(13.0),
+                            ..markdown::Settings::with_style(style)
+                        };
+
+                        markdown::view(s, settings)
+                            .map(move |url| Message::Page(page_index, page::Event::LinkClicked(url)))
+                            .into()
+                    })
+                    .unwrap_or_else(|| text("Loading...").into());
+
+                let code = container(code)
+                    .padding([12, 16])
+                    .style(theme::container::code_block);
+
+                container(column![preview, code])
+                    .style(theme::container::card_muted)
+                    .width(Fill)
+                    .into()
+            } else {
+                container(preview)
+                    .style(theme::container::card_muted)
+                    .width(Fill)
+                    .into()
+            };
+
+            let example_ids = page.example_ids();
+
+            if i == 0 {
+                // Demo card: no title header, just the card with sensor
+                let with_id = container(card).id(example_ids[i].clone());
+                let sensored: Component<'_, Message> = sensor(with_id)
+                    .on_show(move |_| Message::Page(page_index, page::Event::ExampleShown(i)))
+                    .on_hide(Message::Page(page_index, page::Event::ExampleHidden(i)))
+                    .anticipate(50)
+                    .into();
+                items.push(sensored);
+            } else {
+                if i == 1 {
+                    let heading: Component<'_, Message> = text::h2("Examples").into();
+                    items.push(heading);
+                }
+
+                let mut section = column![text::h3(example_meta.title)].spacing(16);
+
+                if let Some(desc) = example_meta.description {
+                    section = section.push(text::p(desc).style(theme::text::muted));
+                }
+
+                let section_card: Component<'_, Message> = section.push(card).spacing(16).into();
+
+                let with_id = container(section_card).id(example_ids[i].clone());
+                let sensored: Component<'_, Message> = sensor(with_id)
+                    .on_show(move |_| Message::Page(page_index, page::Event::ExampleShown(i)))
+                    .on_hide(Message::Page(page_index, page::Event::ExampleHidden(i)))
+                    .anticipate(50)
+                    .into();
+                items.push(sensored);
+            }
+        }
+
+        icedxdy::widget::column(items)
+            .spacing(48)
+            .max_width(640.0)
+            .width(Fill)
+            .into()
+    }
+
+    /// "On This Page" navigation panel.
+    fn on_this_page(&self) -> Component<'_, Message> {
+        let page_index = self.current_page;
+        let page = &*self.pages[page_index];
+        let meta = page.meta();
+        let visible = page.visible();
+
+        let count = visible.len();
+        let alpha_for = |i: usize| -> f32 {
+            if count == 0 || !visible.contains(&i) {
+                return 0.25;
+            }
+            let rank = visible.iter().position(|&v| v == i).unwrap();
+            let center = (count - 1) as f32 / 2.0;
+            let distance = (rank as f32 - center).abs() / center.max(1.0);
+            1.0 - 0.5 * distance
+        };
+
+        // Skip the first example (demo) in the ToC
+        let nav_items = meta.examples.iter().enumerate().skip(1).map(|(i, example)| {
+            let alpha = alpha_for(i);
+            use theme::button::{Status, Style};
+            let toc_style = move |theme: &Theme, status: Status| {
+                let p = theme.palette();
+                let base_color = match status {
+                    Status::Active => p.foreground.alpha(alpha),
+                    _ => p.foreground,
+                };
+                Style {
+                    background: None,
+                    text_color: base_color.into(),
+                    ..Style::default()
+                }
+            };
+            button(example.title)
+                .size(Sm)
+                .translate(false)
+                .style(toc_style)
+                .on_press(Message::Page(page_index, page::Event::ScrollTo(i)))
+                .into()
+        });
+
+        let header = container(text::muted("On This Page")).padding([0, 8]);
+
+        column![header]
+            .push(column(nav_items).spacing(2))
+            .spacing(16)
+            .padding([24, 8])
+            .width(200)
+            .into()
+    }
+
     fn view(&self) -> iced::Element<'_, Message, Theme> {
         let branding = text::h4("icedxdy");
 
         let font_selector = combo_box(
             &self.font_list,
-            "Font…",
+            "Font...",
             Some(&self.current_font),
             Message::FontSelected,
         )
@@ -235,18 +343,18 @@ impl App {
         // Sidebar
         let sidebar_header = container(text::muted("Components")).padding([0, 8]);
 
-        let sidebar_items = column(Section::ALL.iter().map(|section| {
-            let is_active = *section == self.section;
+        let sidebar_items = column(self.pages.iter().enumerate().map(|(i, page)| {
+            let is_active = i == self.current_page;
             let style: fn(&Theme, _) -> _ = if is_active {
                 theme::button::sidebar_active
             } else {
                 theme::button::sidebar
             };
-            button(section.title())
+            button(page.meta().title)
                 .size(Sm)
                 .translate(false)
                 .style(style)
-                .on_press(Message::SelectSection(*section))
+                .on_press(Message::SelectPage(i))
                 .into()
         }))
         .spacing(2);
@@ -260,17 +368,12 @@ impl App {
         .height(Fill);
 
         // Main content
-        let title = text::h1(self.section.title());
-        let description = text::p(self.section.description()).style(theme::text::muted);
+        let current = &*self.pages[self.current_page];
+        let meta = current.meta();
+        let title = text::h1(meta.title);
+        let description = text::p(meta.description).style(theme::text::muted);
 
-        let preview = container(match self.section {
-            Section::Button => self.button.view().map(Message::Button),
-            Section::Badge => self.badge.view().map(Message::Badge),
-            Section::Input => self.input.view().map(Message::Input),
-            Section::Alert => self.alert.view().map(Message::Alert),
-            Section::Text => self.text.view().map(Message::Text),
-        })
-        .width(Fill);
+        let preview = container(self.view_page()).width(Fill);
 
         let content = container(
             column![title, description, preview]
@@ -284,14 +387,8 @@ impl App {
 
         let main = scrollable(content)
             .direction(scrollable::Direction::Vertical(thin_scrollbar))
-            .height(Fill);
-
-        // Attach scrollable id for Button section's scroll-to support
-        let main = if self.section == Section::Button {
-            main.id(self.button.scrollable_id())
-        } else {
-            main
-        };
+            .height(Fill)
+            .id(current.scrollable_id());
 
         let sidebar_divider = rule::vertical(1).style(|theme: &Theme| {
             use iced::gradient::Linear;
@@ -307,16 +404,16 @@ impl App {
             }
         });
 
-        let body = match self.section {
-            Section::Button => {
-                let on_this_page = self.button.on_this_page().map(Message::Button);
-                row![sidebar, sidebar_divider, main, on_this_page]
-                    .width(Fill)
-                    .height(Fill)
-            }
-            _ => row![sidebar, sidebar_divider, main]
+        // Show "On This Page" panel if there are more than 1 example
+        let body = if meta.examples.len() > 1 {
+            let on_this_page = self.on_this_page();
+            row![sidebar, sidebar_divider, main, on_this_page]
                 .width(Fill)
-                .height(Fill),
+                .height(Fill)
+        } else {
+            row![sidebar, sidebar_divider, main]
+                .width(Fill)
+                .height(Fill)
         };
 
         column![header, separator::horizontal(), body]

@@ -1,0 +1,85 @@
+mod default;
+mod demo;
+mod destructive;
+
+use std::collections::BTreeSet;
+
+use iced::widget::{Id, markdown};
+use iced::Task;
+
+use icedxdy::{Component, Theme};
+
+use crate::example;
+use crate::page;
+
+pub static META: page::Meta = page::Meta {
+    title: "Alert",
+    description: "Displays a callout for important information.",
+    examples: &[
+        example::Meta { id: "demo", title: "Alert", description: None, snippet: "examples/browser/snippets/alert-demo.md" },
+        example::Meta { id: "default", title: "Default", description: None, snippet: "examples/browser/snippets/alert-default.md" },
+        example::Meta { id: "destructive", title: "Destructive", description: None, snippet: "examples/browser/snippets/alert-destructive.md" },
+    ],
+};
+
+#[derive(Debug, Clone)]
+pub enum Message {}
+
+pub struct AlertPage {
+    state: page::State,
+}
+
+impl AlertPage {
+    pub fn new(page_index: usize) -> Box<dyn page::Page> {
+        Box::new(Self {
+            state: page::State::new(page_index, &META),
+        })
+    }
+}
+
+fn view(index: usize) -> Component<'static, Message> {
+    match index {
+        0 => demo::view(),
+        1 => default::view(),
+        2 => destructive::view(),
+        _ => unreachable!(),
+    }
+}
+
+impl page::Page for AlertPage {
+    fn meta(&self) -> &'static page::Meta {
+        &META
+    }
+
+    fn snippets(&self) -> &[Option<Vec<markdown::Item>>] {
+        &self.state.snippets
+    }
+
+    fn visible(&self) -> &BTreeSet<usize> {
+        &self.state.visible
+    }
+
+    fn example_ids(&self) -> &[Id] {
+        &self.state.example_ids
+    }
+
+    fn scrollable_id(&self) -> Id {
+        self.state.scrollable_id.clone()
+    }
+
+    fn init(&self) -> Task<crate::Message> {
+        self.state.init()
+    }
+
+    fn update(&mut self, event: page::Event) -> Task<crate::Message> {
+        if let Some(task) = self.state.update(&event) {
+            return task;
+        }
+        Task::none()
+    }
+
+    fn preview(&self, index: usize) -> iced::Element<'_, crate::Message, Theme> {
+        let pi = self.state.page_index;
+        view(index).map(move |_| crate::Message::Page(pi, page::Event::Noop)).into()
+    }
+}
