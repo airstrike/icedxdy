@@ -8,8 +8,8 @@ use super::Message;
 pub fn view<'a>() -> Component<'a, Message> {
     alert::alert()
         .icon(icon::circle_alert().size(16))
-        .title(text::small("Error").semibold().letter_spacing(-0.025).style(theme::text::destructive))
-        .description(text::small("Your session has expired. Please log in again.").style(theme::text::destructive))
+        .title(text::small("Payment failed").semibold().letter_spacing(-0.025).style(theme::text::destructive))
+        .description(text::small("Your payment could not be processed. Please check your payment method and try again.").style(theme::text::destructive))
         .destructive()
         .into()
 }

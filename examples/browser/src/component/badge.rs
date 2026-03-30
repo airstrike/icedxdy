@@ -1,12 +1,13 @@
 use std::collections::BTreeSet;
 
-use iced::widget::{Id, markdown, row};
+use iced::widget::{Id, markdown};
 use iced::Task;
 
-use icedxdy::widget::badge;
+use icedxdy::widget::{badge, row, spinner};
 use icedxdy::Theme;
 
 use crate::example;
+use crate::icon;
 use crate::page;
 use crate::Message;
 
@@ -14,11 +15,10 @@ pub static META: page::Meta = page::Meta {
     title: "Badge",
     description: "Displays a badge or a component that looks like a badge.",
     examples: &[
-        example::Meta { id: "demo", title: "Badge", description: None, snippet: "examples/browser/snippets/badge-default.md" },
-        example::Meta { id: "default", title: "Default", description: None, snippet: "examples/browser/snippets/badge-default.md" },
-        example::Meta { id: "secondary", title: "Secondary", description: None, snippet: "examples/browser/snippets/badge-secondary.md" },
-        example::Meta { id: "destructive", title: "Destructive", description: None, snippet: "examples/browser/snippets/badge-destructive.md" },
-        example::Meta { id: "outline", title: "Outline", description: None, snippet: "examples/browser/snippets/badge-outline.md" },
+        example::Meta { id: "demo", title: "Badge", description: None, snippet: "examples/browser/snippets/badge-demo.md" },
+        example::Meta { id: "variants", title: "Variants", description: Some("Use the variant prop to change the variant of the badge."), snippet: "examples/browser/snippets/badge-variants.md" },
+        example::Meta { id: "with-icon", title: "With Icon", description: Some("You can render an icon inside the badge."), snippet: "examples/browser/snippets/badge-with-icon.md" },
+        example::Meta { id: "with-spinner", title: "With Spinner", description: Some("You can render a spinner inside the badge."), snippet: "examples/browser/snippets/badge-with-spinner.md" },
     ],
 };
 
@@ -36,21 +36,56 @@ impl BadgePage {
 
 fn view(index: usize) -> iced::Element<'static, Message, Theme> {
     match index {
+        // Demo: all 5 variants in a row
         0 => {
-            row![
+            iced::widget::row![
                 badge("Badge"),
                 badge("Secondary").variant(badge::Variant::Secondary),
                 badge("Destructive").variant(badge::Variant::Destructive),
                 badge("Outline").variant(badge::Variant::Outline),
+                badge("Ghost").variant(badge::Variant::Ghost),
             ]
             .spacing(8)
             .align_y(iced::Center)
             .into()
         }
-        1 => badge("Badge").into(),
-        2 => badge("Secondary").variant(badge::Variant::Secondary).into(),
-        3 => badge("Destructive").variant(badge::Variant::Destructive).into(),
-        4 => badge("Outline").variant(badge::Variant::Outline).into(),
+        // Variants
+        1 => {
+            iced::widget::row![
+                badge("Default"),
+                badge("Secondary").variant(badge::Variant::Secondary),
+                badge("Destructive").variant(badge::Variant::Destructive),
+                badge("Outline").variant(badge::Variant::Outline),
+                badge("Ghost").variant(badge::Variant::Ghost),
+            ]
+            .spacing(8)
+            .align_y(iced::Center)
+            .into()
+        }
+        // With Icon
+        2 => {
+            iced::widget::row![
+                badge(row![icon::badge_check().size(14), "Verified"])
+                    .variant(badge::Variant::Secondary),
+                badge(row!["Bookmark", icon::bookmark().size(14)])
+                    .variant(badge::Variant::Outline),
+            ]
+            .spacing(8)
+            .align_y(iced::Center)
+            .into()
+        }
+        // With Spinner
+        3 => {
+            iced::widget::row![
+                badge(row![spinner().size(12.0), "Deleting"])
+                    .variant(badge::Variant::Destructive),
+                badge(row!["Generating", spinner().size(12.0)])
+                    .variant(badge::Variant::Secondary),
+            ]
+            .spacing(8)
+            .align_y(iced::Center)
+            .into()
+        }
         _ => unreachable!(),
     }
 }

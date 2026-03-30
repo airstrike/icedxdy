@@ -23,6 +23,7 @@ pub enum Variant {
     Secondary,
     Destructive,
     Outline,
+    Ghost,
 }
 
 /// A small inline pill label.
@@ -80,6 +81,7 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Badge<'a, Message> {
             Variant::Secondary => theme::badge::secondary,
             Variant::Destructive => theme::badge::destructive,
             Variant::Outline => theme::badge::outline,
+            Variant::Ghost => theme::badge::ghost,
         };
 
         // py-0.5 = 2px, px-2.5 = 10px

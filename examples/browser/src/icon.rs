@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// b6fd3f814afffc7610d79ffe1ec46ba999bb0f5d30e2976e8234e3f17fa95ce4
+// 7f4f74b1348582706e770a3c8cee53013ad07a37a5bdeeaec0d24ca76a08f764
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -11,8 +11,13 @@ pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
 pub const ALL_ICONS: &[(&str, &str)] = &[
     ("arrow_up", "\u{E04A}"),
     ("arrow_up_right", "\u{E04D}"),
+    ("badge_check", "\u{E241}"),
+    ("bookmark", "\u{E060}"),
     ("circle_alert", "\u{E077}"),
+    ("circle_check", "\u{E226}"),
+    ("circle_check_big", "\u{E07C}"),
     ("git_branch", "\u{E0E2}"),
+    ("info", "\u{E0F9}"),
     ("moon", "\u{E11E}"),
     ("sun", "\u{E178}"),
     ("terminal", "\u{E181}"),
@@ -32,6 +37,20 @@ where
     icon("\u{E04D}")
 }
 
+pub fn badge_check<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E241}")
+}
+
+pub fn bookmark<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E060}")
+}
+
 pub fn circle_alert<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -39,11 +58,32 @@ where
     icon("\u{E077}")
 }
 
+pub fn circle_check<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E226}")
+}
+
+pub fn circle_check_big<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E07C}")
+}
+
 pub fn git_branch<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E0E2}")
+}
+
+pub fn info<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E0F9}")
 }
 
 pub fn moon<'a, Theme>() -> Text<'a, Theme>

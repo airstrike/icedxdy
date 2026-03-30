@@ -14,11 +14,11 @@ use crate::page;
 
 pub static META: page::Meta = page::Meta {
     title: "Alert",
-    description: "Displays a callout for important information.",
+    description: "Displays a callout for user attention.",
     examples: &[
         example::Meta { id: "demo", title: "Alert", description: None, snippet: "examples/browser/snippets/alert-demo.md" },
-        example::Meta { id: "default", title: "Default", description: None, snippet: "examples/browser/snippets/alert-default.md" },
-        example::Meta { id: "destructive", title: "Destructive", description: None, snippet: "examples/browser/snippets/alert-destructive.md" },
+        example::Meta { id: "basic", title: "Basic", description: Some("A basic alert with an icon, title and description."), snippet: "examples/browser/snippets/alert-basic.md" },
+        example::Meta { id: "destructive", title: "Destructive", description: Some("Use variant destructive to create a destructive alert."), snippet: "examples/browser/snippets/alert-destructive.md" },
     ],
 };
 

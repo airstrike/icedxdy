@@ -1,10 +1,10 @@
 ```rust
-use icedxdy::widget::{button, input, row};
+use icedxdy::widget::{button, input};
 
 row![
-    input::input("Email", &self.email)
-        .on_input(Message::EmailChanged),
-    button("Subscribe").on_press(Message::Submit),
+    input::input("Search...", &self.value)
+        .on_input(Message::Changed),
+    button("Search")
+        .on_press(Message::Search),
 ]
-.spacing(8)
 ```

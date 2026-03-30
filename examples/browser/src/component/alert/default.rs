@@ -6,8 +6,8 @@ use super::Message;
 
 pub fn view<'a>() -> Component<'a, Message> {
     alert::alert()
-        .icon(icon::terminal().size(16))
-        .title(text::small("Heads up!").semibold().letter_spacing(-0.025))
-        .description(text::small("You can add components to your app using the cli."))
+        .icon(icon::circle_check_big().size(16))
+        .title(text::small("Account updated successfully").semibold().letter_spacing(-0.025))
+        .description(text::small("Your profile information has been saved. Changes will be reflected immediately."))
         .into()
 }

@@ -65,3 +65,17 @@ pub fn outline(theme: &Theme) -> Style {
         ..Default::default()
     }
 }
+
+/// Ghost: no background, no border, muted foreground text
+pub fn ghost(theme: &Theme) -> Style {
+    let p = theme.palette();
+    Style {
+        background: None,
+        text_color: Some(p.foreground.into()),
+        border: Border {
+            radius: PILL_RADIUS.into(),
+            ..Default::default()
+        },
+        ..Default::default()
+    }
+}

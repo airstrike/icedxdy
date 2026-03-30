@@ -1,6 +1,6 @@
 ```rust
 use icedxdy::widget::input;
 
-input::input("Type something...", &self.value)
+input::input("Enter text", &self.value)
     .on_input(Message::Changed)
 ```

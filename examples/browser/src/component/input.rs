@@ -12,13 +12,25 @@ use crate::page;
 
 pub static META: page::Meta = page::Meta {
     title: "Input",
-    description: "Displays a form input field or a component that looks like an input.",
+    description: "A text input component for forms and user data entry with built-in styling and accessibility features.",
     examples: &[
         example::Meta {
             id: "demo",
             title: "Input",
             description: None,
-            snippet: "examples/browser/snippets/input-default.md",
+            snippet: "examples/browser/snippets/input-demo.md",
+        },
+        example::Meta {
+            id: "basic",
+            title: "Basic",
+            description: Some("A simple input with a placeholder."),
+            snippet: "examples/browser/snippets/input-basic.md",
+        },
+        example::Meta {
+            id: "field",
+            title: "Field",
+            description: Some("An input with a label and description."),
+            snippet: "examples/browser/snippets/input-field.md",
         },
         example::Meta {
             id: "disabled",
@@ -27,15 +39,9 @@ pub static META: page::Meta = page::Meta {
             snippet: "examples/browser/snippets/input-disabled.md",
         },
         example::Meta {
-            id: "with-label",
-            title: "With Label",
-            description: Some("An input with a label above it."),
-            snippet: "examples/browser/snippets/input-with-label.md",
-        },
-        example::Meta {
             id: "with-button",
-            title: "With Button",
-            description: Some("An input paired with a button."),
+            title: "Inline",
+            description: Some("Use an input with a button to create a search input."),
             snippet: "examples/browser/snippets/input-with-button.md",
         },
     ],
@@ -43,8 +49,9 @@ pub static META: page::Meta = page::Meta {
 
 pub struct InputPage {
     state: page::State,
-    default_value: String,
-    email_value: String,
+    demo_value: String,
+    basic_value: String,
+    field_value: String,
     with_button_value: String,
 }
 
@@ -52,8 +59,9 @@ impl InputPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
             state: page::State::new(page_index, &META),
-            default_value: String::new(),
-            email_value: String::new(),
+            demo_value: String::new(),
+            basic_value: String::new(),
+            field_value: String::new(),
             with_button_value: String::new(),
         })
     }
@@ -92,9 +100,10 @@ impl page::Page for InputPage {
         match event {
             page::Message::InputChanged(field, value) => {
                 match field {
-                    0 => self.default_value = value,
-                    1 => self.email_value = value,
-                    2 => self.with_button_value = value,
+                    0 => self.demo_value = value,
+                    1 => self.basic_value = value,
+                    2 => self.field_value = value,
+                    3 => self.with_button_value = value,
                     _ => {}
                 }
                 Task::none()
@@ -106,27 +115,50 @@ impl page::Page for InputPage {
     fn preview(&self, index: usize) -> iced::Element<'_, Message, Theme> {
         let pi = self.state.page_index;
         match index {
-            0 => input::input("Type something...", &self.default_value)
-                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(0, v)))
-                .into(),
-            1 => input::input("Disabled input", "").disabled().into(),
-            2 => icedxdy::widget::column([
-                text::small("Email").into(),
-                input::input("Email", &self.email_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(1, v)))
+            // Demo: field with label "API Key", placeholder "sk-...", description
+            0 => icedxdy::widget::column([
+                text::small("API Key").semibold().into(),
+                input::input("sk-...", &self.demo_value)
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(0, v)))
                     .into(),
+                text::muted("Your API key is encrypted and stored securely.").into(),
             ])
             .spacing(8)
             .width(320)
             .into(),
-            3 => icedxdy::widget::column([icedxdy::widget::row()
+            // Basic: simple input with placeholder
+            1 => input::input("Enter text", &self.basic_value)
+                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(1, v)))
+                .into(),
+            // Field: input with label "Username" and description
+            2 => icedxdy::widget::column([
+                text::small("Username").semibold().into(),
+                input::input("Enter your username", &self.field_value)
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(2, v)))
+                    .into(),
+                text::muted("Choose a unique username for your account.").into(),
+            ])
+            .spacing(8)
+            .width(320)
+            .into(),
+            // Disabled
+            3 => icedxdy::widget::column([
+                text::small("Email").semibold().into(),
+                input::input("Email", "").disabled().into(),
+                text::muted("This field is currently disabled.").into(),
+            ])
+            .spacing(8)
+            .width(320)
+            .into(),
+            // Inline: input + button side by side
+            4 => icedxdy::widget::column([icedxdy::widget::row()
                 .push(
-                    input::input("Email", &self.with_button_value)
-                        .on_input(move |v| Message::Page(pi, page::Message::InputChanged(2, v)))
+                    input::input("Search...", &self.with_button_value)
+                        .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v)))
                         .into(),
                 )
                 .push(
-                    button("Subscribe")
+                    button("Search")
                         .on_press(Message::Page(pi, page::Message::Noop))
                         .into(),
                 )
