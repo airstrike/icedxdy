@@ -5,26 +5,11 @@ mod icon;
 mod page;
 
 use iced::widget::{column, combo_box, container, markdown, row, scrollable, sensor, space};
-use iced::{Fill, Font, Pixels, Task};
+use iced::{Fill, Font, Function, Pixels, Task};
 
+use icedxdy::Size::*;
 use icedxdy::widget::{button, rule, separator, text};
 use icedxdy::{Component, Theme, theme};
-use icedxdy::Size::*;
-
-fn is_dark_mode() -> bool {
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("defaults")
-            .args(["read", "-g", "AppleInterfaceStyle"])
-            .output()
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "Dark")
-            .unwrap_or(true) // default to dark
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        true // default to dark on other platforms
-    }
-}
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
@@ -56,7 +41,7 @@ pub enum Message {
     ToggleTheme,
     SelectPage(usize),
     FontSelected(String),
-    Page(usize, page::Event),
+    Page(usize, page::Message),
     Font(fonts::Message),
 }
 
@@ -87,7 +72,7 @@ impl App {
 
         (
             Self {
-                dark_mode: is_dark_mode(),
+                dark_mode: theme::is_dark_mode(),
                 current_page: 0,
                 pages,
                 fount: fount::Fount::new(),
@@ -96,20 +81,6 @@ impl App {
             },
             Task::batch(tasks),
         )
-    }
-
-    fn rebuild_font_list(&mut self) {
-        let mut names = self.fount.families();
-
-        // Move pinned fonts to the top (in reverse so first pinned ends up first)
-        for &pinned in PINNED_FONTS.iter().rev() {
-            if let Some(pos) = names.iter().position(|n| n == pinned) {
-                let name = names.remove(pos);
-                names.insert(0, name);
-            }
-        }
-
-        self.font_list = combo_box::State::new(names);
     }
 
     fn update(&mut self, message: Message) -> Task<Message> {
@@ -132,9 +103,9 @@ impl App {
                     fonts::load(name, self.fount.google_catalog()).map(Message::Font)
                 }
             }
-            Message::Page(i, event) => {
+            Message::Page(i, message) => {
                 if let Some(page) = self.pages.get_mut(i) {
-                    page.update(event)
+                    page.update(message)
                 } else {
                     Task::none()
                 }
@@ -171,13 +142,13 @@ impl App {
 
     /// Generic page content: title, description, example cards with previews and code.
     fn view_page(&self) -> Component<'_, Message> {
-        let page_index = self.current_page;
-        let page = &*self.pages[page_index];
+        let pi = self.current_page;
+        let page = &*self.pages[pi];
         let meta = page.meta();
+        let snippets = page.snippets();
+        let example_ids = page.example_ids();
 
-        let mut items: Vec<Component<'_, Message>> = Vec::new();
-
-        for (i, example_meta) in meta.examples.iter().enumerate() {
+        let items = meta.examples.iter().enumerate().flat_map(|(i, ex)| {
             let preview = container(page.preview(i))
                 .center_x(Fill)
                 .center_y(Fill)
@@ -186,82 +157,77 @@ impl App {
                 .padding(40)
                 .style(theme::container::card_preview);
 
-            let has_snippet = !example_meta.snippet.is_empty();
-
-            let card: Component<'_, Message> = if has_snippet {
-                let code: Component<'_, Message> = page
-                    .snippets()[i]
-                    .as_ref()
-                    .map(|s| {
-                        let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
-                        style.code_block_font = Font::MONOSPACE;
-
-                        let settings = markdown::Settings {
-                            code_size: Pixels(13.0),
-                            ..markdown::Settings::with_style(style)
-                        };
-
-                        markdown::view(s, settings)
-                            .map(move |url| Message::Page(page_index, page::Event::LinkClicked(url)))
-                            .into()
-                    })
-                    .unwrap_or_else(|| text("Loading...").into());
-
-                let code = container(code)
-                    .padding([12, 16])
-                    .style(theme::container::code_block);
-
-                container(column![preview, code])
+            let card: Component<'_, Message> = if ex.snippet.is_empty() {
+                container(preview)
                     .style(theme::container::card_muted)
                     .width(Fill)
                     .into()
             } else {
-                container(preview)
+                let code: Component<'_, Message> = snippets[i]
+                    .as_ref()
+                    .map(snippet.with(pi))
+                    .unwrap_or_else(|| text("Loading...").into());
+                let code = container(code)
+                    .padding([12, 16])
+                    .style(theme::container::code_block);
+                container(column![preview, code])
                     .style(theme::container::card_muted)
                     .width(Fill)
                     .into()
             };
 
-            let example_ids = page.example_ids();
+            macro_rules! sensored {
+                ($content:expr) => {
+                    sensor(container($content).id(example_ids[i].clone()))
+                        .on_show(move |_| Message::Page(pi, page::Message::ExampleShown(i)))
+                        .on_hide(Message::Page(pi, page::Message::ExampleHidden(i)))
+                        .anticipate(50)
+                };
+            }
 
             if i == 0 {
-                // Demo card: no title header, just the card with sensor
-                let with_id = container(card).id(example_ids[i].clone());
-                let sensored: Component<'_, Message> = sensor(with_id)
-                    .on_show(move |_| Message::Page(page_index, page::Event::ExampleShown(i)))
-                    .on_hide(Message::Page(page_index, page::Event::ExampleHidden(i)))
-                    .anticipate(50)
-                    .into();
-                items.push(sensored);
+                vec![sensored!(card).into()]
             } else {
+                let desc: Option<Component<'_, Message>> = ex
+                    .description
+                    .map(|d| text::p(d).style(theme::text::muted).into());
+
+                let section: Component<'_, Message> = icedxdy::widget::column(
+                    [Some(text::h3(ex.title).into()), desc, Some(card)]
+                        .into_iter()
+                        .flatten(),
+                )
+                .spacing(16)
+                .into();
+
+                let mut items = Vec::with_capacity(2);
                 if i == 1 {
-                    let heading: Component<'_, Message> = text::h2("Examples").into();
-                    items.push(heading);
+                    items.push(text::h2("Examples").into());
                 }
-
-                let mut section = column![text::h3(example_meta.title)].spacing(16);
-
-                if let Some(desc) = example_meta.description {
-                    section = section.push(text::p(desc).style(theme::text::muted));
-                }
-
-                let section_card: Component<'_, Message> = section.push(card).spacing(16).into();
-
-                let with_id = container(section_card).id(example_ids[i].clone());
-                let sensored: Component<'_, Message> = sensor(with_id)
-                    .on_show(move |_| Message::Page(page_index, page::Event::ExampleShown(i)))
-                    .on_hide(Message::Page(page_index, page::Event::ExampleHidden(i)))
-                    .anticipate(50)
-                    .into();
-                items.push(sensored);
+                items.push(sensored!(section).into());
+                items
             }
-        }
+        });
 
         icedxdy::widget::column(items)
             .spacing(48)
             .max_width(640.0)
             .width(Fill)
             .into()
+    }
+
+    fn rebuild_font_list(&mut self) {
+        let mut names = self.fount.families();
+
+        // Move pinned fonts to the top (in reverse so first pinned ends up first)
+        for &pinned in PINNED_FONTS.iter().rev() {
+            if let Some(pos) = names.iter().position(|n| n == pinned) {
+                let name = names.remove(pos);
+                names.insert(0, name);
+            }
+        }
+
+        self.font_list = combo_box::State::new(names);
     }
 
     /// "On This Page" navigation panel.
@@ -283,28 +249,33 @@ impl App {
         };
 
         // Skip the first example (demo) in the ToC
-        let nav_items = meta.examples.iter().enumerate().skip(1).map(|(i, example)| {
-            let alpha = alpha_for(i);
-            use theme::button::{Status, Style};
-            let toc_style = move |theme: &Theme, status: Status| {
-                let p = theme.palette();
-                let base_color = match status {
-                    Status::Active => p.foreground.alpha(alpha),
-                    _ => p.foreground,
+        let nav_items = meta
+            .examples
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(i, example)| {
+                let alpha = alpha_for(i);
+                use theme::button::{Status, Style};
+                let toc_style = move |theme: &Theme, status: Status| {
+                    let p = theme.palette();
+                    let base_color = match status {
+                        Status::Active => p.foreground.alpha(alpha),
+                        _ => p.foreground,
+                    };
+                    Style {
+                        background: None,
+                        text_color: base_color.into(),
+                        ..Style::default()
+                    }
                 };
-                Style {
-                    background: None,
-                    text_color: base_color.into(),
-                    ..Style::default()
-                }
-            };
-            button(example.title)
-                .size(Sm)
-                .translate(false)
-                .style(toc_style)
-                .on_press(Message::Page(page_index, page::Event::ScrollTo(i)))
-                .into()
-        });
+                button(example.title)
+                    .size(Sm)
+                    .translate(false)
+                    .style(toc_style)
+                    .on_press(Message::Page(page_index, page::Message::ScrollTo(i)))
+                    .into()
+            });
 
         let header = container(text::muted("On This Page")).padding([0, 8]);
 
@@ -429,4 +400,16 @@ impl App {
             Theme::light()
         }
     }
+}
+
+fn snippet<'a>(page_index: usize, items: &'a Vec<markdown::Item>) -> Component<'a, Message, Theme> {
+    let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
+    style.code_block_font = Font::MONOSPACE;
+    let settings = markdown::Settings {
+        code_size: Pixels(13.0),
+        ..markdown::Settings::with_style(style)
+    };
+    markdown::view(items, settings)
+        .map(move |url| Message::Page(page_index, page::Message::LinkClicked(url)))
+        .into()
 }

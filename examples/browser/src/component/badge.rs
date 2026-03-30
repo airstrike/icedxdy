@@ -80,7 +80,7 @@ impl page::Page for BadgePage {
         self.state.init()
     }
 
-    fn update(&mut self, event: page::Event) -> Task<Message> {
+    fn update(&mut self, event: page::Message) -> Task<Message> {
         if let Some(task) = self.state.update(&event) {
             return task;
         }

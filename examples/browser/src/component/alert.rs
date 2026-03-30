@@ -71,7 +71,7 @@ impl page::Page for AlertPage {
         self.state.init()
     }
 
-    fn update(&mut self, event: page::Event) -> Task<crate::Message> {
+    fn update(&mut self, event: page::Message) -> Task<crate::Message> {
         if let Some(task) = self.state.update(&event) {
             return task;
         }
@@ -80,6 +80,6 @@ impl page::Page for AlertPage {
 
     fn preview(&self, index: usize) -> iced::Element<'_, crate::Message, Theme> {
         let pi = self.state.page_index;
-        view(index).map(move |_| crate::Message::Page(pi, page::Event::Noop)).into()
+        view(index).map(move |_| crate::Message::Page(pi, page::Message::Noop)).into()
     }
 }

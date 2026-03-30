@@ -17,7 +17,7 @@ pub struct Meta {
 
 /// Events produced by page statestructure and component-specific interactions.
 #[derive(Debug, Clone)]
-pub enum Event {
+pub enum Message {
     SnippetLoaded(usize, Result<String, String>),
     LinkClicked(markdown::Uri),
     ExampleShown(usize),
@@ -38,7 +38,7 @@ pub trait Page {
     fn scrollable_id(&self) -> Id;
 
     fn init(&self) -> Task<super::Message>;
-    fn update(&mut self, event: Event) -> Task<super::Message>;
+    fn update(&mut self, message: Message) -> Task<super::Message>;
     fn preview(&self, index: usize) -> iced::Element<'_, super::Message, Theme>;
 }
 
@@ -81,7 +81,7 @@ impl State {
                             .await
                             .map_err(|e| e.to_string())
                     },
-                    move |result| super::Message::Page(pi, Event::SnippetLoaded(i, result)),
+                    move |result| super::Message::Page(pi, Message::SnippetLoaded(i, result)),
                 )
             })
             .collect();
@@ -89,11 +89,11 @@ impl State {
     }
 
     /// Handle statestructure events. Returns Some(task) if handled, None if not.
-    pub fn update(&mut self, event: &Event) -> Option<Task<super::Message>> {
+    pub fn update(&mut self, event: &Message) -> Option<Task<super::Message>> {
         use icedxdy::widget::operation::scroll;
 
         match event {
-            Event::SnippetLoaded(index, result) => {
+            Message::SnippetLoaded(index, result) => {
                 if let Some(slot) = self.snippets.get_mut(*index) {
                     if let Ok(content) = result {
                         *slot = Some(markdown::parse(content).collect());
@@ -101,20 +101,20 @@ impl State {
                 }
                 Some(Task::none())
             }
-            Event::LinkClicked(_) => Some(Task::none()),
-            Event::ExampleShown(idx) => {
+            Message::LinkClicked(_) => Some(Task::none()),
+            Message::ExampleShown(idx) => {
                 self.visible.insert(*idx);
                 Some(Task::none())
             }
-            Event::ExampleHidden(idx) => {
+            Message::ExampleHidden(idx) => {
                 self.visible.remove(idx);
                 Some(Task::none())
             }
-            Event::ScrollTo(idx) => Some(scroll::scroll_into_view(
+            Message::ScrollTo(idx) => Some(scroll::scroll_into_view(
                 self.scrollable_id.clone(),
                 self.example_ids[*idx].clone(),
             )),
-            Event::Noop => Some(Task::none()),
+            Message::Noop => Some(Task::none()),
             _ => None,
         }
     }

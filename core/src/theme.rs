@@ -7,6 +7,7 @@ pub mod alert;
 pub mod badge;
 pub mod button;
 pub mod checkbox;
+pub mod combo_box;
 pub mod container;
 #[cfg(feature = "markdown")]
 pub mod markdown;
@@ -17,7 +18,6 @@ pub mod sidebar;
 pub mod table;
 pub mod text;
 pub mod text_input;
-pub mod combo_box;
 
 use crate::Design;
 
@@ -97,5 +97,21 @@ impl iced_core::theme::Base for Theme {
 
     fn seed(&self) -> Option<iced_core::theme::palette::Seed> {
         Some(self.design.seed)
+    }
+}
+
+pub fn is_dark_mode() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+        Command::new("defaults")
+            .args(["read", "-g", "AppleInterfaceStyle"])
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "Dark")
+            .unwrap_or(true) // default to dark
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        true // default to dark on other platforms
     }
 }
