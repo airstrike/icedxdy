@@ -1,12 +1,17 @@
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
-use iced::Task;
-use iced::widget::{Id, markdown};
+use iced::widget::{Id, column, container, markdown, sensor};
+use iced::{Fill, Font, Function, Pixels, Task};
 
-use icedxdy::Theme;
+use icedxdy::Size::*;
+use icedxdy::widget::{button, text};
+use icedxdy::{Component, Theme, theme};
 
 use crate::example;
+
+/// Height for preview containers (shadcn uses h-72 = 288px)
+const PREVIEW_HEIGHT: f32 = 288.0;
 
 /// Static metadata for a component page.
 pub struct Meta {
@@ -15,7 +20,7 @@ pub struct Meta {
     pub examples: &'static [example::Meta],
 }
 
-/// Events produced by page statestructure and component-specific interactions.
+/// Messages produced by page infrastructure and component interactions.
 #[derive(Debug, Clone)]
 pub enum Message {
     SnippetLoaded(usize, Result<String, String>),
@@ -23,15 +28,14 @@ pub enum Message {
     ExampleShown(usize),
     ExampleHidden(usize),
     ScrollTo(usize),
-    /// Input field changed: (field index within the page, new value)
     InputChanged(usize, String),
-    /// Generic no-op for stateless component actions (e.g. button presses in previews)
     Noop,
 }
 
 /// Object-safe trait for a component page.
 pub trait Page {
     fn meta(&self) -> &'static Meta;
+    fn page_index(&self) -> usize;
     fn snippets(&self) -> &[Option<Vec<markdown::Item>>];
     fn visible(&self) -> &BTreeSet<usize>;
     fn example_ids(&self) -> &[Id];
@@ -42,7 +46,159 @@ pub trait Page {
     fn preview(&self, index: usize) -> iced::Element<'_, super::Message, Theme>;
 }
 
-/// Shared structure that each page owns via composition.
+/// Render a page's body and optional "On This Page" nav.
+pub fn view(
+    page: &dyn Page,
+) -> (
+    Component<'_, super::Message>,
+    Option<Component<'_, super::Message>>,
+) {
+    let body = examples(page);
+    let nav = (page.meta().examples.len() > 1).then(|| sidebar(page));
+    (body, nav)
+}
+
+fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
+    let pi = page.page_index();
+    let meta = page.meta();
+    let snippets = page.snippets();
+    let example_ids = page.example_ids();
+
+    let items = meta.examples.iter().enumerate().flat_map(|(i, ex)| {
+        let preview = container(page.preview(i))
+            .center_x(Fill)
+            .center_y(Fill)
+            .width(Fill)
+            .height(PREVIEW_HEIGHT)
+            .padding(40)
+            .style(theme::container::card_preview);
+
+        let card: Component<'_, super::Message> = if ex.snippet.is_empty() {
+            container(preview)
+                .style(theme::container::card_muted)
+                .width(Fill)
+                .into()
+        } else {
+            let code: Component<'_, super::Message> = snippets[i]
+                .as_ref()
+                .map(snippet.with(pi))
+                .unwrap_or_else(|| text("Loading...").into());
+            let code = container(code)
+                .padding([12, 16])
+                .style(theme::container::code_block);
+            container(column![preview, code])
+                .style(theme::container::card_muted)
+                .width(Fill)
+                .into()
+        };
+
+        macro_rules! sensored {
+            ($content:expr) => {
+                sensor(container($content).id(example_ids[i].clone()))
+                    .on_show(move |_| super::Message::Page(pi, Message::ExampleShown(i)))
+                    .on_hide(super::Message::Page(pi, Message::ExampleHidden(i)))
+                    .anticipate(50)
+            };
+        }
+
+        if i == 0 {
+            vec![sensored!(card).into()]
+        } else {
+            let desc: Option<Component<'_, super::Message>> = ex
+                .description
+                .map(|d| text::p(d).style(theme::text::muted).into());
+
+            let section: Component<'_, super::Message> = icedxdy::widget::column(
+                [Some(text::h3(ex.title).into()), desc, Some(card)]
+                    .into_iter()
+                    .flatten(),
+            )
+            .spacing(16)
+            .into();
+
+            let mut items = Vec::with_capacity(2);
+            if i == 1 {
+                items.push(text::h2("Examples").into());
+            }
+            items.push(sensored!(section).into());
+            items
+        }
+    });
+
+    icedxdy::widget::column(items)
+        .spacing(48)
+        .max_width(640.0)
+        .width(Fill)
+        .into()
+}
+
+fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
+    let pi = page.page_index();
+    let meta = page.meta();
+    let visible = page.visible();
+
+    let count = visible.len();
+    let alpha_for = |i: usize| -> f32 {
+        if count == 0 || !visible.contains(&i) {
+            return 0.25;
+        }
+        let rank = visible.iter().position(|&v| v == i).unwrap();
+        let center = (count - 1) as f32 / 2.0;
+        let distance = (rank as f32 - center).abs() / center.max(1.0);
+        1.0 - 0.5 * distance
+    };
+
+    use theme::button::{Status, Style};
+    let nav_items = meta
+        .examples
+        .iter()
+        .enumerate()
+        .skip(1)
+        .map(|(i, example)| {
+            let alpha = alpha_for(i);
+            let toc_style = move |theme: &Theme, status: Status| {
+                let p = theme.palette();
+                let base_color = match status {
+                    Status::Active => p.foreground.alpha(alpha),
+                    _ => p.foreground,
+                };
+                Style {
+                    background: None,
+                    text_color: base_color.into(),
+                    ..Style::default()
+                }
+            };
+            button(example.title)
+                .size(Sm)
+                .translate(false)
+                .style(toc_style)
+                .on_press(super::Message::Page(pi, Message::ScrollTo(i)))
+                .into()
+        });
+
+    let header = container(text::muted("On This Page")).padding([0, 8]);
+
+    column![header]
+        .push(column(nav_items).spacing(2))
+        .spacing(16)
+        .padding([24, 8])
+        .width(200)
+        .into()
+}
+
+fn snippet<'a>(page_index: usize, items: &'a Vec<markdown::Item>) -> Component<'a, super::Message> {
+    let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
+    style.code_block_font = Font::MONOSPACE;
+    let settings = markdown::Settings {
+        code_size: Pixels(13.0),
+        ..markdown::Settings::with_style(style)
+    };
+    markdown::view(items, settings)
+        .map(move |url| super::Message::Page(page_index, Message::LinkClicked(url)))
+        .into()
+}
+
+/// Common state that each page owns via composition.
 pub struct State {
     pub page_index: usize,
     pub snippets: Vec<Option<Vec<markdown::Item>>>,
@@ -88,7 +244,6 @@ impl State {
         Task::batch(tasks)
     }
 
-    /// Handle statestructure events. Returns Some(task) if handled, None if not.
     pub fn update(&mut self, event: &Message) -> Option<Task<super::Message>> {
         use icedxdy::widget::operation::scroll;
 

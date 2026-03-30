@@ -60,6 +60,7 @@ impl InputPage {
 }
 
 impl page::Page for InputPage {
+    fn page_index(&self) -> usize { self.state.page_index }
     fn meta(&self) -> &'static page::Meta {
         &META
     }

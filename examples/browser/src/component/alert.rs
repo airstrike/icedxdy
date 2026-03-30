@@ -47,6 +47,7 @@ fn view(index: usize) -> Component<'static, Message> {
 }
 
 impl page::Page for AlertPage {
+    fn page_index(&self) -> usize { self.state.page_index }
     fn meta(&self) -> &'static page::Meta {
         &META
     }

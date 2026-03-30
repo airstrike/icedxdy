@@ -4,12 +4,14 @@ mod fonts;
 mod icon;
 mod page;
 
-use iced::widget::{column, combo_box, container, markdown, row, scrollable, sensor, space};
-use iced::{Fill, Font, Function, Pixels, Task};
+use iced::widget::{column, combo_box, row, scrollable, space};
+
+use icedxdy::widget::container;
+use iced::{Fill, Font, Pixels, Task};
 
 use icedxdy::Size::*;
 use icedxdy::widget::{button, rule, separator, text};
-use icedxdy::{Component, Theme, theme};
+use icedxdy::{Theme, theme};
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
@@ -19,9 +21,6 @@ fn main() -> iced::Result {
         .font(icon::FONT)
         .run()
 }
-
-/// Height for preview containers (shadcn uses h-72 = 288px)
-const PREVIEW_HEIGHT: f32 = 288.0;
 
 /// Fonts to pin at the top of the font list
 const PINNED_FONTS: &[&str] = &["Geist", "Inter"];
@@ -140,82 +139,6 @@ impl App {
         }
     }
 
-    /// Generic page content: title, description, example cards with previews and code.
-    fn view_page(&self) -> Component<'_, Message> {
-        let pi = self.current_page;
-        let page = &*self.pages[pi];
-        let meta = page.meta();
-        let snippets = page.snippets();
-        let example_ids = page.example_ids();
-
-        let items = meta.examples.iter().enumerate().flat_map(|(i, ex)| {
-            let preview = container(page.preview(i))
-                .center_x(Fill)
-                .center_y(Fill)
-                .width(Fill)
-                .height(PREVIEW_HEIGHT)
-                .padding(40)
-                .style(theme::container::card_preview);
-
-            let card: Component<'_, Message> = if ex.snippet.is_empty() {
-                container(preview)
-                    .style(theme::container::card_muted)
-                    .width(Fill)
-                    .into()
-            } else {
-                let code: Component<'_, Message> = snippets[i]
-                    .as_ref()
-                    .map(snippet.with(pi))
-                    .unwrap_or_else(|| text("Loading...").into());
-                let code = container(code)
-                    .padding([12, 16])
-                    .style(theme::container::code_block);
-                container(column![preview, code])
-                    .style(theme::container::card_muted)
-                    .width(Fill)
-                    .into()
-            };
-
-            macro_rules! sensored {
-                ($content:expr) => {
-                    sensor(container($content).id(example_ids[i].clone()))
-                        .on_show(move |_| Message::Page(pi, page::Message::ExampleShown(i)))
-                        .on_hide(Message::Page(pi, page::Message::ExampleHidden(i)))
-                        .anticipate(50)
-                };
-            }
-
-            if i == 0 {
-                vec![sensored!(card).into()]
-            } else {
-                let desc: Option<Component<'_, Message>> = ex
-                    .description
-                    .map(|d| text::p(d).style(theme::text::muted).into());
-
-                let section: Component<'_, Message> = icedxdy::widget::column(
-                    [Some(text::h3(ex.title).into()), desc, Some(card)]
-                        .into_iter()
-                        .flatten(),
-                )
-                .spacing(16)
-                .into();
-
-                let mut items = Vec::with_capacity(2);
-                if i == 1 {
-                    items.push(text::h2("Examples").into());
-                }
-                items.push(sensored!(section).into());
-                items
-            }
-        });
-
-        icedxdy::widget::column(items)
-            .spacing(48)
-            .max_width(640.0)
-            .width(Fill)
-            .into()
-    }
-
     fn rebuild_font_list(&mut self) {
         let mut names = self.fount.families();
 
@@ -228,63 +151,6 @@ impl App {
         }
 
         self.font_list = combo_box::State::new(names);
-    }
-
-    /// "On This Page" navigation panel.
-    fn on_this_page(&self) -> Component<'_, Message> {
-        let page_index = self.current_page;
-        let page = &*self.pages[page_index];
-        let meta = page.meta();
-        let visible = page.visible();
-
-        let count = visible.len();
-        let alpha_for = |i: usize| -> f32 {
-            if count == 0 || !visible.contains(&i) {
-                return 0.25;
-            }
-            let rank = visible.iter().position(|&v| v == i).unwrap();
-            let center = (count - 1) as f32 / 2.0;
-            let distance = (rank as f32 - center).abs() / center.max(1.0);
-            1.0 - 0.5 * distance
-        };
-
-        // Skip the first example (demo) in the ToC
-        let nav_items = meta
-            .examples
-            .iter()
-            .enumerate()
-            .skip(1)
-            .map(|(i, example)| {
-                let alpha = alpha_for(i);
-                use theme::button::{Status, Style};
-                let toc_style = move |theme: &Theme, status: Status| {
-                    let p = theme.palette();
-                    let base_color = match status {
-                        Status::Active => p.foreground.alpha(alpha),
-                        _ => p.foreground,
-                    };
-                    Style {
-                        background: None,
-                        text_color: base_color.into(),
-                        ..Style::default()
-                    }
-                };
-                button(example.title)
-                    .size(Sm)
-                    .translate(false)
-                    .style(toc_style)
-                    .on_press(Message::Page(page_index, page::Message::ScrollTo(i)))
-                    .into()
-            });
-
-        let header = container(text::muted("On This Page")).padding([0, 8]);
-
-        column![header]
-            .push(column(nav_items).spacing(2))
-            .spacing(16)
-            .padding([24, 8])
-            .width(200)
-            .into()
     }
 
     fn view(&self) -> iced::Element<'_, Message, Theme> {
@@ -344,10 +210,10 @@ impl App {
         let title = text::h1(meta.title);
         let description = text::p(meta.description).style(theme::text::muted);
 
-        let preview = container(self.view_page()).width(Fill);
+        let (page_body, page_nav) = page::view(current);
 
         let content = container(
-            column![title, description, preview]
+            column![title, description, container(page_body).width(Fill)]
                 .spacing(24)
                 .padding(32)
                 .width(600),
@@ -375,10 +241,8 @@ impl App {
             }
         });
 
-        // Show "On This Page" panel if there are more than 1 example
-        let body = if meta.examples.len() > 1 {
-            let on_this_page = self.on_this_page();
-            row![sidebar, sidebar_divider, main, on_this_page]
+        let body = if let Some(nav) = page_nav {
+            row![sidebar, sidebar_divider, main, nav]
                 .width(Fill)
                 .height(Fill)
         } else {
@@ -400,16 +264,4 @@ impl App {
             Theme::light()
         }
     }
-}
-
-fn snippet<'a>(page_index: usize, items: &'a Vec<markdown::Item>) -> Component<'a, Message, Theme> {
-    let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
-    style.code_block_font = Font::MONOSPACE;
-    let settings = markdown::Settings {
-        code_size: Pixels(13.0),
-        ..markdown::Settings::with_style(style)
-    };
-    markdown::view(items, settings)
-        .map(move |url| Message::Page(page_index, page::Message::LinkClicked(url)))
-        .into()
 }

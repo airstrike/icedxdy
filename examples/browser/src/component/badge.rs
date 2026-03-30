@@ -56,6 +56,7 @@ fn view(index: usize) -> iced::Element<'static, Message, Theme> {
 }
 
 impl page::Page for BadgePage {
+    fn page_index(&self) -> usize { self.state.page_index }
     fn meta(&self) -> &'static page::Meta {
         &META
     }
