@@ -123,26 +123,15 @@ into_element!(iced_widget::Space);
 into_element!(iced_widget::Button<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Checkbox<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::TextInput<'a, Message, Theme, Renderer> where + Clone);
-// Slider: T is the value type, not Message. Needs hand-rolled impl.
-// into_element!(iced_widget::Slider<'a, T, Theme>);
 into_element!(iced_widget::Tooltip<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Sensor<'a, (), Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Pin<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::MouseArea<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Stack<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Grid<'a, Message, Theme, Renderer> where + Clone);
-// into_element!(iced_widget::Table<'a, Message, Theme, Renderer>);
-
-// FIXME: needs Catalog:
-// into_element!(iced_widget::ProgressBar<'a, Theme>);
-// into_element!(iced_widget::Toggler<'a, Message, Theme, Renderer>);
-// into_element!(iced_widget::Float<'a, Message, Theme, Renderer>);
-// into_element!(iced_widget::PaneGrid<'a, Message, Theme, Renderer>);
-
-// FIXME: needs generic type parameters, so current macro fails.
-// into_element!(iced_widget::TextEditor<'a, H, Message, Theme, Renderer>);
-// into_element!(iced_widget::PickList<'a, T, L, V, Message, Theme, Renderer>);
-// into_element!(iced_widget::ComboBox<'a, T, Message, Theme, Renderer>);
+into_element!(iced_widget::ProgressBar<'a, Theme>);
+into_element!(iced_widget::Toggler<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Float<'a, Message, Theme, Renderer> where + Clone);
 
 // &str → our Element (via our Text, so size propagation works)
 impl<'a, Message: 'a> From<&'a str> for Component<'a, Message> {
@@ -155,6 +144,50 @@ impl<'a, Message: 'a> From<&'a str> for Component<'a, Message> {
 impl<'a, Message: 'a> From<String> for Component<'a, Message> {
     fn from(s: String) -> Self {
         Component::new(crate::text::Text::new(s))
+    }
+}
+
+// Slider<T>: T is the value type, not Message
+impl<'a, T, Message> IntoElement<'a, Message> for iced_widget::Slider<'a, T, Message, Theme>
+where
+    T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
+    Message: Clone + 'a,
+{
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        iced_core::Element::new(*self)
+    }
+}
+
+impl<'a, T, Message> From<iced_widget::Slider<'a, T, Message, Theme>> for Component<'a, Message>
+where
+    T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
+    Message: Clone + 'a,
+{
+    fn from(w: iced_widget::Slider<'a, T, Message, Theme>) -> Self {
+        Component::new(w)
+    }
+}
+
+// ComboBox<T>
+impl<'a, T, Message> IntoElement<'a, Message>
+    for iced_widget::ComboBox<'a, T, Message, Theme, Renderer>
+where
+    T: std::fmt::Display + Clone + 'static,
+    Message: Clone + 'a,
+{
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        iced_core::Element::new(*self)
+    }
+}
+
+impl<'a, T, Message> From<iced_widget::ComboBox<'a, T, Message, Theme, Renderer>>
+    for Component<'a, Message>
+where
+    T: std::fmt::Display + Clone + 'static,
+    Message: Clone + 'a,
+{
+    fn from(w: iced_widget::ComboBox<'a, T, Message, Theme, Renderer>) -> Self {
+        Component::new(w)
     }
 }
 

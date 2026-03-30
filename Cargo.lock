@@ -1675,6 +1675,7 @@ dependencies = [
  "iced_widget",
  "icedxdy_core",
  "lyon_algorithms",
+ "num-traits",
 ]
 
 [[package]]
