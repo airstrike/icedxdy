@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
-use iced::widget::{Id, column, container, markdown, sensor};
+use iced::widget::{Id, center, column, container, markdown, sensor};
 use iced::{Fill, Font, Function, Pixels, Task};
 
 use icedxdy::Size::*;
@@ -65,32 +65,26 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let example_ids = page.example_ids();
 
     let items = meta.examples.iter().enumerate().flat_map(|(i, ex)| {
-        let preview = container(page.preview(i))
-            .center_x(Fill)
-            .center_y(Fill)
-            .width(Fill)
+        let preview = center(page.preview(i))
             .height(PREVIEW_HEIGHT)
             .padding(40)
             .style(theme::container::card_preview);
 
-        let card: Component<'_, super::Message> = if ex.snippet.is_empty() {
-            container(preview)
-                .style(theme::container::card_muted)
-                .width(Fill)
-                .into()
-        } else {
-            let code: Component<'_, super::Message> = snippets[i]
-                .as_ref()
-                .map(snippet.with(pi))
-                .unwrap_or_else(|| text("Loading...").into());
-            let code = container(code)
-                .padding([12, 16])
-                .style(theme::container::code_block);
-            container(column![preview, code])
-                .style(theme::container::card_muted)
-                .width(Fill)
-                .into()
-        };
+        let code = (!ex.snippet.is_empty()).then_some(
+            container(
+                snippets[i]
+                    .as_ref()
+                    .map(snippet.with(pi))
+                    .unwrap_or_else(|| text("Loading...").into()),
+            )
+            .padding([12, 16])
+            .style(theme::container::code_block),
+        );
+
+        let card = container(column![preview, code])
+            .style(theme::container::card_muted)
+            .width(Fill)
+            .into();
 
         macro_rules! sensored {
             ($content:expr) => {
