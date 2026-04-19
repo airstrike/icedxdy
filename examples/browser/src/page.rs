@@ -67,6 +67,7 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let items = meta.examples.iter().enumerate().flat_map(|(i, ex)| {
         let preview = center(page.preview(i))
             .height(PREVIEW_HEIGHT)
+            .width(Fill)
             .padding(40)
             .style(theme::container::card_preview);
 
@@ -78,6 +79,7 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
                     .unwrap_or_else(|| text("Loading...").into()),
             )
             .padding([12, 16])
+            .width(Fill)
             .style(theme::container::code_block),
         );
 
@@ -107,6 +109,7 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
                     .into_iter()
                     .flatten(),
             )
+            .width(Fill)
             .spacing(16)
             .into();
 
@@ -121,7 +124,6 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
 
     icedxdy::widget::column(items)
         .spacing(48)
-        .max_width(640.0)
         .width(Fill)
         .into()
 }
