@@ -264,7 +264,7 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
     }
 
     fn code_block(
-        &self,
+        &'a self,
         settings: markdown::Settings,
         _language: Option<&'a str>,
         _code: &'a str,
@@ -272,8 +272,9 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
     ) -> iced::Element<'a, markdown::Uri, Theme, iced::Renderer> {
         use iced::widget::{rich_text, scrollable};
 
+        let theme = self.code_theme();
         let body = column(lines.iter().map(|line| {
-            rich_text(line.spans(settings.style))
+            rich_text(line.spans(settings.style, Some(theme)))
                 .on_link_click(Self::on_link_click)
                 .font(settings.style.code_block_font)
                 .size(settings.code_size)

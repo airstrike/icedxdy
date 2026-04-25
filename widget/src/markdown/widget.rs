@@ -262,12 +262,36 @@ impl Text {
 
     /// Returns the [`rich_text()`] spans ready to be used for the given style.
     ///
-    /// This method performs caching for you. It will only reallocate if the [`Style`]
-    /// provided changes.
-    pub fn spans(&self, style: Style) -> Arc<[text::Span<'static, Uri>]> {
+    /// Caches by [`Style`] when no `code_theme` is supplied (paragraphs,
+    /// headings — all non-code text). When a `code_theme` is supplied the
+    /// spans are recomputed unconditionally — theme identity is not
+    /// observable across calls.
+    pub fn spans(
+        &self,
+        style: Style,
+        #[cfg(feature = "highlighter")] code_theme: Option<&dyn super::highlighter::CodeTheme>,
+    ) -> Arc<[text::Span<'static, Uri>]> {
+        #[cfg(feature = "highlighter")]
+        if code_theme.is_some() {
+            return self
+                .spans
+                .iter()
+                .map(|span| span.view(&style, code_theme))
+                .collect();
+        }
+
         if Some(style) != self.last_style.get() {
-            *self.last_styled_spans.borrow_mut() =
-                self.spans.iter().map(|span| span.view(&style)).collect();
+            *self.last_styled_spans.borrow_mut() = self
+                .spans
+                .iter()
+                .map(|span| {
+                    span.view(
+                        &style,
+                        #[cfg(feature = "highlighter")]
+                        None,
+                    )
+                })
+                .collect();
 
             self.last_style.set(Some(style));
         }
@@ -286,16 +310,22 @@ enum Span {
         emphasis: bool,
         code: bool,
     },
+    /// Tokenised but not yet coloured. Tree-sitter produces these at parse
+    /// time; the active [`super::highlighter::CodeTheme`] (passed in by the
+    /// [`Viewer`]) maps `capture` → colour at draw time.
     #[cfg(feature = "highlighter")]
-    Highlight {
+    Scoped {
         text: String,
-        color: Option<Color>,
-        font: Option<Font>,
+        capture: Option<u32>,
     },
 }
 
 impl Span {
-    fn view(&self, style: &Style) -> text::Span<'static, Uri> {
+    fn view(
+        &self,
+        style: &Style,
+        #[cfg(feature = "highlighter")] code_theme: Option<&dyn super::highlighter::CodeTheme>,
+    ) -> text::Span<'static, Uri> {
         match self {
             Span::Standard {
                 text,
@@ -338,8 +368,13 @@ impl Span {
                 }
             }
             #[cfg(feature = "highlighter")]
-            Span::Highlight { text, color, font } => {
-                span(text.clone()).color_maybe(*color).font_maybe(*font)
+            Span::Scoped { text, capture } => {
+                let style = capture
+                    .and_then(|c| code_theme.map(|t| t.style(c)))
+                    .unwrap_or_default();
+                span(text.clone())
+                    .color_maybe(style.color)
+                    .font_maybe(style.font)
             }
         }
     }
@@ -465,7 +500,6 @@ impl Highlighter {
 
     pub fn highlight_line(&mut self, text: &str) -> &[Span] {
         use super::highlighter;
-        use super::highlighter::CodeTheme;
 
         let line = text.strip_suffix('\n').unwrap_or(text).to_owned();
 
@@ -484,23 +518,15 @@ impl Highlighter {
             let source = self.pending_lines.join("\n");
             let mut tokenizer = highlighter::Highlighter::new();
             let raw_lines = tokenizer.highlight(&source, &self.language);
-            let theme = highlighter::DefaultLight;
 
             self.cached = raw_lines
                 .into_iter()
                 .map(|spans| {
                     spans
                         .into_iter()
-                        .map(|sp| {
-                            let style = sp
-                                .capture
-                                .map(|c| theme.style(c))
-                                .unwrap_or_default();
-                            Span::Highlight {
-                                text: sp.text,
-                                color: style.color,
-                                font: style.font,
-                            }
+                        .map(|sp| Span::Scoped {
+                            text: sp.text,
+                            capture: sp.capture,
                         })
                         .collect()
                 })
@@ -1176,7 +1202,7 @@ where
 pub fn view_with<'a, Message, Theme, Renderer>(
     items: impl IntoIterator<Item = &'a Item>,
     settings: impl Into<Settings>,
-    viewer: &impl Viewer<'a, Message, Theme, Renderer>,
+    viewer: &'a impl Viewer<'a, Message, Theme, Renderer>,
 ) -> Element<'a, Message, Theme, Renderer>
 where
     Message: 'a,
@@ -1195,7 +1221,7 @@ where
 
 /// Displays an [`Item`] using the given [`Viewer`].
 pub fn item<'a, Message, Theme, Renderer>(
-    viewer: &impl Viewer<'a, Message, Theme, Renderer>,
+    viewer: &'a impl Viewer<'a, Message, Theme, Renderer>,
     settings: Settings,
     item: &'a Item,
     index: usize,
@@ -1253,16 +1279,20 @@ where
     } = settings;
 
     container(
-        rich_text(text.spans(settings.style))
-            .on_link_click(on_link_click)
-            .size(match level {
-                pulldown_cmark::HeadingLevel::H1 => h1_size,
-                pulldown_cmark::HeadingLevel::H2 => h2_size,
-                pulldown_cmark::HeadingLevel::H3 => h3_size,
-                pulldown_cmark::HeadingLevel::H4 => h4_size,
-                pulldown_cmark::HeadingLevel::H5 => h5_size,
-                pulldown_cmark::HeadingLevel::H6 => h6_size,
-            }),
+        rich_text(text.spans(
+            settings.style,
+            #[cfg(feature = "highlighter")]
+            None,
+        ))
+        .on_link_click(on_link_click)
+        .size(match level {
+            pulldown_cmark::HeadingLevel::H1 => h1_size,
+            pulldown_cmark::HeadingLevel::H2 => h2_size,
+            pulldown_cmark::HeadingLevel::H3 => h3_size,
+            pulldown_cmark::HeadingLevel::H4 => h4_size,
+            pulldown_cmark::HeadingLevel::H5 => h5_size,
+            pulldown_cmark::HeadingLevel::H6 => h6_size,
+        }),
     )
     .padding(padding::top(if index > 0 {
         text_size / 2.0
@@ -1283,16 +1313,20 @@ where
     Theme: Catalog + 'a,
     Renderer: core::text::Renderer<Font = Font> + 'a,
 {
-    rich_text(text.spans(settings.style))
-        .size(settings.text_size)
-        .on_link_click(on_link_click)
-        .into()
+    rich_text(text.spans(
+        settings.style,
+        #[cfg(feature = "highlighter")]
+        None,
+    ))
+    .size(settings.text_size)
+    .on_link_click(on_link_click)
+    .into()
 }
 
 /// Displays an unordered list using the default look and
 /// calling the [`Viewer`] for each bullet point item.
 pub fn unordered_list<'a, Message, Theme, Renderer>(
-    viewer: &impl Viewer<'a, Message, Theme, Renderer>,
+    viewer: &'a impl Viewer<'a, Message, Theme, Renderer>,
     settings: Settings,
     bullets: &'a [Bullet],
 ) -> Element<'a, Message, Theme, Renderer>
@@ -1334,7 +1368,7 @@ where
 /// Displays an ordered list using the default look and
 /// calling the [`Viewer`] for each numbered item.
 pub fn ordered_list<'a, Message, Theme, Renderer>(
-    viewer: &impl Viewer<'a, Message, Theme, Renderer>,
+    viewer: &'a impl Viewer<'a, Message, Theme, Renderer>,
     settings: Settings,
     start: u64,
     bullets: &'a [Bullet],
@@ -1368,11 +1402,15 @@ where
     .into()
 }
 
-/// Displays a code block using the default look.
+/// Displays a code block using the default look. The `code_theme`
+/// argument is consulted at draw time to colour `Span::Scoped` tokens —
+/// pass `None` to leave them in the renderer's default text colour
+/// (effectively a "no syntax highlighting" rendering).
 pub fn code_block<'a, Message, Theme, Renderer>(
     settings: Settings,
     lines: &'a [Text],
     on_link_click: impl Fn(Uri) -> Message + Clone + 'a,
+    #[cfg(feature = "highlighter")] code_theme: Option<&'a dyn super::highlighter::CodeTheme>,
 ) -> Element<'a, Message, Theme, Renderer>
 where
     Message: 'a,
@@ -1382,7 +1420,12 @@ where
     container(
         scrollable(
             container(column(lines.iter().map(|line| {
-                rich_text(line.spans(settings.style))
+                let spans = line.spans(
+                    settings.style,
+                    #[cfg(feature = "highlighter")]
+                    code_theme,
+                );
+                rich_text(spans)
                     .on_link_click(on_link_click.clone())
                     .font(settings.style.code_block_font)
                     .size(settings.code_size)
@@ -1404,7 +1447,7 @@ where
 
 /// Displays a quote using the default look.
 pub fn quote<'a, Message, Theme, Renderer>(
-    viewer: &impl Viewer<'a, Message, Theme, Renderer>,
+    viewer: &'a impl Viewer<'a, Message, Theme, Renderer>,
     settings: Settings,
     contents: &'a [Item],
 ) -> Element<'a, Message, Theme, Renderer>
@@ -1440,7 +1483,7 @@ where
 
 /// Displays a table using the default look.
 pub fn table<'a, Message, Theme, Renderer>(
-    viewer: &impl Viewer<'a, Message, Theme, Renderer>,
+    viewer: &'a impl Viewer<'a, Message, Theme, Renderer>,
     settings: Settings,
     columns: &'a [Column],
     rows: &'a [Row],
@@ -1485,7 +1528,7 @@ where
 
 /// Displays a column of items with the default look.
 pub fn items<'a, Message, Theme, Renderer>(
-    viewer: &impl Viewer<'a, Message, Theme, Renderer>,
+    viewer: &'a impl Viewer<'a, Message, Theme, Renderer>,
     settings: Settings,
     items: &'a [Item],
 ) -> Element<'a, Message, Theme, Renderer>
@@ -1528,10 +1571,17 @@ where
         let _url = url;
         let _title = title;
 
-        container(rich_text(alt.spans(settings.style)).on_link_click(Self::on_link_click))
-            .padding(settings.spacing.0)
-            .class(Theme::code_block())
-            .into()
+        container(
+            rich_text(alt.spans(
+                settings.style,
+                #[cfg(feature = "highlighter")]
+                None,
+            ))
+            .on_link_click(Self::on_link_click),
+        )
+        .padding(settings.spacing.0)
+        .class(Theme::code_block())
+        .into()
     }
 
     /// Displays a heading.
@@ -1556,9 +1606,14 @@ where
 
     /// Displays a code block.
     ///
-    /// By default, it calls [`code_block`].
+    /// By default, it calls [`code_block`] with the [`CodeTheme`] returned
+    /// by [`Self::code_theme`]. Note the `&'a self` receiver — the
+    /// `code_theme` reference carries the `'a` lifetime so it can flow
+    /// into the returned `Element<'a, ...>`.
+    ///
+    /// [`CodeTheme`]: super::highlighter::CodeTheme
     fn code_block(
-        &self,
+        &'a self,
         settings: Settings,
         language: Option<&'a str>,
         code: &'a str,
@@ -1567,14 +1622,35 @@ where
         let _language = language;
         let _code = code;
 
-        code_block(settings, lines, Self::on_link_click)
+        code_block(
+            settings,
+            lines,
+            Self::on_link_click,
+            #[cfg(feature = "highlighter")]
+            Some(self.code_theme()),
+        )
+    }
+
+    /// Returns the [`super::highlighter::CodeTheme`] used to colour
+    /// `Span::Scoped` tokens at draw time. Default returns
+    /// [`super::highlighter::DefaultLight`]; override to use a custom
+    /// theme — that's the icedxdy-specific extension that turns iced
+    /// markdown into a parse-once / theme-at-draw pipeline.
+    ///
+    /// The 'a binding lets implementations return either a `&'static`
+    /// theme (e.g. a unit struct) or a theme held in `self` (whose
+    /// lifetime is bound by the same 'a as the rendered Element data).
+    #[cfg(feature = "highlighter")]
+    fn code_theme(&'a self) -> &'a dyn super::highlighter::CodeTheme {
+        static DEFAULT: super::highlighter::DefaultLight = super::highlighter::DefaultLight;
+        &DEFAULT
     }
 
     /// Displays an unordered list.
     ///
     /// By default, it calls [`unordered_list`].
     fn unordered_list(
-        &self,
+        &'a self,
         settings: Settings,
         bullets: &'a [Bullet],
     ) -> Element<'a, Message, Theme, Renderer> {
@@ -1585,7 +1661,7 @@ where
     ///
     /// By default, it calls [`ordered_list`].
     fn ordered_list(
-        &self,
+        &'a self,
         settings: Settings,
         start: u64,
         bullets: &'a [Bullet],
@@ -1597,7 +1673,7 @@ where
     ///
     /// By default, it calls [`quote`].
     fn quote(
-        &self,
+        &'a self,
         settings: Settings,
         contents: &'a [Item],
     ) -> Element<'a, Message, Theme, Renderer> {
@@ -1615,7 +1691,7 @@ where
     ///
     /// By default, it calls [`table`].
     fn table(
-        &self,
+        &'a self,
         settings: Settings,
         columns: &'a [Column],
         rows: &'a [Row],
