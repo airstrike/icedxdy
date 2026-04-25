@@ -51,6 +51,9 @@ use crate::core::theme::palette;
 use crate::core::{self, Color, Element, Length, Padding, Pixels, Theme, color};
 use iced_widget::{checkbox, column, container, rich_text, row, rule, scrollable, span, text};
 
+#[cfg(feature = "highlighter")]
+use super::highlighter::{CodeTheme, DefaultLight};
+
 use std::borrow::BorrowMut;
 use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
@@ -269,7 +272,7 @@ impl Text {
     pub fn spans(
         &self,
         style: Style,
-        #[cfg(feature = "highlighter")] code_theme: Option<&dyn super::highlighter::CodeTheme>,
+        #[cfg(feature = "highlighter")] code_theme: Option<&dyn CodeTheme>,
     ) -> Arc<[text::Span<'static, Uri>]> {
         #[cfg(feature = "highlighter")]
         if code_theme.is_some() {
@@ -324,7 +327,7 @@ impl Span {
     fn view(
         &self,
         style: &Style,
-        #[cfg(feature = "highlighter")] code_theme: Option<&dyn super::highlighter::CodeTheme>,
+        #[cfg(feature = "highlighter")] code_theme: Option<&dyn CodeTheme>,
     ) -> text::Span<'static, Uri> {
         match self {
             Span::Standard {
@@ -1410,7 +1413,7 @@ pub fn code_block<'a, Message, Theme, Renderer>(
     settings: Settings,
     lines: &'a [Text],
     on_link_click: impl Fn(Uri) -> Message + Clone + 'a,
-    #[cfg(feature = "highlighter")] code_theme: Option<&'a dyn super::highlighter::CodeTheme>,
+    #[cfg(feature = "highlighter")] code_theme: Option<&'a dyn CodeTheme>,
 ) -> Element<'a, Message, Theme, Renderer>
 where
     Message: 'a,
@@ -1631,18 +1634,17 @@ where
         )
     }
 
-    /// Returns the [`super::highlighter::CodeTheme`] used to colour
-    /// `Span::Scoped` tokens at draw time. Default returns
-    /// [`super::highlighter::DefaultLight`]; override to use a custom
-    /// theme — that's the icedxdy-specific extension that turns iced
+    /// Returns the [`CodeTheme`] used to colour `Span::Scoped` tokens at
+    /// draw time. Default returns [`DefaultLight`]; override to use a
+    /// custom theme — the icedxdy-specific extension that turns iced
     /// markdown into a parse-once / theme-at-draw pipeline.
     ///
     /// The 'a binding lets implementations return either a `&'static`
     /// theme (e.g. a unit struct) or a theme held in `self` (whose
     /// lifetime is bound by the same 'a as the rendered Element data).
     #[cfg(feature = "highlighter")]
-    fn code_theme(&'a self) -> &'a dyn super::highlighter::CodeTheme {
-        static DEFAULT: super::highlighter::DefaultLight = super::highlighter::DefaultLight;
+    fn code_theme(&'a self) -> &'a dyn CodeTheme {
+        static DEFAULT: DefaultLight = DefaultLight;
         &DEFAULT
     }
 
