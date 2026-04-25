@@ -52,7 +52,7 @@ use crate::core::{self, Color, Element, Length, Padding, Pixels, Theme, color};
 use iced_widget::{checkbox, column, container, rich_text, row, rule, scrollable, span, text};
 
 #[cfg(feature = "highlighter")]
-use super::highlighter::{CodeTheme, DefaultLight};
+use super::highlighter;
 
 use std::borrow::BorrowMut;
 use std::cell::{Cell, RefCell};
@@ -272,7 +272,7 @@ impl Text {
     pub fn spans(
         &self,
         style: Style,
-        #[cfg(feature = "highlighter")] code_theme: Option<&dyn CodeTheme>,
+        #[cfg(feature = "highlighter")] code_theme: Option<&dyn highlighter::Theme>,
     ) -> Arc<[text::Span<'static, Uri>]> {
         #[cfg(feature = "highlighter")]
         if code_theme.is_some() {
@@ -314,7 +314,7 @@ enum Span {
         code: bool,
     },
     /// Tokenised but not yet coloured. Tree-sitter produces these at parse
-    /// time; the active [`super::highlighter::CodeTheme`] (passed in by the
+    /// time; the active [`super::highlighter::Theme`] (passed in by the
     /// [`Viewer`]) maps `capture` → colour at draw time.
     #[cfg(feature = "highlighter")]
     Scoped {
@@ -327,7 +327,7 @@ impl Span {
     fn view(
         &self,
         style: &Style,
-        #[cfg(feature = "highlighter")] code_theme: Option<&dyn CodeTheme>,
+        #[cfg(feature = "highlighter")] code_theme: Option<&dyn highlighter::Theme>,
     ) -> text::Span<'static, Uri> {
         match self {
             Span::Standard {
@@ -475,7 +475,7 @@ struct State {
 /// tokenising once per block, and code-block snippets are small.
 ///
 /// Colours are baked in here at parse time using
-/// [`super::highlighter::DefaultLight`] — chunk B will defer this to
+/// [`super::highlighter::Light`] — chunk B will defer this to
 /// view time so the [`crate::markdown::Viewer`] can pick a theme.
 #[cfg(feature = "highlighter")]
 #[derive(Debug)]
@@ -1413,7 +1413,7 @@ pub fn code_block<'a, Message, Theme, Renderer>(
     settings: Settings,
     lines: &'a [Text],
     on_link_click: impl Fn(Uri) -> Message + Clone + 'a,
-    #[cfg(feature = "highlighter")] code_theme: Option<&'a dyn CodeTheme>,
+    #[cfg(feature = "highlighter")] code_theme: Option<&'a dyn highlighter::Theme>,
 ) -> Element<'a, Message, Theme, Renderer>
 where
     Message: 'a,
@@ -1609,12 +1609,10 @@ where
 
     /// Displays a code block.
     ///
-    /// By default, it calls [`code_block`] with the [`CodeTheme`] returned
-    /// by [`Self::code_theme`]. Note the `&'a self` receiver — the
-    /// `code_theme` reference carries the `'a` lifetime so it can flow
-    /// into the returned `Element<'a, ...>`.
-    ///
-    /// [`CodeTheme`]: super::highlighter::CodeTheme
+    /// By default, it calls [`code_block`] with the
+    /// [`highlighter::Theme`] returned by [`Self::code_theme`]. Note the
+    /// `&'a self` receiver — the `code_theme` reference carries the `'a`
+    /// lifetime so it can flow into the returned `Element<'a, ...>`.
     fn code_block(
         &'a self,
         settings: Settings,
@@ -1634,17 +1632,18 @@ where
         )
     }
 
-    /// Returns the [`CodeTheme`] used to colour `Span::Scoped` tokens at
-    /// draw time. Default returns [`DefaultLight`]; override to use a
-    /// custom theme — the icedxdy-specific extension that turns iced
-    /// markdown into a parse-once / theme-at-draw pipeline.
+    /// Returns the [`highlighter::Theme`] used to colour `Span::Scoped`
+    /// tokens at draw time. Default returns [`highlighter::Light`];
+    /// override to use a custom theme — the icedxdy-specific extension
+    /// that turns iced markdown into a parse-once / theme-at-draw
+    /// pipeline.
     ///
     /// The 'a binding lets implementations return either a `&'static`
     /// theme (e.g. a unit struct) or a theme held in `self` (whose
     /// lifetime is bound by the same 'a as the rendered Element data).
     #[cfg(feature = "highlighter")]
-    fn code_theme(&'a self) -> &'a dyn CodeTheme {
-        static DEFAULT: DefaultLight = DefaultLight;
+    fn code_theme(&'a self) -> &'a dyn highlighter::Theme {
+        static DEFAULT: highlighter::Light = highlighter::Light;
         &DEFAULT
     }
 

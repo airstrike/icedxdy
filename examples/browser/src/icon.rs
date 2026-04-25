@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 7f4f74b1348582706e770a3c8cee53013ad07a37a5bdeeaec0d24ca76a08f764
+// 1c849340784a7f1b8e43181cee40d14bea6140b803c91377d7d180b8b952e8c6
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -13,9 +13,11 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("arrow_up_right", "\u{E04D}"),
     ("badge_check", "\u{E241}"),
     ("bookmark", "\u{E060}"),
+    ("check", "\u{E06C}"),
     ("circle_alert", "\u{E077}"),
     ("circle_check", "\u{E226}"),
     ("circle_check_big", "\u{E07C}"),
+    ("copy", "\u{E09E}"),
     ("git_branch", "\u{E0E2}"),
     ("info", "\u{E0F9}"),
     ("moon", "\u{E11E}"),
@@ -51,6 +53,13 @@ where
     icon("\u{E060}")
 }
 
+pub fn check<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E06C}")
+}
+
 pub fn circle_alert<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -70,6 +79,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E07C}")
+}
+
+pub fn copy<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E09E}")
 }
 
 pub fn git_branch<'a, Theme>() -> Text<'a, Theme>

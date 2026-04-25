@@ -1,12 +1,13 @@
 //! Markdown rendering, vendored from `iced_widget::markdown` and extended
-//! with configurable syntax-highlighter theme.
+//! with a tree-sitter syntax highlighter (replacing iced_highlighter's
+//! regex-grammar syntect engine) and a parse-once / theme-at-draw
+//! pipeline (`Viewer::code_theme`).
 //!
-//! Upstream is hardcoded to `iced_highlighter::Theme::Base16Ocean`; our
-//! [`parse_with_theme`] lets callers pick any theme (e.g.
-//! `InspiredGitHub` for shadcn-faithful light-mode rendering).
+//! Built-in language: Rust, using Helix's vendored queries. Downstream
+//! apps can register additional languages with [`highlighter::register`].
 //!
-//! See `widget/src/markdown/widget.rs` for the cp'd source — kept verbatim
-//! where possible so future re-vendoring stays mechanical.
+//! See `widget/src/markdown/widget.rs` for the cp'd iced source — kept
+//! verbatim where possible so future re-vendoring stays mechanical.
 
 #[cfg(feature = "highlighter")]
 pub mod highlighter;
@@ -20,11 +21,6 @@ pub use widget::{
     unordered_list, view, view_with,
 };
 
-#[cfg(feature = "highlighter")]
-pub use highlighter::{
-    CAPTURE_NAMES, CodeStyle, CodeTheme, DefaultDark, DefaultLight, HighlightedLine,
-    HighlightedSpan,
-};
 
 // Catalog impl for our own Theme — mirrors iced's default impl on
 // `iced_core::Theme` (in widget.rs:1649-1653) so callers using

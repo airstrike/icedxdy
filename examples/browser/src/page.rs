@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use iced::Alignment;
 use iced::widget::{Id, center, column, container, sensor, stack};
-use iced::{Fill, Font, Function, Pixels, Task};
+use iced::{Fill, Font, Pixels, Task};
 
 use icedxdy::Size::*;
 use icedxdy::widget::markdown;
@@ -60,19 +60,27 @@ pub trait Page {
     fn reset_volatile(&mut self) {}
 }
 
-/// Render a page's body and optional "On This Page" nav.
+/// Render a page's body and optional "On This Page" nav. `dark` selects
+/// between the GitHub-light and GitHub-dark code-block palettes — they
+/// must be picked at view-construction time because the syntax colours
+/// are baked into the rendered Element spans.
 pub fn view(
     page: &dyn Page,
+    dark: bool,
 ) -> (
     Component<'_, super::Message>,
     Option<Component<'_, super::Message>>,
 ) {
-    let body = examples(page);
+    let viewer = viewer_for(dark);
+    let body = examples(page, viewer);
     let nav = (page.meta().examples.len() > 1).then(|| sidebar(page));
     (body, nav)
 }
 
-fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
+fn examples<'a>(
+    page: &'a dyn Page,
+    viewer: &'a SnippetViewer,
+) -> Component<'a, super::Message> {
     let pi = page.page_index();
     let meta = page.meta();
     let snippets = page.snippets();
@@ -91,30 +99,31 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
             (!ex.snippet.is_empty()).then(|| {
                 let body = snippets[i]
                     .as_ref()
-                    .map(snippet.with(pi))
+                    .map(|items| snippet(pi, items, viewer))
                     .unwrap_or_else(|| text("Loading...").into());
                 let inner = container(body)
                     .padding([12, 16])
                     .width(Fill)
                     .style(theme::container::code_block);
 
-                let copy_btn: Component<'_, super::Message> = button::ghost(
-                    icon::arrow_up_right().size(14),
-                )
-                .size(Sm)
-                .square()
-                .on_press(super::Message::Page(pi, Message::CopyCode(i)))
-                .into();
-                let copy_corner = container(copy_btn)
-                    .align_x(Alignment::End)
-                    .align_y(Alignment::Start)
-                    .padding([8, 8])
-                    .width(Fill)
-                    .height(Fill);
-
                 if expanded_set.contains(&i) {
+                    // Expanded: full code + copy button at top-right corner.
+                    let copy_btn: Component<'_, super::Message> =
+                        button::ghost(icon::copy().size(14))
+                            .size(Sm)
+                            .square()
+                            .on_press(super::Message::Page(pi, Message::CopyCode(i)))
+                            .into();
+                    let copy_corner = container(copy_btn)
+                        .align_x(Alignment::End)
+                        .align_y(Alignment::Start)
+                        .padding([8, 8])
+                        .width(Fill)
+                        .height(Fill);
                     stack![inner, copy_corner].into()
                 } else {
+                    // Collapsed: truncated code with gradient fade + "View Code" button.
+                    // No copy button — user hasn't opted into seeing the code yet.
                     let truncated = inner.max_height(COLLAPSED_CODE_HEIGHT).clip(true);
                     let view_code_btn: Component<'_, super::Message> = button("View Code")
                         .size(Sm)
@@ -127,11 +136,19 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
                         .width(Fill)
                         .align_x(Alignment::Center)
                         .align_y(Alignment::Center);
-                    stack![truncated, overlay, copy_corner].into()
+                    stack![truncated, overlay].into()
                 }
             });
 
-        let card = container(column![preview, code])
+        // Thin divider between preview and code area — matches shadcn's
+        // implicit visual break between the bg-card preview and bg-code
+        // section. Skip the divider when there's no code (description-only
+        // examples).
+        let divider: Option<iced::Element<'_, super::Message, Theme>> = code
+            .as_ref()
+            .map(|_| iced_widget::rule::horizontal(1).into());
+
+        let card = container(column![preview, divider, code])
             .style(theme::container::card)
             .padding(1)
             .clip(true)
@@ -232,35 +249,52 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         .into()
 }
 
-fn snippet<'a>(page_index: usize, items: &'a Vec<markdown::Item>) -> Component<'a, super::Message> {
+fn snippet<'a>(
+    page_index: usize,
+    items: &'a Vec<markdown::Item>,
+    viewer: &'a SnippetViewer,
+) -> Component<'a, super::Message> {
     let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
     style.code_block_font = Font::MONOSPACE;
     let settings = markdown::Settings {
         code_size: Pixels(13.0),
         ..markdown::Settings::with_style(style)
     };
-    markdown::view_with(items, settings, &SnippetViewer)
+    markdown::view_with(items, settings, viewer)
         .map(move |url| super::Message::Page(page_index, Message::LinkClicked(url)))
         .into()
 }
 
-/// Custom markdown viewer for code-snippet rendering. Overrides
-/// `code_block` to skip iced's default container chrome (which would
-/// nest a second `theme::container::code_block` inside our outer
-/// page-level one); we provide the bg + rounded corners + padding from
-/// the page-level container instead, so the markdown widget just emits
-/// the syntax-highlighted lines + horizontal scrollbar.
-///
-/// Note: token colors come from `iced_highlighter`'s hard-coded
-/// `Base16Ocean` theme (see iced markdown source). To match shadcn's
-/// `github-light`/`github-dark` requires bypassing `markdown::parse` and
-/// using `iced_highlighter::Stream` directly with `InspiredGitHub` —
-/// see follow-up plan.
-struct SnippetViewer;
+/// Markdown viewer for code-snippet rendering. Picks `highlighter::Light`
+/// or `highlighter::Dark` (the GitHub palettes shadcn's nova ships via
+/// Shiki) based on the current app theme. Overrides `code_block` to skip
+/// iced's default container chrome — bg + radius + padding come from the
+/// page-level container, the markdown widget just emits the highlighted
+/// rich-text lines + horizontal scrollbar.
+enum SnippetViewer {
+    Light,
+    Dark,
+}
+
+static LIGHT_THEME: markdown::highlighter::Light = markdown::highlighter::Light;
+static DARK_THEME: markdown::highlighter::Dark = markdown::highlighter::Dark;
+static LIGHT_VIEWER: SnippetViewer = SnippetViewer::Light;
+static DARK_VIEWER: SnippetViewer = SnippetViewer::Dark;
+
+fn viewer_for(dark: bool) -> &'static SnippetViewer {
+    if dark { &DARK_VIEWER } else { &LIGHT_VIEWER }
+}
 
 impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetViewer {
     fn on_link_click(url: markdown::Uri) -> markdown::Uri {
         url
+    }
+
+    fn code_theme(&'a self) -> &'a dyn markdown::highlighter::Theme {
+        match self {
+            SnippetViewer::Light => &LIGHT_THEME,
+            SnippetViewer::Dark => &DARK_THEME,
+        }
     }
 
     fn code_block(
@@ -357,9 +391,8 @@ impl State {
                 if let Ok(content) = result
                     && let Some(slot) = self.snippets.get_mut(*index)
                 {
-                    // TODO: chunk B — pass a CodeTheme through the Viewer so colors
-                    // are decided at draw time, then swap DefaultLight for a
-                    // shadcn-faithful github-light/dark palette.
+                    // TODO: swap DefaultLight for a shadcn-faithful github-light/dark
+                    // palette via Viewer's code_theme() method.
                     *slot = Some(markdown::parse(content).collect());
                     if let Some(raw_slot) = self.snippets_raw.get_mut(*index) {
                         *raw_slot = Some(content.clone());

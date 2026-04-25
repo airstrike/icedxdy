@@ -215,7 +215,7 @@ impl App {
         let title = text::h1(meta.title);
         let description = text::p(meta.description).style(theme::text::muted);
 
-        let (page_body, page_nav) = page::view(current);
+        let (page_body, page_nav) = page::view(current, self.dark_mode);
 
         let content = container(
             column![title, description, container(page_body).width(Fill)]
