@@ -139,10 +139,11 @@ impl<'a, Message: Clone + 'a> SidebarMenuButton<'a, Message> {
 }
 
 // -- Style functions ----------------------------------------------------------
-// TODO: Wire up SidebarPalette when merging. For now, use main palette colors:
-//   sidebar accent     ~ palette.accent
-//   sidebar foreground ~ palette.foreground / palette.muted.foreground
-//   sidebar accent-fg  ~ palette.accent.foreground
+// These match shadcn's docs-sidebar.tsx override (what the rendered docs site
+// actually shows): `font-medium` always, `bg-accent` (main palette) on active,
+// muted text color for inactive. They do NOT match the base SidebarMenuButton
+// CSS (which uses `bg-sidebar-accent`) — the icedxdy browser mimics the docs
+// site, so docs-sidebar styling is the intended default here.
 
 fn style_default(active: bool) -> impl Fn(&Theme, Status) -> Style {
     move |theme, status| {
