@@ -6,8 +6,8 @@ mod page;
 
 use iced::widget::{column, combo_box, row, scrollable, space};
 
-use icedxdy::widget::container;
 use iced::{Fill, Font, Pixels, Task};
+use icedxdy::widget::container;
 
 use icedxdy::Size::*;
 use icedxdy::widget::{button, rule, separator, text};
@@ -89,6 +89,11 @@ impl App {
                 Task::none()
             }
             Message::SelectPage(page) => {
+                if page != self.current_page {
+                    if let Some(prev) = self.pages.get_mut(self.current_page) {
+                        prev.reset_volatile();
+                    }
+                }
                 self.current_page = page;
                 Task::none()
             }
@@ -216,7 +221,7 @@ impl App {
             column![title, description, container(page_body).width(Fill)]
                 .spacing(24)
                 .padding(32)
-                .width(600),
+                .width(700),
         )
         .center_x(Fill);
 

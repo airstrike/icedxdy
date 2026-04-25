@@ -11,7 +11,7 @@ keywords.workspace = true
 
 [features]
 default = []
-markdown = ["icedxdy_core/markdown"]
+markdown = ["icedxdy_core/markdown", "icedxdy_widget/markdown"]
 spinner = ["icedxdy_widget/spinner"]
 
 [dependencies]
@@ -48,6 +48,11 @@ iced_core = "0.15.0-dev"
 iced_runtime = "0.15.0-dev"
 iced_selector = "0.15.0-dev"
 iced_widget = "0.15.0-dev"
+log = "0.4"
+pulldown-cmark = { version = "0.12", default-features = false, features = ["html"] }
+tree-sitter = "0.26"
+tree-sitter-highlight = "0.26"
+tree-sitter-rust = "0.24"
 
 [patch.crates-io]
 iced.git = "https://github.com/airstrike/iced.git"

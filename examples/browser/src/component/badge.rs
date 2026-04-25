@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 
-use iced::widget::{Id, markdown};
+use iced::widget::Id;
+use icedxdy::widget::markdown;
 use iced::Task;
 
 use icedxdy::widget::{badge, row, spinner};
@@ -112,6 +113,10 @@ impl page::Page for BadgePage {
         self.state.scrollable_id.clone()
     }
 
+    fn code_expanded(&self) -> &BTreeSet<usize> {
+        &self.state.code_expanded
+    }
+
     fn init(&self) -> Task<Message> {
         self.state.init()
     }
@@ -121,6 +126,10 @@ impl page::Page for BadgePage {
             return task;
         }
         Task::none()
+    }
+
+    fn reset_volatile(&mut self) {
+        self.state.reset_volatile();
     }
 
     fn preview(&self, index: usize) -> iced::Element<'_, Message, Theme> {

@@ -13,7 +13,8 @@ mod with_icon;
 
 use std::collections::BTreeSet;
 
-use iced::widget::{Id, markdown};
+use iced::widget::Id;
+use icedxdy::widget::markdown;
 use iced::Task;
 
 use icedxdy::{Component, Theme};
@@ -97,6 +98,10 @@ impl page::Page for ButtonPage {
         self.state.scrollable_id.clone()
     }
 
+    fn code_expanded(&self) -> &BTreeSet<usize> {
+        &self.state.code_expanded
+    }
+
     fn init(&self) -> Task<crate::Message> {
         self.state.init()
     }
@@ -106,6 +111,10 @@ impl page::Page for ButtonPage {
             return task;
         }
         Task::none()
+    }
+
+    fn reset_volatile(&mut self) {
+        self.state.reset_volatile();
     }
 
     fn preview(&self, index: usize) -> iced::Element<'_, crate::Message, Theme> {

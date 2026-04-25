@@ -66,6 +66,11 @@ pub struct Palette {
     /// Focus ring color
     pub ring: Color,
 
+    /// Code-block bg + fg (matches shadcn's --color-code / --color-code-foreground;
+    /// distinct from `muted` because shadcn's `--surface` is darker in dark mode
+    /// than `--muted`).
+    pub code: SemanticColor,
+
     /// Sidebar colors
     pub sidebar: SidebarPalette,
 }
@@ -89,6 +94,9 @@ impl Palette {
             border: oklch(0.922, 0.0, 0.0),
             input: oklch(0.922, 0.0, 0.0),
             ring: oklch(0.708, 0.0, 0.0),
+
+            // shadcn --color-code (light) = oklch(0.98 0 0), fg = --foreground
+            code: SemanticColor::new(oklch(0.98, 0.0, 0.0), oklch(0.145, 0.0, 0.0)),
 
             sidebar: SidebarPalette {
                 background: oklch(0.985, 0.0, 0.0),
@@ -119,6 +127,9 @@ impl Palette {
             border: oklch_alpha(1.0, 0.0, 0.0, 0.1),
             input: oklch_alpha(1.0, 0.0, 0.0, 0.15),
             ring: oklch(0.556, 0.0, 0.0),
+
+            // shadcn --color-code (dark) = oklch(0.2 0 0), fg = oklch(0.708 0 0)
+            code: SemanticColor::new(oklch(0.2, 0.0, 0.0), oklch(0.708, 0.0, 0.0)),
 
             sidebar: SidebarPalette {
                 background: oklch(0.205, 0.015, 286.0),

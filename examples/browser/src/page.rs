@@ -1,17 +1,23 @@
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
-use iced::widget::{Id, center, column, container, markdown, sensor};
+use iced::Alignment;
+use iced::widget::{Id, center, column, container, sensor, stack};
 use iced::{Fill, Font, Function, Pixels, Task};
 
 use icedxdy::Size::*;
+use icedxdy::widget::markdown;
 use icedxdy::widget::{button, text};
 use icedxdy::{Component, Theme, theme};
 
 use crate::example;
+use crate::icon;
 
 /// Height for preview containers (shadcn uses h-72 = 288px)
 const PREVIEW_HEIGHT: f32 = 288.0;
+
+/// Collapsed code-snippet height when not expanded by the user (px).
+const COLLAPSED_CODE_HEIGHT: f32 = 160.0;
 
 /// Static metadata for a component page.
 pub struct Meta {
@@ -28,6 +34,8 @@ pub enum Message {
     ExampleShown(usize),
     ExampleHidden(usize),
     ScrollTo(usize),
+    ExpandCode(usize),
+    CopyCode(usize),
     InputChanged(usize, String),
     Noop,
 }
@@ -40,10 +48,16 @@ pub trait Page {
     fn visible(&self) -> &BTreeSet<usize>;
     fn example_ids(&self) -> &[Id];
     fn scrollable_id(&self) -> Id;
+    fn code_expanded(&self) -> &BTreeSet<usize>;
 
     fn init(&self) -> Task<super::Message>;
     fn update(&mut self, message: Message) -> Task<super::Message>;
     fn preview(&self, index: usize) -> iced::Element<'_, super::Message, Theme>;
+
+    /// Reset state that should NOT persist across navigation away from this
+    /// page (e.g., expanded-code dismissal). Default: clear nothing —
+    /// pages with `page::State` should override to call `state.reset_volatile()`.
+    fn reset_volatile(&mut self) {}
 }
 
 /// Render a page's body and optional "On This Page" nav.
@@ -64,6 +78,8 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let snippets = page.snippets();
     let example_ids = page.example_ids();
 
+    let expanded_set = page.code_expanded();
+
     let items = meta.examples.iter().enumerate().flat_map(|(i, ex)| {
         let preview = center(page.preview(i))
             .height(PREVIEW_HEIGHT)
@@ -71,20 +87,54 @@ fn examples<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
             .padding(40)
             .style(theme::container::card_preview);
 
-        let code = (!ex.snippet.is_empty()).then_some(
-            container(
-                snippets[i]
+        let code: Option<iced::Element<'_, super::Message, Theme>> =
+            (!ex.snippet.is_empty()).then(|| {
+                let body = snippets[i]
                     .as_ref()
                     .map(snippet.with(pi))
-                    .unwrap_or_else(|| text("Loading...").into()),
-            )
-            .padding([12, 16])
-            .width(Fill)
-            .style(theme::container::code_block),
-        );
+                    .unwrap_or_else(|| text("Loading...").into());
+                let inner = container(body)
+                    .padding([12, 16])
+                    .width(Fill)
+                    .style(theme::container::code_block);
+
+                let copy_btn: Component<'_, super::Message> = button::ghost(
+                    icon::arrow_up_right().size(14),
+                )
+                .size(Sm)
+                .square()
+                .on_press(super::Message::Page(pi, Message::CopyCode(i)))
+                .into();
+                let copy_corner = container(copy_btn)
+                    .align_x(Alignment::End)
+                    .align_y(Alignment::Start)
+                    .padding([8, 8])
+                    .width(Fill)
+                    .height(Fill);
+
+                if expanded_set.contains(&i) {
+                    stack![inner, copy_corner].into()
+                } else {
+                    let truncated = inner.max_height(COLLAPSED_CODE_HEIGHT).clip(true);
+                    let view_code_btn: Component<'_, super::Message> = button("View Code")
+                        .size(Sm)
+                        .style(theme::button::outline)
+                        .on_press(super::Message::Page(pi, Message::ExpandCode(i)))
+                        .into();
+                    let overlay = container(view_code_btn)
+                        .style(theme::container::code_fade_overlay)
+                        .height(COLLAPSED_CODE_HEIGHT)
+                        .width(Fill)
+                        .align_x(Alignment::Center)
+                        .align_y(Alignment::Center);
+                    stack![truncated, overlay, copy_corner].into()
+                }
+            });
 
         let card = container(column![preview, code])
-            .style(theme::container::card_muted)
+            .style(theme::container::card)
+            .padding(1)
+            .clip(true)
             .width(Fill)
             .into();
 
@@ -189,18 +239,68 @@ fn snippet<'a>(page_index: usize, items: &'a Vec<markdown::Item>) -> Component<'
         code_size: Pixels(13.0),
         ..markdown::Settings::with_style(style)
     };
-    markdown::view(items, settings)
+    markdown::view_with(items, settings, &SnippetViewer)
         .map(move |url| super::Message::Page(page_index, Message::LinkClicked(url)))
         .into()
+}
+
+/// Custom markdown viewer for code-snippet rendering. Overrides
+/// `code_block` to skip iced's default container chrome (which would
+/// nest a second `theme::container::code_block` inside our outer
+/// page-level one); we provide the bg + rounded corners + padding from
+/// the page-level container instead, so the markdown widget just emits
+/// the syntax-highlighted lines + horizontal scrollbar.
+///
+/// Note: token colors come from `iced_highlighter`'s hard-coded
+/// `Base16Ocean` theme (see iced markdown source). To match shadcn's
+/// `github-light`/`github-dark` requires bypassing `markdown::parse` and
+/// using `iced_highlighter::Stream` directly with `InspiredGitHub` —
+/// see follow-up plan.
+struct SnippetViewer;
+
+impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetViewer {
+    fn on_link_click(url: markdown::Uri) -> markdown::Uri {
+        url
+    }
+
+    fn code_block(
+        &self,
+        settings: markdown::Settings,
+        _language: Option<&'a str>,
+        _code: &'a str,
+        lines: &'a [markdown::Text],
+    ) -> iced::Element<'a, markdown::Uri, Theme, iced::Renderer> {
+        use iced::widget::{rich_text, scrollable};
+
+        let body = column(lines.iter().map(|line| {
+            rich_text(line.spans(settings.style))
+                .on_link_click(Self::on_link_click)
+                .font(settings.style.code_block_font)
+                .size(settings.code_size)
+                .into()
+        }));
+
+        scrollable(body)
+            .direction(scrollable::Direction::Horizontal(
+                scrollable::Scrollbar::default()
+                    .width(settings.code_size / 2)
+                    .scroller_width(settings.code_size / 2),
+            ))
+            .into()
+    }
 }
 
 /// Common state that each page owns via composition.
 pub struct State {
     pub page_index: usize,
     pub snippets: Vec<Option<Vec<markdown::Item>>>,
+    /// Raw markdown source for each snippet — kept around so the copy
+    /// button can extract the code without re-reading the file.
+    pub snippets_raw: Vec<Option<String>>,
     pub visible: BTreeSet<usize>,
     pub example_ids: Vec<Id>,
     pub scrollable_id: Id,
+    pub code_expanded: BTreeSet<usize>,
     meta: &'static Meta,
 }
 
@@ -210,11 +310,19 @@ impl State {
         Self {
             page_index,
             snippets: vec![None; count],
+            snippets_raw: vec![None; count],
             visible: BTreeSet::new(),
             example_ids: (0..count).map(|_| Id::unique()).collect(),
             scrollable_id: Id::unique(),
+            code_expanded: BTreeSet::new(),
             meta,
         }
+    }
+
+    /// Clear state that doesn't survive navigation away from this page.
+    /// Currently: dismissed "View Code" overlays.
+    pub fn reset_volatile(&mut self) {
+        self.code_expanded.clear();
     }
 
     pub fn init(&self) -> Task<super::Message> {
@@ -245,9 +353,15 @@ impl State {
 
         match event {
             Message::SnippetLoaded(index, result) => {
-                if let Some(slot) = self.snippets.get_mut(*index) {
-                    if let Ok(content) = result {
-                        *slot = Some(markdown::parse(content).collect());
+                if let Ok(content) = result
+                    && let Some(slot) = self.snippets.get_mut(*index)
+                {
+                    // TODO: chunk B — pass a CodeTheme through the Viewer so colors
+                    // are decided at draw time, then swap DefaultLight for a
+                    // shadcn-faithful github-light/dark palette.
+                    *slot = Some(markdown::parse(content).collect());
+                    if let Some(raw_slot) = self.snippets_raw.get_mut(*index) {
+                        *raw_slot = Some(content.clone());
                     }
                 }
                 Some(Task::none())
@@ -265,8 +379,51 @@ impl State {
                 self.scrollable_id.clone(),
                 self.example_ids[*idx].clone(),
             )),
+            Message::ExpandCode(idx) => {
+                self.code_expanded.insert(*idx);
+                Some(Task::none())
+            }
+            Message::CopyCode(idx) => {
+                let code = self
+                    .snippets_raw
+                    .get(*idx)
+                    .and_then(|s| s.as_ref())
+                    .map(|raw| extract_code_from_markdown(raw))
+                    .unwrap_or_default();
+                let pi = self.page_index;
+                Some(
+                    iced::clipboard::write(code)
+                        .map(move |_| super::Message::Page(pi, Message::Noop)),
+                )
+            }
             Message::Noop => Some(Task::none()),
             _ => None,
         }
+    }
+}
+
+/// Extract the contents of the FIRST fenced code block from a markdown
+/// source — strips the opening ```lang fence and the closing ```. Falls
+/// back to the full input if no fence is present.
+fn extract_code_from_markdown(raw: &str) -> String {
+    let mut inside = false;
+    let mut out: Vec<&str> = Vec::new();
+    for line in raw.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") {
+            if inside {
+                break;
+            }
+            inside = true;
+            continue;
+        }
+        if inside {
+            out.push(line);
+        }
+    }
+    if out.is_empty() {
+        raw.to_string()
+    } else {
+        out.join("\n")
     }
 }

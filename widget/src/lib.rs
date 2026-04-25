@@ -7,6 +7,8 @@ pub mod column;
 pub mod component;
 pub mod container;
 pub mod input;
+#[cfg(feature = "markdown")]
+pub mod markdown;
 pub mod operation;
 pub mod row;
 pub mod rule;

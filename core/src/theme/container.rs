@@ -54,8 +54,8 @@ pub fn card_preview(theme: &Theme) -> Style {
                 bottom_right: 0.0,
                 bottom_left: 0.0,
             },
-            width: 1.0,
-            color: p.border.into(),
+            width: 0.0,
+            color: iced_core::Color::TRANSPARENT,
         },
         ..Default::default()
     }
@@ -75,17 +75,12 @@ pub fn card_muted(theme: &Theme) -> Style {
 }
 
 pub fn code_block(theme: &Theme) -> Style {
-    let p = theme.palette();
-    let is_dark = p.background.l < 0.5;
-    let bg = if is_dark {
-        // Dark mode: use the very dark background (darker than muted card)
-        p.background
-    } else {
-        // Light mode: use muted background for subtle contrast
-        p.muted.base
-    };
+    // shadcn `--color-code` bg + bottom-rounded corners. Sits inside the outer
+    // `card` container; the card provides bg-background (page color) on top,
+    // and the code area gets this distinct `code` palette bg as a separate
+    // band — matching shadcn's bg-card outer + bg-code code structure.
     Style {
-        background: Some(bg.into()),
+        background: Some(theme.palette().code.base.into()),
         border: Border {
             radius: iced_core::border::Radius {
                 top_left: 0.0,
@@ -93,7 +88,40 @@ pub fn code_block(theme: &Theme) -> Style {
                 bottom_left: radius::LG,
                 bottom_right: radius::LG,
             },
-            ..Default::default()
+            width: 0.0,
+            color: iced_core::Color::TRANSPARENT,
+        },
+        ..Default::default()
+    }
+}
+
+/// Vertical "to top" gradient fade for the View Code overlay — matches
+/// shadcn's `linear-gradient(to top, var(--color-code),
+/// color-mix(in oklab, var(--color-code) 60%, transparent), transparent)`.
+/// Stop 0.0 (top) = transparent, 0.5 (middle) = 60% alpha, 1.0 (bottom) =
+/// solid code bg.
+pub fn code_fade_overlay(theme: &Theme) -> Style {
+    use iced_core::gradient::Linear;
+    use std::f32::consts::PI;
+
+    let code_bg = theme.palette().code.base;
+    Style {
+        background: Some(
+            Linear::new(PI)
+                .add_stop(0.0, iced_core::Color::TRANSPARENT)
+                .add_stop(0.5, code_bg.alpha(0.6).into())
+                .add_stop(1.0, code_bg.into())
+                .into(),
+        ),
+        border: Border {
+            radius: iced_core::border::Radius {
+                top_left: 0.0,
+                top_right: 0.0,
+                bottom_left: radius::LG,
+                bottom_right: radius::LG,
+            },
+            width: 0.0,
+            color: iced_core::Color::TRANSPARENT,
         },
         ..Default::default()
     }
