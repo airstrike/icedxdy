@@ -58,6 +58,12 @@ pub struct Palette {
     pub accent: SemanticColor,
     /// Destructive/error actions
     pub destructive: SemanticColor,
+    /// Informational actions / neutral status
+    pub info: SemanticColor,
+    /// Successful actions / positive status
+    pub success: SemanticColor,
+    /// Cautionary actions / warning status
+    pub warning: SemanticColor,
 
     /// Border color
     pub border: Color,
@@ -90,6 +96,11 @@ impl Palette {
             muted: SemanticColor::new(oklch(0.97, 0.0, 0.0), oklch(0.556, 0.0, 0.0)),
             accent: SemanticColor::new(oklch(0.97, 0.0, 0.0), oklch(0.205, 0.0, 0.0)),
             destructive: SemanticColor::new(oklch(0.58, 0.22, 27.0), oklch(0.985, 0.0, 0.0)),
+            // Status colors — same lightness/chroma profile as `destructive` so
+            // they read as a coherent set against the Neutral background.
+            info: SemanticColor::new(oklch(0.55, 0.20, 245.0), oklch(0.985, 0.0, 0.0)),
+            success: SemanticColor::new(oklch(0.58, 0.18, 150.0), oklch(0.985, 0.0, 0.0)),
+            warning: SemanticColor::new(oklch(0.72, 0.16, 75.0), oklch(0.205, 0.0, 0.0)),
 
             border: oklch(0.922, 0.0, 0.0),
             input: oklch(0.922, 0.0, 0.0),
@@ -123,6 +134,11 @@ impl Palette {
             muted: SemanticColor::new(oklch(0.269, 0.0, 0.0), oklch(0.708, 0.0, 0.0)),
             accent: SemanticColor::new(oklch(0.371, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
             destructive: SemanticColor::new(oklch(0.704, 0.191, 22.216), oklch(0.985, 0.0, 0.0)),
+            // Status colors — pastel-bright variants matching `destructive`'s
+            // dark-mode lift so the four state colors form a coherent set.
+            info: SemanticColor::new(oklch(0.70, 0.16, 245.0), oklch(0.205, 0.0, 0.0)),
+            success: SemanticColor::new(oklch(0.72, 0.16, 150.0), oklch(0.205, 0.0, 0.0)),
+            warning: SemanticColor::new(oklch(0.80, 0.15, 80.0), oklch(0.205, 0.0, 0.0)),
 
             border: oklch_alpha(1.0, 0.0, 0.0, 0.1),
             input: oklch_alpha(1.0, 0.0, 0.0, 0.15),

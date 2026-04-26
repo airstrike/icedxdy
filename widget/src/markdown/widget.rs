@@ -1610,7 +1610,8 @@ where
     /// Displays a code block.
     ///
     /// By default, it calls [`code_block`] with the
-    /// [`highlighter::Theme`] returned by [`Self::code_theme`]. Note the
+    /// [`highlighter::Theme`] returned by [`Self::code_theme`] (or `None`
+    /// for unstyled rendering when no theme is supplied). Note the
     /// `&'a self` receiver — the `code_theme` reference carries the `'a`
     /// lifetime so it can flow into the returned `Element<'a, ...>`.
     fn code_block(
@@ -1628,23 +1629,27 @@ where
             lines,
             Self::on_link_click,
             #[cfg(feature = "highlighter")]
-            Some(self.code_theme()),
+            self.code_theme(),
         )
     }
 
     /// Returns the [`highlighter::Theme`] used to colour `Span::Scoped`
-    /// tokens at draw time. Default returns [`highlighter::Light`];
-    /// override to use a custom theme — the icedxdy-specific extension
-    /// that turns iced markdown into a parse-once / theme-at-draw
-    /// pipeline.
+    /// tokens at draw time. Default returns `None` — code blocks render
+    /// unstyled (foreground text colour) unless an implementation
+    /// overrides this method.
     ///
-    /// The 'a binding lets implementations return either a `&'static`
-    /// theme (e.g. a unit struct) or a theme held in `self` (whose
-    /// lifetime is bound by the same 'a as the rendered Element data).
+    /// Apps usually return either:
+    /// - a derived map: `Some(&self.derived_map)` where
+    ///   `derived_map: highlighter::Map = (&app_theme).into();`, or
+    /// - a parsed map: `Some(&self.theme)` where `theme` was built
+    ///   via [`highlighter::Map::from_vscode_theme`].
+    ///
+    /// The `'a` binding lets implementations return either a `&'static`
+    /// theme or one borrowed from `self` (lifetime bound by the same
+    /// `'a` as the rendered Element data).
     #[cfg(feature = "highlighter")]
-    fn code_theme(&'a self) -> &'a dyn highlighter::Theme {
-        static DEFAULT: highlighter::Light = highlighter::Light;
-        &DEFAULT
+    fn code_theme(&'a self) -> Option<&'a dyn highlighter::Theme> {
+        None
     }
 
     /// Displays an unordered list.

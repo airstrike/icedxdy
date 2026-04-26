@@ -60,18 +60,17 @@ pub trait Page {
     fn reset_volatile(&mut self) {}
 }
 
-/// Render a page's body and optional "On This Page" nav. `dark` selects
-/// between the GitHub-light and GitHub-dark code-block palettes — they
-/// must be picked at view-construction time because the syntax colours
-/// are baked into the rendered Element spans.
-pub fn view(
-    page: &dyn Page,
-    dark: bool,
+/// Render a page's body and optional "On This Page" nav. The `viewer`
+/// owns the active code-theme `Map`; the caller (App) keeps it in
+/// state and rebuilds it on theme toggle so the viewer reference here
+/// outlives the returned Element.
+pub fn view<'a>(
+    page: &'a dyn Page,
+    viewer: &'a SnippetViewer,
 ) -> (
-    Component<'_, super::Message>,
-    Option<Component<'_, super::Message>>,
+    Component<'a, super::Message>,
+    Option<Component<'a, super::Message>>,
 ) {
-    let viewer = viewer_for(dark);
     let body = examples(page, viewer);
     let nav = (page.meta().examples.len() > 1).then(|| sidebar(page));
     (body, nav)
@@ -265,24 +264,31 @@ fn snippet<'a>(
         .into()
 }
 
-/// Markdown viewer for code-snippet rendering. Picks `highlighter::Light`
-/// or `highlighter::Dark` (the GitHub palettes shadcn's nova ships via
-/// Shiki) based on the current app theme. Overrides `code_block` to skip
-/// iced's default container chrome — bg + radius + padding come from the
-/// page-level container, the markdown widget just emits the highlighted
-/// rich-text lines + horizontal scrollbar.
-enum SnippetViewer {
-    Light,
-    Dark,
+/// Markdown viewer for code-snippet rendering. Holds an owned
+/// [`markdown::highlighter::Map`] derived from the current app theme
+/// (or supplied directly by the app) — the active palette gets injected
+/// at view time without re-parsing the markdown items.
+///
+/// Overrides `code_block` to skip iced's default container chrome —
+/// bg + radius + padding come from the page-level container, the
+/// markdown widget just emits the highlighted rich-text lines +
+/// horizontal scrollbar.
+pub struct SnippetViewer {
+    map: markdown::highlighter::Map,
 }
 
-static LIGHT_THEME: markdown::highlighter::Light = markdown::highlighter::Light;
-static DARK_THEME: markdown::highlighter::Dark = markdown::highlighter::Dark;
-static LIGHT_VIEWER: SnippetViewer = SnippetViewer::Light;
-static DARK_VIEWER: SnippetViewer = SnippetViewer::Dark;
+impl SnippetViewer {
+    /// Build a viewer whose code colours are derived from the given
+    /// app theme via `From<&icedxdy::Theme> for highlighter::Map`.
+    pub fn from_theme(theme: &Theme) -> Self {
+        Self { map: theme.into() }
+    }
 
-fn viewer_for(dark: bool) -> &'static SnippetViewer {
-    if dark { &DARK_VIEWER } else { &LIGHT_VIEWER }
+    /// Build a viewer with an explicit code-theme map — typically a
+    /// VS Code theme parsed by `Map::from_vscode_theme`.
+    pub fn with_map(map: markdown::highlighter::Map) -> Self {
+        Self { map }
+    }
 }
 
 impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetViewer {
@@ -290,11 +296,8 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
         url
     }
 
-    fn code_theme(&'a self) -> &'a dyn markdown::highlighter::Theme {
-        match self {
-            SnippetViewer::Light => &LIGHT_THEME,
-            SnippetViewer::Dark => &DARK_THEME,
-        }
+    fn code_theme(&'a self) -> Option<&'a dyn markdown::highlighter::Theme> {
+        Some(&self.map)
     }
 
     fn code_block(
@@ -306,9 +309,8 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
     ) -> iced::Element<'a, markdown::Uri, Theme, iced::Renderer> {
         use iced::widget::{rich_text, scrollable};
 
-        let theme = self.code_theme();
         let body = column(lines.iter().map(|line| {
-            rich_text(line.spans(settings.style, Some(theme)))
+            rich_text(line.spans(settings.style, Some(&self.map)))
                 .on_link_click(Self::on_link_click)
                 .font(settings.style.code_block_font)
                 .size(settings.code_size)

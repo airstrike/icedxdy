@@ -49,6 +49,24 @@ impl Color {
         self
     }
 
+    /// Rotate the hue by `degrees`. Wraps into [0, 360).
+    pub fn shift_hue(mut self, degrees: f32) -> Self {
+        self.h = (self.h + degrees).rem_euclid(360.0);
+        self
+    }
+
+    /// Reduce chroma by `amount` (0.0 keeps, 1.0 fully greys out).
+    pub fn desaturate(mut self, amount: f32) -> Self {
+        self.c = (self.c * (1.0 - amount.clamp(0.0, 1.0))).max(0.0);
+        self
+    }
+
+    /// Increase chroma by `amount` (0.0 keeps, 1.0 doubles).
+    pub fn saturate(mut self, amount: f32) -> Self {
+        self.c = (self.c * (1.0 + amount.max(0.0))).min(0.4);
+        self
+    }
+
     /// Convert OKLCH to sRGB
     /// Based on the CSS Color Level 4 specification
     fn to_srgb(self) -> (f32, f32, f32) {

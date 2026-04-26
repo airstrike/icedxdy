@@ -1339,6 +1339,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 
 [[package]]
+name = "highlight"
+version = "0.1.0"
+dependencies = [
+ "iced",
+ "iced_widget",
+ "icedxdy",
+]
+
+[[package]]
 name = "http"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1678,6 +1687,8 @@ dependencies = [
  "lyon_algorithms",
  "num-traits",
  "pulldown-cmark",
+ "serde",
+ "serde_json",
  "tree-sitter",
  "tree-sitter-highlight",
  "tree-sitter-rust",

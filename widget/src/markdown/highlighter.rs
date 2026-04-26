@@ -16,6 +16,7 @@ use std::ops::Range;
 use std::sync::{LazyLock, RwLock};
 
 use iced_core::{Color, Font, font};
+use serde::Deserialize;
 
 use tree_sitter::QueryError;
 use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent};
@@ -39,6 +40,7 @@ pub const CAPTURE_NAMES: &[&str] = &[
     "function.macro",
     "function.method",
     "keyword",
+    "keyword.control.import",
     "label",
     "module",
     "namespace",
@@ -106,12 +108,19 @@ fn build_config(
     Ok(config)
 }
 
-/// Built-in Rust support using Helix's vendored queries.
+/// Built-in Rust support using Helix's vendored queries plus a small
+/// `highlights-macro-extra.scm` patch that catches paths/calls inside
+/// `token_tree` macro bodies (Helix doesn't, by design).
 fn rust_config() -> HighlightConfiguration {
+    let highlights = concat!(
+        include_str!("queries/rust/highlights.scm"),
+        "\n",
+        include_str!("queries/rust/highlights-macro-extra.scm"),
+    );
     build_config(
         "rust",
         tree_sitter_rust::LANGUAGE.into(),
-        include_str!("queries/rust/highlights.scm"),
+        highlights,
         include_str!("queries/rust/injections.scm"),
         include_str!("queries/rust/locals.scm"),
     )
@@ -269,19 +278,26 @@ fn unstyled_line(line: &str) -> Line {
     }]
 }
 
-// --- Default themes -------------------------------------------------------------
+// --- Themes (data) --------------------------------------------------------------
 //
-// The colour tables below come straight from Shiki's `github-light-default` and
-// `github-dark` themes — the same palettes shadcn's nova style ships
-// (`apps/v4/source.config.ts`). No nova-specific CSS overrides exist; the styling
-// is 100% delegated to these Shiki themes.
+// Themes are *data*: a [`Map`] from capture index → [`Style`]. The two
+// built-in maps ([`github_light`], [`github_dark`]) hold the palettes
+// shadcn's nova style ships via Shiki's `github-light-default` and
+// `github-dark` themes (verified from
+// shikijs/textmate-grammars-themes — no nova-specific overrides).
 //
-// Source:
-//   https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/main/
-//     packages/tm-themes/themes/github-{light-default,dark}.json
+// Custom themes:
 //
-// Mapping from TextMate scope → tree-sitter capture follows the pattern in
-// `tree-sitter-highlight`'s docs (capture names match the highlights query).
+// ```ignore
+// use icedxdy::widget::markdown::highlighter::{fg, fg_bold, Map};
+//
+// let monokai = Map::from_entries([
+//     ("comment", fg(0x75715e)),
+//     ("keyword", fg(0xf92672)),
+//     ("string",  fg(0xe6db74)),
+//     // …
+// ]);
+// ```
 
 const fn rgb(hex: u32) -> Color {
     Color {
@@ -292,115 +308,586 @@ const fn rgb(hex: u32) -> Color {
     }
 }
 
-const fn bold() -> Font {
+const fn bold_font() -> Font {
     Font {
         weight: font::Weight::Bold,
         ..Font::MONOSPACE
     }
 }
 
-const fn italic() -> Font {
+const fn italic_font() -> Font {
     Font {
         style: font::Style::Italic,
         ..Font::MONOSPACE
     }
 }
 
-fn fg(hex: u32) -> Style {
+/// Foreground-only [`Style`] from a 24-bit RGB hex.
+pub fn fg(hex: u32) -> Style {
     Style {
         color: Some(rgb(hex)),
         font: None,
     }
 }
 
-fn fg_bold(hex: u32) -> Style {
+/// Foreground + bold [`Style`].
+pub fn fg_bold(hex: u32) -> Style {
     Style {
         color: Some(rgb(hex)),
-        font: Some(bold()),
+        font: Some(bold_font()),
     }
 }
 
-fn fg_italic(hex: u32) -> Style {
+/// Foreground + italic [`Style`].
+pub fn fg_italic(hex: u32) -> Style {
     Style {
         color: Some(rgb(hex)),
-        font: Some(italic()),
+        font: Some(italic_font()),
     }
 }
 
-/// GitHub Light Default — the light theme shadcn's nova style ships for code
-/// blocks (via Shiki).
-pub struct Light;
+/// Complete code-syntax theme as data: one [`Style`] per capture in
+/// [`CAPTURE_NAMES`]. Captures not explicitly set inherit the renderer's
+/// default text colour.
+///
+/// Build via [`Map::from_entries`] or one of the named constructors
+/// ([`github_light`], [`github_dark`]).
+#[derive(Debug, Clone)]
+pub struct Map {
+    styles: Vec<Style>,
+    is_dark: bool,
+}
 
-impl Theme for Light {
+impl Map {
+    /// Build a [`Map`] from `(capture_name, style)` pairs. Capture names
+    /// not in [`CAPTURE_NAMES`] are silently ignored. The `is_dark` flag
+    /// is informational — used by hosts that want to mirror the code
+    /// theme's light/dark mode in their surrounding UI.
+    pub fn from_entries<I, S>(entries: I) -> Self
+    where
+        I: IntoIterator<Item = (S, Style)>,
+        S: AsRef<str>,
+    {
+        let mut styles = vec![Style::default(); CAPTURE_NAMES.len()];
+        for (name, style) in entries {
+            if let Some(idx) = CAPTURE_NAMES.iter().position(|n| *n == name.as_ref()) {
+                styles[idx] = style;
+            }
+        }
+        Self {
+            styles,
+            is_dark: false,
+        }
+    }
+
+    /// Set whether this map represents a dark theme. Returned by
+    /// [`Map::from_vscode_theme`] from the JSON's `type` field; the
+    /// [`From<&icedxdy_core::Theme>`] impl sets it from the source palette.
+    pub fn with_dark(mut self, is_dark: bool) -> Self {
+        self.is_dark = is_dark;
+        self
+    }
+
+    /// Whether this map is intended for a dark UI background.
+    pub fn is_dark(&self) -> bool {
+        self.is_dark
+    }
+}
+
+impl Theme for Map {
     fn style(&self, capture: u32) -> Style {
-        let name = CAPTURE_NAMES.get(capture as usize).copied().unwrap_or("");
-        match name {
-            "comment" => fg(0x6e7781),
-            "string" | "string.regexp" | "string.special" => fg(0x0a3069),
-            "string.escape" => fg_bold(0x116329),
-            "constant"
-            | "constant.builtin"
-            | "number"
-            | "function.builtin"
-            | "type.builtin"
-            | "variable.builtin"
-            | "attribute"
-            | "property"
-            | "property.builtin"
-            | "variable.other.member"
-            | "module"
-            | "namespace" => fg(0x0550ae),
-            "keyword" | "operator" | "embedded" | "special" => fg(0xcf222e),
-            "function" | "function.macro" | "function.method" | "constructor" => fg(0x8250df),
-            "type" | "type.enum" | "tag" => fg(0x116329),
-            "variable" | "variable.mutable" | "label" => fg(0x953800),
-            "punctuation.bracket" => fg(0x57606a),
-            // `punctuation`, `punctuation.delimiter`, `punctuation.special`,
-            // `variable.parameter` — no explicit Shiki rule; inherit foreground.
-            _ => Style::default(),
+        self.styles
+            .get(capture as usize)
+            .copied()
+            .unwrap_or_default()
+    }
+}
+
+impl Map {
+    /// How many capture slots in this map have non-default styling. Useful
+    /// for quickly auditing how much of [`CAPTURE_NAMES`] a parsed theme
+    /// actually covers (sparse themes may leave many captures unstyled).
+    pub fn populated_count(&self) -> usize {
+        self.styles
+            .iter()
+            .filter(|s| s.color.is_some() || s.font.is_some())
+            .count()
+    }
+}
+
+// --- VS Code / TextMate theme JSON parsing --------------------------------------
+
+/// Capture-name → list-of-TextMate-scopes-to-try mapping. Used by
+/// [`Map::from_vscode_theme`] to look up colours from a VS Code theme
+/// JSON given a tree-sitter capture name.
+///
+/// Each tree-sitter capture lists a fallback chain of TM scopes (most
+/// specific first). The first scope that resolves to a token-color rule
+/// in the JSON wins.
+const CAPTURE_TO_TM_SCOPES: &[(&str, &[&str])] = &[
+    ("comment", &["comment"]),
+    ("string", &["string", "string.quoted"]),
+    ("string.regexp", &["string.regexp", "source.regexp", "string"]),
+    ("string.special", &["string.special", "string"]),
+    (
+        "string.escape",
+        &["constant.character.escape", "string.regexp constant.character.escape"],
+    ),
+    ("number", &["constant.numeric"]),
+    ("constant", &["constant", "variable.other.constant", "variable.language"]),
+    (
+        "constant.builtin",
+        &["support.constant", "constant.language", "variable.language", "constant"],
+    ),
+    ("keyword", &["keyword", "storage", "storage.type"]),
+    ("operator", &["keyword.operator", "keyword"]),
+    ("special", &["keyword.operator", "keyword"]),
+    ("function", &["entity.name.function"]),
+    ("function.builtin", &["support.function", "entity.name.function"]),
+    ("function.macro", &["entity.name.function"]),
+    ("function.method", &["entity.name.function"]),
+    ("constructor", &["entity.name.function", "entity.name.tag"]),
+    ("type", &["entity.name.type", "support.class", "entity.name.class"]),
+    ("type.builtin", &["support.type", "storage.type"]),
+    ("type.enum", &["variable.other.enummember", "entity.name.type"]),
+    ("tag", &["entity.name.tag"]),
+    ("variable", &["variable", "variable.other"]),
+    ("variable.mutable", &["variable", "variable.other"]),
+    ("variable.builtin", &["variable.language"]),
+    ("variable.parameter", &["variable.parameter"]),
+    (
+        "variable.other.member",
+        &["variable.other.property", "meta.property-name", "support.type.property-name"],
+    ),
+    ("attribute", &["entity.other.attribute-name", "meta.attribute"]),
+    ("module", &["entity.name.namespace", "entity.name.module"]),
+    ("namespace", &["entity.name.namespace", "entity.name.module"]),
+    ("punctuation.bracket", &["punctuation"]),
+    ("label", &["entity.name.label"]),
+    ("property", &["meta.property-name", "variable.other.property"]),
+    ("property.builtin", &["support.type.property-name", "meta.property-name"]),
+];
+
+/// VS Code theme JSON shape (just the bits we care about).
+#[derive(Deserialize)]
+struct VsCodeTheme {
+    #[serde(default)]
+    r#type: Option<String>,
+    #[serde(rename = "tokenColors", default)]
+    token_colors: Vec<TokenRule>,
+}
+
+#[derive(Deserialize)]
+struct TokenRule {
+    scope: Option<TokenScope>,
+    settings: TokenSettings,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum TokenScope {
+    Single(String),
+    Multi(Vec<String>),
+}
+
+impl TokenScope {
+    fn iter(&self) -> Box<dyn Iterator<Item = &str> + '_> {
+        match self {
+            TokenScope::Single(s) => Box::new(std::iter::once(s.as_str())),
+            TokenScope::Multi(v) => Box::new(v.iter().map(String::as_str)),
         }
     }
 }
 
-/// GitHub Dark — the dark theme shadcn's nova style ships for code blocks
-/// (via Shiki).
-pub struct Dark;
+#[derive(Deserialize, Default)]
+struct TokenSettings {
+    #[serde(default)]
+    foreground: Option<String>,
+    #[serde(default, rename = "fontStyle")]
+    font_style: Option<String>,
+}
 
-impl Theme for Dark {
-    fn style(&self, capture: u32) -> Style {
-        let name = CAPTURE_NAMES.get(capture as usize).copied().unwrap_or("");
-        match name {
-            "comment" => fg(0x6a737d),
-            "string" | "string.special" => fg(0x9ecbff),
-            "string.regexp" => fg(0xdbedff),
-            "string.escape" => fg_bold(0x85e89d),
-            "constant"
-            | "constant.builtin"
-            | "number"
-            | "function.builtin"
-            | "type.builtin"
-            | "variable.builtin"
-            | "attribute"
-            | "property"
-            | "property.builtin"
-            | "variable.other.member"
-            | "module"
-            | "namespace" => fg(0x79b8ff),
-            "keyword" | "operator" | "embedded" | "special" => fg(0xf97583),
-            "function" | "function.macro" | "function.method" | "constructor" => fg(0xb392f0),
-            "type" | "type.enum" | "tag" => fg(0x85e89d),
-            "variable" | "variable.mutable" | "label" => fg(0xffab70),
-            "punctuation.bracket" => fg(0xd1d5da),
-            _ => Style::default(),
-        }
+/// Match-specificity for VS Code TM scopes. Rule scope `comment` matches
+/// target `comment.line.documentation` with specificity 1 (one segment);
+/// rule `comment.line` matches with specificity 2; exact rule
+/// `comment.line.documentation` with 3. Returns 0 for no match.
+fn match_specificity(rule_scope: &str, target: &str) -> usize {
+    if rule_scope == target {
+        return rule_scope.split('.').count();
+    }
+    if target.starts_with(rule_scope)
+        && target.as_bytes().get(rule_scope.len()) == Some(&b'.')
+    {
+        return rule_scope.split('.').count();
+    }
+    0
+}
+
+fn parse_hex(hex: &str) -> Option<Color> {
+    let hex = hex.strip_prefix('#').unwrap_or(hex);
+    let bytes = u32::from_str_radix(hex, 16).ok()?;
+    match hex.len() {
+        6 => Some(rgb(bytes)),
+        8 => Some(Color {
+            r: ((bytes >> 24) & 0xff) as u8 as f32 / 255.0,
+            g: ((bytes >> 16) & 0xff) as u8 as f32 / 255.0,
+            b: ((bytes >> 8) & 0xff) as u8 as f32 / 255.0,
+            a: (bytes & 0xff) as u8 as f32 / 255.0,
+        }),
+        _ => None,
     }
 }
 
-// `fg_italic` is currently unused (GitHub themes only italicise markup.italic
-// which doesn't appear in code blocks). Kept around because the Shiki theme
-// JSON does declare italic on a couple of scopes — when we add markup support
-// to the highlighter it'll wire up here.
-#[allow(dead_code)]
-fn _keep_fg_italic_referenced() -> Style {
-    fg_italic(0x000000)
+fn parse_font_style(s: &str) -> Option<Font> {
+    let bold = s.contains("bold");
+    let italic = s.contains("italic");
+    match (bold, italic) {
+        (true, true) => Some(Font {
+            weight: font::Weight::Bold,
+            style: font::Style::Italic,
+            ..Font::MONOSPACE
+        }),
+        (true, false) => Some(bold_font()),
+        (false, true) => Some(italic_font()),
+        (false, false) => None,
+    }
 }
+
+fn find_style(theme: &VsCodeTheme, target: &str) -> Option<Style> {
+    let mut best: Option<&TokenRule> = None;
+    let mut best_specificity = 0usize;
+
+    for rule in &theme.token_colors {
+        let Some(scope) = &rule.scope else {
+            continue;
+        };
+        for s in scope.iter() {
+            let specificity = match_specificity(s, target);
+            if specificity > best_specificity && rule.settings.foreground.is_some() {
+                best = Some(rule);
+                best_specificity = specificity;
+            }
+        }
+    }
+
+    let rule = best?;
+    let color = rule.settings.foreground.as_deref().and_then(parse_hex);
+    let font = rule.settings.font_style.as_deref().and_then(parse_font_style);
+    color.map(|c| Style {
+        color: Some(c),
+        font,
+    })
+}
+
+impl Map {
+    /// Build a [`Map`] from a VS Code (TextMate) theme JSON document. Only
+    /// the `tokenColors` section is read; `colors`, `semanticTokenColors`,
+    /// etc. are ignored.
+    ///
+    /// For each tree-sitter capture in [`CAPTURE_NAMES`], we look up the
+    /// best-matching TM scope rule using [`CAPTURE_TO_TM_SCOPES`]'s
+    /// fallback chain, then use that rule's foreground + fontStyle.
+    pub fn from_vscode_theme(json: &str) -> Result<Self, serde_json::Error> {
+        let theme: VsCodeTheme = serde_json::from_str(json)?;
+        let mut entries = Vec::with_capacity(CAPTURE_TO_TM_SCOPES.len());
+        for &(capture, scopes) in CAPTURE_TO_TM_SCOPES {
+            for &scope in scopes {
+                if let Some(style) = find_style(&theme, scope) {
+                    entries.push((capture.to_string(), style));
+                    break;
+                }
+            }
+        }
+        let is_dark = theme.r#type.as_deref() == Some("dark");
+        Ok(Map::from_entries(entries).with_dark(is_dark))
+    }
+}
+
+// --- Default Map derived from the icedxdy palette -------------------------------
+
+/// Build a default [`Map`] from an [`icedxdy_core::Theme`] palette. Used
+/// as the fallback when the application hasn't supplied a custom code
+/// theme — colours come from the same semantic tokens the rest of the
+/// UI uses (primary, accent, destructive, muted, …) so the code block
+/// looks coherent with the surrounding app chrome regardless of which
+/// shadcn-style theme is active.
+///
+/// Apps that want a specific aesthetic (GitHub Light/Dark, Monokai,
+/// etc.) should ship their own VS Code theme JSON and parse it via
+/// [`Map::from_vscode_theme`].
+impl From<&icedxdy_core::Theme> for Map {
+    fn from(theme: &icedxdy_core::Theme) -> Self {
+        let p = theme.palette();
+        let is_dark = p.background.l < 0.5;
+
+        // Verbatim port of Tokyo Night's tokenColors structure with hues
+        // sourced from the palette. TN uses 6+ named hues (purple,
+        // blue, cyan, light-cyan, red, orange, amber, green); we map
+        // onto our four state colours plus two derived blue variants
+        // (cyan = info shifted toward green; subtle = info lightened +
+        // desaturated) so paths/types/punctuation read distinctly from
+        // function names instead of all collapsing to one blue:
+        //
+        //   TN purple   (#BB9AF7, keywords, attributes)        → destructive
+        //   TN red      (#F7768E, this/self, tags, spread)     → destructive
+        //   TN blue     (#7AA2F7, function names)              → info
+        //   TN cyan     (#7DCFFF/#0DB9D7, types, properties,   → cyan (info −25° hue, +0.08 L)
+        //                                modules, namespaces)
+        //   TN lt-cyan  (#89DDFF, operators, punctuation,      → subtle (info +0.10 L, −40% C)
+        //                                  string.escape)
+        //   TN orange   (#FF9E64, numbers, constants)          → warning
+        //   TN amber    (#E0AF68, parameters)                  → warning
+        //   TN green    (#9ECE6A, strings)                     → success
+        //   TN comment  (#51597D, comments)                    → muted.foreground
+        //   TN fg       (#C0CAF5, identifiers)                 → foreground
+        //
+        // Still lossy in hue (purple→red), but path/type/punct now
+        // separate from function names and from each other.
+        let red = p.destructive.base.into();
+        let blue = p.info.base.into();
+        // Targeting TN's three blue tones from its tokenColors:
+        //   teal #0DB9D7 (entity.name.namespace) — L≈0.69, C≈0.13, H≈222
+        //   cyan #7DCFFF (variable.other.property) — L≈0.81, C≈0.10, H≈232
+        //   light-cyan #89DDFF (punctuation, keyword.other) — L≈0.86, C≈0.07, H≈235
+        // From info.base (dark: L=0.70, C=0.16, H=245) we derive:
+        //   teal: hue −25°, hold lightness — saturated namespace tone
+        //   cyan: hue −20°, +0.10 L, light desat — a step lighter for properties
+        //   subtle: hue −15°, +0.20 L, half chroma — pastel for punctuation/operators
+        let teal = p.info.base.shift_hue(-25.0).into();
+        let cyan = p.info.base.shift_hue(-20.0).lighten(0.10).desaturate(0.20).into();
+        let subtle = p
+            .info
+            .base
+            .shift_hue(-15.0)
+            .lighten(0.20)
+            .desaturate(0.50)
+            .into();
+        let green = p.success.base.into();
+        let amber = p.warning.base.into();
+        let muted = p.muted.foreground.into();
+        let fg = p.foreground.into();
+
+        let semantic = |c: iced_core::Color| Style {
+            color: Some(c),
+            font: None,
+        };
+
+        Map::from_entries([
+            ("comment", semantic(muted)),
+
+            ("string", semantic(green)),
+            ("string.regexp", semantic(green)),
+            ("string.special", semantic(green)),
+            ("string.escape", semantic(subtle)),
+
+            ("number", semantic(amber)),
+            ("constant", semantic(amber)),
+            ("constant.builtin", semantic(amber)),
+
+            ("keyword", semantic(red)),
+            // `use`, `mod`, `as` — TN puts `keyword.other` in the
+            // light-cyan slot; everything else (storage, control flow)
+            // stays purple/red.
+            ("keyword.control.import", semantic(subtle)),
+            ("operator", semantic(subtle)),
+            ("embedded", semantic(subtle)),
+            ("special", semantic(red)),
+
+            ("function", semantic(blue)),
+            ("function.builtin", semantic(blue)),
+            ("function.macro", semantic(blue)),
+            ("function.method", semantic(blue)),
+            ("constructor", semantic(blue)),
+
+            // TN treats type names (`entity.name.type`) as fg via the
+            // `entity.name` fallback — only primitive/builtin types pick
+            // up cyan via `support.type`.
+            ("type", semantic(fg)),
+            ("type.builtin", semantic(teal)),
+            ("type.enum", semantic(fg)),
+            ("tag", semantic(red)),
+
+            ("attribute", semantic(red)),
+            ("property", semantic(cyan)),
+            ("property.builtin", semantic(cyan)),
+            ("variable.other.member", semantic(cyan)),
+
+            ("module", semantic(teal)),
+            ("namespace", semantic(teal)),
+
+            ("variable", semantic(fg)),
+            ("variable.mutable", semantic(fg)),
+            ("variable.builtin", semantic(red)),
+            ("variable.parameter", semantic(amber)),
+            ("label", semantic(fg)),
+
+            ("punctuation", semantic(subtle)),
+            ("punctuation.bracket", semantic(subtle)),
+            ("punctuation.delimiter", semantic(subtle)),
+            ("punctuation.special", semantic(subtle)),
+        ])
+        .with_dark(is_dark)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Run the highlighter and produce a flat `(text, capture_name)` stream
+    /// across the whole source. Whitespace-only spans are kept (capture =
+    /// `None`); newlines appear as their own entries so multi-line inputs
+    /// stay readable in failure output.
+    fn capture_stream(src: &str, lang: &str) -> Vec<(String, Option<&'static str>)> {
+        let lines = Highlighter::new().highlight(src, lang);
+        let mut out = Vec::new();
+        for (i, line) in lines.iter().enumerate() {
+            for span in line {
+                let name = span
+                    .capture
+                    .and_then(|idx| CAPTURE_NAMES.get(idx as usize).copied());
+                out.push((span.text.clone(), name));
+            }
+            if i + 1 < lines.len() {
+                out.push(("\n".to_string(), None));
+            }
+        }
+        out
+    }
+
+    /// Assert the highlighter emits `expected` for `src`. Whitespace-only
+    /// entries are filtered on both sides so tests focus on tokens. On
+    /// mismatch, prints a side-by-side expected-vs-actual diff.
+    fn assert_captures(src: &str, lang: &str, expected: &[(&str, Option<&str>)]) {
+        let actual_owned = capture_stream(src, lang);
+        let actual: Vec<(&str, Option<&str>)> = actual_owned
+            .iter()
+            .filter(|(t, _)| !t.chars().all(char::is_whitespace))
+            .map(|(t, c)| (t.as_str(), *c))
+            .collect();
+        let expected: Vec<(&str, Option<&str>)> = expected
+            .iter()
+            .filter(|(t, _)| !t.chars().all(char::is_whitespace))
+            .copied()
+            .collect();
+
+        if actual == expected {
+            return;
+        }
+
+        let mut buf = String::from("\nsource:\n");
+        for line in src.lines() {
+            buf.push_str("  ");
+            buf.push_str(line);
+            buf.push('\n');
+        }
+        buf.push_str("\nexpected vs actual:\n");
+        let max = actual.len().max(expected.len());
+        for i in 0..max {
+            let e = expected.get(i);
+            let a = actual.get(i);
+            let mark = if e == a { ' ' } else { '✗' };
+            buf.push_str(&format!("  {mark} #{i:>3}: {e:?} | {a:?}\n"));
+        }
+        panic!("{buf}");
+    }
+
+    /// Macro bodies are opaque `token_tree` nodes in tree-sitter-rust, so
+    /// `path::call(arg)` patterns inside them are invisible to Helix's
+    /// upstream queries. This test pins the behaviour of our
+    /// `highlights-macro-extra.scm` patch: the path component must
+    /// resolve to `@namespace`, the call name to `@function`.
+    #[test]
+    fn macro_body_paths_and_calls() {
+        let src = r#"row![button::outline("X")]"#;
+        assert_captures(
+            src,
+            "rust",
+            &[
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("button", Some("namespace")),
+                ("::", Some("punctuation.delimiter")),
+                ("outline", Some("function")),
+                ("(", Some("punctuation.bracket")),
+                ("\"X\"", Some("string")),
+                (")", Some("punctuation.bracket")),
+                ("]", Some("punctuation.bracket")),
+            ],
+        );
+    }
+
+    /// Outside macros, `button::outline(...)` parses as a real
+    /// `(call_expression (scoped_identifier))` and Helix's queries handle
+    /// it directly. Verify both halves resolve identically to the macro
+    /// case so the visual rendering doesn't shift between contexts.
+    #[test]
+    fn non_macro_paths_and_calls_match_macro_body() {
+        let src = r#"button::outline("X");"#;
+        assert_captures(
+            src,
+            "rust",
+            &[
+                ("button", Some("namespace")),
+                ("::", Some("punctuation.delimiter")),
+                ("outline", Some("function")),
+                ("(", Some("punctuation.bracket")),
+                ("\"X\"", Some("string")),
+                (")", Some("punctuation.bracket")),
+                (";", Some("punctuation.delimiter")),
+            ],
+        );
+    }
+
+    /// Nested macro invocations — `row![ row![...] ]` — only the outer
+    /// is parsed as `macro_invocation` by tree-sitter-rust; the inner
+    /// is a flat `identifier`, `!`, `token_tree` triple inside the
+    /// outer's `token_tree`. Our `highlights-macro-extra.scm` patches
+    /// the inner case so both render identically.
+    #[test]
+    fn nested_macro_invocations() {
+        let src = r#"row![row![]]"#;
+        assert_captures(
+            src,
+            "rust",
+            &[
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("]", Some("punctuation.bracket")),
+                ("]", Some("punctuation.bracket")),
+            ],
+        );
+    }
+
+    /// Use clauses: `use` is a control keyword, every path component is a
+    /// namespace, the brace-grouped imports are also namespaces. This
+    /// matches what Tokyo Night colours in VS Code (path components in
+    /// cyan, `use` keyword in purple, braces/`::` in light cyan).
+    #[test]
+    fn use_clause_namespace_chain() {
+        let src = "use icedxdy::widget::{button, row};";
+        assert_captures(
+            src,
+            "rust",
+            &[
+                ("use", Some("keyword.control.import")),
+                ("icedxdy", Some("namespace")),
+                ("::", Some("punctuation.delimiter")),
+                ("widget", Some("namespace")),
+                ("::", Some("punctuation.delimiter")),
+                ("{", Some("punctuation.bracket")),
+                ("button", Some("variable")),
+                (",", Some("punctuation.delimiter")),
+                ("row", Some("variable")),
+                ("}", Some("punctuation.bracket")),
+                (";", Some("punctuation.delimiter")),
+            ],
+        );
+    }
+}
+

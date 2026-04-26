@@ -13,6 +13,8 @@ use icedxdy::Size::*;
 use icedxdy::widget::{button, rule, separator, text};
 use icedxdy::{Theme, theme};
 
+use page::SnippetViewer;
+
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
         .title("icedxdy \u{2022} components browser")
@@ -29,6 +31,10 @@ struct App {
     dark_mode: bool,
     current_page: usize,
     pages: Vec<Box<dyn page::Page>>,
+    /// Owns the code-syntax theme map. Rebuilt from the active iced
+    /// theme on every `ToggleTheme` so the viewer reference passed to
+    /// `page::view` outlives the returned Element.
+    snippet_viewer: SnippetViewer,
     // Font management
     fount: fount::Fount,
     font_list: combo_box::State<String>,
@@ -69,11 +75,19 @@ impl App {
 
         tasks.push(fonts::init().map(Message::Font));
 
+        let dark_mode = theme::is_dark_mode();
+        let snippet_viewer = SnippetViewer::from_theme(&if dark_mode {
+            Theme::dark()
+        } else {
+            Theme::light()
+        });
+
         (
             Self {
-                dark_mode: theme::is_dark_mode(),
+                dark_mode,
                 current_page: 0,
                 pages,
+                snippet_viewer,
                 fount: fount::Fount::new(),
                 font_list: combo_box::State::new(vec![default_font.clone()]),
                 current_font: default_font,
@@ -86,6 +100,7 @@ impl App {
         match message {
             Message::ToggleTheme => {
                 self.dark_mode = !self.dark_mode;
+                self.snippet_viewer = SnippetViewer::from_theme(&self.theme());
                 Task::none()
             }
             Message::SelectPage(page) => {
@@ -215,7 +230,7 @@ impl App {
         let title = text::h1(meta.title);
         let description = text::p(meta.description).style(theme::text::muted);
 
-        let (page_body, page_nav) = page::view(current, self.dark_mode);
+        let (page_body, page_nav) = page::view(current, &self.snippet_viewer);
 
         let content = container(
             column![title, description, container(page_body).width(Fill)]

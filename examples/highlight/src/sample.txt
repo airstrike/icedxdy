@@ -1,0 +1,38 @@
+```rust
+use std::collections::HashMap;
+
+/// A simple greeter that tracks how many times it's said hello.
+#[derive(Debug, Default)]
+pub struct Greeter {
+    counter: u32,
+    names: Vec<String>,
+}
+
+impl Greeter {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn greet(&mut self, name: impl Into<String>) -> String {
+        let name = name.into();
+        self.counter += 1;
+        self.names.push(name.clone());
+        format!("Hello, {name}! ({} greetings)", self.counter)
+    }
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut g = Greeter::new();
+    let counts: HashMap<&'static str, i32> =
+        [("a", 1), ("b", 2), ("c", 3)].into_iter().collect();
+
+    for (k, v) in &counts {
+        println!("{}", g.greet(*k));
+        if *v > 2 {
+            // pretend this is interesting
+            break;
+        }
+    }
+    Ok(())
+}
+```

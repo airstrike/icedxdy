@@ -6,6 +6,13 @@
 //! Built-in language: Rust, using Helix's vendored queries. Downstream
 //! apps can register additional languages with [`highlighter::register`].
 //!
+//! Code-theme palettes are app-level concerns. The widget ships a
+//! `From<&icedxdy_core::Theme> for highlighter::Map` derivation so the
+//! default look matches the surrounding UI; apps that want a specific
+//! aesthetic load their own VS Code / TextMate theme JSON via
+//! [`highlighter::Map::from_vscode_theme`] and pass it to a
+//! [`Viewer::code_theme`] override.
+//!
 //! See `widget/src/markdown/widget.rs` for the cp'd iced source — kept
 //! verbatim where possible so future re-vendoring stays mechanical.
 
