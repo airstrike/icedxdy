@@ -413,6 +413,25 @@ impl Map {
             .filter(|s| s.color.is_some() || s.font.is_some())
             .count()
     }
+
+    /// Look up the [`Style`] for a capture by name. Returns the default
+    /// (no colour, no font) for unknown names — handy for layering one
+    /// map's entries onto another (`dst.set_capture(n, src.get_capture(n))`).
+    pub fn get_capture(&self, name: &str) -> Style {
+        CAPTURE_NAMES
+            .iter()
+            .position(|n| *n == name)
+            .map(|idx| self.styles[idx])
+            .unwrap_or_default()
+    }
+
+    /// Override the [`Style`] for a single capture by name. Capture names
+    /// not in [`CAPTURE_NAMES`] are silently ignored.
+    pub fn set_capture(&mut self, name: &str, style: Style) {
+        if let Some(idx) = CAPTURE_NAMES.iter().position(|n| *n == name) {
+            self.styles[idx] = style;
+        }
+    }
 }
 
 // --- VS Code / TextMate theme JSON parsing --------------------------------------

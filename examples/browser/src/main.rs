@@ -8,12 +8,24 @@ use iced::widget::{column, combo_box, row, scrollable, space};
 
 use iced::{Fill, Font, Pixels, Task};
 use icedxdy::widget::container;
+use icedxdy::widget::markdown::highlighter::Map;
 
 use icedxdy::Size::*;
 use icedxdy::widget::{button, rule, separator, text};
 use icedxdy::{Theme, theme};
 
 use page::SnippetViewer;
+
+/// Vendored shadcn-flavour code themes (Shiki ships these in shadcn's
+/// docs site). Used verbatim — no overrides — so example renderings
+/// match the shadcn documentation snippets exactly. Loaded
+/// synchronously via `include_str!` and parsed once at startup.
+const GH_LIGHT: &str = include_str!("../themes/github-light-default.json");
+const GH_DARK: &str = include_str!("../themes/github-dark.json");
+
+fn parse_code_map(json: &str) -> Map {
+    Map::from_vscode_theme(json).expect("vendored github theme parses")
+}
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
@@ -76,11 +88,8 @@ impl App {
         tasks.push(fonts::init().map(Message::Font));
 
         let dark_mode = theme::is_dark_mode();
-        let snippet_viewer = SnippetViewer::from_theme(&if dark_mode {
-            Theme::dark()
-        } else {
-            Theme::light()
-        });
+        let snippet_viewer =
+            SnippetViewer::with_map(parse_code_map(if dark_mode { GH_DARK } else { GH_LIGHT }));
 
         (
             Self {
@@ -100,7 +109,8 @@ impl App {
         match message {
             Message::ToggleTheme => {
                 self.dark_mode = !self.dark_mode;
-                self.snippet_viewer = SnippetViewer::from_theme(&self.theme());
+                let json = if self.dark_mode { GH_DARK } else { GH_LIGHT };
+                self.snippet_viewer = SnippetViewer::with_map(parse_code_map(json));
                 Task::none()
             }
             Message::SelectPage(page) => {
