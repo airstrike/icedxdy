@@ -67,6 +67,23 @@ impl Color {
         self
     }
 
+    /// Interpolate toward `other` by `t` (0.0 = self, 1.0 = other). Hue
+    /// takes the shorter arc around the wheel — blending blue (245°)
+    /// with red (22°) at t=0.3 lands in the purple range, not by going
+    /// the long way through green.
+    pub fn blend(mut self, other: Color, t: f32) -> Color {
+        let t = t.clamp(0.0, 1.0);
+        self.l += (other.l - self.l) * t;
+        self.c += (other.c - self.c) * t;
+        self.a += (other.a - self.a) * t;
+        let mut diff = (other.h - self.h).rem_euclid(360.0);
+        if diff > 180.0 {
+            diff -= 360.0;
+        }
+        self.h = (self.h + diff * t).rem_euclid(360.0);
+        self
+    }
+
     /// Convert OKLCH to sRGB
     /// Based on the CSS Color Level 4 specification
     fn to_srgb(self) -> (f32, f32, f32) {

@@ -620,39 +620,23 @@ impl From<&icedxdy_core::Theme> for Map {
         let p = theme.palette();
         let is_dark = p.background.l < 0.5;
 
-        // Verbatim port of Tokyo Night's tokenColors structure with hues
-        // sourced from the palette. TN uses 6+ named hues (purple,
-        // blue, cyan, light-cyan, red, orange, amber, green); we map
-        // onto our four state colours plus two derived blue variants
-        // (cyan = info shifted toward green; subtle = info lightened +
-        // desaturated) so paths/types/punctuation read distinctly from
-        // function names instead of all collapsing to one blue:
+        // Hybrid mapping — TN's blue-family nuance for the categories
+        // where it matters (paths read distinctly from punctuation reads
+        // distinctly from `use`-style keywords) layered with shadcn's
+        // colour personality (purple functions, green types, red
+        // keywords, blue strings, orange attributes) for the rest.
         //
-        //   TN purple   (#BB9AF7, keywords, attributes)        → destructive
-        //   TN red      (#F7768E, this/self, tags, spread)     → destructive
-        //   TN blue     (#7AA2F7, function names)              → info
-        //   TN cyan     (#7DCFFF/#0DB9D7, types, properties,   → cyan (info −25° hue, +0.08 L)
-        //                                modules, namespaces)
-        //   TN lt-cyan  (#89DDFF, operators, punctuation,      → subtle (info +0.10 L, −40% C)
-        //                                  string.escape)
-        //   TN orange   (#FF9E64, numbers, constants)          → warning
-        //   TN amber    (#E0AF68, parameters)                  → warning
-        //   TN green    (#9ECE6A, strings)                     → success
-        //   TN comment  (#51597D, comments)                    → muted.foreground
-        //   TN fg       (#C0CAF5, identifiers)                 → foreground
+        // Three TN-style blue tones derived from `info.base`:
+        //   teal    (info −25° hue)                — paths/namespaces
+        //   cyan    (info −20°, +0.10 L, light desat) — struct field access
+        //   subtle  (info −15°, +0.20 L, half C)   — punctuation, `use`/`mod`
         //
-        // Still lossy in hue (purple→red), but path/type/punct now
-        // separate from function names and from each other.
-        let red = p.destructive.base.into();
-        let blue = p.info.base.into();
-        // Targeting TN's three blue tones from its tokenColors:
-        //   teal #0DB9D7 (entity.name.namespace) — L≈0.69, C≈0.13, H≈222
-        //   cyan #7DCFFF (variable.other.property) — L≈0.81, C≈0.10, H≈232
-        //   light-cyan #89DDFF (punctuation, keyword.other) — L≈0.86, C≈0.07, H≈235
-        // From info.base (dark: L=0.70, C=0.16, H=245) we derive:
-        //   teal: hue −25°, hold lightness — saturated namespace tone
-        //   cyan: hue −20°, +0.10 L, light desat — a step lighter for properties
-        //   subtle: hue −15°, +0.20 L, half chroma — pastel for punctuation/operators
+        // Plus four shadcn accents:
+        //   red     destructive                   — keywords, `self`, escapes
+        //   blue    info                          — strings, numbers, constants
+        //   green   success                       — types, constructors, tags
+        //   amber   warning                       — attributes, properties
+        //   purple  info.blend(destructive, 0.30) — function names
         let teal = p.info.base.shift_hue(-25.0).into();
         let cyan = p.info.base.shift_hue(-20.0).lighten(0.10).desaturate(0.20).into();
         let subtle = p
@@ -662,6 +646,9 @@ impl From<&icedxdy_core::Theme> for Map {
             .lighten(0.20)
             .desaturate(0.50)
             .into();
+        let purple = p.info.base.blend(p.destructive.base, 0.30).into();
+        let red = p.destructive.base.into();
+        let blue = p.info.base.into();
         let green = p.success.base.into();
         let amber = p.warning.base.into();
         let muted = p.muted.foreground.into();
@@ -675,41 +662,38 @@ impl From<&icedxdy_core::Theme> for Map {
         Map::from_entries([
             ("comment", semantic(muted)),
 
-            ("string", semantic(green)),
-            ("string.regexp", semantic(green)),
-            ("string.special", semantic(green)),
-            ("string.escape", semantic(subtle)),
+            ("string", semantic(blue)),
+            ("string.regexp", semantic(blue)),
+            ("string.special", semantic(blue)),
+            ("string.escape", semantic(red)),
 
-            ("number", semantic(amber)),
-            ("constant", semantic(amber)),
-            ("constant.builtin", semantic(amber)),
+            ("number", semantic(blue)),
+            ("constant", semantic(blue)),
+            ("constant.builtin", semantic(blue)),
 
             ("keyword", semantic(red)),
-            // `use`, `mod`, `as` — TN puts `keyword.other` in the
-            // light-cyan slot; everything else (storage, control flow)
-            // stays purple/red.
+            // `use` / `mod` / `as` get TN's light-cyan slot so they read
+            // distinctly from both regular keywords (red) and the
+            // teal-family path components that follow them.
             ("keyword.control.import", semantic(subtle)),
             ("operator", semantic(subtle)),
-            ("embedded", semantic(subtle)),
+            ("embedded", semantic(red)),
             ("special", semantic(red)),
 
-            ("function", semantic(blue)),
-            ("function.builtin", semantic(blue)),
-            ("function.macro", semantic(blue)),
-            ("function.method", semantic(blue)),
-            ("constructor", semantic(blue)),
+            ("function", semantic(purple)),
+            ("function.builtin", semantic(purple)),
+            ("function.macro", semantic(purple)),
+            ("function.method", semantic(purple)),
+            ("constructor", semantic(green)),
 
-            // TN treats type names (`entity.name.type`) as fg via the
-            // `entity.name` fallback — only primitive/builtin types pick
-            // up cyan via `support.type`.
-            ("type", semantic(fg)),
-            ("type.builtin", semantic(teal)),
-            ("type.enum", semantic(fg)),
-            ("tag", semantic(red)),
+            ("type", semantic(green)),
+            ("type.builtin", semantic(green)),
+            ("type.enum", semantic(green)),
+            ("tag", semantic(green)),
 
-            ("attribute", semantic(red)),
-            ("property", semantic(cyan)),
-            ("property.builtin", semantic(cyan)),
+            ("attribute", semantic(amber)),
+            ("property", semantic(amber)),
+            ("property.builtin", semantic(amber)),
             ("variable.other.member", semantic(cyan)),
 
             ("module", semantic(teal)),
@@ -858,6 +842,150 @@ mod tests {
                 ("row", Some("function.macro")),
                 ("!", Some("function.macro")),
                 ("[", Some("punctuation.bracket")),
+                ("]", Some("punctuation.bracket")),
+                ("]", Some("punctuation.bracket")),
+            ],
+        );
+    }
+
+    /// Multiline nested macros — the same `(token_tree (identifier)
+    /// @function.macro . "!" . (token_tree))` pattern that handles
+    /// `row![row![]]` (single-line) must still fire when there's
+    /// whitespace and a body between the brackets. Pins the exact
+    /// shape used in the components-browser examples.
+    #[test]
+    fn nested_macro_multiline() {
+        let src = "row![\n    row![\n        x,\n    ],\n]";
+        assert_captures(
+            src,
+            "rust",
+            &[
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("x", Some("variable")),
+                (",", Some("punctuation.delimiter")),
+                ("]", Some("punctuation.bracket")),
+                (",", Some("punctuation.delimiter")),
+                ("]", Some("punctuation.bracket")),
+            ],
+        );
+    }
+
+    /// Image #21 reproduction using the EXACT contents of the
+    /// `button-size.md` snippet that the browser feeds the highlighter
+    /// (everything between the ``` fences). If any inner `row!` reads
+    /// as fg/white in the rendered browser but `function.macro` here,
+    /// the bug is downstream of the highlighter (markdown extraction,
+    /// viewer wiring, etc.).
+    #[test]
+    fn image_21_button_size_snippet_literal() {
+        let src = "\
+use icedxdy::widget::{button, row};
+use icedxdy::Size::*;
+
+row![
+    row![
+        button::outline(\"Extra Small\").size(Xs),
+        button::icon(icon::arrow_up_right()).size(Xs),
+    ],
+    row![
+        button::outline(\"Small\").size(Sm),
+        button::icon(icon::arrow_up_right()).size(Sm),
+    ],
+    row![
+        button::outline(\"Default\"),
+        button::icon(icon::arrow_up_right()),
+    ],
+    row![
+        button::outline(\"Large\").size(Lg),
+        button::icon(icon::arrow_up_right()).size(Lg),
+    ],
+]";
+        let stream = capture_stream(src, "rust");
+        let row_caps: Vec<_> = stream
+            .iter()
+            .filter(|(t, _)| t == "row")
+            .map(|(_, c)| *c)
+            .collect();
+        assert_eq!(
+            row_caps,
+            vec![
+                Some("variable"),       // `row` in `use {button, row}` — use_list override
+                Some("function.macro"), // outer  row![…]
+                Some("function.macro"), // inner #1
+                Some("function.macro"), // inner #2
+                Some("function.macro"), // inner #3
+                Some("function.macro"), // inner #4
+            ],
+            "row capture sequence wrong",
+        );
+    }
+
+    /// Image #21 reproduction: outer `row!` containing multiple
+    /// sibling `row!` blocks, each with a body of `path::call(arg)`
+    /// chains. Pin every capture so we can tell at a glance whether
+    /// any nested-macro identifier silently falls through to fg.
+    #[test]
+    fn image_21_nested_button_calls() {
+        let src = "row![\n    row![\n        button::outline(\"X\").size(Xs),\n    ],\n]";
+        assert_captures(
+            src,
+            "rust",
+            &[
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("button", Some("namespace")),
+                ("::", Some("punctuation.delimiter")),
+                ("outline", Some("function")),
+                ("(", Some("punctuation.bracket")),
+                ("\"X\"", Some("string")),
+                (")", Some("punctuation.bracket")),
+                (".", Some("punctuation.delimiter")),
+                ("size", Some("function")),
+                ("(", Some("punctuation.bracket")),
+                ("Xs", Some("type")),
+                (")", Some("punctuation.bracket")),
+                (",", Some("punctuation.delimiter")),
+                ("]", Some("punctuation.bracket")),
+                (",", Some("punctuation.delimiter")),
+                ("]", Some("punctuation.bracket")),
+            ],
+        );
+    }
+
+    /// Multiple SIBLING nested macros inside one outer macro — matches
+    /// the structure of example bodies like `row![ row![…], row![…],
+    /// row![…] ]`. Each sibling `row!` must independently fire the
+    /// macro pattern. Regression check for image #21 in the
+    /// conversation history.
+    #[test]
+    fn sibling_nested_macros() {
+        let src = "row![row![a],row![b]]";
+        assert_captures(
+            src,
+            "rust",
+            &[
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("a", Some("variable")),
+                ("]", Some("punctuation.bracket")),
+                (",", Some("punctuation.delimiter")),
+                ("row", Some("function.macro")),
+                ("!", Some("function.macro")),
+                ("[", Some("punctuation.bracket")),
+                ("b", Some("variable")),
                 ("]", Some("punctuation.bracket")),
                 ("]", Some("punctuation.bracket")),
             ],

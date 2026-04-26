@@ -857,8 +857,34 @@ fn parse_with<'a>(
             pulldown_cmark::TagEnd::CodeBlock if !metadata => {
                 code_block = false;
 
+                // Re-tokenise the FULL accumulated source one final time
+                // and rebuild `code_lines`. The per-line streaming above
+                // tokenises against the source-so-far, which means lines
+                // emitted before the block closes see an incomplete AST
+                // (e.g. inner `row![…]` inside `row![\n    row![…]\n]`
+                // wouldn't have an enclosing `(token_tree)` to anchor the
+                // macro-extra patterns against — it'd fall through to
+                // `@variable`). Re-running on the closed source fixes
+                // every line retroactively.
                 #[cfg(feature = "highlighter")]
                 {
+                    if let (Some(h), false) = (highlighter.as_mut(), code.is_empty()) {
+                        let mut tokenizer = highlighter::Highlighter::new();
+                        let raw_lines = tokenizer.highlight(&code, &h.language);
+                        code_lines = raw_lines
+                            .into_iter()
+                            .map(|spans| {
+                                let scoped: Vec<Span> = spans
+                                    .into_iter()
+                                    .map(|sp| Span::Scoped {
+                                        text: sp.text,
+                                        capture: sp.capture,
+                                    })
+                                    .collect();
+                                Text::new(scoped)
+                            })
+                            .collect();
+                    }
                     state.borrow_mut().highlighter = highlighter.take();
                 }
 
