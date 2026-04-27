@@ -1,81 +1,322 @@
 //! Badge styling
 //!
-//! Style functions for badge variants, returning container styles.
+//! `Style` is OKLCH-native — badge reuses container's `Style` field-for-field.
+//! Variant fns + Spec/atom apply tweaks before conversion.
 
-use iced_core::Border;
-use iced_widget::container::Style;
+use std::ops::Add;
 
 use super::Theme;
+use super::container::Style;
+use super::tweak::{Tweak, TweakSet};
+use crate::{Background, Border, Palette};
 
+/// Pill-shape radius — clamped to a huge value so the container renders as a
+/// fully rounded capsule regardless of size.
 const PILL_RADIUS: f32 = u32::MAX as f32;
 
-/// Default: bg-primary text-primary-foreground
+// --- Variant fns -------------------------------------------------------------
+
+/// Default: `bg-primary` text-`primary-foreground`.
 pub fn default(theme: &Theme) -> Style {
     let p = theme.palette();
     Style {
         background: Some(p.primary.base.into()),
-        text_color: Some(p.primary.foreground.into()),
+        text_color: Some(p.primary.foreground),
         border: Border {
             radius: PILL_RADIUS.into(),
-            ..Default::default()
+            ..Border::default()
         },
-        ..Default::default()
+        ..Style::default()
     }
 }
 
-/// Secondary: bg-secondary text-secondary-foreground
+/// Secondary: `bg-secondary` text-`secondary-foreground`.
 pub fn secondary(theme: &Theme) -> Style {
     let p = theme.palette();
     Style {
         background: Some(p.secondary.base.into()),
-        text_color: Some(p.secondary.foreground.into()),
+        text_color: Some(p.secondary.foreground),
         border: Border {
             radius: PILL_RADIUS.into(),
-            ..Default::default()
+            ..Border::default()
         },
-        ..Default::default()
+        ..Style::default()
     }
 }
 
-/// Destructive: bg-destructive text-destructive-foreground
+/// Destructive: `bg-destructive` text-`destructive-foreground`.
 pub fn destructive(theme: &Theme) -> Style {
     let p = theme.palette();
     Style {
         background: Some(p.destructive.base.into()),
-        text_color: Some(p.destructive.foreground.into()),
+        text_color: Some(p.destructive.foreground),
         border: Border {
             radius: PILL_RADIUS.into(),
-            ..Default::default()
+            ..Border::default()
         },
-        ..Default::default()
+        ..Style::default()
     }
 }
 
-/// Outline: bg-transparent text-foreground border-1px
+/// Outline: transparent bg, foreground text, 1px border.
 pub fn outline(theme: &Theme) -> Style {
     let p = theme.palette();
     Style {
         background: None,
-        text_color: Some(p.foreground.into()),
+        text_color: Some(p.foreground),
         border: Border {
             radius: PILL_RADIUS.into(),
             width: 1.0,
-            color: p.border.into(),
+            color: p.border,
         },
-        ..Default::default()
+        ..Style::default()
     }
 }
 
-/// Ghost: no background, no border, muted foreground text
+/// Ghost: no background, no border, foreground text.
 pub fn ghost(theme: &Theme) -> Style {
     let p = theme.palette();
     Style {
         background: None,
-        text_color: Some(p.foreground.into()),
+        text_color: Some(p.foreground),
         border: Border {
             radius: PILL_RADIUS.into(),
-            ..Default::default()
+            ..Border::default()
         },
-        ..Default::default()
+        ..Style::default()
+    }
+}
+
+// --- Variant unit structs ----------------------------------------------------
+
+/// Default badge variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Default;
+
+/// Secondary badge variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Secondary;
+
+/// Destructive badge variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Destructive;
+
+/// Outline badge variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Outline;
+
+/// Ghost badge variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Ghost;
+
+// --- Spec --------------------------------------------------------------------
+
+/// A badge style: a base variant function plus a sequence of tweaks
+/// applied at resolve time.
+#[derive(Debug, Clone)]
+pub struct Spec {
+    variant: fn(&Theme) -> Style,
+    tweaks: TweakSet,
+}
+
+impl Spec {
+    fn variant(f: fn(&Theme) -> Style) -> Spec {
+        Spec {
+            variant: f,
+            tweaks: TweakSet::default(),
+        }
+    }
+
+    fn push(mut self, t: Tweak) -> Spec {
+        self.tweaks.0.push(t);
+        self
+    }
+
+    /// Resolve this spec to a concrete `Style` for the given theme.
+    pub fn resolve(&self, theme: &Theme) -> Style {
+        let mut style = (self.variant)(theme);
+        let palette = theme.palette();
+        for t in &self.tweaks.0 {
+            apply(t, &mut style, palette);
+        }
+        style
+    }
+}
+
+impl From<Default> for Spec {
+    fn from(_: Default) -> Spec {
+        Spec::variant(default)
+    }
+}
+
+impl From<Secondary> for Spec {
+    fn from(_: Secondary) -> Spec {
+        Spec::variant(secondary)
+    }
+}
+
+impl From<Destructive> for Spec {
+    fn from(_: Destructive) -> Spec {
+        Spec::variant(destructive)
+    }
+}
+
+impl From<Outline> for Spec {
+    fn from(_: Outline) -> Spec {
+        Spec::variant(outline)
+    }
+}
+
+impl From<Ghost> for Spec {
+    fn from(_: Ghost) -> Spec {
+        Spec::variant(ghost)
+    }
+}
+
+macro_rules! variant_add {
+    ($($variant:ident),* $(,)?) => {
+        $(
+            impl<T: Into<Tweak>> Add<T> for $variant {
+                type Output = Spec;
+                fn add(self, rhs: T) -> Spec {
+                    Spec::from(self).push(rhs.into())
+                }
+            }
+        )*
+    };
+}
+
+variant_add!(Default, Secondary, Destructive, Outline, Ghost);
+
+impl<T: Into<Tweak>> Add<T> for Spec {
+    type Output = Spec;
+    fn add(self, rhs: T) -> Spec {
+        self.push(rhs.into())
+    }
+}
+
+// --- Resolver ----------------------------------------------------------------
+//
+// Badge has no status, so `Tweak::State(...)` silently drops. Identical body
+// to container.rs::apply.
+
+fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
+    match tweak {
+        Tweak::Bg(t) => {
+            style.background = Some(t.resolve(palette).into());
+        }
+        Tweak::Fg(t) => {
+            style.text_color = Some(t.resolve(palette));
+        }
+        Tweak::BorderColor(t) => {
+            style.border.color = t.resolve(palette);
+        }
+        Tweak::BorderWidth(w) => {
+            style.border.width = *w;
+        }
+        Tweak::Radius(r) => {
+            style.border.radius = (*r).into();
+        }
+        Tweak::Shadow(s) => {
+            style.shadow = (*s).into();
+        }
+        Tweak::Opaque => {
+            if let Some(Background::Color(src)) = style.background {
+                let dst = palette.background;
+                let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
+                style.background = Some(Background::Color(composed));
+            }
+        }
+        Tweak::Alpha(factor) => {
+            if let Some(bg) = style.background {
+                style.background = Some(bg.scale_alpha(*factor));
+            }
+        }
+        Tweak::State(_, _) => {}
+        Tweak::Ring { .. }
+        | Tweak::Size(_)
+        | Tweak::Weight(_)
+        | Tweak::Family(_)
+        | Tweak::LineHeight(_)
+        | Tweak::Italic
+        | Tweak::Align(_) => {}
+    }
+}
+
+// --- Bridge to iced::container::StyleFn --------------------------------------
+
+impl<'a> From<Default> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: Default) -> Self {
+        Box::new(|t| default(t).into())
+    }
+}
+
+impl<'a> From<Secondary> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: Secondary) -> Self {
+        Box::new(|t| secondary(t).into())
+    }
+}
+
+impl<'a> From<Destructive> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: Destructive) -> Self {
+        Box::new(|t| destructive(t).into())
+    }
+}
+
+impl<'a> From<Outline> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: Outline) -> Self {
+        Box::new(|t| outline(t).into())
+    }
+}
+
+impl<'a> From<Ghost> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: Ghost) -> Self {
+        Box::new(|t| ghost(t).into())
+    }
+}
+
+impl<'a> From<Spec> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(spec: Spec) -> Self {
+        Box::new(move |t| spec.resolve(t).into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Background, Color};
+
+    fn bg_color(style: &Style) -> Color {
+        match style.background {
+            Some(Background::Color(c)) => c,
+            other => panic!("expected solid Background::Color, got {other:?}"),
+        }
+    }
+
+    /// `Default` resolves to `palette.primary.base` background.
+    #[test]
+    fn default_uses_primary_background() {
+        let theme = Theme::dark();
+        let resolved = default(&theme);
+        let bg = bg_color(&resolved);
+        let expected = theme.palette().primary.base;
+        assert!(
+            (bg.l - expected.l).abs() < 1e-4
+                && (bg.c - expected.c).abs() < 1e-4
+                && (bg.a - expected.a).abs() < 1e-4,
+            "expected primary.base, got {bg:?}",
+        );
+    }
+
+    /// `Outline` has no background — the variant must produce `None`.
+    #[test]
+    fn outline_has_no_background() {
+        let theme = Theme::dark();
+        let resolved = outline(&theme);
+        assert!(
+            resolved.background.is_none(),
+            "Outline must not set a background, got {:?}",
+            resolved.background,
+        );
     }
 }

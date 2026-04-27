@@ -1,43 +1,245 @@
-//! Sidebar-specific container styles (flush + floating variants).
+//! Sidebar container styling
 //!
-//! Other sidebar styling (menu buttons, separators, group labels) is
-//! handled inside each respective widget module, matching docs-sidebar
-//! rendering rather than base shadcn SidebarMenuButton.
+//! `Style` is OKLCH-native — sidebar reuses container's `Style` field-for-field.
+//! Variant fns + Spec/atom apply tweaks before conversion.
+//!
+//! Other sidebar styling (menu buttons, separators, group labels) is handled
+//! inside each respective widget module, matching docs-sidebar rendering rather
+//! than base shadcn `SidebarMenuButton`.
+//!
+//! `Inset` is intentionally absent — Phase 4.
 
-use iced_core::{Border, Shadow, Vector};
-use iced_widget::container;
+use std::ops::Add;
+
+use iced_core::Vector;
 
 use super::Theme;
-use crate::radius;
+use super::container::Style;
+use super::tweak::{Tweak, TweakSet};
+use crate::{Background, Border, Color, Palette, Shadow, radius};
 
-// ---------------------------------------------------------------------------
-// Container
-// ---------------------------------------------------------------------------
+// --- Variant fns -------------------------------------------------------------
 
-/// Sidebar background container
-pub fn sidebar_background(theme: &Theme) -> container::Style {
-    container::Style {
+/// Sidebar background — flush variant, solid `palette.sidebar.background`.
+pub fn default(theme: &Theme) -> Style {
+    Style {
         background: Some(theme.palette().sidebar.background.into()),
-        ..Default::default()
+        ..Style::default()
     }
 }
 
-/// Sidebar floating container: background, border, shadow, rounded corners
-pub fn sidebar_floating(theme: &Theme) -> container::Style {
+/// Floating sidebar — sidebar bg, 1px border, drop shadow, rounded-lg.
+pub fn floating(theme: &Theme) -> Style {
     let sb = &theme.palette().sidebar;
-
-    container::Style {
+    Style {
         background: Some(sb.background.into()),
         border: Border {
             radius: radius::LG.into(),
             width: 1.0,
-            color: sb.border.into(),
+            color: sb.border,
         },
         shadow: Shadow {
-            color: iced_core::Color::from_rgba(0.0, 0.0, 0.0, 0.1),
+            color: Color::BLACK.alpha(0.1),
             offset: Vector::new(0.0, 2.0),
             blur_radius: 8.0,
         },
-        ..Default::default()
+        ..Style::default()
+    }
+}
+
+// --- Variant unit structs ----------------------------------------------------
+
+/// Default (flush) sidebar variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Default;
+
+/// Floating sidebar variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Floating;
+
+// --- Spec --------------------------------------------------------------------
+
+/// A sidebar style: a base variant function plus a sequence of tweaks
+/// applied at resolve time.
+#[derive(Debug, Clone)]
+pub struct Spec {
+    variant: fn(&Theme) -> Style,
+    tweaks: TweakSet,
+}
+
+impl Spec {
+    fn variant(f: fn(&Theme) -> Style) -> Spec {
+        Spec {
+            variant: f,
+            tweaks: TweakSet::default(),
+        }
+    }
+
+    fn push(mut self, t: Tweak) -> Spec {
+        self.tweaks.0.push(t);
+        self
+    }
+
+    /// Resolve this spec to a concrete `Style` for the given theme.
+    pub fn resolve(&self, theme: &Theme) -> Style {
+        let mut style = (self.variant)(theme);
+        let palette = theme.palette();
+        for t in &self.tweaks.0 {
+            apply(t, &mut style, palette);
+        }
+        style
+    }
+}
+
+impl From<Default> for Spec {
+    fn from(_: Default) -> Spec {
+        Spec::variant(default)
+    }
+}
+
+impl From<Floating> for Spec {
+    fn from(_: Floating) -> Spec {
+        Spec::variant(floating)
+    }
+}
+
+macro_rules! variant_add {
+    ($($variant:ident),* $(,)?) => {
+        $(
+            impl<T: Into<Tweak>> Add<T> for $variant {
+                type Output = Spec;
+                fn add(self, rhs: T) -> Spec {
+                    Spec::from(self).push(rhs.into())
+                }
+            }
+        )*
+    };
+}
+
+variant_add!(Default, Floating);
+
+impl<T: Into<Tweak>> Add<T> for Spec {
+    type Output = Spec;
+    fn add(self, rhs: T) -> Spec {
+        self.push(rhs.into())
+    }
+}
+
+// --- Resolver ----------------------------------------------------------------
+//
+// Sidebar has no status, so `Tweak::State(...)` silently drops. Identical body
+// to container.rs::apply.
+
+fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
+    match tweak {
+        Tweak::Bg(t) => {
+            style.background = Some(t.resolve(palette).into());
+        }
+        Tweak::Fg(t) => {
+            style.text_color = Some(t.resolve(palette));
+        }
+        Tweak::BorderColor(t) => {
+            style.border.color = t.resolve(palette);
+        }
+        Tweak::BorderWidth(w) => {
+            style.border.width = *w;
+        }
+        Tweak::Radius(r) => {
+            style.border.radius = (*r).into();
+        }
+        Tweak::Shadow(s) => {
+            style.shadow = (*s).into();
+        }
+        Tweak::Opaque => {
+            if let Some(Background::Color(src)) = style.background {
+                let dst = palette.background;
+                let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
+                style.background = Some(Background::Color(composed));
+            }
+        }
+        Tweak::Alpha(factor) => {
+            if let Some(bg) = style.background {
+                style.background = Some(bg.scale_alpha(*factor));
+            }
+        }
+        Tweak::State(_, _) => {}
+        Tweak::Ring { .. }
+        | Tweak::Size(_)
+        | Tweak::Weight(_)
+        | Tweak::Family(_)
+        | Tweak::LineHeight(_)
+        | Tweak::Italic
+        | Tweak::Align(_) => {}
+    }
+}
+
+// --- Bridge to iced::container::StyleFn --------------------------------------
+
+impl<'a> From<Default> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: Default) -> Self {
+        Box::new(|t| default(t).into())
+    }
+}
+
+impl<'a> From<Floating> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: Floating) -> Self {
+        Box::new(|t| floating(t).into())
+    }
+}
+
+impl<'a> From<Spec> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(spec: Spec) -> Self {
+        Box::new(move |t| spec.resolve(t).into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn bg_color(style: &Style) -> Color {
+        match style.background {
+            Some(Background::Color(c)) => c,
+            other => panic!("expected solid Background::Color, got {other:?}"),
+        }
+    }
+
+    /// `Default` resolves to `palette.sidebar.background`.
+    #[test]
+    fn default_uses_sidebar_background() {
+        let theme = Theme::dark();
+        let resolved = default(&theme);
+        let bg = bg_color(&resolved);
+        let expected = theme.palette().sidebar.background;
+        assert!(
+            (bg.l - expected.l).abs() < 1e-4
+                && (bg.c - expected.c).abs() < 1e-4
+                && (bg.a - expected.a).abs() < 1e-4,
+            "expected sidebar.background, got {bg:?}",
+        );
+    }
+
+    /// `Floating` resolves to `palette.sidebar.background` with a shadow + LG radius.
+    #[test]
+    fn floating_uses_sidebar_background_with_shadow() {
+        let theme = Theme::dark();
+        let resolved = floating(&theme);
+        let bg = bg_color(&resolved);
+        let expected = theme.palette().sidebar.background;
+        assert!(
+            (bg.l - expected.l).abs() < 1e-4
+                && (bg.c - expected.c).abs() < 1e-4
+                && (bg.a - expected.a).abs() < 1e-4,
+            "expected sidebar.background, got {bg:?}",
+        );
+        assert!(
+            resolved.shadow.blur_radius > 0.0,
+            "Floating must carry a non-zero shadow",
+        );
+        assert_eq!(
+            resolved.border.radius,
+            radius::LG.into(),
+            "Floating must use rounded-lg corners",
+        );
     }
 }

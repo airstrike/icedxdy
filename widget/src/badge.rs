@@ -76,12 +76,12 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Badge<'a, Message> {
         self.content.size(crate::Size::Xs);
         self.content.weight(Weight::Semibold);
 
-        let style_fn: fn(&Theme) -> iced_widget::container::Style = match self.variant {
-            Variant::Default => theme::badge::default,
-            Variant::Secondary => theme::badge::secondary,
-            Variant::Destructive => theme::badge::destructive,
-            Variant::Outline => theme::badge::outline,
-            Variant::Ghost => theme::badge::ghost,
+        let style_fn: iced_widget::container::StyleFn<'_, Theme> = match self.variant {
+            Variant::Default => theme::badge::Default.into(),
+            Variant::Secondary => theme::badge::Secondary.into(),
+            Variant::Destructive => theme::badge::Destructive.into(),
+            Variant::Outline => theme::badge::Outline.into(),
+            Variant::Ghost => theme::badge::Ghost.into(),
         };
 
         // py-0.5 = 2px, px-2.5 = 10px

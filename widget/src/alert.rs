@@ -115,11 +115,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
 
         content_row = content_row.push(text_col);
 
-        // FIXME: use new style API
         // Container style based on variant
-        let container_style: fn(&Theme) -> iced_widget::container::Style = match self.variant {
-            Variant::Default => theme::alert::default,
-            Variant::Destructive => theme::alert::destructive,
+        let container_style: iced_widget::container::StyleFn<'_, Theme> = match self.variant {
+            Variant::Default => theme::alert::Default.into(),
+            Variant::Destructive => theme::alert::Destructive.into(),
         };
 
         iced_widget::container(content_row)
