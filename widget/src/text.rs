@@ -12,7 +12,7 @@
 
 use iced_core::font::Weight;
 use iced_core::text::{Fragment, IntoFragment};
-use iced_widget::text::Style;
+use iced_widget::text::StyleFn;
 use iced_widget::Renderer;
 
 use crate::component::IntoElement;
@@ -39,7 +39,7 @@ pub struct Text<'a> {
     size: Option<f32>,
     weight: Option<Weight>,
     letter_spacing: Option<iced_core::Em>,
-    style: Option<fn(&Theme) -> Style>,
+    style: Option<StyleFn<'a, Theme>>,
 }
 
 impl<'a> Text<'a> {
@@ -81,8 +81,13 @@ impl<'a> Text<'a> {
         self
     }
 
-    pub fn style(mut self, style: fn(&Theme) -> Style) -> Self {
-        self.style = Some(style);
+    /// Set the style.
+    ///
+    /// Accepts any text-style variant struct (`theme::text::Foreground`,
+    /// `theme::text::Muted`, etc.), a `Spec` (`Foreground + Alpha(0.5)`),
+    /// or an explicit `Box::new(closure)`.
+    pub fn style(mut self, style: impl Into<StyleFn<'a, Theme>>) -> Self {
+        self.style = Some(style.into());
         self
     }
 
@@ -151,7 +156,7 @@ pub fn h1<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .size(size::XL3)
         .semibold()
         .letter_spacing(-0.025)
-        .style(theme::text::foreground)
+        .style(theme::text::Foreground)
 }
 
 pub fn h2<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
@@ -159,7 +164,7 @@ pub fn h2<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .size(size::XL)
         .medium()
         .letter_spacing(-0.025)
-        .style(theme::text::foreground)
+        .style(theme::text::Foreground)
 }
 
 pub fn h3<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
@@ -167,7 +172,7 @@ pub fn h3<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .size(size::LG)
         .medium()
         .letter_spacing(-0.025)
-        .style(theme::text::foreground)
+        .style(theme::text::Foreground)
 }
 
 pub fn h4<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
@@ -175,42 +180,42 @@ pub fn h4<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .size(size::BASE)
         .medium()
         .letter_spacing(-0.025)
-        .style(theme::text::foreground)
+        .style(theme::text::Foreground)
 }
 
 pub fn p<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::BASE)
-        .style(theme::text::foreground)
+        .style(theme::text::Foreground)
 }
 
 pub fn lead<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::XL)
-        .style(theme::text::muted)
+        .style(theme::text::Muted)
 }
 
 pub fn large<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::LG)
         .semibold()
-        .style(theme::text::foreground)
+        .style(theme::text::Foreground)
 }
 
 pub fn small<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
-        .style(theme::text::foreground)
+        .style(theme::text::Foreground)
 }
 
 pub fn muted<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
-        .style(theme::text::muted)
+        .style(theme::text::Muted)
 }
 
 pub fn xs<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::XS)
-        .style(theme::text::foreground)
+        .style(theme::text::Foreground)
 }

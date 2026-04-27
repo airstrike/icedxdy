@@ -151,14 +151,16 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
         }
 
         let rounded = btn.rounded;
-        iced_btn = iced_btn.style(move |t: &Theme, s: super::widget::Status| {
-            let iced_status: iced_widget::button::Status = s.into();
-            let mut style: super::widget::Style = (btn.style)(t, iced_status).into();
-            if rounded {
-                style.border.radius = (u32::MAX as f32).into();
-            }
-            style
-        });
+        let bridge: super::widget::StyleFn<'a, Theme> =
+            Box::new(move |t: &Theme, s: super::widget::Status| {
+                let iced_status: iced_widget::button::Status = s.into();
+                let mut style: super::widget::Style = (btn.style)(t, iced_status).into();
+                if rounded {
+                    style.border.radius = (u32::MAX as f32).into();
+                }
+                style
+            });
+        iced_btn = iced_btn.style(bridge);
 
         if let Some(on_press) = btn.on_press {
             iced_btn = iced_btn.on_press(on_press);
@@ -205,6 +207,6 @@ impl Link {
         let span: Span<'a, Message, Font> = Span::new(self.label).link(message);
         Rich::with_spans([span])
             .on_link_click(|msg| msg)
-            .style(theme::text::link)
+            .style(|t| theme::text::link(t).into())
     }
 }

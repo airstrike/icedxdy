@@ -250,12 +250,16 @@ where
     }
 
     /// Sets the style of the [`Button`].
+    ///
+    /// Accepts any value that converts into the button's [`StyleFn`] —
+    /// typically a variant unit struct, a `Spec`, or `Box::new(closure)`
+    /// for ad-hoc styles.
     #[must_use]
-    pub fn style(mut self, style: impl Fn(&Theme, Status) -> Style + 'a) -> Self
+    pub fn style(mut self, style: impl Into<StyleFn<'a, Theme>>) -> Self
     where
         Theme::Class<'a>: From<StyleFn<'a, Theme>>,
     {
-        self.class = (Box::new(style) as StyleFn<'a, Theme>).into();
+        self.class = style.into().into();
         self
     }
 

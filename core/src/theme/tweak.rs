@@ -16,6 +16,7 @@ use std::ops::Add;
 use crate::{Radius, Shadow};
 
 pub mod align;
+pub mod alpha;
 pub mod bg;
 pub mod border;
 pub mod family;
@@ -30,6 +31,7 @@ pub mod token;
 pub mod weight;
 
 pub use align::Align;
+pub use alpha::Alpha;
 pub use bg::Bg;
 pub use family::Family;
 pub use fg::Fg;
@@ -63,6 +65,7 @@ pub enum Tweak {
         offset: f32,
     },
     Opaque,
+    Alpha(f32),
     Size(iced_core::Pixels),
     Weight(iced_core::font::Weight),
     Family(iced_core::Font),

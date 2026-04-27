@@ -239,7 +239,7 @@ impl App {
         let current = &*self.pages[self.current_page];
         let meta = current.meta();
         let title = text::h1(meta.title);
-        let description = text::p(meta.description).style(theme::text::muted);
+        let description = text::p(meta.description).style(theme::text::Muted);
 
         let (page_body, page_nav) = page::view(current, &self.snippet_viewer);
 
@@ -258,7 +258,7 @@ impl App {
             .height(Fill)
             .id(current.scrollable_id());
 
-        let sidebar_divider = rule::vertical(1).style(|theme: &Theme| {
+        let sidebar_divider = rule::vertical(1).style(Box::new(|theme: &Theme| {
             use iced::gradient::Linear;
             use std::f32::consts::PI;
             let border = theme.palette().border;
@@ -270,7 +270,7 @@ impl App {
                     .into(),
                 ..rule::Style::default()
             }
-        });
+        }) as rule::StyleFn<'_, Theme>);
 
         let body = if let Some(nav) = page_nav {
             row![sidebar, sidebar_divider, main, nav]

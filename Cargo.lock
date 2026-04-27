@@ -1344,6 +1344,7 @@ version = "0.1.0"
 dependencies = [
  "dirs",
  "iced",
+ "iced_runtime",
  "iced_widget",
  "icedxdy",
  "reqwest",

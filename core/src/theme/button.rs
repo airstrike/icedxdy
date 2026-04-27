@@ -608,6 +608,11 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             }
             // Background::Gradient: pass through unchanged.
         }
+        Tweak::Alpha(factor) => {
+            if let Some(bg) = style.background {
+                style.background = Some(bg.scale_alpha(*factor));
+            }
+        }
         Tweak::State(trigger, inner) => {
             if triggered(*trigger, status) {
                 for inner_tweak in &inner.0 {

@@ -89,6 +89,12 @@ impl<'a, Message: 'a> From<Container<'a, Message>>
     }
 }
 
+impl<'a, Message: 'a> From<Container<'a, Message>> for crate::Component<'a, Message> {
+    fn from(c: Container<'a, Message>) -> Self {
+        crate::Component::new(c)
+    }
+}
+
 impl<'a, Message: 'a> IntoElement<'a, Message> for Container<'a, Message> {
     fn size(&mut self, size: Size) {
         self.content.size(size);

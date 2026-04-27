@@ -166,7 +166,7 @@ fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, 
         } else {
             let desc: Option<Component<'_, super::Message>> = ex
                 .description
-                .map(|d| text::p(d).style(theme::text::muted).into());
+                .map(|d| text::p(d).style(theme::text::Muted).into());
 
             let section: Component<'_, super::Message> = icedxdy::widget::column(
                 [Some(text::h3(ex.title).into()), desc, Some(card)]

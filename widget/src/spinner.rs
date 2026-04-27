@@ -104,8 +104,12 @@ impl<'a> Spinner<'a> {
         self
     }
 
-    pub fn style(mut self, style: impl Fn(&Theme) -> Style + 'a) -> Self {
-        self.class = Box::new(style);
+    /// Set the style.
+    ///
+    /// Accepts any value that converts into the spinner's [`StyleFn`] —
+    /// typically `Box::new(closure)` for ad-hoc styles.
+    pub fn style(mut self, style: impl Into<StyleFn<'a, Theme>>) -> Self {
+        self.class = style.into();
         self
     }
 }

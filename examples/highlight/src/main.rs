@@ -7,7 +7,7 @@
 //! per slug). Network is required: there is no bundled fallback.
 
 use iced::widget::{column, combo_box, scrollable};
-use iced::{Element, Fill, Font, Pixels, Task};
+use iced::{Element, Fill, Font, Pixels, Subscription, Task, keyboard};
 use iced_widget::stack;
 use icedxdy::widget::markdown::highlighter;
 use icedxdy::widget::text;
@@ -19,24 +19,25 @@ mod registry;
 const SAMPLE: &str = include_str!("sample.txt");
 
 fn main() -> iced::Result {
-    iced::application(App::new, App::update, App::view)
+    iced::application(Highlights::new, Highlights::update, Highlights::view)
         .title("icedxdy \u{2022} highlight playground")
         .antialiasing(true)
-        .theme(App::theme)
+        .subscription(Highlights::subscription)
+        .theme(Highlights::theme)
         .run()
 }
 
-enum App {
+enum Highlights {
     LoadingCatalog,
     LoadingTheme {
         entries: Vec<registry::Entry>,
         slug: String,
     },
-    Ready(Ready),
+    Ready(App),
     Failed(String),
 }
 
-struct Ready {
+struct App {
     entries: Vec<registry::Entry>,
     picker_state: combo_box::State<registry::Entry>,
     selected: registry::Entry,
@@ -51,36 +52,46 @@ enum Message {
     ThemeLoaded(String, Result<highlighter::Map, String>),
     Selected(registry::Entry),
     Noop,
+
+    Switch(Direction),
 }
 
-impl App {
+#[derive(Debug, Clone, Copy)]
+enum Direction {
+    Next,
+    Previous,
+    First,
+    Last,
+}
+
+impl Highlights {
     fn new() -> (Self, Task<Message>) {
         let load = Task::perform(registry::fetch_catalog(), Message::CatalogLoaded);
-        (App::LoadingCatalog, load)
+        (Highlights::LoadingCatalog, load)
     }
 
     fn update(&mut self, msg: Message) -> Task<Message> {
         match msg {
             Message::CatalogLoaded(Ok(entries)) => {
                 let slug = pick_default(&entries);
-                *self = App::LoadingTheme {
+                *self = Highlights::LoadingTheme {
                     entries,
                     slug: slug.clone(),
                 };
                 fetch_theme_task(slug)
             }
             Message::CatalogLoaded(Err(e)) => {
-                *self = App::Failed(format!("Failed to load catalog: {e}"));
+                *self = Highlights::Failed(format!("Failed to load catalog: {e}"));
                 Task::none()
             }
             Message::ThemeLoaded(slug, Ok(map)) => {
-                let placeholder = std::mem::replace(self, App::LoadingCatalog);
+                let placeholder = std::mem::replace(self, Highlights::LoadingCatalog);
                 *self = match placeholder {
-                    App::LoadingTheme { entries, .. } => {
+                    Highlights::LoadingTheme { entries, .. } => {
                         let selected = entry_for(&entries, &slug);
                         let picker_state = combo_box::State::new(entries.clone());
                         let items = markdown::parse(SAMPLE).collect();
-                        App::Ready(Ready {
+                        Highlights::Ready(App {
                             entries,
                             picker_state,
                             selected,
@@ -89,25 +100,25 @@ impl App {
                             pending: None,
                         })
                     }
-                    App::Ready(mut r) => {
+                    Highlights::Ready(mut r) => {
                         r.selected = entry_for(&r.entries, &slug);
                         r.map = map;
                         r.pending = None;
-                        App::Ready(r)
+                        Highlights::Ready(r)
                     }
                     other => other,
                 };
                 Task::none()
             }
             Message::ThemeLoaded(slug, Err(e)) => {
-                if let App::Ready(r) = self {
+                if let Highlights::Ready(r) = self {
                     r.pending = None;
                 }
                 eprintln!("theme {slug} failed: {e}");
                 Task::none()
             }
             Message::Selected(entry) => {
-                if let App::Ready(r) = self {
+                if let Highlights::Ready(r) = self {
                     let slug = entry.slug.clone();
                     r.pending = Some(slug.clone());
                     r.selected = entry;
@@ -116,22 +127,45 @@ impl App {
                     Task::none()
                 }
             }
+
+            Message::Switch(direction) => {
+                let Highlights::Ready(r) = self else {
+                    return Task::none();
+                };
+                let Some(index) = entry_index(&r.entries, &r.selected.slug) else {
+                    return Task::none();
+                };
+                let next_index = match direction {
+                    Direction::Next => (index + 1) % r.entries.len(),
+                    Direction::Previous => (index + r.entries.len() - 1) % r.entries.len(),
+                    Direction::First => 0,
+                    Direction::Last => r.entries.len() - 1,
+                };
+                let entry = r.entries[next_index].clone();
+                let slug = entry.slug.clone();
+                r.pending = Some(slug.clone());
+                r.selected = entry;
+                fetch_theme_task(slug)
+            }
+
             Message::Noop => Task::none(),
         }
     }
 
     fn view(&self) -> Element<'_, Message, Theme> {
         match self {
-            App::LoadingCatalog => splash("Loading theme catalog\u{2026}"),
-            App::LoadingTheme { slug, .. } => splash(&format!("Loading theme '{slug}'\u{2026}")),
-            App::Failed(msg) => splash(msg),
-            App::Ready(r) => r.view(),
+            Highlights::LoadingCatalog => splash("Loading theme catalog\u{2026}"),
+            Highlights::LoadingTheme { slug, .. } => {
+                splash(&format!("Loading theme '{slug}'\u{2026}"))
+            }
+            Highlights::Failed(msg) => splash(msg),
+            Highlights::Ready(r) => r.view(),
         }
     }
 
     fn theme(&self) -> Theme {
         let prefer_dark = match self {
-            App::Ready(r) => r.map.is_dark(),
+            Highlights::Ready(r) => r.map.is_dark(),
             _ => theme::is_dark_mode(),
         };
         if prefer_dark {
@@ -139,6 +173,27 @@ impl App {
         } else {
             Theme::light()
         }
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        use keyboard::key::{Key, Named};
+
+        keyboard::listen().filter_map(|event| {
+            let keyboard::Event::KeyPressed { key, .. } = event else {
+                return None;
+            };
+            match key {
+                Key::Named(Named::PageDown)
+                | Key::Named(Named::ArrowRight)
+                | Key::Named(Named::ArrowDown) => Some(Message::Switch(Direction::Next)),
+                Key::Named(Named::PageUp)
+                | Key::Named(Named::ArrowLeft)
+                | Key::Named(Named::ArrowUp) => Some(Message::Switch(Direction::Previous)),
+                Key::Named(Named::Home) => Some(Message::Switch(Direction::First)),
+                Key::Named(Named::End) => Some(Message::Switch(Direction::Last)),
+                _ => None,
+            }
+        })
     }
 }
 
@@ -188,7 +243,11 @@ fn entry_for(entries: &[registry::Entry], slug: &str) -> registry::Entry {
         })
 }
 
-impl Ready {
+fn entry_index(entries: &[registry::Entry], slug: &str) -> Option<usize> {
+    entries.iter().position(|e| e.slug == slug)
+}
+
+impl App {
     fn view(&self) -> Element<'_, Message, Theme> {
         let picker = combo_box(
             &self.picker_state,
@@ -198,13 +257,17 @@ impl Ready {
         );
 
         let label = self.pending.as_ref().map(|slug| {
-            // Card-shaped overlay built from style tokens: card surface, full
-            // rounded corners, 1px border. Reads as a "modal-on-code" while
-            // the theme fetches.
-            use icedxdy::theme::tweak::{border, radius};
+            // Mirrors the browser's "View Code" structure: an opaque inner
+            // card (analog of the View Code button) centered inside a
+            // gradient overlay (analog of the code-fade overlay). The
+            // gradient lets the previous theme show through up top; the
+            // card makes the "Loading" text readable in the middle.
             use icedxdy::Size::Lg;
-            center(text::muted(format!("Loading {slug}\u{2026}")))
-                .style(theme::container::Card + radius(Lg) + border::Width(1.0))
+            use icedxdy::theme::tweak::{Opaque, radius};
+            let card = container(text::muted(format!("Loading {slug}\u{2026}")))
+                .padding([8, 16])
+                .style(theme::container::Card + Opaque + radius(Lg));
+            center(card).style(theme::container::CodeFadeOverlay)
         });
 
         let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
@@ -237,7 +300,7 @@ impl Ready {
     }
 }
 
-impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for Ready {
+impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for App {
     fn on_link_click(url: markdown::Uri) -> markdown::Uri {
         url
     }

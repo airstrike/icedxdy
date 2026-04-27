@@ -363,6 +363,11 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
                 style.background = Some(Background::Color(composed));
             }
         }
+        Tweak::Alpha(factor) => {
+            if let Some(bg) = style.background {
+                style.background = Some(bg.scale_alpha(*factor));
+            }
+        }
         // No status → state combinators silently drop.
         Tweak::State(_, _) => {}
         // CSS-style cascade: tweaks with no container counterpart drop.
@@ -475,5 +480,63 @@ impl<'a> From<CodeFadeOverlay> for iced_widget::container::StyleFn<'a, Theme> {
 impl<'a> From<Spec> for iced_widget::container::StyleFn<'a, Theme> {
     fn from(spec: Spec) -> Self {
         Box::new(move |t| spec.resolve(t).into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::tweak::Alpha;
+    use super::*;
+
+    fn bg_color(style: &Style) -> Color {
+        match style.background {
+            Some(Background::Color(c)) => c,
+            other => panic!("expected solid Background::Color, got {other:?}"),
+        }
+    }
+
+    /// `Alpha(0.5)` on `Card` (which has an opaque card surface) must
+    /// scale the resolved bg alpha by half.
+    #[test]
+    fn alpha_scales_card_background_alpha() {
+        let theme = Theme::dark();
+        let spec: Spec = (Card + Alpha(0.5)).into();
+        let resolved = spec.resolve(&theme);
+        let bg = bg_color(&resolved);
+        let expected = theme.palette().card.base.a * 0.5;
+        assert!(
+            (bg.a - expected).abs() < 1e-4,
+            "expected a={expected}, got a={}",
+            bg.a,
+        );
+    }
+
+    /// `Alpha` on a backgroundless variant is a no-op.
+    #[test]
+    fn alpha_on_transparent_is_noop() {
+        let theme = Theme::dark();
+        let spec: Spec = (Transparent + Alpha(0.5)).into();
+        let resolved = spec.resolve(&theme);
+        assert!(
+            resolved.background.is_none(),
+            "transparent has no bg; Alpha must not synthesize one",
+        );
+    }
+
+    /// `Opaque` on `Card`'s already-opaque base is a no-op.
+    /// Sanity-check: Card sets `palette.card.base` (alpha=1.0) so OKLCH
+    /// alpha-compositing leaves it unchanged.
+    #[test]
+    fn opaque_on_card_no_change() {
+        use super::super::tweak::Opaque;
+        let theme = Theme::dark();
+        let bare = bg_color(&card(&theme));
+        let composed = bg_color(&(Spec::from(Card) + Opaque).resolve(&theme));
+        assert!(
+            (bare.l - composed.l).abs() < 1e-4
+                && (bare.c - composed.c).abs() < 1e-4
+                && (bare.a - composed.a).abs() < 1e-4,
+            "Card already opaque; Opaque must be a no-op. bare={bare:?}, composed={composed:?}",
+        );
     }
 }

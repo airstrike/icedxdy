@@ -9,7 +9,11 @@ license.workspace = true
 icedxdy = { workspace = true, features = ["markdown"] }
 iced = { workspace = true, features = ["markdown", "highlighter", "tokio"] }
 iced_widget.workspace = true
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+iced_runtime.workspace = true
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+    "json",
+] }
 dirs = "6"
 serde = { workspace = true }
 serde_json = { workspace = true }
