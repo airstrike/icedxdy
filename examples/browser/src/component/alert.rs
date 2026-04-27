@@ -1,3 +1,4 @@
+mod action;
 mod default;
 mod demo;
 mod destructive;
@@ -20,11 +21,14 @@ pub static META: page::Meta = page::Meta {
         example::Meta { id: "demo", title: "Alert", description: None, snippet: "examples/browser/snippets/alert-demo.md" },
         example::Meta { id: "basic", title: "Basic", description: Some("A basic alert with an icon, title and description."), snippet: "examples/browser/snippets/alert-basic.md" },
         example::Meta { id: "destructive", title: "Destructive", description: Some("Use variant destructive to create a destructive alert."), snippet: "examples/browser/snippets/alert-destructive.md" },
+        example::Meta { id: "action", title: "Action", description: Some("Use AlertAction to add a button or other action element to the alert."), snippet: "examples/browser/snippets/alert-action.md" },
     ],
 };
 
 #[derive(Debug, Clone)]
-pub enum Message {}
+pub enum Message {
+    Pressed,
+}
 
 pub struct AlertPage {
     state: page::State,
@@ -43,6 +47,7 @@ fn view(index: usize) -> Component<'static, Message> {
         0 => demo::view(),
         1 => default::view(),
         2 => destructive::view(),
+        3 => action::view(),
         _ => unreachable!(),
     }
 }

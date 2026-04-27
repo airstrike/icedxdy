@@ -1,24 +1,30 @@
 //! Alert component
 //!
-//! A callout box with optional icon, title, and description.
+//! A callout box with optional icon, title, description, and an
+//! optional top-right action (typically a button).
 //!
 //! # Example
 //!
 //! ```ignore
 //! use icedxdy::widget::alert;
 //!
-//! alert()
+//! alert::alert()
 //!     .icon(icon::terminal())
 //!     .title("Heads up!")
 //!     .description("You can add components to your app using the cli.")
 //! ```
 
-use crate::component::{Component, IntoElement};
-use iced_core::Length::*;
+use iced_core::alignment::{Horizontal, Vertical};
+use iced_core::text::IntoFragment;
+use iced_core::{Length::*, Padding};
 use iced_widget::Renderer;
 use icedxdy_core::{Theme, theme};
 
-/// Alert variant
+use crate::Size;
+use crate::component::{Component, IntoElement};
+use crate::text;
+
+/// Alert variant.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Variant {
     #[default]
@@ -26,11 +32,12 @@ pub enum Variant {
     Destructive,
 }
 
-/// A callout box with optional icon, title, and description.
+/// A callout box with optional icon, title, description, and action.
 pub struct Alert<'a, Message> {
     icon: Option<Component<'a, Message>>,
-    title: Option<Component<'a, Message>>,
-    description: Option<Component<'a, Message>>,
+    title: Option<text::Text<'a>>,
+    description: Option<text::Text<'a>>,
+    action: Option<Component<'a, Message>>,
     variant: Variant,
 }
 
@@ -40,6 +47,7 @@ pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
         icon: None,
         title: None,
         description: None,
+        action: None,
         variant: Variant::Default,
     }
 }
@@ -51,15 +59,22 @@ impl<'a, Message: 'a> Alert<'a, Message> {
         self
     }
 
-    /// Set the title text. Rendered as small + semibold + tracking-tight.
-    pub fn title(mut self, title: impl Into<Component<'a, Message>>) -> Self {
-        self.title = Some(title.into());
+    /// Set the title text. Rendered at `text-sm` with medium weight.
+    pub fn title(mut self, title: impl IntoFragment<'a>) -> Self {
+        self.title = Some(text::Text::new(title).size(text::size::SM).medium());
         self
     }
 
-    /// Set the description text. Rendered as small + muted style.
-    pub fn description(mut self, description: impl Into<Component<'a, Message>>) -> Self {
-        self.description = Some(description.into());
+    /// Set the description text. Rendered at `text-sm` muted in the
+    /// default variant; destructive at alpha 0.9 in the destructive variant.
+    pub fn description(mut self, description: impl IntoFragment<'a>) -> Self {
+        self.description = Some(text::Text::new(description).size(text::size::SM));
+        self
+    }
+
+    /// Add an action element (typically a button) shown at the top-right.
+    pub fn action(mut self, action: impl Into<Component<'a, Message>>) -> Self {
+        self.action = Some(action.into());
         self
     }
 
@@ -91,40 +106,62 @@ impl<'a, Message: 'a> From<Alert<'a, Message>> for Component<'a, Message> {
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
-        // FIXME: use a slice and optional elements instead of if let Some and
-        // pushing the elements into the column
-        // Build the text column (title + description)
-        let mut text_col = iced_widget::Column::new().spacing(4);
+        let Alert { icon, title, description, action, variant } = *self;
 
-        if let Some(title) = self.title {
-            text_col = text_col.push(title.into_iced());
+        let description = description.map(|t| match variant {
+            Variant::Default => t.style(theme::text::Muted),
+            Variant::Destructive => t.style(theme::text::Destructive + theme::tweak::Alpha(0.9)),
+        });
+
+        let mut text_col = iced_widget::Column::new().spacing(2);
+        if let Some(title) = title {
+            text_col = text_col.push(title);
+        }
+        if let Some(desc) = description {
+            text_col = text_col.push(desc);
         }
 
-        if let Some(desc) = self.description {
-            text_col = text_col.push(desc.into_iced());
-        }
+        let body: iced_core::Element<'a, Message, Theme, Renderer> = if let Some(mut icon) = icon {
+            icon.size(Size::Custom(16.0));
+            let icon_wrapper = iced_widget::container(icon.into_iced())
+                .padding(Padding { top: 2.0, ..Padding::ZERO });
+            iced_widget::Row::new()
+                .spacing(8)
+                .align_y(iced_core::Alignment::Start)
+                .push(icon_wrapper)
+                .push(text_col)
+                .into()
+        } else {
+            text_col.into()
+        };
 
-        // Build the row: icon (if present) + text column
-        let mut content_row = iced_widget::Row::new()
-            .spacing(12)
-            .align_y(iced_core::Alignment::Start);
-
-        if let Some(icon) = self.icon {
-            content_row = content_row.push(icon.into_iced());
-        }
-
-        content_row = content_row.push(text_col);
-
-        // Container style based on variant
-        let container_style: iced_widget::container::StyleFn<'_, Theme> = match self.variant {
+        let container_style: iced_widget::container::StyleFn<'_, Theme> = match variant {
             Variant::Default => theme::alert::Default.into(),
             Variant::Destructive => theme::alert::Destructive.into(),
         };
 
-        iced_widget::container(content_row)
-            .padding([12.0, 16.0])
+        let padding = if action.is_some() {
+            Padding { top: 8.0, right: 72.0, bottom: 8.0, left: 10.0 }
+        } else {
+            Padding { top: 8.0, right: 10.0, bottom: 8.0, left: 10.0 }
+        };
+
+        let card = iced_widget::container(body)
+            .padding(padding)
             .width(Fill)
-            .style(container_style)
-            .into()
+            .style(container_style);
+
+        match action {
+            None => card.into(),
+            Some(action) => {
+                let overlay = iced_widget::container(action.into_iced())
+                    .width(Fill)
+                    .height(Fill)
+                    .align_x(Horizontal::Right)
+                    .align_y(Vertical::Top)
+                    .padding(Padding { top: 8.0, right: 8.0, bottom: 0.0, left: 0.0 });
+                iced_widget::stack![card, overlay].into()
+            }
+        }
     }
 }

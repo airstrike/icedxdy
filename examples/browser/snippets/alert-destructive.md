@@ -1,12 +1,9 @@
 ```rust
-use icedxdy::widget::{alert, text};
-use icedxdy::theme;
+use icedxdy::widget::alert;
 
 alert::alert()
-    .icon(icon::circle_alert().size(16))
-    .title(text::small("Payment failed").semibold()
-        .style(theme::text::Destructive))
-    .description(text::small("Your payment could not be processed. Please check your payment method and try again.")
-        .style(theme::text::Destructive))
+    .icon(icon::circle_alert())
+    .title("Payment failed")
+    .description("Your payment could not be processed. Please check your payment method and try again.")
     .destructive()
 ```
