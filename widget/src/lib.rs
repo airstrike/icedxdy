@@ -56,6 +56,15 @@ pub fn container<'a, Message: 'a>(
     container::Container::new(content)
 }
 
+/// Create a [`Container`] that centers its content (both axes), filling
+/// the available space. Mirrors `iced::widget::center` but returns our
+/// wrapped Container so the tweak-aware `.style()` is available.
+pub fn center<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> container::Container<'a, Message> {
+    container::Container::new(content).center(iced_core::Length::Fill)
+}
+
 /// Create a [`Row`].
 pub fn row<'a, Message: 'a>() -> Row<'a, Message> {
     Row::new()

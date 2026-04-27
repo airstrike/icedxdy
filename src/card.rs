@@ -40,7 +40,7 @@ const HEADER_GAP: f32 = 6.0;
 pub fn card<'a, Message>(
     content: impl Into<iced_core::Element<'a, Message, Theme, iced_widget::Renderer>>,
 ) -> Container<'a, Message, Theme, iced_widget::Renderer> {
-    Container::new(content).style(theme::container::card)
+    Container::new(content).style(|t| theme::container::card(t).into())
 }
 
 /// Card header with title and description

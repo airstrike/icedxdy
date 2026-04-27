@@ -39,7 +39,8 @@ mod theme_impl {
 
     impl super::widget::Catalog for Theme {
         fn code_block<'a>() -> <Self as iced_widget::container::Catalog>::Class<'a> {
-            Box::new(code_block)
+            // code_block returns our OKLCH-native Style; bridge to iced.
+            Box::new(|t| code_block(t).into())
         }
     }
 }

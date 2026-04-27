@@ -1342,9 +1342,13 @@ checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 name = "highlight"
 version = "0.1.0"
 dependencies = [
+ "dirs",
  "iced",
  "iced_widget",
  "icedxdy",
+ "reqwest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

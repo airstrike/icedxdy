@@ -90,7 +90,7 @@ fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, 
             .height(PREVIEW_HEIGHT)
             .width(Fill)
             .padding(40)
-            .style(theme::container::card_preview);
+            .style(|t| theme::container::card_preview(t).into());
 
         let code: Option<iced::Element<'_, super::Message, Theme>> =
             (!ex.snippet.is_empty()).then(|| {
@@ -102,7 +102,7 @@ fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, 
                 let inner = container(body)
                     .padding([12, 16])
                     .width(Fill)
-                    .style(theme::container::code_block);
+                    .style(|t| theme::container::code_block(t).into());
 
                 if expanded_set.contains(&i) {
                     // Expanded: full code + copy button at top-right corner.
@@ -132,7 +132,7 @@ fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, 
                         .into();
 
                     let overlay = center(view_code_btn)
-                        .style(theme::container::code_fade_overlay)
+                        .style(|t| theme::container::code_fade_overlay(t).into())
                         .height(COLLAPSED_CODE_HEIGHT);
                     stack![truncated, overlay].into()
                 }
@@ -146,7 +146,7 @@ fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, 
             code.as_ref().map(|_| rule::horizontal(1).into());
 
         let card = container(column![preview, divider, code])
-            .style(theme::container::card)
+            .style(|t| theme::container::card(t).into())
             .padding(1)
             .clip(true)
             .width(Fill)

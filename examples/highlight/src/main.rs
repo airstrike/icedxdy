@@ -1,37 +1,22 @@
-//! Highlight playground — render the same Rust snippet under several
-//! syntax-highlighting themes side by side.
+//! Highlight playground — render the same Rust snippet under any theme
+//! from the shiki `tm-themes` catalog (~60 VSCode-format themes).
 //!
-//! Lives in its own crate so iterating on themes / capture mappings
-//! doesn't churn the components-browser API. Pick a theme from the row
-//! at the top; the snippet re-renders below.
-//!
-//! Add a theme:
-//! 1. Drop a TextMate-style `*.json` into `widget/src/markdown/themes/`
-//!    (or anywhere — just adjust the `include_str!` path).
-//! 2. Add a `(name, include_str!(...))` line to `THEMES`.
+//! Cold start fetches the catalog from jsdelivr (cached 24h) then loads a
+//! default theme matching the system light/dark preference. The combo_box
+//! picker lets you switch — each pick triggers a fetch (cached forever
+//! per slug). Network is required: there is no bundled fallback.
 
-use iced::widget::{center, column, container, row, scrollable};
+use iced::widget::{column, combo_box, scrollable};
 use iced::{Element, Fill, Font, Pixels, Task};
-use iced_widget::button::StyleFn;
-use icedxdy::Size::*;
-use icedxdy::widget::markdown;
+use iced_widget::stack;
 use icedxdy::widget::markdown::highlighter;
-use icedxdy::widget::{button, text};
-use icedxdy::{Theme, radius, theme};
+use icedxdy::widget::text;
+use icedxdy::widget::{center, container, markdown};
+use icedxdy::{Theme, theme};
+
+mod registry;
 
 const SAMPLE: &str = include_str!("sample.txt");
-
-const THEMES: &[(&str, &str)] = &[
-    (
-        "github-light-default",
-        include_str!("../themes/github-light-default.json"),
-    ),
-    ("github-dark", include_str!("../themes/github-dark.json")),
-    ("tokyo-night", include_str!("../themes/tokyo-night.json")),
-    ("monokai", include_str!("../themes/monokai.json")),
-    ("dracula-soft", include_str!("../themes/dracula-soft.json")),
-    ("dark-plus", include_str!("../themes/dark-plus.json")),
-];
 
 fn main() -> iced::Result {
     iced::application(App::new, App::update, App::view)
@@ -42,106 +27,185 @@ fn main() -> iced::Result {
 }
 
 enum App {
-    Loading,
+    LoadingCatalog,
+    LoadingTheme {
+        entries: Vec<registry::Entry>,
+        slug: String,
+    },
     Ready(Ready),
+    Failed(String),
 }
 
 struct Ready {
-    viewer: Viewer,
+    entries: Vec<registry::Entry>,
+    picker_state: combo_box::State<registry::Entry>,
+    selected: registry::Entry,
+    map: highlighter::Map,
     items: Vec<markdown::Item>,
+    pending: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 enum Message {
-    Loaded(Vec<(String, highlighter::Map)>),
-    Select(usize),
+    CatalogLoaded(Result<Vec<registry::Entry>, String>),
+    ThemeLoaded(String, Result<highlighter::Map, String>),
+    Selected(registry::Entry),
     Noop,
 }
 
 impl App {
     fn new() -> (Self, Task<Message>) {
-        let load = Task::perform(
-            async {
-                THEMES
-                    .iter()
-                    .filter_map(|(name, json)| {
-                        highlighter::Map::from_vscode_theme(json)
-                            .ok()
-                            .map(|map| (name.to_string(), map))
-                    })
-                    .collect()
-            },
-            Message::Loaded,
-        );
-        (App::Loading, load)
+        let load = Task::perform(registry::fetch_catalog(), Message::CatalogLoaded);
+        (App::LoadingCatalog, load)
     }
 
     fn update(&mut self, msg: Message) -> Task<Message> {
         match msg {
-            Message::Loaded(themes) => {
-                let items: Vec<_> = markdown::parse(SAMPLE).collect();
-
-                let selected = themes
-                    .iter()
-                    .position(|(_, m)| m.is_dark() == theme::is_dark_mode())
-                    .unwrap_or(0);
-
-                *self = App::Ready(Ready {
-                    viewer: Viewer { themes, selected },
-                    items,
-                });
+            Message::CatalogLoaded(Ok(entries)) => {
+                let slug = pick_default(&entries);
+                *self = App::LoadingTheme {
+                    entries,
+                    slug: slug.clone(),
+                };
+                fetch_theme_task(slug)
             }
-            Message::Select(i) => {
+            Message::CatalogLoaded(Err(e)) => {
+                *self = App::Failed(format!("Failed to load catalog: {e}"));
+                Task::none()
+            }
+            Message::ThemeLoaded(slug, Ok(map)) => {
+                let placeholder = std::mem::replace(self, App::LoadingCatalog);
+                *self = match placeholder {
+                    App::LoadingTheme { entries, .. } => {
+                        let selected = entry_for(&entries, &slug);
+                        let picker_state = combo_box::State::new(entries.clone());
+                        let items = markdown::parse(SAMPLE).collect();
+                        App::Ready(Ready {
+                            entries,
+                            picker_state,
+                            selected,
+                            map,
+                            items,
+                            pending: None,
+                        })
+                    }
+                    App::Ready(mut r) => {
+                        r.selected = entry_for(&r.entries, &slug);
+                        r.map = map;
+                        r.pending = None;
+                        App::Ready(r)
+                    }
+                    other => other,
+                };
+                Task::none()
+            }
+            Message::ThemeLoaded(slug, Err(e)) => {
                 if let App::Ready(r) = self {
-                    r.viewer.selected = i;
+                    r.pending = None;
+                }
+                eprintln!("theme {slug} failed: {e}");
+                Task::none()
+            }
+            Message::Selected(entry) => {
+                if let App::Ready(r) = self {
+                    let slug = entry.slug.clone();
+                    r.pending = Some(slug.clone());
+                    r.selected = entry;
+                    fetch_theme_task(slug)
+                } else {
+                    Task::none()
                 }
             }
-            Message::Noop => {}
+            Message::Noop => Task::none(),
         }
-        Task::none()
     }
 
     fn view(&self) -> Element<'_, Message, Theme> {
         match self {
-            App::Loading => center(
-                column![text::h1("highlight"), text::muted("Parsing themes\u{2026}"),]
-                    .spacing(8)
-                    .align_x(iced::Center),
-            )
-            .into(),
+            App::LoadingCatalog => splash("Loading theme catalog\u{2026}"),
+            App::LoadingTheme { slug, .. } => splash(&format!("Loading theme '{slug}'\u{2026}")),
+            App::Failed(msg) => splash(msg),
             App::Ready(r) => r.view(),
         }
     }
 
     fn theme(&self) -> Theme {
-        match self {
-            App::Loading => Theme::light(),
-            App::Ready(r) => {
-                if r.viewer.themes[r.viewer.selected].1.is_dark() {
-                    Theme::dark()
-                } else {
-                    Theme::light()
-                }
-            }
+        let prefer_dark = match self {
+            App::Ready(r) => r.map.is_dark(),
+            _ => theme::is_dark_mode(),
+        };
+        if prefer_dark {
+            Theme::dark()
+        } else {
+            Theme::light()
         }
     }
 }
 
+fn splash<'a>(message: &str) -> Element<'a, Message, Theme> {
+    center(
+        column![text::h1("highlight"), text::muted(message.to_owned())]
+            .spacing(8)
+            .align_x(iced::Center),
+    )
+    .into()
+}
+
+fn fetch_theme_task(slug: String) -> Task<Message> {
+    let report_slug = slug.clone();
+    Task::perform(
+        async move {
+            let body = registry::fetch_theme(slug).await?;
+            highlighter::Map::from_vscode_theme(&body).map_err(|e| e.to_string())
+        },
+        move |result| Message::ThemeLoaded(report_slug.clone(), result),
+    )
+}
+
+fn pick_default(entries: &[registry::Entry]) -> String {
+    let preferred = if theme::is_dark_mode() {
+        "github-dark"
+    } else {
+        "github-light"
+    };
+    if entries.iter().any(|e| e.slug == preferred) {
+        return preferred.to_owned();
+    }
+    entries
+        .first()
+        .map(|e| e.slug.clone())
+        .unwrap_or_else(|| preferred.to_owned())
+}
+
+fn entry_for(entries: &[registry::Entry], slug: &str) -> registry::Entry {
+    entries
+        .iter()
+        .find(|e| e.slug == slug)
+        .cloned()
+        .unwrap_or_else(|| registry::Entry {
+            slug: slug.to_owned(),
+            display_name: slug.to_owned(),
+        })
+}
+
 impl Ready {
     fn view(&self) -> Element<'_, Message, Theme> {
-        let picker = row(self.viewer.themes.iter().enumerate().map(|(i, (name, _))| {
-            let style: StyleFn<'_, Theme> = if i == self.viewer.selected {
-                (theme::button::Default + radius(Lg)).into()
-            } else {
-                (theme::button::Outline + radius(Lg)).into()
-            };
-            button(name.as_str())
-                .size(Sm)
-                .style(style)
-                .on_press(Message::Select(i))
-                .into()
-        }))
-        .spacing(6);
+        let picker = combo_box(
+            &self.picker_state,
+            "Pick a theme\u{2026}",
+            Some(&self.selected),
+            Message::Selected,
+        );
+
+        let label = self.pending.as_ref().map(|slug| {
+            // Card-shaped overlay built from style tokens: card surface, full
+            // rounded corners, 1px border. Reads as a "modal-on-code" while
+            // the theme fetches.
+            use icedxdy::theme::tweak::{border, radius};
+            use icedxdy::Size::Lg;
+            center(text::muted(format!("Loading {slug}\u{2026}")))
+                .style(theme::container::Card + radius(Lg) + border::Width(1.0))
+        });
 
         let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
         style.code_block_font = Font::MONOSPACE;
@@ -150,21 +214,19 @@ impl Ready {
             ..markdown::Settings::with_style(style)
         };
 
-        let active = &self.viewer.themes[self.viewer.selected];
-        let label = text::muted(format!(
-            "{}    \u{2022}    {} captures populated",
-            active.0,
-            active.1.populated_count(),
-        ));
+        let code = markdown::view_with(&self.items, settings, self).map(|_| Message::Noop);
 
-        let code = markdown::view_with(&self.items, settings, &self.viewer).map(|_| Message::Noop);
+        let code_card = stack![
+            container(code)
+                .padding(16)
+                .width(Fill)
+                .style(theme::container::CodeBlock),
+            label
+        ];
 
-        let code_card = container(code)
-            .padding(16)
-            .width(Fill)
-            .style(theme::container::code_block);
+        let count = text::muted(self.map.populated_count());
 
-        let body = column![picker, label, code_card]
+        let body = column![picker, code_card, count]
             .spacing(20)
             .padding(24)
             .max_width(900);
@@ -175,20 +237,12 @@ impl Ready {
     }
 }
 
-/// Holds every loaded theme + the active index. The `markdown::Viewer`
-/// impl just returns the indexed `Map` — selecting a different theme is
-/// a one-line `viewer.selected = i;` mutation, no re-parse, no realloc.
-struct Viewer {
-    themes: Vec<(String, highlighter::Map)>,
-    selected: usize,
-}
-
-impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for Viewer {
+impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for Ready {
     fn on_link_click(url: markdown::Uri) -> markdown::Uri {
         url
     }
 
     fn code_theme(&'a self) -> Option<&'a dyn highlighter::Theme> {
-        Some(&self.themes[self.selected].1)
+        Some(&self.map)
     }
 }

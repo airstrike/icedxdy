@@ -67,10 +67,17 @@ impl<'a, Message: 'a> Container<'a, Message> {
 
     pub fn style(
         mut self,
-        style: impl Fn(&Theme) -> iced_widget::container::Style + 'static,
+        style: impl Into<StyleFn<'static, Theme>>,
     ) -> Self {
-        self.style = Some(Box::new(style));
+        self.style = Some(style.into());
         self
+    }
+
+    /// Center this container horizontally and vertically inside the
+    /// available space. Shortcut for `.center_x(Fill).center_y(Fill)`.
+    pub fn center(self, length: impl Into<Length>) -> Self {
+        let l = length.into();
+        self.center_x(l).center_y(l)
     }
 }
 
