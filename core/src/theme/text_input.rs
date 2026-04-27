@@ -1,74 +1,416 @@
-//! Text input styling — shadcn/ui faithful port
+//! Text input styling — nova style
 //!
-//! CSS: flex h-9 w-full rounded-md border border-input bg-transparent
-//!      px-3 py-1 text-base shadow-sm transition-colors
-//!      placeholder:text-muted-foreground
-//!      focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-//!      disabled:cursor-not-allowed disabled:opacity-50
-//!      md:text-sm
+//! `Style` is OKLCH-native — variants and tweaks operate on our `Color`,
+//! `Border`, `Background` end-to-end. Conversion to iced's sRGB types
+//! happens once at the catalog boundary (`From<Style> for
+//! iced::text_input::Style`).
+//!
+//! Nova classlist (verbatim from `.nova/apps/v4/styles/radix-nova/ui/input.tsx`):
+//!
+//! ```text
+//! h-8 w-full min-w-0 rounded-lg border border-input bg-transparent
+//! px-2.5 py-1 text-base transition-colors outline-none
+//! placeholder:text-muted-foreground
+//! focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50
+//! disabled:pointer-events-none disabled:cursor-not-allowed
+//! disabled:bg-input/50 disabled:opacity-50
+//! md:text-sm
+//! dark:bg-input/30 dark:disabled:bg-input/80
+//! ```
 
-pub use iced_widget::text_input::{Catalog, Status, Style, StyleFn};
+pub use iced_widget::text_input::Status;
 
-use iced_core::Border;
+use std::ops::Add;
 
 use super::Theme;
-use crate::radius;
+use super::tweak::{Trigger, Tweak, TweakSet};
+use crate::{Background, Border, Color, Palette, radius};
 
-impl Catalog for Theme {
-    type Class<'a> = StyleFn<'a, Self>;
+/// OKLCH-native text input style. Mirrors `iced_widget::text_input::Style`
+/// field-for-field, but the color-bearing fields use our types so the whole
+/// resolve pipeline stays in OKLCH.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Style {
+    /// The background of the text input.
+    pub background: Background,
+    /// The border of the text input.
+    pub border: Border,
+    /// The color of any leading icon.
+    pub icon: Color,
+    /// The placeholder color (shown when value is empty).
+    pub placeholder: Color,
+    /// The typed-value color.
+    pub value: Color,
+    /// The selection-highlight color.
+    pub selection: Color,
+}
+
+impl std::default::Default for Style {
+    fn default() -> Self {
+        Self {
+            background: Background::Color(Color::TRANSPARENT),
+            border: Border::default(),
+            // `Color::default()` is fully transparent — useless as a fallback
+            // for value/placeholder/icon. Use BLACK so the field renders
+            // *something* if a caller skips the catalog default.
+            icon: Color::BLACK,
+            placeholder: Color::BLACK,
+            value: Color::BLACK,
+            selection: Color::BLACK,
+        }
+    }
+}
+
+/// A styling closure that returns our OKLCH-native `Style`.
+pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
+
+impl From<Style> for iced_widget::text_input::Style {
+    fn from(s: Style) -> Self {
+        iced_widget::text_input::Style {
+            background: s.background.into(),
+            border: s.border.into(),
+            icon: s.icon.into(),
+            placeholder: s.placeholder.into(),
+            value: s.value.into(),
+            selection: s.selection.into(),
+        }
+    }
+}
+
+impl From<iced_widget::text_input::Style> for Style {
+    fn from(s: iced_widget::text_input::Style) -> Self {
+        Style {
+            background: s.background.into(),
+            border: s.border.into(),
+            icon: s.icon.into(),
+            placeholder: s.placeholder.into(),
+            value: s.value.into(),
+            selection: s.selection.into(),
+        }
+    }
+}
+
+impl iced_widget::text_input::Catalog for Theme {
+    type Class<'a> = iced_widget::text_input::StyleFn<'a, Self>;
 
     fn default<'a>() -> Self::Class<'a> {
-        Box::new(default)
+        Box::new(|t, s| default(t, s).into())
     }
 
-    fn style(&self, class: &Self::Class<'_>, status: Status) -> Style {
+    fn style(
+        &self,
+        class: &Self::Class<'_>,
+        status: Status,
+    ) -> iced_widget::text_input::Style {
         class(self, status)
     }
 }
 
-/// Default text input style matching shadcn's input component.
+fn is_dark(theme: &Theme) -> bool {
+    theme.palette().background.l < 0.5
+}
+
+// --- Variant fns -------------------------------------------------------------
+
+/// Default text input variant — nova `h-8` field.
+///
+/// Light bg = `palette.background` (the classlist says `bg-transparent` but
+/// we have no parent fill in the preview, so the field's own surface is the
+/// page background). Dark bg = `palette.input` at α `input.a × 0.3`. Border
+/// = `palette.input`, radius `radius::LG` (10px). Focused border swaps to
+/// `palette.ring`. Hover has NO state change (nova has no `:hover` rule).
 pub fn default(theme: &Theme, status: Status) -> Style {
     let p = theme.palette();
+    let dark = is_dark(theme);
+
+    let bg = if dark {
+        p.input.alpha(p.input.a * 0.3)
+    } else {
+        p.background
+    };
 
     let active = Style {
-        background: p.background.into(),
+        background: bg.into(),
         border: Border {
-            radius: radius::MD.into(),
+            radius: radius::LG.into(),
             width: 1.0,
-            color: p.input.into(),
+            color: p.input,
         },
-        icon: p.foreground.into(),
-        placeholder: p.muted.foreground.into(),
-        value: p.foreground.into(),
-        selection: p.primary.base.alpha(0.3).into(),
+        icon: p.foreground,
+        placeholder: p.muted.foreground,
+        value: p.foreground,
+        selection: p.primary.base.alpha(0.3),
     };
 
     match status {
-        Status::Active => active,
-        Status::Hovered => Style {
-            border: Border {
-                color: p.ring.alpha(0.5).into(),
-                ..active.border
-            },
-            ..active
-        },
+        // Nova has no hover state — Hovered must equal Active.
+        Status::Active | Status::Hovered => active,
         Status::Focused { .. } => Style {
             border: Border {
-                color: p.ring.into(),
+                color: p.ring,
                 ..active.border
             },
             ..active
         },
-        Status::Disabled => Style {
-            background: p.muted.base.alpha(0.5).into(),
-            border: Border {
-                color: p.input.alpha(0.5).into(),
-                ..active.border
-            },
-            value: p.foreground.alpha(0.5).into(),
-            placeholder: p.muted.foreground.alpha(0.5).into(),
-            icon: p.foreground.alpha(0.5).into(),
-            ..active
-        },
+        Status::Disabled => {
+            let dis_bg = if dark {
+                p.input.alpha(p.input.a * 0.8)
+            } else {
+                p.input.alpha(0.5)
+            };
+            Style {
+                background: dis_bg.into(),
+                border: Border {
+                    color: p.input.alpha(0.5),
+                    ..active.border
+                },
+                value: p.foreground.alpha(0.5),
+                placeholder: p.muted.foreground.alpha(0.5),
+                icon: p.foreground.alpha(0.5),
+                ..active
+            }
+        }
+    }
+}
+
+// --- Variant unit structs ----------------------------------------------------
+//
+// Tag types matching the variant fns. Each impls `Add<T: Into<Tweak>>` to
+// produce a `Spec`, and `From<Variant> for Spec` for implicit promotion.
+
+/// Default text input variant (nova `h-8` field).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Default;
+
+// --- Spec --------------------------------------------------------------------
+
+/// A text input style: a base variant function plus a sequence of tweaks
+/// applied at resolve time.
+#[derive(Debug, Clone)]
+pub struct Spec {
+    variant: fn(&Theme, Status) -> Style,
+    tweaks: TweakSet,
+}
+
+impl Spec {
+    fn variant(f: fn(&Theme, Status) -> Style) -> Spec {
+        Spec {
+            variant: f,
+            tweaks: TweakSet::default(),
+        }
+    }
+
+    fn push(mut self, t: Tweak) -> Spec {
+        self.tweaks.0.push(t);
+        self
+    }
+
+    /// Resolve this spec to a concrete `Style` for the given theme and
+    /// input status. The base variant is computed first, then each tweak
+    /// is applied in order.
+    pub fn resolve(&self, theme: &Theme, status: Status) -> Style {
+        let mut style = (self.variant)(theme, status);
+        let palette = theme.palette();
+        for t in &self.tweaks.0 {
+            apply(t, &mut style, palette, status);
+        }
+        style
+    }
+}
+
+impl From<Default> for Spec {
+    fn from(_: Default) -> Spec {
+        Spec::variant(default)
+    }
+}
+
+impl<T: Into<Tweak>> Add<T> for Default {
+    type Output = Spec;
+    fn add(self, rhs: T) -> Spec {
+        Spec::from(self).push(rhs.into())
+    }
+}
+
+impl<T: Into<Tweak>> Add<T> for Spec {
+    type Output = Spec;
+    fn add(self, rhs: T) -> Spec {
+        self.push(rhs.into())
+    }
+}
+
+// --- Resolver ----------------------------------------------------------------
+
+fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
+    match tweak {
+        Tweak::Bg(t) => {
+            style.background = t.resolve(palette).into();
+        }
+        Tweak::Fg(t) => {
+            // For an input the semantic "foreground" is the typed value.
+            // Placeholder is its own slot and is not adjusted here.
+            style.value = t.resolve(palette);
+        }
+        Tweak::BorderColor(t) => {
+            style.border.color = t.resolve(palette);
+        }
+        Tweak::BorderWidth(w) => {
+            style.border.width = *w;
+        }
+        Tweak::Radius(r) => {
+            style.border.radius = (*r).into();
+        }
+        Tweak::Opaque => {
+            // OKLCH alpha-composite the variant's bg over palette.background
+            // and force alpha=1.0. Same shape as button/container.
+            if let Background::Color(src) = style.background {
+                let dst = palette.background;
+                let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
+                style.background = Background::Color(composed);
+            }
+        }
+        Tweak::Alpha(factor) => {
+            style.background = style.background.scale_alpha(*factor);
+        }
+        Tweak::State(trigger, inner) => {
+            if triggered(*trigger, status) {
+                for inner_tweak in &inner.0 {
+                    apply(inner_tweak, style, palette, status);
+                }
+            }
+        }
+        // CSS-style cascade: tweaks that don't apply to text_input styling
+        // are silently dropped. Ring rendering deferred to a future Phase 5
+        // design pass — the focus state currently only changes border color.
+        Tweak::Ring { .. }
+        | Tweak::Shadow(_)
+        | Tweak::Size(_)
+        | Tweak::Weight(_)
+        | Tweak::Family(_)
+        | Tweak::LineHeight(_)
+        | Tweak::Italic
+        | Tweak::Align(_) => {}
+    }
+}
+
+fn triggered(trigger: Trigger, status: Status) -> bool {
+    match (trigger, status) {
+        (Trigger::Hover, Status::Hovered) => true,
+        (Trigger::Focus, Status::Focused { .. }) => true,
+        (Trigger::Disabled, Status::Disabled) => true,
+        // text_input has no Pressed; Active is the rest state.
+        (Trigger::Active, _) => false,
+        _ => false,
+    }
+}
+
+// --- StyleFn conversions -----------------------------------------------------
+//
+// Allow variants and Specs to be passed directly to wrapper `.style()` builders
+// that take `impl Into<StyleFn<'a, Theme>>`.
+
+impl<'a> From<Default> for StyleFn<'a, Theme> {
+    fn from(_: Default) -> Self {
+        Box::new(default)
+    }
+}
+
+impl<'a> From<Spec> for StyleFn<'a, Theme> {
+    fn from(spec: Spec) -> Self {
+        Box::new(move |theme, status| spec.resolve(theme, status))
+    }
+}
+
+// --- Bridge to iced::text_input::StyleFn -------------------------------------
+//
+// These let variants/Spec be passed straight to widgets whose `.style()`
+// accepts `impl Into<iced_widget::text_input::StyleFn<...>>`. Each closure
+// runs our OKLCH-native pipeline and converts to iced's sRGB Style at the end.
+
+impl<'a> From<Default> for iced_widget::text_input::StyleFn<'a, Theme> {
+    fn from(_: Default) -> Self {
+        Box::new(|t, s| default(t, s).into())
+    }
+}
+
+impl<'a> From<Spec> for iced_widget::text_input::StyleFn<'a, Theme> {
+    fn from(spec: Spec) -> Self {
+        Box::new(move |t, s| spec.resolve(t, s).into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::tweak::{Bg, Token};
+    use super::*;
+
+    fn bg_color(style: &Style) -> Color {
+        match style.background {
+            Background::Color(c) => c,
+            other => panic!("expected solid Background::Color, got {other:?}"),
+        }
+    }
+
+    fn close(a: Color, b: Color) -> bool {
+        (a.l - b.l).abs() < 1e-4
+            && (a.c - b.c).abs() < 1e-4
+            && (a.a - b.a).abs() < 1e-4
+    }
+
+    /// Dark theme rest bg = `palette.input` at α `input.a × 0.3`.
+    /// Regression guard for the `dark:bg-input/30` class.
+    #[test]
+    fn default_dark_bg_uses_input_alpha_0_3() {
+        let theme = Theme::dark();
+        let resolved = default(&theme, Status::Active);
+        let bg = bg_color(&resolved);
+        let p = theme.palette();
+        let expected = p.input.alpha(p.input.a * 0.3);
+        assert!(
+            close(bg, expected),
+            "expected bg ≈ {expected:?}, got {bg:?}",
+        );
+    }
+
+    /// Focused border = `palette.ring`. Confirms `focus-visible:border-ring`.
+    #[test]
+    fn focused_border_uses_ring() {
+        let theme = Theme::light();
+        let resolved = default(&theme, Status::Focused { is_hovered: false });
+        let actual = resolved.border.color;
+        let expected = theme.palette().ring;
+        assert!(
+            close(actual, expected),
+            "expected focused border = ring ({expected:?}), got {actual:?}",
+        );
+    }
+
+    /// Nova has no hover state — Hovered must be field-identical to Active.
+    /// Preserves the invariant against future drift.
+    #[test]
+    fn hover_equals_active() {
+        let theme = Theme::dark();
+        let active = default(&theme, Status::Active);
+        let hovered = default(&theme, Status::Hovered);
+        assert_eq!(active.background, hovered.background);
+        assert_eq!(active.border, hovered.border);
+        assert_eq!(active.value, hovered.value);
+        assert_eq!(active.placeholder, hovered.placeholder);
+        assert_eq!(active.icon, hovered.icon);
+        assert_eq!(active.selection, hovered.selection);
+    }
+
+    /// `Bg(Token::Primary)` on `Default` overrides bg to `palette.primary.base`.
+    /// Sanity that the atom plumbing reaches `apply()`.
+    #[test]
+    fn bg_atom_overrides_default_variant() {
+        let theme = Theme::dark();
+        let spec: Spec = (Default + Bg(Token::Primary)).into();
+        let resolved = spec.resolve(&theme, Status::Active);
+        let actual = bg_color(&resolved);
+        let expected = theme.palette().primary.base;
+        assert!(
+            close(actual, expected),
+            "expected bg = primary ({expected:?}), got {actual:?}",
+        );
     }
 }

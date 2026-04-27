@@ -24,6 +24,7 @@ pub struct Input<'a, Message> {
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
     on_submit: Option<Message>,
     disabled: bool,
+    style: Option<iced_widget::text_input::StyleFn<'a, Theme>>,
 }
 
 /// Create an [`Input`] with the given placeholder and current value.
@@ -38,6 +39,7 @@ pub fn input<'a, Message: Clone + 'a>(
         on_input: None,
         on_submit: None,
         disabled: false,
+        style: None,
     }
 }
 
@@ -66,15 +68,21 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
         self
     }
 
-    /// Input height based on size variant.
-    /// Default: h-9 (36px), Sm: 32px, Lg: 40px
+    /// Override the input's style. Accepts any value convertible into an
+    /// `iced_widget::text_input::StyleFn` — e.g. our `theme::text_input::Default`
+    /// variant unit struct or a `theme::text_input::Spec`.
+    pub fn style(
+        mut self,
+        style: impl Into<iced_widget::text_input::StyleFn<'a, Theme>>,
+    ) -> Self {
+        self.style = Some(style.into());
+        self
+    }
+
+    /// Input height — delegates to `Size::height` so size variants stay in
+    /// sync with buttons. Nova `h-8` (32px) is `Size::Default`.
     fn height(&self) -> f32 {
-        match self.size {
-            Size::Sm => 32.0,
-            Size::Default => 36.0,
-            Size::Lg => 40.0,
-            _ => 36.0,
-        }
+        self.size.height()
     }
 
     /// Text size based on size variant.
@@ -86,13 +94,13 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
         }
     }
 
-    /// Padding: py-1 px-3 → [4, 12]
+    /// Padding: nova `px-2.5 py-1` → `{4, 10, 4, 10}`.
     fn padding(&self) -> Padding {
         Padding {
             top: 4.0,
             bottom: 4.0,
-            left: 12.0,
-            right: 12.0,
+            left: 10.0,
+            right: 10.0,
         }
     }
 }
@@ -109,6 +117,10 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
             .padding(padding)
             .size(text_size)
             .width(Length::Fill);
+
+        if let Some(style) = input.style {
+            ti = ti.class(style);
+        }
 
         if !input.disabled {
             if let Some(on_input) = input.on_input {
