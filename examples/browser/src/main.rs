@@ -5,6 +5,7 @@ mod icon;
 mod page;
 
 use iced::widget::{column, combo_box, row, scrollable, space};
+use iced_widget::button::StyleFn;
 
 use iced::{Fill, Font, Pixels, Task};
 use icedxdy::widget::container;
@@ -212,10 +213,10 @@ impl App {
 
         let sidebar_items = column(self.pages.iter().enumerate().map(|(i, page)| {
             let is_active = i == self.current_page;
-            let style: fn(&Theme, _) -> _ = if is_active {
-                theme::button::sidebar_active
+            let style: StyleFn<'_, Theme> = if is_active {
+                theme::button::SidebarActive.into()
             } else {
-                theme::button::sidebar
+                theme::button::Sidebar.into()
             };
             button(page.meta().title)
                 .size(Sm)

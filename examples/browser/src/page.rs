@@ -6,9 +6,10 @@ use iced::widget::{Id, center, column, container, sensor, stack};
 use iced::{Fill, Font, Pixels, Task};
 
 use icedxdy::Size::*;
+use icedxdy::theme::tweak::Opaque;
 use icedxdy::widget::markdown;
-use icedxdy::widget::{button, text};
-use icedxdy::{Component, Theme, theme};
+use icedxdy::widget::{button, rule, text};
+use icedxdy::{Component, Theme, radius, theme};
 
 use crate::example;
 use crate::icon;
@@ -76,10 +77,7 @@ pub fn view<'a>(
     (body, nav)
 }
 
-fn examples<'a>(
-    page: &'a dyn Page,
-    viewer: &'a SnippetViewer,
-) -> Component<'a, super::Message> {
+fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, super::Message> {
     let pi = page.page_index();
     let meta = page.meta();
     let snippets = page.snippets();
@@ -100,6 +98,7 @@ fn examples<'a>(
                     .as_ref()
                     .map(|items| snippet(pi, items, viewer))
                     .unwrap_or_else(|| text("Loading...").into());
+
                 let inner = container(body)
                     .padding([12, 16])
                     .width(Fill)
@@ -113,28 +112,28 @@ fn examples<'a>(
                             .square()
                             .on_press(super::Message::Page(pi, Message::CopyCode(i)))
                             .into();
+
                     let copy_corner = container(copy_btn)
                         .align_x(Alignment::End)
                         .align_y(Alignment::Start)
                         .padding([8, 8])
                         .width(Fill)
                         .height(Fill);
+
                     stack![inner, copy_corner].into()
                 } else {
                     // Collapsed: truncated code with gradient fade + "View Code" button.
                     // No copy button — user hasn't opted into seeing the code yet.
                     let truncated = inner.max_height(COLLAPSED_CODE_HEIGHT).clip(true);
+
                     let view_code_btn: Component<'_, super::Message> = button("View Code")
-                        .size(Sm)
-                        .style(theme::button::outline)
+                        .style(theme::button::Outline + Opaque + radius(Lg))
                         .on_press(super::Message::Page(pi, Message::ExpandCode(i)))
                         .into();
-                    let overlay = container(view_code_btn)
+
+                    let overlay = center(view_code_btn)
                         .style(theme::container::code_fade_overlay)
-                        .height(COLLAPSED_CODE_HEIGHT)
-                        .width(Fill)
-                        .align_x(Alignment::Center)
-                        .align_y(Alignment::Center);
+                        .height(COLLAPSED_CODE_HEIGHT);
                     stack![truncated, overlay].into()
                 }
             });
@@ -143,9 +142,8 @@ fn examples<'a>(
         // implicit visual break between the bg-card preview and bg-code
         // section. Skip the divider when there's no code (description-only
         // examples).
-        let divider: Option<iced::Element<'_, super::Message, Theme>> = code
-            .as_ref()
-            .map(|_| iced_widget::rule::horizontal(1).into());
+        let divider: Option<iced::Element<'_, super::Message, Theme>> =
+            code.as_ref().map(|_| rule::horizontal(1).into());
 
         let card = container(column![preview, divider, code])
             .style(theme::container::card)
@@ -210,6 +208,7 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         1.0 - 0.5 * distance
     };
 
+    use iced_widget::button::StyleFn;
     use theme::button::{Status, Style};
     let nav_items = meta
         .examples
@@ -218,18 +217,20 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         .skip(1)
         .map(|(i, example)| {
             let alpha = alpha_for(i);
-            let toc_style = move |theme: &Theme, status: Status| {
-                let p = theme.palette();
-                let base_color = match status {
-                    Status::Active => p.foreground.alpha(alpha),
-                    _ => p.foreground,
-                };
-                Style {
-                    background: None,
-                    text_color: base_color.into(),
-                    ..Style::default()
-                }
-            };
+            let toc_style: StyleFn<'_, Theme> =
+                Box::new(move |theme, status| {
+                    let p = theme.palette();
+                    let base_color = match status {
+                        Status::Active => p.foreground.alpha(alpha),
+                        _ => p.foreground,
+                    };
+                    Style {
+                        background: None,
+                        text_color: base_color,
+                        ..Style::default()
+                    }
+                    .into()
+                });
             button(example.title)
                 .size(Sm)
                 .translate(false)
@@ -278,12 +279,6 @@ pub struct SnippetViewer {
 }
 
 impl SnippetViewer {
-    /// Build a viewer whose code colours are derived from the given
-    /// app theme via `From<&icedxdy::Theme> for highlighter::Map`.
-    pub fn from_theme(theme: &Theme) -> Self {
-        Self { map: theme.into() }
-    }
-
     /// Build a viewer with an explicit code-theme map — typically a
     /// VS Code theme parsed by `Map::from_vscode_theme`.
     pub fn with_map(map: markdown::highlighter::Map) -> Self {

@@ -22,6 +22,7 @@ pub mod slider;
 pub mod table;
 pub mod text;
 pub mod text_input;
+pub mod tweak;
 
 use crate::Design;
 

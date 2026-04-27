@@ -10,7 +10,11 @@ use icedxdy_core::theme;
 use super::widget;
 
 fn default(theme: &Theme, status: widget::Status) -> widget::Style {
-    theme::button::default(theme, status.into()).into()
+    // theme::button::default returns our OKLCH-native Style; convert
+    // through iced::button::Style → widget::Style.
+    let iced: iced_widget::button::Style =
+        theme::button::default(theme, status.into()).into();
+    iced.into()
 }
 
 impl widget::Catalog for Theme {
@@ -58,7 +62,7 @@ pub fn button<'a, Message: Clone + 'a>(
         rounded: false,
         translate: true,
         interaction: None,
-        style: Box::new(theme::button::default),
+        style: Box::new(|t, s| theme::button::default(t, s).into()),
         on_press: None,
     }
 }
@@ -106,10 +110,9 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// Set the style
     pub fn style(
         mut self,
-        style: impl Fn(&icedxdy_core::Theme, iced_widget::button::Status) -> iced_widget::button::Style
-        + 'a,
+        style: impl Into<iced_widget::button::StyleFn<'a, Theme>>,
     ) -> Self {
-        self.style = Box::new(style);
+        self.style = style.into();
         self
     }
 

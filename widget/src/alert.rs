@@ -14,9 +14,9 @@
 //! ```
 
 use crate::component::{Component, IntoElement};
+use iced_core::Length::*;
 use iced_widget::Renderer;
-use icedxdy_core::theme;
-use icedxdy_core::Theme;
+use icedxdy_core::{Theme, theme};
 
 /// Alert variant
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -91,6 +91,8 @@ impl<'a, Message: 'a> From<Alert<'a, Message>> for Component<'a, Message> {
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        // FIXME: use a slice and optional elements instead of if let Some and
+        // pushing the elements into the column
         // Build the text column (title + description)
         let mut text_col = iced_widget::Column::new().spacing(4);
 
@@ -113,16 +115,16 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
 
         content_row = content_row.push(text_col);
 
+        // FIXME: use new style API
         // Container style based on variant
         let container_style: fn(&Theme) -> iced_widget::container::Style = match self.variant {
             Variant::Default => theme::alert::default,
             Variant::Destructive => theme::alert::destructive,
         };
 
-        // py-3 (12px) px-4 (16px), full width, rounded-lg border
         iced_widget::container(content_row)
-            .padding(iced_core::Padding::from([12.0, 16.0]))
-            .width(iced_core::Length::Fill)
+            .padding([12.0, 16.0])
+            .width(Fill)
             .style(container_style)
             .into()
     }

@@ -7,9 +7,9 @@ use super::Message;
 pub fn view<'a>() -> Component<'a, Message> {
     row![
         button![spinner(), "Generating"]
-            .style(theme::button::outline),
+            .style(theme::button::Outline),
         button!["Downloading", spinner()]
-            .style(theme::button::secondary),
+            .style(theme::button::Secondary),
     ]
     .spacing(16)
     .into()

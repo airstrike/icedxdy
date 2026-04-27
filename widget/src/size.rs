@@ -91,6 +91,21 @@ impl From<f32> for Size {
     }
 }
 
+/// Map the size scale to a corner-radius constant — `Sm`/`Xs` get
+/// `radius::SM` (6px), `Default`/`Icon` get `radius::MD` (8px), `Lg` gets
+/// `radius::LG` (10px). `Custom(v)` uses `v` directly as the radius.
+/// Lets callers write `radius(Lg)` instead of `radius(radius::LG)`.
+impl From<Size> for icedxdy_core::Radius {
+    fn from(s: Size) -> Self {
+        match s {
+            Size::Xs | Size::Sm => icedxdy_core::radius::SM.into(),
+            Size::Default | Size::Icon => icedxdy_core::radius::MD.into(),
+            Size::Lg => icedxdy_core::radius::LG.into(),
+            Size::Custom(v) => v.into(),
+        }
+    }
+}
+
 impl From<u16> for Size {
     fn from(v: u16) -> Self {
         Size::Custom(v as f32)

@@ -10,13 +10,14 @@
 //!    (or anywhere — just adjust the `include_str!` path).
 //! 2. Add a `(name, include_str!(...))` line to `THEMES`.
 
-use iced::widget::{column, container, row, scrollable};
-use iced::{Fill, Font, Pixels, Task};
+use iced::widget::{center, column, container, row, scrollable};
+use iced::{Element, Fill, Font, Pixels, Task};
+use iced_widget::button::StyleFn;
 use icedxdy::Size::*;
 use icedxdy::widget::markdown;
 use icedxdy::widget::markdown::highlighter;
 use icedxdy::widget::{button, text};
-use icedxdy::{Theme, theme};
+use icedxdy::{Theme, radius, theme};
 
 const SAMPLE: &str = include_str!("sample.txt");
 
@@ -25,26 +26,11 @@ const THEMES: &[(&str, &str)] = &[
         "github-light-default",
         include_str!("../themes/github-light-default.json"),
     ),
-    (
-        "github-dark",
-        include_str!("../themes/github-dark.json"),
-    ),
-    (
-        "tokyo-night",
-        include_str!("../themes/tokyo-night.json"),
-    ),
-    (
-        "monokai",
-        include_str!("../themes/monokai.json"),
-    ),
-    (
-        "dracula-soft",
-        include_str!("../themes/dracula-soft.json"),
-    ),
-    (
-        "dark-plus",
-        include_str!("../themes/dark-plus.json"),
-    ),
+    ("github-dark", include_str!("../themes/github-dark.json")),
+    ("tokyo-night", include_str!("../themes/tokyo-night.json")),
+    ("monokai", include_str!("../themes/monokai.json")),
+    ("dracula-soft", include_str!("../themes/dracula-soft.json")),
+    ("dark-plus", include_str!("../themes/dark-plus.json")),
 ];
 
 fn main() -> iced::Result {
@@ -61,7 +47,7 @@ enum App {
 }
 
 struct Ready {
-    viewer: ThemeViewer,
+    viewer: Viewer,
     items: Vec<markdown::Item>,
 }
 
@@ -94,12 +80,14 @@ impl App {
         match msg {
             Message::Loaded(themes) => {
                 let items: Vec<_> = markdown::parse(SAMPLE).collect();
+
                 let selected = themes
                     .iter()
                     .position(|(_, m)| m.is_dark() == theme::is_dark_mode())
                     .unwrap_or(0);
+
                 *self = App::Ready(Ready {
-                    viewer: ThemeViewer { themes, selected },
+                    viewer: Viewer { themes, selected },
                     items,
                 });
             }
@@ -113,18 +101,13 @@ impl App {
         Task::none()
     }
 
-    fn view(&self) -> iced::Element<'_, Message, Theme> {
+    fn view(&self) -> Element<'_, Message, Theme> {
         match self {
-            App::Loading => container(
-                column![
-                    text::h1("highlight"),
-                    text::muted("Parsing themes\u{2026}"),
-                ]
-                .spacing(8)
-                .align_x(iced::Center),
+            App::Loading => center(
+                column![text::h1("highlight"), text::muted("Parsing themes\u{2026}"),]
+                    .spacing(8)
+                    .align_x(iced::Center),
             )
-            .center_x(Fill)
-            .center_y(Fill)
             .into(),
             App::Ready(r) => r.view(),
         }
@@ -145,25 +128,19 @@ impl App {
 }
 
 impl Ready {
-    fn view(&self) -> iced::Element<'_, Message, Theme> {
-        let picker = row(
-            self.viewer
-                .themes
-                .iter()
-                .enumerate()
-                .map(|(i, (name, _))| {
-                    let style: fn(&Theme, _) -> _ = if i == self.viewer.selected {
-                        theme::button::default
-                    } else {
-                        theme::button::outline
-                    };
-                    button(name.as_str())
-                        .size(Sm)
-                        .style(style)
-                        .on_press(Message::Select(i))
-                        .into()
-                }),
-        )
+    fn view(&self) -> Element<'_, Message, Theme> {
+        let picker = row(self.viewer.themes.iter().enumerate().map(|(i, (name, _))| {
+            let style: StyleFn<'_, Theme> = if i == self.viewer.selected {
+                (theme::button::Default + radius(Lg)).into()
+            } else {
+                (theme::button::Outline + radius(Lg)).into()
+            };
+            button(name.as_str())
+                .size(Sm)
+                .style(style)
+                .on_press(Message::Select(i))
+                .into()
+        }))
         .spacing(6);
 
         let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
@@ -180,8 +157,7 @@ impl Ready {
             active.1.populated_count(),
         ));
 
-        let code = markdown::view_with(&self.items, settings, &self.viewer)
-            .map(|_| Message::Noop);
+        let code = markdown::view_with(&self.items, settings, &self.viewer).map(|_| Message::Noop);
 
         let code_card = container(code)
             .padding(16)
@@ -202,12 +178,12 @@ impl Ready {
 /// Holds every loaded theme + the active index. The `markdown::Viewer`
 /// impl just returns the indexed `Map` — selecting a different theme is
 /// a one-line `viewer.selected = i;` mutation, no re-parse, no realloc.
-struct ThemeViewer {
+struct Viewer {
     themes: Vec<(String, highlighter::Map)>,
     selected: usize,
 }
 
-impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for ThemeViewer {
+impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for Viewer {
     fn on_link_click(url: markdown::Uri) -> markdown::Uri {
         url
     }
