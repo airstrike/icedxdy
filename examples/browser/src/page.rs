@@ -41,13 +41,6 @@ pub enum Message {
     /// Float-valued counterpart of `InputChanged`. For sliders and other
     /// continuous-value pages.
     ValueChanged(usize, f32),
-    /// Generic animation tick. Carrier for `iced::time::every(...)`-driven
-    /// pages. Pages opt in via `Page::subscription()`; the dispatcher in
-    /// `App` routes ticks to the active page only.
-    AnimationTick(iced::time::Instant),
-    /// Generic delayed-fire signal. Pages emit this from `init()` (via
-    /// `Task::perform(sleep)`) when they need a one-shot scheduled event.
-    DelayedTrigger(usize),
     Noop,
 }
 

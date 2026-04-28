@@ -1,6 +1,7 @@
 use iced_core as core;
 
 pub mod alert;
+pub mod animation;
 pub mod badge;
 pub mod button;
 pub mod column;
