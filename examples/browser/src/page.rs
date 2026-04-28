@@ -217,20 +217,19 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         .skip(1)
         .map(|(i, example)| {
             let alpha = alpha_for(i);
-            let toc_style: StyleFn<'_, Theme> =
-                Box::new(move |theme, status| {
-                    let p = theme.palette();
-                    let base_color = match status {
-                        Status::Active => p.foreground.alpha(alpha),
-                        _ => p.foreground,
-                    };
-                    Style {
-                        background: None,
-                        text_color: base_color,
-                        ..Style::default()
-                    }
-                    .into()
-                });
+            let toc_style: StyleFn<'_, Theme> = Box::new(move |theme, status| {
+                let p = theme.palette();
+                let base_color = match status {
+                    Status::Active => p.foreground.alpha(alpha),
+                    _ => p.foreground,
+                };
+                Style {
+                    background: None,
+                    text_color: base_color,
+                    ..Style::default()
+                }
+                .into()
+            });
             button(example.title)
                 .size(Sm)
                 .translate(false)
@@ -318,6 +317,7 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
                     .width(settings.code_size / 2)
                     .scroller_width(settings.code_size / 2),
             ))
+            .spacing(2)
             .into()
     }
 }

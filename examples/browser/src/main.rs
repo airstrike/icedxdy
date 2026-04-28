@@ -1,26 +1,32 @@
+//! Components-browser entry point.
+//!
+//! Mirrors the loader-state-machine pattern in `examples/highlight`: a
+//! [`Browser`] state machine handles the splash screen while we parse the
+//! vendored shadcn code themes and kick off the font catalog fetch, then
+//! hands off to [`app::App`] once the first font message arrives.
+//!
+//! `app::App` owns the actual UI. Everything else lives in `main.rs` only
+//! to keep startup state out of the runtime path.
+
+mod app;
 mod component;
 mod example;
 mod fonts;
 mod icon;
 mod page;
 
-use iced::widget::{column, combo_box, row, scrollable, space};
-use iced_widget::button::StyleFn;
-
-use iced::{Fill, Font, Pixels, Task};
-use icedxdy::widget::container;
+use iced::widget::column;
+use iced::{Element, Task};
 use icedxdy::widget::markdown::highlighter::Map;
+use icedxdy::widget::{center, text};
+use icedxdy::Theme;
 
-use icedxdy::Size::*;
-use icedxdy::widget::{button, rule, separator, text};
-use icedxdy::{Theme, theme};
+use app::App;
 
-use page::SnippetViewer;
-
-/// Vendored shadcn-flavour code themes (Shiki ships these in shadcn's
-/// docs site). Used verbatim — no overrides — so example renderings
-/// match the shadcn documentation snippets exactly. Loaded
-/// synchronously via `include_str!` and parsed once at startup.
+/// Vendored shadcn-flavour code themes (Shiki ships these in shadcn's docs
+/// site). Used verbatim — no overrides — so example renderings match the
+/// shadcn documentation snippets exactly. Loaded synchronously via
+/// `include_str!` and parsed once at startup before [`App`] is constructed.
 const GH_LIGHT: &str = include_str!("../themes/github-light-default.json");
 const GH_DARK: &str = include_str!("../themes/github-dark.json");
 
@@ -29,270 +35,77 @@ fn parse_code_map(json: &str) -> Map {
 }
 
 fn main() -> iced::Result {
-    iced::application(App::new, App::update, App::view)
+    iced::application(Browser::new, Browser::update, Browser::view)
         .title("icedxdy \u{2022} components browser")
         .antialiasing(true)
-        .theme(App::theme)
+        .theme(Browser::theme)
         .font(icon::FONT)
         .run()
 }
 
-/// Fonts to pin at the top of the font list
-const PINNED_FONTS: &[&str] = &["Geist", "Inter"];
+/// Re-export so pages and other callers continue to use `crate::Message`.
+pub use app::Message;
 
-struct App {
-    dark_mode: bool,
-    current_page: usize,
-    pages: Vec<Box<dyn page::Page>>,
-    /// Owns the code-syntax theme map. Rebuilt from the active iced
-    /// theme on every `ToggleTheme` so the viewer reference passed to
-    /// `page::view` outlives the returned Element.
-    snippet_viewer: SnippetViewer,
-    // Font management
-    fount: fount::Fount,
-    font_list: combo_box::State<String>,
-    current_font: String,
+/// Loader state. The [`App`] is constructed at startup so it can absorb
+/// font/catalog events from the moment they arrive; the splash overlay
+/// stays visible until the default font binary actually finishes loading.
+struct Browser {
+    app: App,
+    font_loaded: bool,
 }
 
-#[derive(Debug, Clone)]
-pub enum Message {
-    ToggleTheme,
-    SelectPage(usize),
-    FontSelected(String),
-    Page(usize, page::Message),
-    Font(fonts::Message),
-}
-
-impl App {
+impl Browser {
     fn new() -> (Self, Task<Message>) {
-        let mut pages: Vec<Box<dyn page::Page>> = Vec::new();
-        let mut tasks: Vec<Task<Message>> = Vec::new();
-
-        use component::{alert, badge, button, input, text};
-
-        let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
-            button::ButtonPage::new,
-            badge::BadgePage::new,
-            input::InputPage::new,
-            alert::AlertPage::new,
-            text::TextPage::new,
-        ];
-
-        for (i, ctor) in constructors.into_iter().enumerate() {
-            let page = ctor(i);
-            tasks.push(page.init());
-            pages.push(page);
-        }
-
-        let default_font = "Geist".to_string();
-
-        tasks.push(fonts::init().map(Message::Font));
-
-        let dark_mode = theme::is_dark_mode();
-        let snippet_viewer =
-            SnippetViewer::with_map(parse_code_map(if dark_mode { GH_DARK } else { GH_LIGHT }));
-
+        let gh_light = parse_code_map(GH_LIGHT);
+        let gh_dark = parse_code_map(GH_DARK);
+        let (app, app_init) = App::new(gh_light, gh_dark);
+        let fonts_init = fonts::init().map(Message::Font);
         (
-            Self {
-                dark_mode,
-                current_page: 0,
-                pages,
-                snippet_viewer,
-                fount: fount::Fount::new(),
-                font_list: combo_box::State::new(vec![default_font.clone()]),
-                current_font: default_font,
+            Browser {
+                app,
+                font_loaded: false,
             },
-            Task::batch(tasks),
+            Task::batch([app_init, fonts_init]),
         )
     }
 
-    fn update(&mut self, message: Message) -> Task<Message> {
-        match message {
-            Message::ToggleTheme => {
-                self.dark_mode = !self.dark_mode;
-                let json = if self.dark_mode { GH_DARK } else { GH_LIGHT };
-                self.snippet_viewer = SnippetViewer::with_map(parse_code_map(json));
-                Task::none()
-            }
-            Message::SelectPage(page) => {
-                if page != self.current_page {
-                    if let Some(prev) = self.pages.get_mut(self.current_page) {
-                        prev.reset_volatile();
-                    }
-                }
-                self.current_page = page;
-                Task::none()
-            }
-            Message::FontSelected(name) => {
-                self.current_font = name.clone();
-
-                if self.fount.system_families().contains(&name) {
-                    let name: &'static str = Box::leak(name.into_boxed_str());
-                    iced::font::set_defaults(Font::new(name), Pixels(14.0))
-                } else {
-                    fonts::load(name, self.fount.google_catalog()).map(Message::Font)
-                }
-            }
-            Message::Page(i, message) => {
-                if let Some(page) = self.pages.get_mut(i) {
-                    page.update(message)
-                } else {
-                    Task::none()
-                }
-            }
-            Message::Font(msg) => match msg {
-                fonts::Message::SystemFontsLoaded(families) => {
-                    let names: Vec<String> = families
-                        .into_iter()
-                        .map(|f| f.to_string())
-                        .filter(|name| !name.starts_with('.'))
-                        .collect();
-                    self.fount.set_system_families(names);
-                    self.rebuild_font_list();
-                    Task::none()
-                }
-                fonts::Message::CatalogLoaded(Ok(catalog)) => {
-                    self.fount.set_google_catalog(catalog);
-                    self.rebuild_font_list();
-                    fonts::load(self.current_font.clone(), self.fount.google_catalog())
-                        .map(Message::Font)
-                }
-                fonts::Message::CatalogLoaded(Err(_)) => Task::none(),
-                fonts::Message::Loaded(name, Err(e)) => {
-                    eprintln!("Font loading failed ({name}): {e}");
-                    Task::none()
-                }
-                fonts::Message::Loaded(name, Ok(())) => {
-                    let name: &'static str = Box::leak(name.into_boxed_str());
-                    iced::font::set_defaults(Font::new(name), Pixels(14.0))
-                }
-            },
+    fn update(&mut self, msg: Message) -> Task<Message> {
+        // Dismiss the splash on any terminal font event — success
+        // (`Loaded(_, Ok(_))`), per-font failure (`Loaded(_, Err(_))`), or
+        // catalog failure (`CatalogLoaded(Err(_))`). Without the failure
+        // arms we'd splash forever offline.
+        if matches!(
+            &msg,
+            Message::Font(fonts::Message::Loaded(_, _))
+                | Message::Font(fonts::Message::CatalogLoaded(Err(_)))
+        ) {
+            self.font_loaded = true;
         }
+        self.app.update(msg)
     }
 
-    fn rebuild_font_list(&mut self) {
-        let mut names = self.fount.families();
-
-        // Move pinned fonts to the top (in reverse so first pinned ends up first)
-        for &pinned in PINNED_FONTS.iter().rev() {
-            if let Some(pos) = names.iter().position(|n| n == pinned) {
-                let name = names.remove(pos);
-                names.insert(0, name);
-            }
+    fn view(&self) -> Element<'_, Message, Theme> {
+        if self.font_loaded {
+            self.app.view()
+        } else {
+            splash("Loading\u{2026}")
         }
-
-        self.font_list = combo_box::State::new(names);
-    }
-
-    fn view(&self) -> iced::Element<'_, Message, Theme> {
-        let branding = text::h4("icedxdy");
-
-        let font_selector = combo_box(
-            &self.font_list,
-            "Font...",
-            Some(&self.current_font),
-            Message::FontSelected,
-        )
-        .width(160)
-        .size(12);
-
-        let theme_icon = if self.dark_mode {
-            icon::sun().size(16)
-        } else {
-            icon::moon().size(16)
-        };
-        let theme_toggle = button::ghost(theme_icon).on_press(Message::ToggleTheme);
-
-        let header = row![branding, space::horizontal(), font_selector, theme_toggle]
-            .spacing(8)
-            .padding(16)
-            .align_y(iced::Center);
-
-        // Sidebar
-        let sidebar_header = container(text::muted("Components")).padding([0, 8]);
-
-        let sidebar_items = column(self.pages.iter().enumerate().map(|(i, page)| {
-            let is_active = i == self.current_page;
-            let style: StyleFn<'_, Theme> = if is_active {
-                theme::button::SidebarActive.into()
-            } else {
-                theme::button::Sidebar.into()
-            };
-            button(page.meta().title)
-                .size(Sm)
-                .translate(false)
-                .style(style)
-                .on_press(Message::SelectPage(i))
-                .into()
-        }))
-        .spacing(2);
-
-        let sidebar = scrollable(
-            column![sidebar_header, sidebar_items]
-                .spacing(16)
-                .padding([24, 13])
-                .width(150),
-        )
-        .height(Fill);
-
-        // Main content
-        let current = &*self.pages[self.current_page];
-        let meta = current.meta();
-        let title = text::h1(meta.title);
-        let description = text::p(meta.description).style(theme::text::Muted);
-
-        let (page_body, page_nav) = page::view(current, &self.snippet_viewer);
-
-        let content = container(
-            column![title, description, container(page_body).width(Fill)]
-                .spacing(24)
-                .padding(32)
-                .width(700),
-        )
-        .center_x(Fill);
-
-        let thin_scrollbar = scrollable::Scrollbar::default().width(1).scroller_width(2);
-
-        let main = scrollable(content)
-            .direction(scrollable::Direction::Vertical(thin_scrollbar))
-            .height(Fill)
-            .id(current.scrollable_id());
-
-        let sidebar_divider = rule::vertical(1).style(Box::new(|theme: &Theme| {
-            use iced::gradient::Linear;
-            use std::f32::consts::PI;
-            let border = theme.palette().border;
-            rule::Style {
-                background: Linear::new(PI)
-                    .add_stop(0.0, iced::Color::TRANSPARENT)
-                    .add_stop(0.5, border.into())
-                    .add_stop(1.0, iced::Color::TRANSPARENT)
-                    .into(),
-                ..rule::Style::default()
-            }
-        }) as rule::StyleFn<'_, Theme>);
-
-        let body = if let Some(nav) = page_nav {
-            row![sidebar, sidebar_divider, main, nav]
-                .width(Fill)
-                .height(Fill)
-        } else {
-            row![sidebar, sidebar_divider, main]
-                .width(Fill)
-                .height(Fill)
-        };
-
-        column![header, separator::horizontal(), body]
-            .width(Fill)
-            .height(Fill)
-            .into()
     }
 
     fn theme(&self) -> Theme {
-        if self.dark_mode {
+        if self.app.is_dark() {
             Theme::dark()
         } else {
             Theme::light()
         }
     }
+}
+
+fn splash<'a>(message: &str) -> Element<'a, Message, Theme> {
+    center(
+        column![text::h1("icedxdy"), text::muted(message.to_owned())]
+            .spacing(8)
+            .align_x(iced::Center),
+    )
+    .into()
 }
