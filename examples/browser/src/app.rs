@@ -1,7 +1,7 @@
 use iced::widget::{column, combo_box, row, scrollable, space};
 use iced_widget::button::StyleFn;
 
-use iced::{Fill, Font, Pixels, Task};
+use iced::{Fill, Font, Pixels, Subscription, Task};
 use icedxdy::widget::container;
 use icedxdy::widget::markdown::highlighter::Map;
 
@@ -46,12 +46,13 @@ impl App {
         let mut pages: Vec<Box<dyn page::Page>> = Vec::new();
         let mut tasks: Vec<Task<Message>> = Vec::new();
 
-        use component::{alert, badge, button, input, text};
+        use component::{alert, badge, button, input, progress, text};
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
             button::ButtonPage::new,
             badge::BadgePage::new,
             input::InputPage::new,
+            progress::ProgressPage::new,
             alert::AlertPage::new,
             text::TextPage::new,
         ];
@@ -89,6 +90,20 @@ impl App {
 
     pub fn is_dark(&self) -> bool {
         self.dark_mode
+    }
+
+    /// Wire the active page's subscription. Inactive pages don't tick — the
+    /// user only ever sees one at a time, and animation work for hidden
+    /// pages would just heat the CPU.
+    pub fn subscription(&self) -> Subscription<Message> {
+        let i = self.current_page;
+        match self.pages.get(i) {
+            Some(page) => page
+                .subscription()
+                .with(i)
+                .map(|(i, m)| Message::Page(i, m)),
+            None => Subscription::none(),
+        }
     }
 
     pub fn update(&mut self, message: Message) -> Task<Message> {

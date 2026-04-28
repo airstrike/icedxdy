@@ -16,7 +16,7 @@ mod icon;
 mod page;
 
 use iced::widget::column;
-use iced::{Element, Task};
+use iced::{Element, Subscription, Task};
 use icedxdy::widget::markdown::highlighter::Map;
 use icedxdy::widget::{center, text};
 use icedxdy::Theme;
@@ -38,6 +38,7 @@ fn main() -> iced::Result {
     iced::application(Browser::new, Browser::update, Browser::view)
         .title("icedxdy \u{2022} components browser")
         .antialiasing(true)
+        .subscription(Browser::subscription)
         .theme(Browser::theme)
         .font(icon::FONT)
         .run()
@@ -97,6 +98,14 @@ impl Browser {
             Theme::dark()
         } else {
             Theme::light()
+        }
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        if self.font_loaded {
+            self.app.subscription()
+        } else {
+            Subscription::none()
         }
     }
 }

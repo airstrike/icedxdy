@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use iced::Alignment;
 use iced::widget::{Id, center, column, container, sensor, stack};
-use iced::{Fill, Font, Pixels, Task};
+use iced::{Fill, Font, Pixels, Subscription, Task};
 
 use icedxdy::Size::*;
 use icedxdy::theme::tweak::Opaque;
@@ -38,6 +38,13 @@ pub enum Message {
     ExpandCode(usize),
     CopyCode(usize),
     InputChanged(usize, String),
+    /// Generic animation tick. Carrier for `iced::time::every(...)`-driven
+    /// pages. Pages opt in via `Page::subscription()`; the dispatcher in
+    /// `App` routes ticks to the active page only.
+    AnimationTick(iced::time::Instant),
+    /// Generic delayed-fire signal. Pages emit this from `init()` (via
+    /// `Task::perform(sleep)`) when they need a one-shot scheduled event.
+    DelayedTrigger(usize),
     Noop,
 }
 
@@ -54,6 +61,14 @@ pub trait Page {
     fn init(&self) -> Task<super::Message>;
     fn update(&mut self, message: Message) -> Task<super::Message>;
     fn preview(&self, index: usize) -> iced::Element<'_, super::Message, Theme>;
+
+    /// Subscription for pages that drive animations or timers. Default:
+    /// `Subscription::none()`. Only the currently active page's subscription
+    /// is wired by `App`, so pages don't waste cycles when the user is on
+    /// a different tab.
+    fn subscription(&self) -> Subscription<Message> {
+        Subscription::none()
+    }
 
     /// Reset state that should NOT persist across navigation away from this
     /// page (e.g., expanded-code dismissal). Default: clear nothing —

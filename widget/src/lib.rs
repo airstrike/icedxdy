@@ -10,6 +10,7 @@ pub mod input;
 #[cfg(feature = "markdown")]
 pub mod markdown;
 pub mod operation;
+pub mod progress;
 pub mod row;
 pub mod rule;
 pub mod separator;
@@ -25,6 +26,7 @@ pub use button::Button;
 pub use column::Column;
 pub use component::{Component, IntoElement};
 pub use input::Input;
+pub use progress::Progress;
 pub use row::Row;
 pub use size::Size;
 pub use text::Text;
@@ -88,6 +90,11 @@ pub fn input<'a, Message: Clone + 'a>(
     value: &'a str,
 ) -> Input<'a, Message> {
     input::input(placeholder, value)
+}
+
+/// Create a [`Progress`] bar with the given value (0..=100).
+pub fn progress<'a, Message: 'a>(value: f32) -> Progress<'a, Message> {
+    progress::progress(value)
 }
 
 /// Create a [`Spinner`].
