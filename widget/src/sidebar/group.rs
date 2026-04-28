@@ -3,7 +3,7 @@
 use crate::column::Column;
 use crate::element::Element;
 use crate::text::Text;
-use iced_core::Length;
+use iced_core::Fill;
 use icedxdy_core::theme;
 
 /// Create a sidebar group.
@@ -15,7 +15,7 @@ pub fn group<'a, Message: 'a>(
 ) -> Column<'a, Message> {
     Column::with_children(children)
         .padding(8)
-        .width(Length::Fill)
+        .width(Fill)
 }
 
 /// Create a sidebar group label.
@@ -37,5 +37,5 @@ pub fn group_label<'a, Message: 'a>(
 pub fn group_content<'a, Message: 'a>(
     children: impl IntoIterator<Item = Element<'a, Message>>,
 ) -> Column<'a, Message> {
-    Column::with_children(children).width(Length::Fill)
+    Column::with_children(children).width(Fill)
 }

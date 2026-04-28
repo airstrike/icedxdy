@@ -2,7 +2,7 @@
 
 use crate::column::Column;
 use crate::element::Element;
-use iced_core::Length;
+use iced_core::Length::Fill;
 
 /// Create scrollable sidebar content.
 ///
@@ -14,5 +14,5 @@ pub fn content<'a, Message: 'a>(
 ) -> Column<'a, Message> {
     Column::with_children(children)
         .spacing(8)
-        .height(Length::Fill)
+        .height(Fill)
 }

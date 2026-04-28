@@ -48,7 +48,8 @@ use crate::core::border;
 use crate::core::font::{self, Font};
 use crate::core::padding;
 use crate::core::theme::palette;
-use crate::core::{self, Color, Element, Length, Padding, Pixels, Theme, color};
+use crate::core::Length::{Fill, Shrink};
+use crate::core::{self, Color, Element, Padding, Pixels, Theme, color};
 use iced_widget::{checkbox, column, container, rich_text, row, rule, scrollable, span, text};
 
 #[cfg(feature = "highlighter")]
@@ -1468,7 +1469,7 @@ where
                 .scroller_width(settings.code_size / 2),
         )),
     )
-    .width(Length::Fill)
+    .width(Fill)
     .padding(settings.code_size / 4)
     .class(Theme::code_block())
     .into()
@@ -1495,7 +1496,7 @@ where
         )
         .spacing(settings.spacing.0),
     ]
-    .height(Length::Shrink)
+    .height(Shrink)
     .spacing(settings.spacing.0)
     .into()
 }

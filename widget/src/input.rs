@@ -13,7 +13,8 @@
 use crate::Size;
 use crate::component::{Component, IntoElement};
 use icedxdy_core::Theme;
-use iced_core::{Length, Padding};
+use iced_core::Length::Fill;
+use iced_core::Padding;
 use iced_widget::Renderer;
 
 /// A styled text input field matching shadcn/ui's Input component.
@@ -116,7 +117,7 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
         let mut ti = iced_widget::text_input(input.placeholder, input.value)
             .padding(padding)
             .size(text_size)
-            .width(Length::Fill);
+            .width(Fill);
 
         if let Some(style) = input.style {
             ti = ti.class(style);
@@ -134,8 +135,8 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
         // Wrap in a container to enforce the exact height
         iced_widget::container(ti)
             .height(height)
-            .width(Length::Fill)
-            .center_y(Length::Fill)
+            .width(Fill)
+            .center_y(Fill)
             .into()
     }
 }

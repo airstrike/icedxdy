@@ -4,7 +4,8 @@ use crate::column::Column;
 use crate::container::Container;
 use crate::element::Element;
 use crate::row::Row;
-use iced_core::{Length, Padding};
+use iced_core::Length::Fill;
+use iced_core::Padding;
 use icedxdy_core::Theme;
 
 /// Create a sidebar submenu.
@@ -18,8 +19,8 @@ pub fn submenu<'a, Message: 'a>(
     // Left border indicator
     let border_line: iced_core::Element<'a, Message, Theme, iced_widget::Renderer> =
         iced_widget::container(iced_widget::space::horizontal())
-            .width(Length::Fixed(1.0))
-            .height(Length::Fill)
+            .width(1.0)
+            .height(Fill)
             .style(|theme: &Theme| iced_widget::container::Style {
                 background: Some(theme.palette().border.into()),
                 ..Default::default()
@@ -36,7 +37,7 @@ pub fn submenu<'a, Message: 'a>(
             left: 10.0,
             right: 0.0,
         })
-        .width(Length::Fill);
+        .width(Fill);
 
     Row::with_children([
         border_element,
@@ -63,6 +64,6 @@ pub fn submenu_button<'a, Message: 'a>(
     content: impl Into<Element<'a, Message>>,
 ) -> Container<'a, Message> {
     Container::new(content)
-        .width(Length::Fill)
-        .height(Length::Fixed(28.0))
+        .width(Fill)
+        .height(28)
 }

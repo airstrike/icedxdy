@@ -18,7 +18,8 @@
 //! ```
 
 use iced_core::mouse::Interaction;
-use iced_core::{Alignment, Border, Length};
+use iced_core::Length::Fill;
+use iced_core::{Alignment, Border};
 use iced_widget::button::{Status, Style};
 use iced_widget::tooltip::Position;
 use iced_widget::Renderer;
@@ -257,9 +258,9 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             widget::Button::new(
                 iced_widget::container(content_iced)
                     .align_x(Alignment::Start)
-                    .width(Length::Fill),
+                    .width(Fill),
             )
-            .width(Length::Fill)
+            .width(Fill)
             .height(height)
             .padding(btn.size.padding())
         };

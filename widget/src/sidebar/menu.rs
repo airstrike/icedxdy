@@ -3,7 +3,7 @@
 use crate::column::Column;
 use crate::element::Element;
 use crate::row::Row;
-use iced_core::Length;
+use iced_core::Length::Fill;
 
 /// Create a sidebar menu.
 ///
@@ -14,7 +14,7 @@ pub fn menu<'a, Message: 'a>(
 ) -> Column<'a, Message> {
     Column::with_children(children)
         .spacing(4)
-        .width(Length::Fill)
+        .width(Fill)
 }
 
 /// Create a sidebar menu item.

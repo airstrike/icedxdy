@@ -2,7 +2,7 @@
 
 use crate::container::Container;
 use crate::element::Element;
-use iced_core::Length;
+use iced_core::Length::Fill;
 use icedxdy_core::Theme;
 
 /// Create a sidebar text input.
@@ -21,6 +21,6 @@ pub fn input<'a, Message: Clone + 'a>(
             .into();
     let element = Element::from(text_input);
     Container::new(element)
-        .width(Length::Fill)
-        .height(Length::Fixed(32.0))
+        .width(Fill)
+        .height(32)
 }

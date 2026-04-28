@@ -2,7 +2,7 @@
 
 use crate::container::Container;
 use crate::element::Element;
-use iced_core::Length;
+use iced_core::Length::Fill;
 
 /// Create a sidebar inset container.
 ///
@@ -12,6 +12,6 @@ pub fn inset<'a, Message: 'a>(
     content: impl Into<Element<'a, Message>>,
 ) -> Container<'a, Message> {
     Container::new(content)
-        .width(Length::Fill)
-        .height(Length::Fill)
+        .width(Fill)
+        .height(Fill)
 }

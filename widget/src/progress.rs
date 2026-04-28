@@ -11,9 +11,10 @@
 //! # Example
 //!
 //! ```ignore
+//! use iced::Fill;
 //! use icedxdy::widget::progress;
 //!
-//! progress(value).width(Length::Fill)
+//! progress(value).width(Fill)
 //! ```
 
 mod element;
