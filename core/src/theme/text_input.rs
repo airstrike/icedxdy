@@ -27,8 +27,8 @@ use super::tweak::{Trigger, Tweak, TweakSet};
 use crate::{Background, Border, Color, Palette, radius};
 
 /// OKLCH-native text input style. Mirrors `iced_widget::text_input::Style`
-/// field-for-field, but the color-bearing fields use our types so the whole
-/// resolve pipeline stays in OKLCH.
+/// field-for-field, plus a `ring` field with no iced equivalent — rendered
+/// by our vendored `widget::text_input` as a halo behind the main quad.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Style {
     /// The background of the text input.
@@ -43,6 +43,18 @@ pub struct Style {
     pub value: Color,
     /// The selection-highlight color.
     pub selection: Color,
+    /// Optional focus ring (Tailwind `ring-*`). `None` = no halo rendered.
+    pub ring: Option<Ring>,
+}
+
+/// Resolved focus-ring fragment: a solid colored halo painted at `width`
+/// pixels around the input's bounds, behind the main fill. Equivalent to
+/// CSS `box-shadow: 0 0 0 {width}px {color}`. Tailwind's `ring-offset` is
+/// dropped — iced has no `outline-offset` analog.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Ring {
+    pub color: Color,
+    pub width: f32,
 }
 
 impl std::default::Default for Style {
@@ -57,6 +69,7 @@ impl std::default::Default for Style {
             placeholder: Color::BLACK,
             value: Color::BLACK,
             selection: Color::BLACK,
+            ring: None,
         }
     }
 }
@@ -66,6 +79,7 @@ pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 
 impl From<Style> for iced_widget::text_input::Style {
     fn from(s: Style) -> Self {
+        // `ring` has no iced equivalent — silently dropped at the boundary.
         iced_widget::text_input::Style {
             background: s.background.into(),
             border: s.border.into(),
@@ -86,6 +100,7 @@ impl From<iced_widget::text_input::Style> for Style {
             placeholder: s.placeholder.into(),
             value: s.value.into(),
             selection: s.selection.into(),
+            ring: None,
         }
     }
 }
@@ -140,6 +155,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         placeholder: p.muted.foreground,
         value: p.foreground,
         selection: p.primary.base.alpha(0.3),
+        ring: None,
     };
 
     match status {
@@ -278,11 +294,18 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
                 }
             }
         }
+        Tweak::Ring { color, width, offset: _ } => {
+            // Ring renders as a halo at `width` px around the bounds, behind
+            // the main fill. `offset` is dropped (no iced equivalent for
+            // Tailwind's `ring-offset` / CSS `outline-offset`).
+            style.ring = Some(Ring {
+                color: color.resolve(palette),
+                width: *width,
+            });
+        }
         // CSS-style cascade: tweaks that don't apply to text_input styling
-        // are silently dropped. Ring rendering deferred to a future Phase 5
-        // design pass — the focus state currently only changes border color.
-        Tweak::Ring { .. }
-        | Tweak::Shadow(_)
+        // are silently dropped.
+        Tweak::Shadow(_)
         | Tweak::Size(_)
         | Tweak::Weight(_)
         | Tweak::Family(_)
@@ -340,7 +363,7 @@ impl<'a> From<Spec> for iced_widget::text_input::StyleFn<'a, Theme> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tweak::{Bg, Token};
+    use super::super::tweak::{self, Bg, Token};
     use super::*;
 
     fn bg_color(style: &Style) -> Color {
@@ -412,5 +435,39 @@ mod tests {
             close(actual, expected),
             "expected bg = primary ({expected:?}), got {actual:?}",
         );
+    }
+
+    /// Bare `Ring` atom (no state trigger) writes to `style.ring` regardless
+    /// of status. Confirms `apply()` resolves `Token → Color` and drops `offset`.
+    #[test]
+    fn ring_atom_writes_to_style_ring() {
+        let theme = Theme::light();
+        let spec: Spec = (Default
+            + tweak::Ring { color: Token::Ring, width: 3.0, offset: 2.0 })
+        .into();
+        let resolved = spec.resolve(&theme, Status::Active);
+        let ring = resolved.ring.expect("ring should be set");
+        assert_eq!(ring.width, 3.0);
+        assert!(close(ring.color, theme.palette().ring));
+    }
+
+    /// `focus(Ring(...))` writes ring only when status = Focused.
+    /// Mirrors the nova classlist `focus-visible:ring-3 ring-ring/50`.
+    #[test]
+    fn focus_trigger_gates_ring() {
+        let theme = Theme::light();
+        let spec: Spec = (Default
+            + tweak::focus(tweak::Ring { color: Token::Ring, width: 3.0, offset: 0.0 }))
+        .into();
+        for status in [Status::Active, Status::Hovered, Status::Disabled] {
+            let resolved = spec.resolve(&theme, status);
+            assert!(
+                resolved.ring.is_none(),
+                "expected ring=None for {status:?}, got {:?}",
+                resolved.ring,
+            );
+        }
+        let focused = spec.resolve(&theme, Status::Focused { is_hovered: false });
+        assert!(focused.ring.is_some(), "expected ring=Some on Focused");
     }
 }

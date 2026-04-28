@@ -19,6 +19,7 @@ pub mod size;
 #[cfg(feature = "spinner")]
 pub mod spinner;
 pub mod text;
+pub mod text_input;
 pub mod weight;
 
 pub use iced_widget::space;

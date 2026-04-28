@@ -1697,6 +1697,7 @@ dependencies = [
  "tree-sitter",
  "tree-sitter-highlight",
  "tree-sitter-rust",
+ "unicode-segmentation",
 ]
 
 [[package]]

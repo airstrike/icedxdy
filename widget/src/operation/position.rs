@@ -1,7 +1,8 @@
 //! Position tracking for widget items.
 //!
 //! This module provides the ability to track the layout positions of items
-//! within widgets, enabling features like scroll-to-item.
+//! within [`Row`](crate::widget::Row) and [`Column`](crate::widget::Column)
+//! widgets, enabling features like scroll-to-item.
 //!
 //! # Example
 //!
@@ -19,14 +20,15 @@
 use std::any::Any;
 use std::collections::HashMap;
 
-use iced_core::Rectangle;
-use iced_core::widget;
-use iced_core::widget::Operation;
-use iced_core::widget::operation::Outcome;
+use crate::core::Rectangle;
+use crate::core::widget;
+use crate::core::widget::Operation;
+use crate::core::widget::operation::Outcome;
 
 /// An identifier for a positioned widget.
 ///
-/// Wraps a [`widget::Id`] so that widgets can expose per-item positions
+/// Wraps a [`widget::Id`] so that [`Row`](crate::widget::Row) and
+/// [`Column`](crate::widget::Column) can expose per-item positions
 /// through the widget operation system.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Id(pub(crate) widget::Id);
