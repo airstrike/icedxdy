@@ -5,7 +5,7 @@ use iced::Task;
 use iced::widget::{Id, slider};
 use icedxdy::Theme;
 use icedxdy::widget::markdown;
-use icedxdy::widget::{column, progress, row, text};
+use icedxdy::widget::{column, progress, row, space, text};
 
 use crate::Message;
 use crate::example;
@@ -152,30 +152,28 @@ impl page::Page for ProgressPage {
             // 320px approximates Tailwind's `max-w-sm` (384px) within the
             // 450px preview area. Slider is iced's default — looks unstyled
             // until our own Slider widget lands.
-            ID_CONTROLLED => column([
-                progress(self.controlled_value).width(320).into(),
+            ID_CONTROLLED => column![
+                progress(self.controlled_value).width(320),
                 slider(0.0..=100.0, self.controlled_value, move |v| {
                     Message::Page(pi, page::Message::ValueChanged(ID_CONTROLLED, v))
                 })
                 .step(1.0)
-                .width(320)
-                .into(),
-            ])
+                .width(320),
+            ]
             .spacing(16)
             .into(),
             // Label: an inline label row above a static 66% progress bar.
             // No Field/FieldLabel widget yet — approximated with a Row that
             // spreads `text::small` ends apart via a fill space.
-            ID_LABEL => column([
+            ID_LABEL => column![
                 row![
                     text::small("Upload progress"),
-                    iced_widget::space::horizontal(),
+                    space::horizontal(),
                     text::small("66%"),
                 ]
-                .spacing(0)
-                .into(),
-                progress(66.0).width(320).into(),
-            ])
+                .spacing(0),
+                progress(66.0).width(320),
+            ]
             .spacing(8)
             .width(320)
             .into(),

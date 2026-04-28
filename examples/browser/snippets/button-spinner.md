@@ -1,11 +1,11 @@
 ```rust
+use icedxdy::theme::button::{Outline, Secondary};
 use icedxdy::widget::{button, row, spinner};
-use icedxdy::theme;
 
 row![
     button![spinner(), "Generating"]
-        .style(theme::button::outline),
+        .style(Outline),
     button!["Downloading", spinner()]
-        .style(theme::button::secondary),
+        .style(Secondary),
 ]
 ```

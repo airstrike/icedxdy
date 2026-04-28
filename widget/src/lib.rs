@@ -21,6 +21,8 @@ pub mod spinner;
 pub mod text;
 pub mod weight;
 
+pub use iced_widget::space;
+
 pub use alert::Alert;
 pub use badge::Badge;
 pub use button::Button;

@@ -1,5 +1,5 @@
 ```rust
 use icedxdy::widget::progress;
 
-progress(self.value).width(Length::Fixed(270.0))
+progress(self.value).width(270)
 ```
