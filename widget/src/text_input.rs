@@ -3,9 +3,10 @@
 
 pub mod cursor;
 mod editor;
+pub(crate) mod element;
 mod value;
 pub mod widget;
 
 pub use cursor::Cursor;
 pub use value::Value;
-pub use widget::TextInput;
+pub use widget::{Catalog, Ring, Status, Style, StyleFn, TextInput};

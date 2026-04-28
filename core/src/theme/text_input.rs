@@ -18,9 +18,41 @@
 //! dark:bg-input/30 dark:disabled:bg-input/80
 //! ```
 
-pub use iced_widget::text_input::Status;
-
 use std::ops::Add;
+
+/// Interaction state of a text input. Mirrors `iced_widget::text_input::Status`
+/// field-for-field, but it's our type so we're not bound to iced's choices when
+/// adding new states (e.g. `Invalid` for `aria-invalid`).
+///
+/// Convert from iced's stock `Status` via `From` if you have one in hand.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Status {
+    /// The input can be interacted with.
+    Active,
+    /// The input is being hovered.
+    Hovered,
+    /// The input is focused.
+    Focused {
+        /// Whether the input is hovered, while focused.
+        is_hovered: bool,
+    },
+    /// The input cannot be interacted with.
+    Disabled,
+}
+
+impl From<iced_widget::text_input::Status> for Status {
+    fn from(s: iced_widget::text_input::Status) -> Self {
+        // Local `use` shadows the outer `Status` so we can match on iced's
+        // variants by their bare name; `Self` covers the construction side.
+        use iced_widget::text_input::Status;
+        match s {
+            Status::Active => Self::Active,
+            Status::Hovered => Self::Hovered,
+            Status::Focused { is_hovered } => Self::Focused { is_hovered },
+            Status::Disabled => Self::Disabled,
+        }
+    }
+}
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
@@ -77,20 +109,8 @@ impl std::default::Default for Style {
 /// A styling closure that returns our OKLCH-native `Style`.
 pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 
-impl From<Style> for iced_widget::text_input::Style {
-    fn from(s: Style) -> Self {
-        // `ring` has no iced equivalent — silently dropped at the boundary.
-        iced_widget::text_input::Style {
-            background: s.background.into(),
-            border: s.border.into(),
-            icon: s.icon.into(),
-            placeholder: s.placeholder.into(),
-            value: s.value.into(),
-            selection: s.selection.into(),
-        }
-    }
-}
-
+/// Convert from iced's stock `text_input::Style` into ours. Lossless in this
+/// direction (iced has no `ring` field, so we set `ring: None`).
 impl From<iced_widget::text_input::Style> for Style {
     fn from(s: iced_widget::text_input::Style) -> Self {
         Style {
@@ -105,17 +125,40 @@ impl From<iced_widget::text_input::Style> for Style {
     }
 }
 
+/// The inverse: converting our `Style` to iced's silently drops `ring`. We
+/// keep this impl because stock iced widgets that compose a text input (e.g.
+/// `iced_widget::combo_box`) require `Theme: iced_widget::text_input::Catalog`,
+/// and that Catalog impl needs to return iced's `Style`. New code in our
+/// crate should prefer the vendored `widget::text_input` widget instead — it
+/// understands ring.
+impl From<Style> for iced_widget::text_input::Style {
+    fn from(s: Style) -> Self {
+        iced_widget::text_input::Style {
+            background: s.background.into(),
+            border: s.border.into(),
+            icon: s.icon.into(),
+            placeholder: s.placeholder.into(),
+            value: s.value.into(),
+            selection: s.selection.into(),
+        }
+    }
+}
+
+/// Bridge so stock iced widgets (combo_box etc.) that compose a text input
+/// continue to work with our `Theme`. Routes through our OKLCH resolver,
+/// converts both Status and Style at the boundary. Ring is dropped at the
+/// iced::Style boundary — combo_box can't render it anyway.
 impl iced_widget::text_input::Catalog for Theme {
     type Class<'a> = iced_widget::text_input::StyleFn<'a, Self>;
 
     fn default<'a>() -> Self::Class<'a> {
-        Box::new(|t, s| default(t, s).into())
+        Box::new(|t, s| default(t, s.into()).into())
     }
 
     fn style(
         &self,
         class: &Self::Class<'_>,
-        status: Status,
+        status: iced_widget::text_input::Status,
     ) -> iced_widget::text_input::Style {
         class(self, status)
     }
@@ -166,6 +209,13 @@ pub fn default(theme: &Theme, status: Status) -> Style {
                 color: p.ring,
                 ..active.border
             },
+            // Nova `focus-visible:ring-3 ring-ring/50` — 3px halo at
+            // palette.ring with 50% alpha. Rendered by the vendored widget
+            // as an expanded fill_quad behind the main fill.
+            ring: Some(Ring {
+                color: p.ring.alpha(0.5),
+                width: 3.0,
+            }),
             ..active
         },
         Status::Disabled => {
@@ -340,24 +390,6 @@ impl<'a> From<Default> for StyleFn<'a, Theme> {
 impl<'a> From<Spec> for StyleFn<'a, Theme> {
     fn from(spec: Spec) -> Self {
         Box::new(move |theme, status| spec.resolve(theme, status))
-    }
-}
-
-// --- Bridge to iced::text_input::StyleFn -------------------------------------
-//
-// These let variants/Spec be passed straight to widgets whose `.style()`
-// accepts `impl Into<iced_widget::text_input::StyleFn<...>>`. Each closure
-// runs our OKLCH-native pipeline and converts to iced's sRGB Style at the end.
-
-impl<'a> From<Default> for iced_widget::text_input::StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(|t, s| default(t, s).into())
-    }
-}
-
-impl<'a> From<Spec> for iced_widget::text_input::StyleFn<'a, Theme> {
-    fn from(spec: Spec) -> Self {
-        Box::new(move |t, s| spec.resolve(t, s).into())
     }
 }
 

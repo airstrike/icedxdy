@@ -1,6 +1,7 @@
 //! Input component — shadcn/ui faithful port
 //!
-//! A styled text input field.
+//! A styled text input field. Wraps our vendored `text_input::TextInput` so
+//! `.style()` can carry the focus ring (Tailwind `ring-*`) end-to-end.
 //!
 //! # Example
 //!
@@ -12,7 +13,10 @@
 
 use crate::Size;
 use crate::component::{Component, IntoElement};
+use crate::text_input;
+use crate::text_input::element::from_core;
 use icedxdy_core::Theme;
+use icedxdy_core::theme;
 use iced_core::Length::Fill;
 use iced_core::Padding;
 use iced_widget::Renderer;
@@ -24,8 +28,10 @@ pub struct Input<'a, Message> {
     size: Size,
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
     on_submit: Option<Message>,
+    on_focus: Option<Message>,
+    on_blur: Option<Message>,
     disabled: bool,
-    style: Option<iced_widget::text_input::StyleFn<'a, Theme>>,
+    style: Option<theme::text_input::StyleFn<'a, Theme>>,
 }
 
 /// Create an [`Input`] with the given placeholder and current value.
@@ -39,6 +45,8 @@ pub fn input<'a, Message: Clone + 'a>(
         size: Size::Default,
         on_input: None,
         on_submit: None,
+        on_focus: None,
+        on_blur: None,
         disabled: false,
         style: None,
     }
@@ -63,18 +71,31 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
         self
     }
 
+    /// Set the message to emit when the input gains focus.
+    pub fn on_focus(mut self, message: Message) -> Self {
+        self.on_focus = Some(message);
+        self
+    }
+
+    /// Set the message to emit when the input loses focus.
+    pub fn on_blur(mut self, message: Message) -> Self {
+        self.on_blur = Some(message);
+        self
+    }
+
     /// Disable the input.
     pub fn disabled(mut self) -> Self {
         self.disabled = true;
         self
     }
 
-    /// Override the input's style. Accepts any value convertible into an
-    /// `iced_widget::text_input::StyleFn` — e.g. our `theme::text_input::Default`
-    /// variant unit struct or a `theme::text_input::Spec`.
+    /// Override the input's style. Accepts our OKLCH-native `Default` variant
+    /// or any `Spec` (e.g. `Default + Bg(...) + focus(Ring(...))`). Ring is
+    /// preserved across the crate boundary by the bridge in
+    /// [`text_input::element`](crate::text_input::element).
     pub fn style(
         mut self,
-        style: impl Into<iced_widget::text_input::StyleFn<'a, Theme>>,
+        style: impl Into<theme::text_input::StyleFn<'a, Theme>>,
     ) -> Self {
         self.style = Some(style.into());
         self
@@ -114,13 +135,22 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
         let text_size = input.text_size();
         let padding = input.padding();
 
-        let mut ti = iced_widget::text_input(input.placeholder, input.value)
-            .padding(padding)
-            .size(text_size)
-            .width(Fill);
+        let mut ti: text_input::TextInput<'a, Message, Theme, Renderer> =
+            text_input::TextInput::new(input.placeholder, input.value)
+                .padding(padding)
+                .size(text_size)
+                .width(Fill)
+                .height(height);
 
         if let Some(style) = input.style {
-            ti = ti.class(style);
+            // Wrap the core StyleFn so it produces widget::Style (with ring).
+            // Status types match across crates (vendored re-exports core's),
+            // so no Status conversion is needed here.
+            let bridge: text_input::StyleFn<'a, Theme> =
+                Box::new(move |theme, status| {
+                    from_core(style(theme, status))
+                });
+            ti = ti.class(bridge);
         }
 
         if !input.disabled {
@@ -130,14 +160,15 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
             if let Some(on_submit) = input.on_submit {
                 ti = ti.on_submit(on_submit);
             }
+            if let Some(on_focus) = input.on_focus {
+                ti = ti.on_focus(on_focus);
+            }
+            if let Some(on_blur) = input.on_blur {
+                ti = ti.on_blur(on_blur);
+            }
         }
 
-        // Wrap in a container to enforce the exact height
-        iced_widget::container(ti)
-            .height(height)
-            .width(Fill)
-            .center_y(Fill)
-            .into()
+        ti.into()
     }
 }
 

@@ -45,9 +45,11 @@ use crate::core::mouse::{self, click};
 use crate::core::renderer;
 use crate::core::text::paragraph::{self, Paragraph as _};
 use crate::core::text::{self, Text};
+use crate::core::animation::Easing;
 use crate::core::time::{Duration, Instant};
 use crate::core::touch;
 use crate::core::widget;
+use crate::core::Animation;
 use crate::core::widget::operation::{self, Operation};
 use crate::core::widget::tree::{self, Tree};
 use crate::core::window;
@@ -104,6 +106,10 @@ pub struct TextInput<
     is_secure: bool,
     font: Option<Renderer::Font>,
     width: Length,
+    /// **Deviation from upstream**: explicit input height (Tailwind `h-8`,
+    /// `h-9`, etc.). Defaults to `Length::Shrink` so non-icedxdy users get
+    /// the original "intrinsic" sizing behavior.
+    height: Length,
     padding: Padding,
     size: Option<Pixels>,
     line_height: text::LineHeight,
@@ -137,6 +143,7 @@ where
             is_secure: false,
             font: None,
             width: Length::Fill,
+            height: Length::Shrink,
             padding: DEFAULT_PADDING,
             size: None,
             line_height: text::LineHeight::default(),
@@ -256,6 +263,18 @@ where
         self
     }
 
+    /// Sets the height of the [`TextInput`].
+    ///
+    /// **Deviation from upstream sweeten/iced**: stock iced determines a
+    /// text input's height intrinsically from `padding + text_size +
+    /// line_height`. We add an explicit `.height()` so shadcn-style fixed
+    /// `h-8` / `h-9` / `h-10` field sizing maps cleanly without wrapping
+    /// the widget in an outer container (which would clip the focus ring).
+    pub fn height(mut self, height: impl Into<Length>) -> Self {
+        self.height = height.into();
+        self
+    }
+
     /// Sets the [`Padding`] of the [`TextInput`].
     pub fn padding<P: Into<Padding>>(mut self, padding: P) -> Self {
         self.padding = padding.into();
@@ -321,7 +340,7 @@ where
         let padding = self.padding.fit(Size::ZERO, limits.max());
         let height = self.line_height.to_absolute(text_size);
 
-        let limits = limits.width(self.width).shrink(padding);
+        let limits = limits.width(self.width).height(self.height).shrink(padding);
         let text_bounds = limits.resolve(self.width, height, Size::ZERO);
 
         let placeholder_text = Text {
@@ -498,33 +517,52 @@ where
         let style = theme
             .style(&self.class, self.last_status.unwrap_or(Status::Disabled));
 
-        // Focus ring (Tailwind `ring-*`): a solid halo painted behind the
-        // main fill, with bounds and radius expanded by `width` on each side.
-        // Equivalent to CSS `box-shadow: 0 0 0 {width}px {color}`.
-        if let Some(ring) = style.ring {
-            let r = ring.width;
-            let mut radius = style.border.radius;
-            radius.top_left += r;
-            radius.top_right += r;
-            radius.bottom_right += r;
-            radius.bottom_left += r;
-            renderer.fill_quad(
-                renderer::Quad {
-                    bounds: Rectangle {
-                        x: bounds.x - r,
-                        y: bounds.y - r,
-                        width: bounds.width + r * 2.0,
-                        height: bounds.height + r * 2.0,
-                    },
-                    border: Border {
-                        radius,
-                        width: 0.0,
-                        color: Color::TRANSPARENT,
-                    },
-                    ..renderer::Quad::default()
-                },
-                Background::Color(ring.color),
+        // Focus ring (Tailwind `ring-*`): a stroke around the input, sitting
+        // OUTSIDE the input's own bounds. Implemented as a transparent quad
+        // whose `border.width` paints `ring.width` px of `ring.color`. The
+        // expanded bounds put the inner edge of that border flush with the
+        // input's outer edge, so the visible result is a halo around (not
+        // over) the field. Equivalent to CSS `box-shadow: 0 0 0 Npx C`.
+        //
+        // Animated via `state.focus_anim` (150ms cubic-bezier(0.4,0,0.2,1)).
+        // We look up the focused-status style explicitly so the ring spec is
+        // available during the fade-OUT (when `style` here is the unfocused
+        // status with `ring = None`). The animation factor multiplies the
+        // ring color's alpha for a smooth in/out.
+        let now = Instant::now();
+        let focus_t = state.focus_anim.interpolate(0.0, 1.0, now);
+        if focus_t > 0.0 {
+            let focused = theme.style(
+                &self.class,
+                Status::Focused { is_hovered: false },
             );
+            if let Some(ring) = focused.ring {
+                let r = ring.width;
+                let mut radius = focused.border.radius;
+                radius.top_left += r;
+                radius.top_right += r;
+                radius.bottom_right += r;
+                radius.bottom_left += r;
+                let mut color = ring.color;
+                color.a *= focus_t;
+                renderer.fill_quad(
+                    renderer::Quad {
+                        bounds: Rectangle {
+                            x: bounds.x - r,
+                            y: bounds.y - r,
+                            width: bounds.width + r * 2.0,
+                            height: bounds.height + r * 2.0,
+                        },
+                        border: Border {
+                            radius,
+                            width: r,
+                            color,
+                        },
+                        ..renderer::Quad::default()
+                    },
+                    Background::Color(Color::TRANSPARENT),
+                );
+            }
         }
 
         renderer.fill_quad(
@@ -1487,6 +1525,15 @@ where
             Event::Window(window::Event::RedrawRequested(now)) => {
                 let state = state::<Renderer>(tree);
 
+                // Drive the focus-ring fade in/out (150ms cubic-bezier).
+                let is_focused = state.is_focused.is_some();
+                if is_focused != state.focus_anim.value() {
+                    state.focus_anim.go_mut(is_focused, *now);
+                }
+                if state.focus_anim.is_animating(*now) {
+                    shell.request_redraw();
+                }
+
                 if let Some(focus) = &mut state.is_focused
                     && focus.is_window_focused
                 {
@@ -1614,7 +1661,12 @@ pub enum Side {
 }
 
 /// The state of a [`TextInput`].
-#[derive(Debug, Default, Clone)]
+///
+/// **Deviation from upstream sweeten/iced**: adds `focus_anim`, an
+/// `Animation<bool>` that drives ring opacity in/out over 150ms with shadcn's
+/// `cubic-bezier(0.4, 0, 0.2, 1)` curve. The derive of `Default` is replaced
+/// with a manual impl so the animation gets its easing/duration set up.
+#[derive(Debug, Clone)]
 pub struct State<P: text::Paragraph> {
     value: paragraph::Plain<P>,
     placeholder: paragraph::Plain<P>,
@@ -1628,6 +1680,31 @@ pub struct State<P: text::Paragraph> {
     cursor: Cursor,
     keyboard_modifiers: keyboard::Modifiers,
     scroll_offset: f32,
+    focus_anim: crate::core::Animation<bool>,
+}
+
+impl<P: text::Paragraph> Default for State<P> {
+    fn default() -> Self {
+        Self {
+            value: paragraph::Plain::default(),
+            placeholder: paragraph::Plain::default(),
+            icon: paragraph::Plain::default(),
+            is_focused: None,
+            was_focused: false,
+            is_dragging: None,
+            is_pasting: None,
+            preedit: None,
+            last_click: None,
+            cursor: Cursor::default(),
+            keyboard_modifiers: keyboard::Modifiers::default(),
+            scroll_offset: 0.0,
+            focus_anim: Animation::new(false)
+                .easing(Easing::Custom(|t| {
+                    crate::animation::cubic_bezier(0.4, 0.0, 0.2, 1.0, t)
+                }))
+                .duration(Duration::from_millis(150)),
+        }
+    }
 }
 
 fn state<Renderer: text::Renderer>(
@@ -1879,20 +1956,12 @@ fn replace_paragraph<Renderer>(
 const CURSOR_BLINK_INTERVAL_MILLIS: u128 = 500;
 
 /// The possible status of a [`TextInput`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Status {
-    /// The [`TextInput`] can be interacted with.
-    Active,
-    /// The [`TextInput`] is being hovered.
-    Hovered,
-    /// The [`TextInput`] is focused.
-    Focused {
-        /// Whether the [`TextInput`] is hovered, while focused.
-        is_hovered: bool,
-    },
-    /// The [`TextInput`] cannot be interacted with.
-    Disabled,
-}
+/// **Deviation from upstream sweeten/iced**: `Status` is re-exported from
+/// `icedxdy_core` so the whole crate (theme + widget + wrapper) speaks one
+/// canonical type. Otherwise we'd carry an extra `widget::Status ↔
+/// core::Status` conversion at every Catalog call. Variants match upstream
+/// 1:1 so the rest of this file's pattern matches keep working.
+pub use icedxdy_core::theme::text_input::Status;
 
 /// A focus ring rendered around the text input — a solid colored halo of
 /// `width` pixels painted behind the main fill. Equivalent to CSS
