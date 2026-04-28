@@ -125,7 +125,10 @@ impl App {
                     }
                 }
                 self.current_page = page;
-                Task::none()
+                self.pages
+                    .get_mut(page)
+                    .map(|p| p.on_visible())
+                    .unwrap_or_else(Task::none)
             }
             Message::FontSelected(name) => {
                 self.current_font = name.clone();

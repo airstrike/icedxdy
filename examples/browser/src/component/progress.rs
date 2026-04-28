@@ -107,26 +107,25 @@ impl page::Page for ProgressPage {
         self.state.init()
     }
 
+    fn on_visible(&mut self) -> Task<Message> {
+        // Schedule the demo's `setTimeout(setProgress(66), 500)` jump.
+        // The widget eases the value-change from 13 to 66 internally over
+        // 150ms via cubic-bezier(0.4, 0, 0.2, 1). On revisit, the page's
+        // `value` is already at 66, so this fires idempotently — no animation.
+        let pi = self.state.page_index;
+        Task::perform(
+            async {
+                tokio::time::sleep(Duration::from_millis(DELAY_MS)).await;
+            },
+            move |_| Message::Page(pi, page::Message::ValueChanged(ID_DEMO, TARGET_VALUE)),
+        )
+    }
+
     fn update(&mut self, event: page::Message) -> Task<Message> {
         if let Some(task) = self.state.update(&event) {
             return task;
         }
         match event {
-            page::Message::ExampleShown(ID_DEMO) => {
-                self.value = INITIAL_VALUE;
-                let pi = self.state.page_index;
-                Task::perform(
-                    async {
-                        tokio::time::sleep(Duration::from_millis(DELAY_MS)).await;
-                    },
-                    move |_| {
-                        Message::Page(
-                            pi,
-                            page::Message::ValueChanged(ID_DEMO, TARGET_VALUE),
-                        )
-                    },
-                )
-            }
             page::Message::ValueChanged(ID_DEMO, v) => {
                 self.value = v;
                 Task::none()

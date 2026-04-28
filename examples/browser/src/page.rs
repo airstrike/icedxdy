@@ -70,6 +70,13 @@ pub trait Page {
     /// page (e.g., expanded-code dismissal). Default: clear nothing —
     /// pages with `page::State` should override to call `state.reset_volatile()`.
     fn reset_volatile(&mut self) {}
+
+    /// Called by `App` whenever the user navigates TO this page. Use it for
+    /// "first-paint" triggers that iced's `sensor` can't reliably catch when
+    /// the example is already in the viewport at mount time. Default: no-op.
+    fn on_visible(&mut self) -> Task<super::Message> {
+        Task::none()
+    }
 }
 
 /// Render a page's body and optional "On This Page" nav. The `viewer`

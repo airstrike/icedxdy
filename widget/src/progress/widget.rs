@@ -117,24 +117,21 @@ where
 struct State {
     /// The interpolated value being rendered right now.
     animated: Animation<f32>,
-    /// Whether `animated` has been initialized to a real prop value yet.
-    /// Until the first `diff()` runs (i.e. the first render observes a
-    /// concrete prop), we don't know the starting value. Initialization
-    /// happens lazily so the first observed value seeds `animated`
-    /// directly without triggering a 0 → first-value sweep.
-    initialized: bool,
 }
 
-impl Default for State {
-    fn default() -> Self {
+impl State {
+    /// Seed the animation at `value` with the shadcn `transition-all` easing.
+    /// Called from [`Widget::state`] so the first mount renders at the
+    /// initial prop value rather than 0.0 — iced's `Tree::new` does NOT call
+    /// `Widget::diff`, so any lazy-init via `diff()` would silently miss.
+    fn seeded(value: f32) -> Self {
         Self {
-            animated: Animation::new(0.0)
+            animated: Animation::new(value)
                 .easing(Easing::Custom(
                     // cubic-bezier(0.4, 0, 0.2, 1) — shadcn's transition-all
                     |t| crate::animation::cubic_bezier(0.4, 0.0, 0.2, 1.0, t),
                 ))
                 .duration(TRANSITION_DURATION),
-            initialized: false,
         }
     }
 }
@@ -150,7 +147,7 @@ where
     }
 
     fn state(&self) -> tree::State {
-        tree::State::new(State::default())
+        tree::State::new(State::seeded(self.value))
     }
 
     fn size(&self) -> Size<Length> {
@@ -171,19 +168,12 @@ where
 
     fn diff(&self, tree: &mut Tree) {
         let state = tree.state.downcast_mut::<State>();
-        if !state.initialized {
-            // First time we're seeing a prop value — seed `animated` so the
-            // initial render does NOT sweep from 0 to the first value.
-            state.animated = Animation::new(self.value)
-                .easing(Easing::Custom(
-                    |t| crate::animation::cubic_bezier(0.4, 0.0, 0.2, 1.0, t),
-                ))
-                .duration(TRANSITION_DURATION);
-            state.initialized = true;
-        } else if state.animated.value() != self.value {
+        if state.animated.value() != self.value {
             // Re-target without snapping: lilt's `transition` interpolates
             // from the *currently displayed* value (which it tracks
-            // internally) to the new target.
+            // internally) to the new target. State::seeded already initialised
+            // the at-rest value when this widget first mounted, so we never
+            // get here with a stale `0.0` baseline.
             state.animated.go_mut(self.value, Instant::now());
         }
     }
