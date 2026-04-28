@@ -46,7 +46,7 @@ const TRANSITION_DURATION: Duration = Duration::from_millis(150);
 /// `theme::progress_bar` apply unchanged.
 ///
 /// [`value`]: ProgressBar::value
-pub struct ProgressBar<'a, Theme = iced_widget::Theme>
+pub struct ProgressBar<'a, Message, Theme = iced_widget::Theme>
 where
     Theme: progress_bar::Catalog,
 {
@@ -55,9 +55,12 @@ where
     length: Length,
     girth: Length,
     class: Theme::Class<'a>,
+    /// Optional callback fired when the easing animation finishes — i.e.
+    /// when the bar settles at its target value. Receives the at-rest value.
+    on_idle: Option<Box<dyn Fn(f32) -> Message + 'a>>,
 }
 
-impl<'a, Theme> ProgressBar<'a, Theme>
+impl<'a, Message, Theme> ProgressBar<'a, Message, Theme>
 where
     Theme: progress_bar::Catalog,
 {
@@ -73,6 +76,7 @@ where
             length: Length::Fill,
             girth: Length::from(Self::DEFAULT_GIRTH),
             class: Theme::default(),
+            on_idle: None,
         }
     }
 
@@ -110,6 +114,19 @@ where
         self.class = class.into();
         self
     }
+
+    /// Sets a callback to fire when the easing animation finishes. The
+    /// callback receives the at-rest target value. Useful for gating
+    /// follow-up actions (dismiss splash, navigate, etc.) on the bar
+    /// reaching a particular value.
+    #[must_use]
+    pub fn on_idle(
+        mut self,
+        on_idle: impl Fn(f32) -> Message + 'a,
+    ) -> Self {
+        self.on_idle = Some(Box::new(on_idle));
+        self
+    }
 }
 
 /// Per-instance animation state stored in the widget tree.
@@ -117,6 +134,10 @@ where
 struct State {
     /// The interpolated value being rendered right now.
     animated: Animation<f32>,
+    /// Whether the previous frame's animation was active. Used to detect
+    /// the animating → idle transition so `on_idle` fires exactly once
+    /// when the bar settles.
+    was_animating: bool,
 }
 
 impl State {
@@ -132,12 +153,13 @@ impl State {
                     |t| crate::animation::cubic_bezier(0.4, 0.0, 0.2, 1.0, t),
                 ))
                 .duration(TRANSITION_DURATION),
+            was_animating: false,
         }
     }
 }
 
 impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer>
-    for ProgressBar<'_, Theme>
+    for ProgressBar<'_, Message, Theme>
 where
     Theme: progress_bar::Catalog,
     Renderer: iced_core::Renderer,
@@ -189,8 +211,17 @@ where
         _viewport: &Rectangle,
     ) {
         if let Event::Window(window::Event::RedrawRequested(now)) = event {
-            let state = tree.state.downcast_ref::<State>();
-            if state.animated.is_animating(*now) {
+            let state = tree.state.downcast_mut::<State>();
+            let now_animating = state.animated.is_animating(*now);
+            // Animation just settled — fire on_idle exactly once at the
+            // animating → idle transition.
+            if state.was_animating && !now_animating {
+                if let Some(on_idle) = &self.on_idle {
+                    shell.publish(on_idle(self.value));
+                }
+            }
+            state.was_animating = now_animating;
+            if now_animating {
                 shell.request_redraw();
             }
         }
@@ -254,7 +285,7 @@ where
     }
 }
 
-impl<'a, Message, Theme, Renderer> From<ProgressBar<'a, Theme>>
+impl<'a, Message, Theme, Renderer> From<ProgressBar<'a, Message, Theme>>
     for Element<'a, Message, Theme, Renderer>
 where
     Message: 'a,
@@ -262,7 +293,7 @@ where
     Renderer: 'a + iced_core::Renderer,
 {
     fn from(
-        progress_bar: ProgressBar<'a, Theme>,
+        progress_bar: ProgressBar<'a, Message, Theme>,
     ) -> Element<'a, Message, Theme, Renderer> {
         Element::new(progress_bar)
     }

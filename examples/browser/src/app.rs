@@ -39,6 +39,11 @@ pub enum Message {
     FontSelected(String),
     Page(usize, page::Message),
     Font(fonts::Message),
+    /// Emitted by the splash-screen progress bar each time its easing
+    /// animation settles. `App` ignores it; `Browser` intercepts and uses
+    /// the `value == 100` case to dismiss the splash so it stays up until
+    /// the bar visibly reaches the right edge.
+    SplashIdle(f32),
 }
 
 impl App {
@@ -147,6 +152,7 @@ impl App {
                     Task::none()
                 }
             }
+            Message::SplashIdle(_) => Task::none(),
             Message::Font(msg) => match msg {
                 fonts::Message::SystemFontsLoaded(families) => {
                     let names: Vec<String> = families

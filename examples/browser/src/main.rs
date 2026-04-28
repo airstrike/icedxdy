@@ -18,7 +18,7 @@ mod page;
 use iced::widget::column;
 use iced::{Element, Subscription, Task};
 use icedxdy::widget::markdown::highlighter::Map;
-use icedxdy::widget::{center, text};
+use icedxdy::widget::{center, progress, text};
 use icedxdy::Theme;
 
 use app::App;
@@ -76,27 +76,35 @@ impl Browser {
     }
 
     fn update(&mut self, msg: Message) -> Task<Message> {
+        // Splash dismissal is gated on the progress bar's `on_idle` arriving
+        // with `value == 100`, so the bar visibly reaches the right edge
+        // before the splash hands off to the app. Bumping `load_progress`
+        // to 100 on terminal font events (success, per-font fail, or
+        // catalog-load fail offline) drives the final ease; `SplashIdle(100)`
+        // then flips `font_loaded`.
+        if let Message::SplashIdle(value) = msg
+            && value >= 100.0
+        {
+            self.font_loaded = true;
+            return Task::none();
+        }
+
         // Phase-based splash progress. Each terminal stage clamps the bar
         // upward; the `.max()` keeps reordered events monotone.
         if let Message::Font(font_msg) = &msg {
             let bump = match font_msg {
                 fonts::Message::SystemFontsLoaded(_) => 25.0,
-                fonts::Message::CatalogLoaded(_) => 50.0,
-                fonts::Message::Loaded(_, _) => 75.0,
+                fonts::Message::CatalogLoaded(Ok(_)) => 50.0,
+                // CatalogLoaded(Err): offline; no `Loaded` will follow, so
+                // jump to 100 to drive the splash through to dismissal.
+                fonts::Message::CatalogLoaded(Err(_)) => 100.0,
+                // Any `Loaded` (success or per-font failure) means the font
+                // pipeline is done — drive to 100.
+                fonts::Message::Loaded(_, _) => 100.0,
             };
             self.load_progress = self.load_progress.max(bump);
         }
-        // Dismiss the splash on any terminal font event — success
-        // (`Loaded(_, Ok(_))`), per-font failure (`Loaded(_, Err(_))`), or
-        // catalog failure (`CatalogLoaded(Err(_))`). Without the failure
-        // arms we'd splash forever offline.
-        if matches!(
-            &msg,
-            Message::Font(fonts::Message::Loaded(_, _))
-                | Message::Font(fonts::Message::CatalogLoaded(Err(_)))
-        ) {
-            self.font_loaded = true;
-        }
+
         self.app.update(msg)
     }
 
@@ -130,7 +138,9 @@ fn splash<'a>(message: &str, progress_value: f32) -> Element<'a, Message, Theme>
         column![
             text::h1("icedxdy"),
             text::muted(message.to_owned()),
-            icedxdy::widget::progress(progress_value).width(140),
+            progress(progress_value)
+                .width(140)
+                .on_idle(Message::SplashIdle),
         ]
         .spacing(12)
         .align_x(iced::Center),

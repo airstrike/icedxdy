@@ -23,7 +23,7 @@ pub struct Progress<'a, Message> {
     value: f32,
     width: Length,
     style: Option<iced_widget::progress_bar::StyleFn<'a, Theme>>,
-    _marker: std::marker::PhantomData<Message>,
+    on_idle: Option<Box<dyn Fn(f32) -> Message + 'a>>,
 }
 
 /// Create a [`Progress`] with the given value (0..=100).
@@ -32,7 +32,7 @@ pub fn progress<'a, Message: 'a>(value: f32) -> Progress<'a, Message> {
         value: value.clamp(0.0, 100.0),
         width: Length::Fill,
         style: None,
-        _marker: std::marker::PhantomData,
+        on_idle: None,
     }
 }
 
@@ -60,6 +60,17 @@ impl<'a, Message: 'a> Progress<'a, Message> {
         self.style = Some(style.into());
         self
     }
+
+    /// Fire `on_idle(value)` when the easing animation settles at its
+    /// target. Useful for gating follow-up actions (dismissing a splash,
+    /// navigation, etc.) on the bar reaching a specific value.
+    pub fn on_idle(
+        mut self,
+        on_idle: impl Fn(f32) -> Message + 'a,
+    ) -> Self {
+        self.on_idle = Some(Box::new(on_idle));
+        self
+    }
 }
 
 impl<'a, Message: 'a> From<Progress<'a, Message>>
@@ -69,10 +80,13 @@ impl<'a, Message: 'a> From<Progress<'a, Message>>
         let style = p
             .style
             .unwrap_or_else(|| Box::new(|t| progress_bar::default(t).into()));
-        let bar = widget::ProgressBar::new(0.0..=100.0, p.value)
+        let mut bar = widget::ProgressBar::new(0.0..=100.0, p.value)
             .length(p.width)
             .girth(HEIGHT)
             .style(move |t| style(t));
+        if let Some(on_idle) = p.on_idle {
+            bar = bar.on_idle(move |v| on_idle(v));
+        }
         bar.into()
     }
 }
