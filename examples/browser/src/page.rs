@@ -38,6 +38,9 @@ pub enum Message {
     ExpandCode(usize),
     CopyCode(usize),
     InputChanged(usize, String),
+    /// Float-valued counterpart of `InputChanged`. For sliders and other
+    /// continuous-value pages.
+    ValueChanged(usize, f32),
     /// Generic animation tick. Carrier for `iced::time::every(...)`-driven
     /// pages. Pages opt in via `Page::subscription()`; the dispatcher in
     /// `App` routes ticks to the active page only.

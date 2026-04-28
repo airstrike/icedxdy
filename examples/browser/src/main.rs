@@ -53,6 +53,10 @@ pub use app::Message;
 struct Browser {
     app: App,
     font_loaded: bool,
+    /// Visual hint for splash progression. Bumped by phase as font-loading
+    /// events arrive (system list -> Google catalog -> font bytes). Clamped
+    /// to never decrease, so out-of-order events still progress visually.
+    load_progress: f32,
 }
 
 impl Browser {
@@ -65,12 +69,23 @@ impl Browser {
             Browser {
                 app,
                 font_loaded: false,
+                load_progress: 0.0,
             },
             Task::batch([app_init, fonts_init]),
         )
     }
 
     fn update(&mut self, msg: Message) -> Task<Message> {
+        // Phase-based splash progress. Each terminal stage clamps the bar
+        // upward; the `.max()` keeps reordered events monotone.
+        if let Message::Font(font_msg) = &msg {
+            let bump = match font_msg {
+                fonts::Message::SystemFontsLoaded(_) => 25.0,
+                fonts::Message::CatalogLoaded(_) => 50.0,
+                fonts::Message::Loaded(_, _) => 75.0,
+            };
+            self.load_progress = self.load_progress.max(bump);
+        }
         // Dismiss the splash on any terminal font event — success
         // (`Loaded(_, Ok(_))`), per-font failure (`Loaded(_, Err(_))`), or
         // catalog failure (`CatalogLoaded(Err(_))`). Without the failure
@@ -89,7 +104,7 @@ impl Browser {
         if self.font_loaded {
             self.app.view()
         } else {
-            splash("Loading\u{2026}")
+            splash("Loading\u{2026}", self.load_progress)
         }
     }
 
@@ -110,11 +125,15 @@ impl Browser {
     }
 }
 
-fn splash<'a>(message: &str) -> Element<'a, Message, Theme> {
+fn splash<'a>(message: &str, progress_value: f32) -> Element<'a, Message, Theme> {
     center(
-        column![text::h1("icedxdy"), text::muted(message.to_owned())]
-            .spacing(8)
-            .align_x(iced::Center),
+        column![
+            text::h1("icedxdy"),
+            text::muted(message.to_owned()),
+            icedxdy::widget::progress(progress_value).width(140),
+        ]
+        .spacing(12)
+        .align_x(iced::Center),
     )
     .into()
 }

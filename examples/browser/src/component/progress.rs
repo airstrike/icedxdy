@@ -3,11 +3,11 @@ use std::time::Duration;
 
 use iced::Task;
 use iced::time::{self, Instant};
-use iced::widget::Id;
+use iced::widget::{Id, slider};
 use iced::{Length, Subscription};
 use icedxdy::Theme;
 use icedxdy::widget::markdown;
-use icedxdy::widget::progress;
+use icedxdy::widget::{column, progress, row, text};
 
 use crate::Message;
 use crate::example;
@@ -22,6 +22,18 @@ pub static META: page::Meta = page::Meta {
             title: "Progress",
             description: None,
             snippet: "examples/browser/snippets/progress-demo.md",
+        },
+        example::Meta {
+            id: "controlled",
+            title: "Controlled",
+            description: Some("A progress bar that can be controlled by a slider."),
+            snippet: "examples/browser/snippets/progress-controlled.md",
+        },
+        example::Meta {
+            id: "label",
+            title: "Label",
+            description: Some("Use a Field component to add a label to the progress bar."),
+            snippet: "examples/browser/snippets/progress-label.md",
         },
     ],
 };
@@ -45,15 +57,19 @@ const TRANSITION_MS: u64 = 150;
 /// `page::Message::DelayedTrigger(ID_DEMO)` so future examples can claim
 /// their own ids without colliding.
 const ID_DEMO: usize = 0;
+const ID_CONTROLLED: usize = 1;
+const ID_LABEL: usize = 2;
 
 pub struct ProgressPage {
     state: page::State,
-    /// Current displayed value.
+    /// Current displayed value for the Demo bar.
     value: f32,
     /// When the transition began. `None` until the 500ms delay fires; once
     /// `Some`, every animation tick interpolates from `INITIAL_VALUE` to
     /// `TARGET_VALUE` over `TRANSITION_MS` from this instant.
     transition_started: Option<Instant>,
+    /// Slider-driven value for the Controlled example.
+    controlled_value: f32,
 }
 
 impl ProgressPage {
@@ -62,6 +78,7 @@ impl ProgressPage {
             state: page::State::new(page_index, &META),
             value: INITIAL_VALUE,
             transition_started: None,
+            controlled_value: 50.0,
         })
     }
 
@@ -105,15 +122,7 @@ impl page::Page for ProgressPage {
     }
 
     fn init(&self) -> Task<Message> {
-        let pi = self.state.page_index;
-        let snippet_task = self.state.init();
-        let delay_task = Task::perform(
-            async {
-                tokio::time::sleep(Duration::from_millis(DELAY_MS)).await;
-            },
-            move |_| Message::Page(pi, page::Message::DelayedTrigger(ID_DEMO)),
-        );
-        Task::batch([snippet_task, delay_task])
+        self.state.init()
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
@@ -121,10 +130,25 @@ impl page::Page for ProgressPage {
             return task;
         }
         match event {
+            page::Message::ExampleShown(ID_DEMO) => {
+                self.value = INITIAL_VALUE;
+                self.transition_started = None;
+                let pi = self.state.page_index;
+                Task::perform(
+                    async {
+                        tokio::time::sleep(Duration::from_millis(DELAY_MS)).await;
+                    },
+                    move |_| Message::Page(pi, page::Message::DelayedTrigger(ID_DEMO)),
+                )
+            }
             page::Message::DelayedTrigger(ID_DEMO) => {
                 if self.transition_started.is_none() {
                     self.transition_started = Some(Instant::now());
                 }
+                Task::none()
+            }
+            page::Message::ValueChanged(ID_CONTROLLED, v) => {
+                self.controlled_value = v;
                 Task::none()
             }
             page::Message::AnimationTick(_) => {
@@ -161,15 +185,44 @@ impl page::Page for ProgressPage {
     }
 
     fn preview(&self, index: usize) -> iced::Element<'_, Message, Theme> {
+        let pi = self.state.page_index;
         match index {
             // Demo: nova's `<Progress value={progress} className="w-[60%]" />`.
             // The preview region is ~450px wide after the 40px padding, so
-            // we model `w-[60%]` as a 270px-wide bar (60% of ~450px) inside
-            // a horizontally-centred container — visually faithful without
-            // measuring the parent at runtime.
-            0 => iced::widget::container(progress(self.value).width(Length::Fixed(270.0)))
-                .center_x(Length::Fill)
+            // we model `w-[60%]` as a 270px-wide bar (60% of ~450px).
+            ID_DEMO => progress(self.value).width(Length::Fixed(270.0)).into(),
+            // Controlled: progress bar driven by an iced stock slider. Width
+            // 320px approximates Tailwind's `max-w-sm` (384px) within the
+            // 450px preview area. Slider is iced's default — looks unstyled
+            // until our own Slider widget lands.
+            ID_CONTROLLED => column([
+                progress(self.controlled_value)
+                    .width(Length::Fixed(320.0))
+                    .into(),
+                slider(0.0..=100.0, self.controlled_value, move |v| {
+                    Message::Page(pi, page::Message::ValueChanged(ID_CONTROLLED, v))
+                })
+                .step(1.0)
+                .width(320)
                 .into(),
+            ])
+            .spacing(16)
+            .into(),
+            // Label: an inline label row above a static 66% progress bar.
+            // No Field/FieldLabel widget yet — approximated with a Row that
+            // spreads `text::small` ends apart via a fill space.
+            ID_LABEL => column([
+                row()
+                    .push(text::small("Upload progress").into())
+                    .push(iced_widget::space::horizontal().into())
+                    .push(text::small("66%").into())
+                    .spacing(0)
+                    .into(),
+                progress(66.0).width(Length::Fixed(320.0)).into(),
+            ])
+            .spacing(8)
+            .width(Length::Fixed(320.0))
+            .into(),
             _ => unreachable!(),
         }
     }
