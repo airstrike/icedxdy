@@ -182,7 +182,9 @@ pub fn default(theme: &Theme, status: Status) -> Style {
     let dark = is_dark(theme);
 
     let bg = if dark {
-        p.input.alpha(p.input.a * 0.3)
+        // Tailwind `/30` modifier sets alpha to 0.3 (it does NOT multiply
+        // with the source's existing alpha). Spec: `dark:bg-input/30`.
+        p.input.alpha(0.3)
     } else {
         p.background
     };
@@ -219,20 +221,26 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             ..active
         },
         Status::Disabled => {
+            // Tailwind `/N` overrides alpha; doesn't multiply with the
+            // source. Spec: `disabled:bg-input/50` (light), `dark:disabled:bg-input/80`.
             let dis_bg = if dark {
-                p.input.alpha(p.input.a * 0.8)
+                p.input.alpha(0.8)
             } else {
                 p.input.alpha(0.5)
             };
+            // The element-wide `disabled:opacity-50` on top multiplies every
+            // pixel by 0.5 — we apply that to non-bg colors with `scale_alpha`
+            // so they preserve their *own* base alpha (matters for dark
+            // `palette.input` which is α 0.15, not 1.0).
             Style {
-                background: dis_bg.into(),
+                background: dis_bg.scale_alpha(0.5).into(),
                 border: Border {
-                    color: p.input.alpha(0.5),
+                    color: p.input.scale_alpha(0.5),
                     ..active.border
                 },
-                value: p.foreground.alpha(0.5),
-                placeholder: p.muted.foreground.alpha(0.5),
-                icon: p.foreground.alpha(0.5),
+                value: p.foreground.scale_alpha(0.5),
+                placeholder: p.muted.foreground.scale_alpha(0.5),
+                icon: p.foreground.scale_alpha(0.5),
                 ..active
             }
         }
@@ -411,15 +419,16 @@ mod tests {
             && (a.a - b.a).abs() < 1e-4
     }
 
-    /// Dark theme rest bg = `palette.input` at α `input.a × 0.3`.
-    /// Regression guard for the `dark:bg-input/30` class.
+    /// Dark theme rest bg = `palette.input` with alpha *set* to 0.3.
+    /// Regression guard for the `dark:bg-input/30` class — Tailwind's `/N`
+    /// modifier overrides the source alpha; it does NOT multiply.
     #[test]
     fn default_dark_bg_uses_input_alpha_0_3() {
         let theme = Theme::dark();
         let resolved = default(&theme, Status::Active);
         let bg = bg_color(&resolved);
         let p = theme.palette();
-        let expected = p.input.alpha(p.input.a * 0.3);
+        let expected = p.input.alpha(0.3);
         assert!(
             close(bg, expected),
             "expected bg ≈ {expected:?}, got {bg:?}",

@@ -517,58 +517,68 @@ where
         let style = theme
             .style(&self.class, self.last_status.unwrap_or(Status::Disabled));
 
-        // Focus ring (Tailwind `ring-*`): a stroke around the input, sitting
-        // OUTSIDE the input's own bounds. Implemented as a transparent quad
-        // whose `border.width` paints `ring.width` px of `ring.color`. The
-        // expanded bounds put the inner edge of that border flush with the
-        // input's outer edge, so the visible result is a halo around (not
-        // over) the field. Equivalent to CSS `box-shadow: 0 0 0 Npx C`.
+        // Per shadcn nova, the input has `transition-colors` (150ms,
+        // cubic-bezier(0.4,0,0.2,1)) which animates COLOR properties only —
+        // including `border-color`. The focus RING (`ring-3 ring-ring/50`)
+        // is a `box-shadow` and is NOT in `transition-colors`, so it
+        // appears/disappears INSTANTLY with the focus state.
         //
-        // Animated via `state.focus_anim` (150ms cubic-bezier(0.4,0,0.2,1)).
-        // We look up the focused-status style explicitly so the ring spec is
-        // available during the fade-OUT (when `style` here is the unfocused
-        // status with `ring = None`). The animation factor multiplies the
-        // ring color's alpha for a smooth in/out.
+        // We mirror that here: `focus_anim` interpolates the border color
+        // between the unfocused (Active) style and the focused style; the
+        // ring is rendered as-is iff the input is actually focused.
         let now = Instant::now();
-        let focus_t = state.focus_anim.interpolate(0.0, 1.0, now);
-        if focus_t > 0.0 {
-            let focused = theme.style(
-                &self.class,
-                Status::Focused { is_hovered: false },
-            );
-            if let Some(ring) = focused.ring {
-                let r = ring.width;
-                let mut radius = focused.border.radius;
-                radius.top_left += r;
-                radius.top_right += r;
-                radius.bottom_right += r;
-                radius.bottom_left += r;
-                let mut color = ring.color;
-                color.a *= focus_t;
-                renderer.fill_quad(
-                    renderer::Quad {
-                        bounds: Rectangle {
-                            x: bounds.x - r,
-                            y: bounds.y - r,
-                            width: bounds.width + r * 2.0,
-                            height: bounds.height + r * 2.0,
-                        },
-                        border: Border {
-                            radius,
-                            width: r,
-                            color,
-                        },
-                        ..renderer::Quad::default()
+        let active_style = theme.style(&self.class, Status::Active);
+        let focused_style = theme.style(
+            &self.class,
+            Status::Focused { is_hovered: false },
+        );
+        let border_color = state.focus_anim.interpolate(
+            active_style.border.color,
+            focused_style.border.color,
+            now,
+        );
+        let animated_border = Border {
+            color: border_color,
+            ..style.border
+        };
+
+        // Ring: instant-on at the moment of focus, instant-off at blur.
+        // Drawn as a 3px stroke on a transparent quad whose bounds sit
+        // OUTSIDE the input's own bounds. `border.width = ring.width`
+        // paints inward from the expanded bounds, so the visible halo is
+        // around (not over) the field.
+        if state.is_focused()
+            && let Some(ring) = focused_style.ring
+        {
+            let r = ring.width;
+            let mut radius = focused_style.border.radius;
+            radius.top_left += r;
+            radius.top_right += r;
+            radius.bottom_right += r;
+            radius.bottom_left += r;
+            renderer.fill_quad(
+                renderer::Quad {
+                    bounds: Rectangle {
+                        x: bounds.x - r,
+                        y: bounds.y - r,
+                        width: bounds.width + r * 2.0,
+                        height: bounds.height + r * 2.0,
                     },
-                    Background::Color(Color::TRANSPARENT),
-                );
-            }
+                    border: Border {
+                        radius,
+                        width: r,
+                        color: ring.color,
+                    },
+                    ..renderer::Quad::default()
+                },
+                Background::Color(Color::TRANSPARENT),
+            );
         }
 
         renderer.fill_quad(
             renderer::Quad {
                 bounds,
-                border: style.border,
+                border: animated_border,
                 ..renderer::Quad::default()
             },
             style.background,
