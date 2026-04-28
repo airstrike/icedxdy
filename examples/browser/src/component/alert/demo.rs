@@ -1,4 +1,4 @@
-use iced::Length;
+use iced::Fill;
 use icedxdy::Component;
 use icedxdy::widget::alert;
 
@@ -19,6 +19,6 @@ pub fn view<'a>() -> Component<'a, Message> {
             .into(),
     ])
     .spacing(16)
-    .width(Length::Fill)
+    .width(Fill)
     .into()
 }

@@ -5,7 +5,7 @@ use iced::widget::Id;
 use icedxdy::widget::markdown;
 
 use icedxdy::Theme;
-use icedxdy::widget::{button, input, text};
+use icedxdy::widget::{button, input, row, text};
 
 use crate::Message;
 use crate::example;
@@ -160,19 +160,15 @@ impl page::Page for InputPage {
             .width(320)
             .into(),
             // Inline: input + button side by side
-            4 => icedxdy::widget::column([icedxdy::widget::row()
-                .push(
+            4 => icedxdy::widget::column([
+                row![
                     input::input("Search...", &self.with_button_value)
-                        .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v)))
-                        .into(),
-                )
-                .push(
-                    button("Search")
-                        .on_press(Message::Page(pi, page::Message::Noop))
-                        .into(),
-                )
+                        .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v))),
+                    button("Search").on_press(Message::Page(pi, page::Message::Noop)),
+                ]
                 .spacing(8)
-                .into()])
+                .into()
+            ])
             .max_width(400.0)
             .into(),
             _ => unreachable!(),

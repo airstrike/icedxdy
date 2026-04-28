@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use iced::Task;
 use iced::widget::{Id, slider};
-use iced::Length;
 use icedxdy::Theme;
 use icedxdy::widget::markdown;
 use icedxdy::widget::{column, progress, row, text};
@@ -148,15 +147,13 @@ impl page::Page for ProgressPage {
             // Demo: nova's `<Progress value={progress} className="w-[60%]" />`.
             // The preview region is ~450px wide after the 40px padding, so
             // we model `w-[60%]` as a 270px-wide bar (60% of ~450px).
-            ID_DEMO => progress(self.value).width(Length::Fixed(270.0)).into(),
+            ID_DEMO => progress(self.value).width(270).into(),
             // Controlled: progress bar driven by an iced stock slider. Width
             // 320px approximates Tailwind's `max-w-sm` (384px) within the
             // 450px preview area. Slider is iced's default — looks unstyled
             // until our own Slider widget lands.
             ID_CONTROLLED => column([
-                progress(self.controlled_value)
-                    .width(Length::Fixed(320.0))
-                    .into(),
+                progress(self.controlled_value).width(320).into(),
                 slider(0.0..=100.0, self.controlled_value, move |v| {
                     Message::Page(pi, page::Message::ValueChanged(ID_CONTROLLED, v))
                 })
@@ -170,16 +167,17 @@ impl page::Page for ProgressPage {
             // No Field/FieldLabel widget yet — approximated with a Row that
             // spreads `text::small` ends apart via a fill space.
             ID_LABEL => column([
-                row()
-                    .push(text::small("Upload progress").into())
-                    .push(iced_widget::space::horizontal().into())
-                    .push(text::small("66%").into())
-                    .spacing(0)
-                    .into(),
-                progress(66.0).width(Length::Fixed(320.0)).into(),
+                row![
+                    text::small("Upload progress"),
+                    iced_widget::space::horizontal(),
+                    text::small("66%"),
+                ]
+                .spacing(0)
+                .into(),
+                progress(66.0).width(320).into(),
             ])
             .spacing(8)
-            .width(Length::Fixed(320.0))
+            .width(320)
             .into(),
             _ => unreachable!(),
         }
