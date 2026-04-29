@@ -14,6 +14,8 @@ use icedxdy::{Component, Theme};
 use crate::example;
 use crate::page;
 
+// Intentional skips per CLAUDE.md: alert-colors (Custom Colors)
+// and alert-rtl (RTL).
 pub static META: page::Meta = page::Meta {
     title: "Alert",
     description: "Displays a callout for user attention.",

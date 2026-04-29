@@ -5,7 +5,9 @@ use iced::widget::Id;
 use icedxdy::widget::markdown;
 
 use icedxdy::Theme;
-use icedxdy::widget::{button, input, row, text};
+use icedxdy::theme;
+use icedxdy::theme::tweak;
+use icedxdy::widget::{button, column, input, row, text};
 
 use crate::Message;
 use crate::example;
@@ -40,10 +42,22 @@ pub static META: page::Meta = page::Meta {
             snippet: "examples/browser/snippets/input-disabled.md",
         },
         example::Meta {
-            id: "with-button",
+            id: "inline",
             title: "Inline",
             description: Some("Use an input with a button to create a search input."),
-            snippet: "examples/browser/snippets/input-with-button.md",
+            snippet: "examples/browser/snippets/input-inline.md",
+        },
+        example::Meta {
+            id: "invalid",
+            title: "Invalid",
+            description: Some("An input with validation errors, styled with a destructive border and focus ring."),
+            snippet: "examples/browser/snippets/input-invalid.md",
+        },
+        example::Meta {
+            id: "required",
+            title: "Required",
+            description: Some("An input with a required label, marked by a destructive asterisk suffix."),
+            snippet: "examples/browser/snippets/input-required.md",
         },
     ],
 };
@@ -53,7 +67,9 @@ pub struct InputPage {
     demo_value: String,
     basic_value: String,
     field_value: String,
-    with_button_value: String,
+    inline_value: String,
+    invalid_value: String,
+    required_value: String,
 }
 
 impl InputPage {
@@ -63,7 +79,9 @@ impl InputPage {
             demo_value: String::new(),
             basic_value: String::new(),
             field_value: String::new(),
-            with_button_value: String::new(),
+            inline_value: String::new(),
+            invalid_value: String::new(),
+            required_value: String::new(),
         })
     }
 }
@@ -108,7 +126,9 @@ impl page::Page for InputPage {
                     0 => self.demo_value = value,
                     1 => self.basic_value = value,
                     2 => self.field_value = value,
-                    3 => self.with_button_value = value,
+                    3 => self.inline_value = value,
+                    4 => self.invalid_value = value,
+                    5 => self.required_value = value,
                     _ => {}
                 }
                 Task::none()
@@ -125,9 +145,9 @@ impl page::Page for InputPage {
         let pi = self.state.page_index;
         match index {
             // Demo: field with label "API Key", placeholder "sk-...", description
-            0 => icedxdy::widget::column([
+            0 => column([
                 text::small("API Key").semibold().into(),
-                input::input("sk-...", &self.demo_value)
+                input("sk-...", &self.demo_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(0, v)))
                     .into(),
                 text::muted("Your API key is encrypted and stored securely.").into(),
@@ -136,13 +156,13 @@ impl page::Page for InputPage {
             .width(320)
             .into(),
             // Basic: simple input with placeholder
-            1 => input::input("Enter text", &self.basic_value)
+            1 => input("Enter text", &self.basic_value)
                 .on_input(move |v| Message::Page(pi, page::Message::InputChanged(1, v)))
                 .into(),
             // Field: input with label "Username" and description
-            2 => icedxdy::widget::column([
+            2 => column([
                 text::small("Username").semibold().into(),
-                input::input("Enter your username", &self.field_value)
+                input("Enter your username", &self.field_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(2, v)))
                     .into(),
                 text::muted("Choose a unique username for your account.").into(),
@@ -150,19 +170,19 @@ impl page::Page for InputPage {
             .spacing(8)
             .width(320)
             .into(),
-            // Disabled
-            3 => icedxdy::widget::column([
+            // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
+            3 => column([
                 text::small("Email").semibold().into(),
-                input::input("Email", "").disabled().into(),
+                input("Email", "").into(),
                 text::muted("This field is currently disabled.").into(),
             ])
             .spacing(8)
             .width(320)
             .into(),
             // Inline: input + button side by side
-            4 => icedxdy::widget::column([
+            4 => column([
                 row![
-                    input::input("Search...", &self.with_button_value)
+                    input("Search...", &self.inline_value)
                         .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v))),
                     button("Search").on_press(Message::Page(pi, page::Message::Noop)),
                 ]
@@ -170,6 +190,49 @@ impl page::Page for InputPage {
                 .into()
             ])
             .max_width(400.0)
+            .into(),
+            // Invalid: destructive border + destructive focus ring (aria-invalid).
+            // The nova classlist uses `aria-invalid:ring-destructive/20` (20% alpha)
+            // but our `tweak::Ring` resolves a `Token` to a full-alpha Color with
+            // no per-atom alpha override. Full-alpha destructive demonstrates the
+            // visual concept; matching the 0.2 alpha is a follow-up once an
+            // alpha-override mechanism lands. See report.
+            5 => column([
+                text::small("Invalid Input").semibold().into(),
+                input("Error", &self.invalid_value)
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(4, v)))
+                    .style(
+                        theme::text_input::Default
+                            + tweak::border::Color(tweak::Token::Destructive)
+                            + tweak::focus(
+                                tweak::border::Color(tweak::Token::Destructive)
+                                    + tweak::Ring {
+                                        color: tweak::Token::Destructive,
+                                        width: 3.0,
+                                        offset: 0.0,
+                                    },
+                            ),
+                    )
+                    .into(),
+                text::muted("This field contains validation errors.").into(),
+            ])
+            .spacing(8)
+            .width(320)
+            .into(),
+            // Required: label has a destructive `*` suffix; input itself is default style.
+            6 => column([
+                row![
+                    text::small("Required Field").semibold(),
+                    text::small(" *").style(theme::text::Destructive),
+                ]
+                .into(),
+                input("This field is required", &self.required_value)
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(5, v)))
+                    .into(),
+                text::muted("This field must be filled out.").into(),
+            ])
+            .spacing(8)
+            .width(320)
             .into(),
             _ => unreachable!(),
         }

@@ -219,3 +219,38 @@ pub fn xs<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .size(size::XS)
         .style(theme::text::Foreground)
 }
+
+/// A blockquote line. Shadcn classlist: `mt-6 border-l-2 pl-6 italic`.
+///
+/// Italic + the left-border + horizontal padding are paragraph-level
+/// decorations the Text widget alone can't express; the call site
+/// composes the visual border via a `row` + `Rule`. This helper sets
+/// the size + foreground color and lets the parent do layout.
+pub fn blockquote<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
+    Text::new(content)
+        .size(size::BASE)
+        .style(theme::text::Foreground)
+}
+
+/// An inline `code`-styled fragment. Shadcn classlist:
+/// `relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono
+/// text-sm font-semibold`.
+///
+/// Font + size + weight live on the returned `Text`; `bg-muted` +
+/// padding + radius are container-level — the call site wraps this
+/// in a small container.
+pub fn inline_code<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
+    Text::new(content)
+        .size(size::SM)
+        .semibold()
+        .style(theme::text::Foreground)
+}
+
+/// A single bulleted list item. Shadcn renders `<ul class="list-disc">`
+/// natively; we don't have a List widget, so callers compose a column
+/// of these for multi-item lists.
+pub fn list<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
+    Text::new(format!("\u{2022} {}", content.into_fragment()))
+        .size(size::BASE)
+        .style(theme::text::Foreground)
+}

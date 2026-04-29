@@ -22,6 +22,12 @@ use iced_core::Padding;
 use iced_widget::Renderer;
 
 /// A styled text input field matching shadcn/ui's Input component.
+///
+/// Disabled state follows iced's convention: an input with no `.on_input(...)`
+/// is disabled (you can't type into it). To toggle disabled at runtime, use
+/// `.on_input_maybe(Option<Fn>)` — though our wrapper exposes only the
+/// always-Some `.on_input(...)` builder, so the natural pattern is to omit
+/// the call entirely.
 pub struct Input<'a, Message> {
     placeholder: &'a str,
     value: &'a str,
@@ -30,7 +36,6 @@ pub struct Input<'a, Message> {
     on_submit: Option<Message>,
     on_focus: Option<Message>,
     on_blur: Option<Message>,
-    disabled: bool,
     style: Option<theme::text_input::StyleFn<'a, Theme>>,
 }
 
@@ -47,7 +52,6 @@ pub fn input<'a, Message: Clone + 'a>(
         on_submit: None,
         on_focus: None,
         on_blur: None,
-        disabled: false,
         style: None,
     }
 }
@@ -80,12 +84,6 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
     /// Set the message to emit when the input loses focus.
     pub fn on_blur(mut self, message: Message) -> Self {
         self.on_blur = Some(message);
-        self
-    }
-
-    /// Disable the input.
-    pub fn disabled(mut self) -> Self {
-        self.disabled = true;
         self
     }
 
@@ -153,19 +151,17 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
             ti = ti.class(bridge);
         }
 
-        if !input.disabled {
-            if let Some(on_input) = input.on_input {
-                ti = ti.on_input(on_input);
-            }
-            if let Some(on_submit) = input.on_submit {
-                ti = ti.on_submit(on_submit);
-            }
-            if let Some(on_focus) = input.on_focus {
-                ti = ti.on_focus(on_focus);
-            }
-            if let Some(on_blur) = input.on_blur {
-                ti = ti.on_blur(on_blur);
-            }
+        if let Some(on_input) = input.on_input {
+            ti = ti.on_input(on_input);
+        }
+        if let Some(on_submit) = input.on_submit {
+            ti = ti.on_submit(on_submit);
+        }
+        if let Some(on_focus) = input.on_focus {
+            ti = ti.on_focus(on_focus);
+        }
+        if let Some(on_blur) = input.on_blur {
+            ti = ti.on_blur(on_blur);
         }
 
         ti.into()

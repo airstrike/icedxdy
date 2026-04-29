@@ -1,6 +1,5 @@
 ```rust
-use iced::widget::slider;
-use icedxdy::widget::{column, progress};
+use icedxdy::widget::{column, progress, slider};
 
 column![
     progress(self.value).width(320),

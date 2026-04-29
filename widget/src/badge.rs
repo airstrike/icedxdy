@@ -6,12 +6,17 @@
 //! use icedxdy::widget::badge;
 //!
 //! badge("Badge")
-//! badge("Destructive").variant(badge::Variant::Destructive)
+//! badge::secondary("Secondary")
+//! badge::destructive("Destructive")
+//! badge::outline("Outline")
+//! badge::ghost("Ghost")
+//! badge::secondary("Open Link").on_press(Message::Open)
 //! ```
 
 use crate::component::{Component, IntoElement};
 use crate::Weight;
-use iced_widget::Renderer;
+use iced_core::mouse::Interaction;
+use iced_widget::{mouse_area, Renderer};
 use icedxdy_core::theme;
 use icedxdy_core::Theme;
 
@@ -30,6 +35,7 @@ pub enum Variant {
 pub struct Badge<'a, Message> {
     content: Component<'a, Message>,
     variant: Variant,
+    on_press: Option<Message>,
 }
 
 /// Create a [`Badge`] with default variant.
@@ -37,7 +43,46 @@ pub fn badge<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Bad
     Badge {
         content: content.into(),
         variant: Variant::Default,
+        on_press: None,
     }
+}
+
+/// Create a [`Badge`] with the default variant.
+///
+/// Equivalent to [`badge`]; provided for symmetry with the other variant
+/// helpers.
+pub fn default<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Badge<'a, Message> {
+    badge(content).variant(Variant::Default)
+}
+
+/// Create a [`Badge`] with the secondary variant.
+pub fn secondary<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Badge<'a, Message> {
+    badge(content).variant(Variant::Secondary)
+}
+
+/// Create a [`Badge`] with the outline variant.
+pub fn outline<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Badge<'a, Message> {
+    badge(content).variant(Variant::Outline)
+}
+
+/// Create a [`Badge`] with the destructive variant.
+pub fn destructive<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Badge<'a, Message> {
+    badge(content).variant(Variant::Destructive)
+}
+
+/// Create a [`Badge`] with the ghost variant.
+pub fn ghost<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Badge<'a, Message> {
+    badge(content).variant(Variant::Ghost)
 }
 
 impl<'a, Message: 'a> Badge<'a, Message> {
@@ -48,7 +93,18 @@ impl<'a, Message: 'a> Badge<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> From<Badge<'a, Message>>
+impl<'a, Message: Clone + 'a> Badge<'a, Message> {
+    /// Make the badge clickable, emitting `message` on left-button press.
+    ///
+    /// Mirrors shadcn's `<Badge asChild><a href=...>` pattern: the badge
+    /// keeps its visual styling and gains pointer-cursor + click semantics.
+    pub fn on_press(mut self, message: Message) -> Self {
+        self.on_press = Some(message);
+        self
+    }
+}
+
+impl<'a, Message: Clone + 'a> From<Badge<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(badge: Badge<'a, Message>) -> Self {
@@ -56,13 +112,13 @@ impl<'a, Message: 'a> From<Badge<'a, Message>>
     }
 }
 
-impl<'a, Message: 'a> From<Badge<'a, Message>> for Component<'a, Message> {
+impl<'a, Message: Clone + 'a> From<Badge<'a, Message>> for Component<'a, Message> {
     fn from(b: Badge<'a, Message>) -> Self {
         Component::new(b)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for Badge<'a, Message> {
+impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Badge<'a, Message> {
     fn size(&mut self, size: crate::Size) {
         self.content.size(size);
     }
@@ -85,10 +141,17 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Badge<'a, Message> {
         };
 
         // py-0.5 = 2px, px-2.5 = 10px
-        iced_widget::container(self.content.into_iced())
+        let pill = iced_widget::container(self.content.into_iced())
             .padding([2, 10])
             .center_y(iced_core::Length::Shrink)
-            .style(style_fn)
-            .into()
+            .style(style_fn);
+
+        match self.on_press {
+            Some(message) => mouse_area(pill)
+                .interaction(Interaction::Pointer)
+                .on_press(message)
+                .into(),
+            None => pill.into(),
+        }
     }
 }

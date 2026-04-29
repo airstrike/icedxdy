@@ -22,6 +22,7 @@ pub mod text;
 pub mod text_input;
 pub mod weight;
 
+pub use iced_widget::slider;
 pub use iced_widget::space;
 
 pub use alert::Alert;
@@ -43,9 +44,11 @@ pub fn button<'a, Message: Clone + 'a>(
     button::button(content)
 }
 
-/// Create a [`Text`] widget.
+/// Create a [`Text`] widget at small size — matches shadcn's default body
+/// text (`text-sm`, 14px). For other sizes use the explicit helpers
+/// (`text::h1`, `text::large`, `text::muted`, etc.).
 pub fn text<'a>(content: impl iced_core::text::IntoFragment<'a>) -> Text<'a> {
-    Text::new(content)
+    text::small(content)
 }
 
 /// Create a [`Column`] with the given children.

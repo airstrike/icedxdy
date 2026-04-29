@@ -2,10 +2,10 @@ use std::collections::BTreeSet;
 use std::time::Duration;
 
 use iced::Task;
-use iced::widget::{Id, slider};
+use iced::widget::Id;
 use icedxdy::Theme;
 use icedxdy::widget::markdown;
-use icedxdy::widget::{column, progress, row, space, text};
+use icedxdy::widget::{column, progress, row, slider, space, text};
 
 use crate::Message;
 use crate::example;

@@ -5,12 +5,11 @@ use icedxdy::widget::markdown;
 use iced::Task;
 
 use icedxdy::widget::{badge, row, spinner};
-use icedxdy::Theme;
+use icedxdy::{Component, Theme};
 
 use crate::example;
 use crate::icon;
 use crate::page;
-use crate::Message;
 
 pub static META: page::Meta = page::Meta {
     title: "Badge",
@@ -18,10 +17,16 @@ pub static META: page::Meta = page::Meta {
     examples: &[
         example::Meta { id: "demo", title: "Badge", description: None, snippet: "examples/browser/snippets/badge-demo.md" },
         example::Meta { id: "variants", title: "Variants", description: Some("Use the variant prop to change the variant of the badge."), snippet: "examples/browser/snippets/badge-variants.md" },
-        example::Meta { id: "with-icon", title: "With Icon", description: Some("You can render an icon inside the badge."), snippet: "examples/browser/snippets/badge-with-icon.md" },
-        example::Meta { id: "with-spinner", title: "With Spinner", description: Some("You can render a spinner inside the badge."), snippet: "examples/browser/snippets/badge-with-spinner.md" },
+        example::Meta { id: "icon", title: "With Icon", description: Some("You can render an icon inside the badge."), snippet: "examples/browser/snippets/badge-icon.md" },
+        example::Meta { id: "spinner", title: "With Spinner", description: Some("You can render a spinner inside the badge."), snippet: "examples/browser/snippets/badge-spinner.md" },
+        example::Meta { id: "link", title: "As Link", description: Some("Use the on_press builder to render a clickable badge."), snippet: "examples/browser/snippets/badge-link.md" },
     ],
 };
+
+#[derive(Debug, Clone)]
+pub enum Message {
+    Pressed,
+}
 
 pub struct BadgePage {
     state: page::State,
@@ -35,58 +40,49 @@ impl BadgePage {
     }
 }
 
-fn view(index: usize) -> iced::Element<'static, Message, Theme> {
+fn view(index: usize) -> Component<'static, Message> {
     match index {
         // Demo: all 5 variants in a row
-        0 => {
-            iced::widget::row![
-                badge("Badge"),
-                badge("Secondary").variant(badge::Variant::Secondary),
-                badge("Destructive").variant(badge::Variant::Destructive),
-                badge("Outline").variant(badge::Variant::Outline),
-                badge("Ghost").variant(badge::Variant::Ghost),
-            ]
-            .spacing(8)
-            .align_y(iced::Center)
-            .into()
-        }
+        0 => row![
+            badge("Badge"),
+            badge::secondary("Secondary"),
+            badge::destructive("Destructive"),
+            badge::outline("Outline"),
+            badge::ghost("Ghost"),
+        ]
+        .spacing(8)
+        .into(),
         // Variants
-        1 => {
-            iced::widget::row![
-                badge("Default"),
-                badge("Secondary").variant(badge::Variant::Secondary),
-                badge("Destructive").variant(badge::Variant::Destructive),
-                badge("Outline").variant(badge::Variant::Outline),
-                badge("Ghost").variant(badge::Variant::Ghost),
-            ]
-            .spacing(8)
-            .align_y(iced::Center)
-            .into()
-        }
+        1 => row![
+            badge("Default"),
+            badge::secondary("Secondary"),
+            badge::destructive("Destructive"),
+            badge::outline("Outline"),
+            badge::ghost("Ghost"),
+        ]
+        .spacing(8)
+        .into(),
         // With Icon
-        2 => {
-            iced::widget::row![
-                badge(row![icon::badge_check().size(14), "Verified"])
-                    .variant(badge::Variant::Secondary),
-                badge(row!["Bookmark", icon::bookmark().size(14)])
-                    .variant(badge::Variant::Outline),
-            ]
-            .spacing(8)
-            .align_y(iced::Center)
-            .into()
-        }
+        2 => row![
+            badge::secondary(row![icon::badge_check().size(14), "Verified"]),
+            badge::outline(row!["Bookmark", icon::bookmark().size(14)]),
+        ]
+        .spacing(8)
+        .into(),
         // With Spinner
-        3 => {
-            iced::widget::row![
-                badge(row![spinner().size(12.0), "Deleting"])
-                    .variant(badge::Variant::Destructive),
-                badge(row!["Generating", spinner().size(12.0)])
-                    .variant(badge::Variant::Secondary),
-            ]
-            .spacing(8)
-            .align_y(iced::Center)
-            .into()
-        }
+        3 => row![
+            badge::destructive(row![spinner().size(12.0), "Deleting"]),
+            badge::secondary(row!["Generating", spinner().size(12.0)]),
+        ]
+        .spacing(8)
+        .into(),
+        // Link (clickable badge)
+        4 => row![
+            badge(row!["Open Link", icon::arrow_up_right().size(14)])
+                .on_press(Message::Pressed),
+        ]
+        .spacing(8)
+        .into(),
         _ => unreachable!(),
     }
 }
@@ -117,11 +113,11 @@ impl page::Page for BadgePage {
         &self.state.code_expanded
     }
 
-    fn init(&self) -> Task<Message> {
+    fn init(&self) -> Task<crate::Message> {
         self.state.init()
     }
 
-    fn update(&mut self, event: page::Message) -> Task<Message> {
+    fn update(&mut self, event: page::Message) -> Task<crate::Message> {
         if let Some(task) = self.state.update(&event) {
             return task;
         }
@@ -132,7 +128,10 @@ impl page::Page for BadgePage {
         self.state.reset_volatile();
     }
 
-    fn preview(&self, index: usize) -> iced::Element<'_, Message, Theme> {
+    fn preview(&self, index: usize) -> iced::Element<'_, crate::Message, Theme> {
+        let pi = self.state.page_index;
         view(index)
+            .map(move |_| crate::Message::Page(pi, page::Message::Noop))
+            .into()
     }
 }

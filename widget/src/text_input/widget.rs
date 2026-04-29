@@ -1535,8 +1535,12 @@ where
             Event::Window(window::Event::RedrawRequested(now)) => {
                 let state = state::<Renderer>(tree);
 
-                // Drive the focus-ring fade in/out (150ms cubic-bezier).
-                let is_focused = state.is_focused.is_some();
+                // Drive the focused-border-color tween (150ms cubic-bezier).
+                // Disabled inputs don't react to focus visually — keep the
+                // animation pinned to `false` so the border stays at the
+                // resolved Disabled style.
+                let is_disabled = self.on_input.is_none();
+                let is_focused = state.is_focused.is_some() && !is_disabled;
                 if is_focused != state.focus_anim.value() {
                     state.focus_anim.go_mut(is_focused, *now);
                 }
