@@ -319,12 +319,24 @@ fn inline_code_card<'a>(code: &'a str) -> iced::Element<'a, Message, Theme> {
         .into()
 }
 
-/// Render a bulleted list with nova's `ml-6` (24px) left indent. Wraps
-/// the column of `text::list` items in a container with a 24px left
-/// padding, since `text::list` itself is flush-left.
+/// Render a bulleted list with nova's `ml-6` (24px) left indent.
+///
+/// Sidesteps `text::list` (which is currently rendering blank and inflating
+/// its layout height — see the `FOLLOWUP: Typography list rendering blank`
+/// task) by inlining the bullet into a `text::p` per item. Drop this when
+/// a real `List` widget lands.
 fn indented_list<'a>(items: &'a [&'a str]) -> iced::Element<'a, Message, Theme> {
-    let body = column(items.iter().map(|s| text::list(*s).into())).spacing(8);
-    container(body).padding(padding::left(24)).into()
+    let body = column(
+        items
+            .iter()
+            .map(|s| text::p(format!("\u{2022} {}", s)).into()),
+    )
+    .spacing(8);
+    container(body)
+        .padding(padding::left(24))
+        .height(Length::Shrink)
+        .width(Fill)
+        .into()
 }
 
 /// Render a small two-column table approximating nova's typography-table.
