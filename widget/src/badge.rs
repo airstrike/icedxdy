@@ -128,9 +128,9 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Badge<'a, Message> {
     }
 
     fn into_element(mut self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
-        // Push text-xs (12px) and semibold down to content
+        // Push text-xs (12px) and medium down to content (nova `font-medium`)
         self.content.size(crate::Size::Xs);
-        self.content.weight(Weight::Semibold);
+        self.content.weight(Weight::Medium);
 
         let style_fn: iced_widget::container::StyleFn<'_, Theme> = match self.variant {
             Variant::Default => theme::badge::Default.into(),
@@ -140,9 +140,16 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Badge<'a, Message> {
             Variant::Ghost => theme::badge::Ghost.into(),
         };
 
-        // py-0.5 = 2px, px-2.5 = 10px
+        // py-0.5 = 2px, px-2 = 8px (nova `px-2 py-0.5`).
+        //
+        // NOTE: nova additionally tightens the icon-side padding via
+        // `has-data-[icon=inline-end]:pr-1.5` and
+        // `has-data-[icon=inline-start]:pl-1.5` (6px instead of 8px). We
+        // don't yet have an icon-side hint on the builder so this remains
+        // a uniform 8px on both sides — minor visual drift when an icon
+        // sits flush on either edge. Acceptable for this audit pass.
         let pill = iced_widget::container(self.content.into_iced())
-            .padding([2, 10])
+            .padding([2, 8])
             .center_y(iced_core::Length::Shrink)
             .style(style_fn);
 

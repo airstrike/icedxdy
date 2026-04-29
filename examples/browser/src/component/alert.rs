@@ -1,6 +1,5 @@
 mod action;
 mod default;
-mod demo;
 mod destructive;
 
 use std::collections::BTreeSet;
@@ -9,9 +8,11 @@ use iced::widget::Id;
 use icedxdy::widget::markdown;
 use iced::Task;
 
+use icedxdy::widget::{alert, column, container};
 use icedxdy::{Component, Theme};
 
 use crate::example;
+use crate::icon;
 use crate::page;
 
 // Intentional skips per CLAUDE.md: alert-colors (Custom Colors)
@@ -20,7 +21,6 @@ pub static META: page::Meta = page::Meta {
     title: "Alert",
     description: "Displays a callout for user attention.",
     examples: &[
-        example::Meta { id: "demo", title: "Alert", description: None, snippet: "examples/browser/snippets/alert-demo.md" },
         example::Meta { id: "basic", title: "Basic", description: Some("A basic alert with an icon, title and description."), snippet: "examples/browser/snippets/alert-basic.md" },
         example::Meta { id: "destructive", title: "Destructive", description: Some("Use variant destructive to create a destructive alert."), snippet: "examples/browser/snippets/alert-destructive.md" },
         example::Meta { id: "action", title: "Action", description: Some("Use AlertAction to add a button or other action element to the alert."), snippet: "examples/browser/snippets/alert-action.md" },
@@ -46,10 +46,9 @@ impl AlertPage {
 
 fn view(index: usize) -> Component<'static, Message> {
     match index {
-        0 => demo::view(),
-        1 => default::view(),
-        2 => destructive::view(),
-        3 => action::view(),
+        0 => default::view(),
+        1 => destructive::view(),
+        2 => action::view(),
         _ => unreachable!(),
     }
 }
@@ -98,5 +97,30 @@ impl page::Page for AlertPage {
     fn preview(&self, index: usize) -> iced::Element<'_, crate::Message, Theme> {
         let pi = self.state.page_index;
         view(index).map(move |_| crate::Message::Page(pi, page::Message::Noop)).into()
+    }
+
+    fn hero(&self) -> Option<page::Hero<'_, crate::Message, Theme>> {
+        // Verbatim shadcn `alert-demo.tsx`: two stacked alerts capped at
+        // max-w-md (448px). page.rs handles the card chrome + centering.
+        let stack = column![
+            alert::alert()
+                .icon(icon::circle_check_big())
+                .title("Payment successful")
+                .description(
+                    "Your payment of $29.99 has been processed. A receipt has been sent to your email address.",
+                ),
+            alert::alert()
+                .icon(icon::info())
+                .title("New feature available")
+                .description(
+                    "We've added dark mode support. You can enable it in your account settings.",
+                ),
+        ]
+        .spacing(16)
+        .width(iced::Length::Fill);
+
+        let capped = container(stack).max_width(448);
+
+        Some(page::Hero::Card(capped.into()))
     }
 }

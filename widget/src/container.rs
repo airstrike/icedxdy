@@ -1,3 +1,6 @@
+pub mod widget;
+mod element;
+
 use crate::component::{Component, IntoElement};
 use crate::Size;
 use icedxdy_core::Theme;
@@ -15,6 +18,8 @@ pub struct Container<'a, Message> {
     width: Length,
     height: Length,
     max_width: f32,
+    min_width: f32,
+    min_height: f32,
     padding: Padding,
     center_x: Option<Length>,
     center_y: Option<Length>,
@@ -28,6 +33,8 @@ impl<'a, Message: 'a> Container<'a, Message> {
             width: Length::Shrink,
             height: Length::Shrink,
             max_width: f32::INFINITY,
+            min_width: 0.0,
+            min_height: 0.0,
             padding: Padding::ZERO,
             center_x: None,
             center_y: None,
@@ -47,6 +54,16 @@ impl<'a, Message: 'a> Container<'a, Message> {
 
     pub fn max_width(mut self, max_width: impl Into<Pixels>) -> Self {
         self.max_width = max_width.into().0;
+        self
+    }
+
+    pub fn min_width(mut self, min_width: impl Into<Pixels>) -> Self {
+        self.min_width = min_width.into().0;
+        self
+    }
+
+    pub fn min_height(mut self, min_height: impl Into<Pixels>) -> Self {
+        self.min_height = min_height.into().0;
         self
     }
 
@@ -105,10 +122,12 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Container<'a, Message> {
     }
 
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
-        let mut c = iced_widget::container(self.content.into_iced())
+        let mut c = widget::Container::new(self.content.into_iced())
             .width(self.width)
             .height(self.height)
             .max_width(self.max_width)
+            .min_width(self.min_width)
+            .min_height(self.min_height)
             .padding(self.padding);
 
         if let Some(w) = self.center_x {
@@ -118,7 +137,14 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Container<'a, Message> {
             c = c.center_y(h);
         }
         if let Some(style) = self.style {
-            c = c.style(style);
+            // Bridge: wrapper's `style` is `iced_widget::container::StyleFn`
+            // (so existing variants like `theme::container::CardPreview`
+            // flow naturally via their existing `From<X> for iced::StyleFn`
+            // impls). At construction we wrap that closure to land in the
+            // vendored widget's `Style` via the field-identical `From`.
+            let bridge: widget::StyleFn<'static, Theme> =
+                Box::new(move |t: &Theme| widget::Style::from((style)(t)));
+            c = c.class(bridge);
         }
 
         c.into()

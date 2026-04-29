@@ -1,19 +1,15 @@
 use icedxdy::Component;
-use icedxdy::widget::{button, row};
+use icedxdy::Size::*;
+use icedxdy::widget::button;
 use icedxdy::theme;
 
 use crate::icon;
 use super::Message;
 
 pub fn view<'a>() -> Component<'a, Message> {
-    row![
-        button![icon::git_branch(), "New Branch"]
-            .style(theme::button::Outline)
-            .on_press(Message::Pressed),
-        button!["Fork", icon::git_branch()]
-            .style(theme::button::Outline)
-            .on_press(Message::Pressed),
-    ]
-    .spacing(8)
-    .into()
+    button![icon::git_branch(), "New Branch"]
+        .size(Sm)
+        .style(theme::button::Outline)
+        .on_press(Message::Pressed)
+        .into()
 }

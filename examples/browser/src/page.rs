@@ -6,6 +6,7 @@ use iced::widget::{Id, center, column, container, sensor, stack};
 use iced::{Fill, Font, Pixels, Subscription, Task};
 
 use icedxdy::Size::*;
+use icedxdy::theme::container::{card, card_preview};
 use icedxdy::theme::tweak::Opaque;
 use icedxdy::widget::markdown;
 use icedxdy::widget::{button, rule, text};
@@ -14,8 +15,14 @@ use icedxdy::{Component, Theme, radius, theme};
 use crate::example;
 use crate::icon;
 
-/// Height for preview containers (shadcn uses h-72 = 288px)
+/// Height for preview containers (shadcn uses h-72 = 288px). Per-example
+/// cards stay at this fixed height; tall content (like the typography
+/// article) lives in the page `hero()` instead, which has no card chrome
+/// and grows naturally.
 const PREVIEW_HEIGHT: f32 = 288.0;
+
+/// Card preview padding — shadcn uses `p-6` = 24px.
+const PREVIEW_PADDING: f32 = 24.0;
 
 /// Collapsed code-snippet height when not expanded by the user (px).
 const COLLAPSED_CODE_HEIGHT: f32 = 160.0;
@@ -44,6 +51,15 @@ pub enum Message {
     Noop,
 }
 
+/// Page hero variant. `Card` wraps content in the same card chrome as a
+/// per-example card (border + bg-card + padding). `Inline` renders
+/// content as plain page-level prose with no chrome (used by typography
+/// for the inline article).
+pub enum Hero<'a, Message, Theme> {
+    Card(iced::Element<'a, Message, Theme>),
+    Inline(iced::Element<'a, Message, Theme>),
+}
+
 /// Object-safe trait for a component page.
 pub trait Page {
     fn meta(&self) -> &'static Meta;
@@ -57,6 +73,20 @@ pub trait Page {
     fn init(&self) -> Task<super::Message>;
     fn update(&mut self, message: Message) -> Task<super::Message>;
     fn preview(&self, index: usize) -> iced::Element<'_, super::Message, Theme>;
+
+    /// Optional page-level hero rendered between the title/description and
+    /// the "Examples" h2. Mirrors the shadcn docs page convention where
+    /// `<widget>-demo.tsx` sits at the top of the page.
+    ///
+    /// Return `Hero::Card(content)` for the typical case — content is
+    /// centered inside a per-example-style card (border + bg-card +
+    /// 24px padding). Return `Hero::Inline(content)` for typography,
+    /// which renders as plain page-level prose with no card chrome.
+    ///
+    /// Default: `None` (no hero — page jumps straight to the first card).
+    fn hero(&self) -> Option<Hero<'_, super::Message, Theme>> {
+        None
+    }
 
     /// Subscription for pages that drive animations or timers. Default:
     /// `Subscription::none()`. Only the currently active page's subscription
@@ -107,7 +137,7 @@ fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, 
         let preview = center(page.preview(i))
             .height(PREVIEW_HEIGHT)
             .width(Fill)
-            .padding(40)
+            .padding(PREVIEW_PADDING)
             .style(|t| theme::container::card_preview(t).into());
 
         let code: Option<iced::Element<'_, super::Message, Theme>> =
@@ -179,35 +209,51 @@ fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, 
             };
         }
 
+        let desc: Option<Component<'_, super::Message>> = ex
+            .description
+            .map(|d| text::p(d).style(theme::text::Muted).into());
+
+        let section: Component<'_, super::Message> = icedxdy::widget::column(
+            [Some(text::h3(ex.title).into()), desc, Some(card)]
+                .into_iter()
+                .flatten(),
+        )
+        .width(Fill)
+        .spacing(16)
+        .into();
+
+        let mut items = Vec::with_capacity(2);
         if i == 0 {
-            vec![sensored!(card).into()]
-        } else {
-            let desc: Option<Component<'_, super::Message>> = ex
-                .description
-                .map(|d| text::p(d).style(theme::text::Muted).into());
+            items.push(text::h2("Examples").into());
+        }
+        items.push(sensored!(section).into());
+        items
+    });
 
-            let section: Component<'_, super::Message> = icedxdy::widget::column(
-                [Some(text::h3(ex.title).into()), desc, Some(card)]
-                    .into_iter()
-                    .flatten(),
-            )
-            .width(Fill)
-            .spacing(16)
-            .into();
-
-            let mut items = Vec::with_capacity(2);
-            if i == 1 {
-                items.push(text::h2("Examples").into());
-            }
-            items.push(sensored!(section).into());
-            items
+    let hero: Option<Component<'_, super::Message>> = page.hero().map(|h| match h {
+        Hero::Inline(content) => Component::from(content),
+        Hero::Card(content) => {
+            // Same chrome as per-example cards: bg-card preview area
+            // (24px padding, min 288px tall) wrapped in a 1px border
+            // (the `card` style). Hero never has a code block under it.
+            let preview = container(center(content))
+                .height(PREVIEW_HEIGHT)
+                .width(Fill)
+                .padding(PREVIEW_PADDING)
+                .style(|t| card_preview(t).into());
+            container(preview)
+                .style(|t| card(t).into())
+                .padding(1)
+                .clip(true)
+                .width(Fill)
+                .into()
         }
     });
 
-    icedxdy::widget::column(items)
-        .spacing(48)
-        .width(Fill)
-        .into()
+    let body_items: Vec<iced::Element<'_, super::Message, Theme>> =
+        hero.into_iter().chain(items).map(|c| c.into_iced()).collect();
+
+    column(body_items).spacing(48).width(Fill).into()
 }
 
 fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
@@ -232,7 +278,6 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         .examples
         .iter()
         .enumerate()
-        .skip(1)
         .map(|(i, example)| {
             let alpha = alpha_for(i);
             let toc_style: StyleFn<'_, Theme> = Box::new(move |theme, status| {

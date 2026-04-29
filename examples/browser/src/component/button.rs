@@ -1,5 +1,4 @@
 mod default;
-mod demo;
 mod destructive;
 mod ghost;
 mod icon;
@@ -17,6 +16,7 @@ use iced::widget::Id;
 use icedxdy::widget::markdown;
 use iced::Task;
 
+use icedxdy::widget::{button, row};
 use icedxdy::{Component, Theme};
 
 use crate::example;
@@ -26,7 +26,6 @@ pub static META: page::Meta = page::Meta {
     title: "Button",
     description: "Displays a button or a component that looks like a button.",
     examples: &[
-        example::Meta { id: "demo", title: "Button", description: None, snippet: "examples/browser/snippets/button-demo.md" },
         example::Meta { id: "size", title: "Size", description: Some("Use the size prop to change the size of the button."), snippet: "examples/browser/snippets/button-size.md" },
         example::Meta { id: "default", title: "Default", description: None, snippet: "examples/browser/snippets/button-default.md" },
         example::Meta { id: "outline", title: "Outline", description: None, snippet: "examples/browser/snippets/button-outline.md" },
@@ -60,18 +59,17 @@ impl ButtonPage {
 
 fn view(index: usize) -> Component<'static, Message> {
     match index {
-        0 => demo::view(),
-        1 => size::view(),
-        2 => default::view(),
-        3 => outline::view(),
-        4 => secondary::view(),
-        5 => ghost::view(),
-        6 => destructive::view(),
-        7 => link::view(),
-        8 => icon::view(),
-        9 => with_icon::view(),
-        10 => rounded::view(),
-        11 => spinner::view(),
+        0 => size::view(),
+        1 => default::view(),
+        2 => outline::view(),
+        3 => secondary::view(),
+        4 => ghost::view(),
+        5 => destructive::view(),
+        6 => link::view(),
+        7 => icon::view(),
+        8 => with_icon::view(),
+        9 => rounded::view(),
+        10 => spinner::view(),
         _ => unreachable!(),
     }
 }
@@ -120,5 +118,20 @@ impl page::Page for ButtonPage {
     fn preview(&self, index: usize) -> iced::Element<'_, crate::Message, Theme> {
         let pi = self.state.page_index;
         view(index).map(move |_| crate::Message::Page(pi, page::Message::Noop)).into()
+    }
+
+    fn hero(&self) -> Option<page::Hero<'_, crate::Message, Theme>> {
+        // Verbatim from .nova/apps/v4/examples/radix/button-demo.tsx:
+        //   <Button variant="outline">Button</Button>
+        //   <Button variant="outline" size="icon"><ArrowUpIcon /></Button>
+        // page.rs handles the card chrome + centering.
+        let content: Component<'_, crate::Message> = row![
+            button::outline("Button"),
+            button::icon(crate::icon::arrow_up()),
+        ]
+        .spacing(8)
+        .into();
+
+        Some(page::Hero::Card(content.into()))
     }
 }

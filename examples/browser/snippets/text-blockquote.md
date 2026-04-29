@@ -2,7 +2,8 @@
 use icedxdy::widget::{rule, text};
 
 // blockquote's left border is paragraph-level decoration that the Text
-// widget doesn't model — compose row + Rule at the call site.
+// widget doesn't model — compose row + Rule at the call site. Italic +
+// foreground color come from `text::blockquote` itself.
 row![
     rule::vertical(2),
     text::blockquote(

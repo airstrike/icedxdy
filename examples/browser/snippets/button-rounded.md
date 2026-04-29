@@ -1,8 +1,5 @@
 ```rust
-use icedxdy::widget::{button, row};
+use icedxdy::widget::button;
 
-row![
-    button("Get Started").rounded(),
-    button::icon(icon::arrow_up()).rounded(),
-]
+button::icon(icon::arrow_up()).rounded()
 ```

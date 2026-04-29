@@ -1,11 +1,9 @@
 ```rust
+use icedxdy::Size::Sm;
 use icedxdy::theme::button::Outline;
-use icedxdy::widget::{button, row};
+use icedxdy::widget::button;
 
-row![
-    button![icon::git_branch(), "New Branch"]
-        .style(Outline),
-    button!["Fork", icon::git_branch()]
-        .style(Outline),
-]
+button![icon::git_branch(), "New Branch"]
+    .size(Sm)
+    .style(Outline)
 ```

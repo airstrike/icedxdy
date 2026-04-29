@@ -15,7 +15,6 @@ pub static META: page::Meta = page::Meta {
     title: "Badge",
     description: "Displays a badge or a component that looks like a badge.",
     examples: &[
-        example::Meta { id: "demo", title: "Badge", description: None, snippet: "examples/browser/snippets/badge-demo.md" },
         example::Meta { id: "variants", title: "Variants", description: Some("Use the variant prop to change the variant of the badge."), snippet: "examples/browser/snippets/badge-variants.md" },
         example::Meta { id: "icon", title: "With Icon", description: Some("You can render an icon inside the badge."), snippet: "examples/browser/snippets/badge-icon.md" },
         example::Meta { id: "spinner", title: "With Spinner", description: Some("You can render a spinner inside the badge."), snippet: "examples/browser/snippets/badge-spinner.md" },
@@ -42,18 +41,8 @@ impl BadgePage {
 
 fn view(index: usize) -> Component<'static, Message> {
     match index {
-        // Demo: all 5 variants in a row
-        0 => row![
-            badge("Badge"),
-            badge::secondary("Secondary"),
-            badge::destructive("Destructive"),
-            badge::outline("Outline"),
-            badge::ghost("Ghost"),
-        ]
-        .spacing(8)
-        .into(),
         // Variants
-        1 => row![
+        0 => row![
             badge("Default"),
             badge::secondary("Secondary"),
             badge::destructive("Destructive"),
@@ -63,22 +52,22 @@ fn view(index: usize) -> Component<'static, Message> {
         .spacing(8)
         .into(),
         // With Icon
-        2 => row![
-            badge::secondary(row![icon::badge_check().size(14), "Verified"]),
-            badge::outline(row!["Bookmark", icon::bookmark().size(14)]),
+        1 => row![
+            badge::secondary(row![icon::badge_check().size(12), "Verified"].spacing(4)),
+            badge::outline(row!["Bookmark", icon::bookmark().size(12)].spacing(4)),
         ]
         .spacing(8)
         .into(),
         // With Spinner
-        3 => row![
-            badge::destructive(row![spinner().size(12.0), "Deleting"]),
-            badge::secondary(row!["Generating", spinner().size(12.0)]),
+        2 => row![
+            badge::destructive(row![spinner().size(12.0), "Deleting"].spacing(4)),
+            badge::secondary(row!["Generating", spinner().size(12.0)].spacing(4)),
         ]
         .spacing(8)
         .into(),
         // Link (clickable badge)
-        4 => row![
-            badge(row!["Open Link", icon::arrow_up_right().size(14)])
+        3 => row![
+            badge(row!["Open Link", icon::arrow_up_right().size(12)].spacing(4))
                 .on_press(Message::Pressed),
         ]
         .spacing(8)
@@ -133,5 +122,19 @@ impl page::Page for BadgePage {
         view(index)
             .map(move |_| crate::Message::Page(pi, page::Message::Noop))
             .into()
+    }
+
+    fn hero(&self) -> Option<page::Hero<'_, crate::Message, Theme>> {
+        // Verbatim shadcn `badge-demo.tsx`: 4 variants in a row.
+        // page.rs wraps in card chrome + centers + adds padding.
+        let content = row![
+            badge("Badge"),
+            badge::secondary("Secondary"),
+            badge::destructive("Destructive"),
+            badge::outline("Outline"),
+        ]
+        .spacing(8);
+
+        Some(page::Hero::Card(content.into()))
     }
 }

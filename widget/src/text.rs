@@ -10,8 +10,11 @@
 //! text::p("Bold text").bold()
 //! ```
 
-use iced_core::font::Weight;
-use iced_core::text::{Fragment, IntoFragment};
+use crate::core::Length;
+use crate::core::Length::Fill;
+use crate::core::font;
+use crate::core::font::Weight;
+use crate::core::text::{Fragment, IntoFragment};
 use iced_widget::text::StyleFn;
 use iced_widget::Renderer;
 
@@ -38,8 +41,10 @@ pub struct Text<'a> {
     font: Option<iced_core::Font>,
     size: Option<f32>,
     weight: Option<Weight>,
+    italic: bool,
     letter_spacing: Option<iced_core::Em>,
     style: Option<StyleFn<'a, Theme>>,
+    width: Option<Length>,
 }
 
 impl<'a> Text<'a> {
@@ -49,8 +54,10 @@ impl<'a> Text<'a> {
             font: None,
             size: None,
             weight: None,
+            italic: false,
             letter_spacing: None,
             style: None,
+            width: None,
         }
     }
 
@@ -76,8 +83,24 @@ impl<'a> Text<'a> {
         self.weight(crate::Weight::Bold)
     }
 
+    /// Apply italic font style. Used by `blockquote` to match nova's
+    /// `border-l-2 pl-6 italic` cascade.
+    pub fn italic(mut self) -> Self {
+        self.italic = true;
+        self
+    }
+
     pub fn letter_spacing(mut self, spacing: impl Into<iced_core::Em>) -> Self {
         self.letter_spacing = Some(spacing.into());
+        self
+    }
+
+    /// Override the text widget's layout width. Paragraph helpers
+    /// (`p`, `lead`, `muted`, `blockquote`, `list`, `small`) default to
+    /// `Fill` so they wrap inside their parent; headings and
+    /// inline-styled fragments default to `Shrink`.
+    pub fn width(mut self, width: impl Into<Length>) -> Self {
+        self.width = Some(width.into());
         self
     }
 
@@ -99,7 +122,19 @@ impl<'a> Text<'a> {
             widget = widget.size(size);
         }
 
-        if let Some(font) = self.font {
+        // Italic is folded into the font (no Format-level override exists),
+        // so we layer it onto whichever font is set. Defaulting to
+        // `Font::DEFAULT` here would clobber `font::set_defaults`, but we
+        // only do it when the caller actually wants italic — the same
+        // tradeoff `bold()` would have if we modeled it that way.
+        let font = match (self.font, self.italic) {
+            (Some(f), true) => Some(f.style(font::Style::Italic)),
+            (Some(f), false) => Some(f),
+            (None, true) => Some(iced_core::Font::DEFAULT.style(font::Style::Italic)),
+            (None, false) => None,
+        };
+
+        if let Some(font) = font {
             widget = widget.font(font);
         }
 
@@ -113,6 +148,10 @@ impl<'a> Text<'a> {
 
         if let Some(style) = self.style {
             widget = widget.style(style);
+        }
+
+        if let Some(width) = self.width {
+            widget = widget.width(width);
         }
 
         widget
@@ -187,12 +226,14 @@ pub fn p<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::BASE)
         .style(theme::text::Foreground)
+        .width(Fill)
 }
 
 pub fn lead<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::XL)
         .style(theme::text::Muted)
+        .width(Fill)
 }
 
 pub fn large<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
@@ -206,12 +247,14 @@ pub fn small<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
         .style(theme::text::Foreground)
+        .width(Fill)
 }
 
 pub fn muted<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
         .style(theme::text::Muted)
+        .width(Fill)
 }
 
 pub fn xs<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
@@ -222,14 +265,17 @@ pub fn xs<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
 
 /// A blockquote line. Shadcn classlist: `mt-6 border-l-2 pl-6 italic`.
 ///
-/// Italic + the left-border + horizontal padding are paragraph-level
-/// decorations the Text widget alone can't express; the call site
-/// composes the visual border via a `row` + `Rule`. This helper sets
-/// the size + foreground color and lets the parent do layout.
+/// Italic is applied via `font::Style::Italic`; the left-border + horizontal
+/// padding are paragraph-level decorations the Text widget alone can't
+/// express, so the call site composes the visual border via a `row` +
+/// `Rule`. This helper sets size, italic, foreground color, and a
+/// fill width so the quote wraps inside its parent.
 pub fn blockquote<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::BASE)
+        .italic()
         .style(theme::text::Foreground)
+        .width(Fill)
 }
 
 /// An inline `code`-styled fragment. Shadcn classlist:
@@ -253,4 +299,5 @@ pub fn list<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(format!("\u{2022} {}", content.into_fragment()))
         .size(size::BASE)
         .style(theme::text::Foreground)
+        .width(Fill)
 }

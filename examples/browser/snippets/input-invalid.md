@@ -4,7 +4,7 @@ use icedxdy::theme::tweak;
 use icedxdy::widget::{input, text};
 
 column![
-    text::small("Invalid Input").semibold(),
+    text::small("Invalid Input").medium(),
     input("Error", &self.value)
         .on_input(Message::Changed)
         .style(

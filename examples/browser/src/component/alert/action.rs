@@ -1,3 +1,4 @@
+use iced::widget::container;
 use icedxdy::Component;
 use icedxdy::Size;
 use icedxdy::widget::{alert, button};
@@ -5,9 +6,13 @@ use icedxdy::widget::{alert, button};
 use super::Message;
 
 pub fn view<'a>() -> Component<'a, Message> {
-    alert::alert()
-        .title("Dark mode is now available")
-        .description("Enable it under your profile settings to get started.")
-        .action(button::button("Enable").size(Size::Xs).on_press(Message::Pressed))
-        .into()
+    // shadcn `alert-action.tsx` caps the alert at `max-w-md` (448px).
+    container(
+        alert::alert()
+            .title("Dark mode is now available")
+            .description("Enable it under your profile settings to get started.")
+            .action(button::button("Enable").size(Size::Xs).on_press(Message::Pressed)),
+    )
+    .max_width(448)
+    .into()
 }

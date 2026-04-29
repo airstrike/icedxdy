@@ -1,3 +1,4 @@
+use iced::widget::container;
 use icedxdy::Component;
 use icedxdy::widget::alert;
 
@@ -5,10 +6,14 @@ use crate::icon;
 use super::Message;
 
 pub fn view<'a>() -> Component<'a, Message> {
-    alert::alert()
-        .icon(icon::circle_alert())
-        .title("Payment failed")
-        .description("Your payment could not be processed. Please check your payment method and try again.")
-        .destructive()
-        .into()
+    // shadcn `alert-destructive.tsx` caps the alert at `max-w-md` (448px).
+    container(
+        alert::alert()
+            .icon(icon::circle_alert())
+            .title("Payment failed")
+            .description("Your payment could not be processed. Please check your payment method and try again.")
+            .destructive(),
+    )
+    .max_width(448)
+    .into()
 }

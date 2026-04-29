@@ -18,12 +18,6 @@ pub static META: page::Meta = page::Meta {
     description: "A text input component for forms and user data entry with built-in styling and accessibility features.",
     examples: &[
         example::Meta {
-            id: "demo",
-            title: "Input",
-            description: None,
-            snippet: "examples/browser/snippets/input-demo.md",
-        },
-        example::Meta {
             id: "basic",
             title: "Basic",
             description: Some("A simple input with a placeholder."),
@@ -42,16 +36,16 @@ pub static META: page::Meta = page::Meta {
             snippet: "examples/browser/snippets/input-disabled.md",
         },
         example::Meta {
-            id: "inline",
-            title: "Inline",
-            description: Some("Use an input with a button to create a search input."),
-            snippet: "examples/browser/snippets/input-inline.md",
-        },
-        example::Meta {
             id: "invalid",
             title: "Invalid",
             description: Some("An input with validation errors, styled with a destructive border and focus ring."),
             snippet: "examples/browser/snippets/input-invalid.md",
+        },
+        example::Meta {
+            id: "inline",
+            title: "Inline",
+            description: Some("Use an input with a button to create a search input."),
+            snippet: "examples/browser/snippets/input-inline.md",
         },
         example::Meta {
             id: "required",
@@ -141,55 +135,48 @@ impl page::Page for InputPage {
         self.state.reset_volatile();
     }
 
+    fn hero(&self) -> Option<page::Hero<'_, Message, Theme>> {
+        // Verbatim shadcn `input-demo.tsx`: Field+Label+Input+Description for
+        // an "API Key" form. Label uses `font-medium` (not semibold) per
+        // FieldLabel in `.nova/.../field.tsx:109`. page.rs adds card chrome.
+        let pi = self.state.page_index;
+        let content = column![
+            text::small("API Key").medium(),
+            input("sk-...", &self.demo_value)
+                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(0, v))),
+            text::muted("Your API key is encrypted and stored securely."),
+        ]
+        .spacing(8)
+        .width(320);
+
+        Some(page::Hero::Card(content.into()))
+    }
+
     fn preview(&self, index: usize) -> iced::Element<'_, Message, Theme> {
         let pi = self.state.page_index;
         match index {
-            // Demo: field with label "API Key", placeholder "sk-...", description
-            0 => column([
-                text::small("API Key").semibold().into(),
-                input("sk-...", &self.demo_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(0, v)))
-                    .into(),
-                text::muted("Your API key is encrypted and stored securely.").into(),
-            ])
-            .spacing(8)
-            .width(320)
-            .into(),
             // Basic: simple input with placeholder
-            1 => input("Enter text", &self.basic_value)
+            0 => input("Enter text", &self.basic_value)
                 .on_input(move |v| Message::Page(pi, page::Message::InputChanged(1, v)))
                 .into(),
             // Field: input with label "Username" and description
-            2 => column([
-                text::small("Username").semibold().into(),
+            1 => column![
+                text::small("Username").medium(),
                 input("Enter your username", &self.field_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(2, v)))
-                    .into(),
-                text::muted("Choose a unique username for your account.").into(),
-            ])
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(2, v))),
+                text::muted("Choose a unique username for your account."),
+            ]
             .spacing(8)
             .width(320)
             .into(),
             // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
-            3 => column([
-                text::small("Email").semibold().into(),
-                input("Email", "").into(),
-                text::muted("This field is currently disabled.").into(),
-            ])
+            2 => column![
+                text::small("Email").medium(),
+                input("Email", ""),
+                text::muted("This field is currently disabled."),
+            ]
             .spacing(8)
             .width(320)
-            .into(),
-            // Inline: input + button side by side
-            4 => column([
-                row![
-                    input("Search...", &self.inline_value)
-                        .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v))),
-                    button("Search").on_press(Message::Page(pi, page::Message::Noop)),
-                ]
-                .spacing(8)
-                .into()
-            ])
-            .max_width(400.0)
             .into(),
             // Invalid: destructive border + destructive focus ring (aria-invalid).
             // The nova classlist uses `aria-invalid:ring-destructive/20` (20% alpha)
@@ -197,8 +184,8 @@ impl page::Page for InputPage {
             // no per-atom alpha override. Full-alpha destructive demonstrates the
             // visual concept; matching the 0.2 alpha is a follow-up once an
             // alpha-override mechanism lands. See report.
-            5 => column([
-                text::small("Invalid Input").semibold().into(),
+            3 => column![
+                text::small("Invalid Input").medium(),
                 input("Error", &self.invalid_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(4, v)))
                     .style(
@@ -212,25 +199,37 @@ impl page::Page for InputPage {
                                         offset: 0.0,
                                     },
                             ),
-                    )
-                    .into(),
-                text::muted("This field contains validation errors.").into(),
-            ])
+                    ),
+                text::muted("This field contains validation errors."),
+            ]
             .spacing(8)
             .width(320)
             .into(),
-            // Required: label has a destructive `*` suffix; input itself is default style.
-            6 => column([
+            // Inline: input + button side by side
+            4 => column![
                 row![
-                    text::small("Required Field").semibold(),
-                    text::small(" *").style(theme::text::Destructive),
+                    input("Search...", &self.inline_value)
+                        .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v))),
+                    button("Search").on_press(Message::Page(pi, page::Message::Noop)),
                 ]
-                .into(),
+                .spacing(8)
+            ]
+            .max_width(400.0)
+            .into(),
+            // Required: label + destructive `*` separated by row spacing so the
+            // gap is layout-driven (not a leading-space text fragment that iced
+            // text shaping can collapse). nova uses flex `gap-2` between the
+            // FieldLabel and the destructive span.
+            5 => column![
+                row![
+                    text::small("Required Field").medium(),
+                    text::small("*").style(theme::text::Destructive),
+                ]
+                .spacing(2),
                 input("This field is required", &self.required_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(5, v)))
-                    .into(),
-                text::muted("This field must be filled out.").into(),
-            ])
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(5, v))),
+                text::muted("This field must be filled out."),
+            ]
             .spacing(8)
             .width(320)
             .into(),
