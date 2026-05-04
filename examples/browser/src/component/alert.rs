@@ -24,7 +24,6 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "",
     },
-    page::Block::Md("examples/browser/snippets/alert-api-reference.md"),
     page::Block::Md("examples/browser/snippets/alert-usage.md"),
     page::Block::Group {
         title: "Examples",
@@ -51,6 +50,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/alert-api-reference.md"),
 ];
 
 #[derive(Debug, Clone)]
