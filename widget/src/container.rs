@@ -26,10 +26,8 @@ pub struct Container<'a, Message> {
     min_width: f32,
     min_height: f32,
     padding: Padding,
-    center_x: Option<Length>,
-    center_y: Option<Length>,
-    align_x: Option<Horizontal>,
-    align_y: Option<Vertical>,
+    align_x: Horizontal,
+    align_y: Vertical,
     clip: bool,
     style: Option<StyleFn<'static, Theme>>,
 }
@@ -46,10 +44,8 @@ impl<'a, Message: 'a> Container<'a, Message> {
             min_width: 0.0,
             min_height: 0.0,
             padding: Padding::ZERO,
-            center_x: None,
-            center_y: None,
-            align_x: None,
-            align_y: None,
+            align_x: Horizontal::Left,
+            align_y: Vertical::Top,
             clip: false,
             style: None,
         }
@@ -97,25 +93,25 @@ impl<'a, Message: 'a> Container<'a, Message> {
         self
     }
 
-    pub fn center_x(mut self, width: impl Into<Length>) -> Self {
-        self.center_x = Some(width.into());
-        self
+    /// Sets the width of the [`Container`] and centers its contents horizontally.
+    pub fn center_x(self, width: impl Into<Length>) -> Self {
+        self.width(width).align_x(Horizontal::Center)
     }
 
-    pub fn center_y(mut self, height: impl Into<Length>) -> Self {
-        self.center_y = Some(height.into());
-        self
+    /// Sets the height of the [`Container`] and centers its contents vertically.
+    pub fn center_y(self, height: impl Into<Length>) -> Self {
+        self.height(height).align_y(Vertical::Center)
     }
 
     /// Sets the content alignment for the horizontal axis.
     pub fn align_x(mut self, alignment: impl Into<Horizontal>) -> Self {
-        self.align_x = Some(alignment.into());
+        self.align_x = alignment.into();
         self
     }
 
     /// Sets the content alignment for the vertical axis.
     pub fn align_y(mut self, alignment: impl Into<Vertical>) -> Self {
-        self.align_y = Some(alignment.into());
+        self.align_y = alignment.into();
         self
     }
 
@@ -195,22 +191,12 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Container<'a, Message> {
             .min_width(self.min_width)
             .min_height(self.min_height)
             .padding(self.padding)
+            .align_x(self.align_x)
+            .align_y(self.align_y)
             .clip(self.clip);
 
         if let Some(id) = self.id {
             c = c.id(id);
-        }
-        if let Some(w) = self.center_x {
-            c = c.center_x(w);
-        }
-        if let Some(h) = self.center_y {
-            c = c.center_y(h);
-        }
-        if let Some(a) = self.align_x {
-            c = c.align_x(a);
-        }
-        if let Some(a) = self.align_y {
-            c = c.align_y(a);
         }
         if let Some(style) = self.style {
             // Bridge: wrapper's `style` is `iced_widget::container::StyleFn`
