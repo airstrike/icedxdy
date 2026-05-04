@@ -71,11 +71,11 @@ impl App {
         let default_font = "Geist".to_string();
 
         let dark_mode = theme::is_dark_mode();
-        let snippet_viewer = SnippetViewer::with_map(if dark_mode {
-            gh_dark.clone()
-        } else {
-            gh_light.clone()
-        });
+        let active_theme = if dark_mode { Theme::dark() } else { Theme::light() };
+        let snippet_viewer = SnippetViewer::new(
+            if dark_mode { gh_dark.clone() } else { gh_light.clone() },
+            active_theme.palette(),
+        );
 
         (
             Self {
@@ -120,7 +120,12 @@ impl App {
                 } else {
                     self.gh_light.clone()
                 };
-                self.snippet_viewer = SnippetViewer::with_map(map);
+                let active_theme = if self.dark_mode {
+                    Theme::dark()
+                } else {
+                    Theme::light()
+                };
+                self.snippet_viewer = SnippetViewer::new(map, active_theme.palette());
                 Task::none()
             }
             Message::SelectPage(page) => {

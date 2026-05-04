@@ -3,17 +3,18 @@ use std::path::PathBuf;
 
 use tokio::fs::read_to_string;
 
-use iced::Alignment;
+use iced::border;
 use iced::widget::{Id, center, column, container, sensor, stack};
-use iced::{Fill, Font, Pixels, Subscription, Task};
+use iced::{Alignment, Background, Fill, Font, Pixels, Subscription, Task};
 
 use icedxdy::Size::*;
 use icedxdy::theme::container::{card, card_preview, code_block, code_fade_overlay};
 use icedxdy::theme::tweak::Opaque;
 use icedxdy::widget::markdown;
+use icedxdy::widget::markdown::widget::Highlight;
 use icedxdy::widget::container::Container;
 use icedxdy::widget::{button, rule, text};
-use icedxdy::{Component, Theme, radius, theme};
+use icedxdy::{Component, Palette, Theme, radius, theme};
 
 use crate::icon;
 
@@ -533,21 +534,52 @@ fn snippet<'a>(
     items: &'a Vec<markdown::Item>,
     viewer: &'a SnippetViewer,
 ) -> Component<'a, super::Message> {
-    let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
-    style.code_block_font = Font::MONOSPACE;
     let settings = markdown::Settings {
         code_size: Pixels(13.0),
-        ..markdown::Settings::with_style(style)
+        ..markdown::Settings::with_style(viewer.style)
     };
     markdown::view_with(items, settings, viewer)
         .map(move |url| super::Message::Page(page_index, Message::LinkClicked(url)))
         .into()
 }
 
+/// Build a [`markdown::Style`] whose inline-code chip pulls from the
+/// active [`Palette`]. Mirrors shadcn's `--color-code` / `--color-code-foreground`
+/// pair: light-mode chip is a near-white bg with body fg; dark-mode chip
+/// is a dark gray bg with a desaturated fg. Both flavors hand off via the
+/// same field and stay in sync with the page's `code_block` container,
+/// since [`Palette::code`] is the same `SemanticColor` that drives that
+/// container's bg/fg.
+fn inline_style_from_palette(palette: &Palette) -> markdown::Style {
+    markdown::Style {
+        font: Font::default(),
+        // shadcn's inline `<code>` uses the same code surface as code blocks,
+        // so the chip background / text color come directly from `palette.code`.
+        inline_code_color: palette.code.foreground.into(),
+        inline_code_highlight: Highlight {
+            background: Background::Color(palette.code.base.into()),
+            border: border::rounded(4),
+        },
+        // shadcn squeezes inline code with `px-[0.3rem] py-[0.2rem]`. iced
+        // expresses chip padding in pixels of font-size; 1px on the sides
+        // stays compact without overlapping adjacent words.
+        inline_code_padding: iced::Padding::default().left(2).right(2),
+        inline_code_font: Font::MONOSPACE,
+        code_block_font: Font::MONOSPACE,
+        // Snippet bodies rarely contain links, but when they do the
+        // primary base reads as a "clickable" accent in either theme
+        // (dark text on light, light text on dark).
+        link_color: palette.primary.base.into(),
+    }
+}
+
 /// Markdown viewer for code-snippet rendering. Holds an owned
 /// [`markdown::highlighter::Map`] derived from the current app theme
-/// (or supplied directly by the app) — the active palette gets injected
-/// at view time without re-parsing the markdown items.
+/// (or supplied directly by the app) plus a [`markdown::Style`] whose
+/// inline-code chip is tinted to the active [`Palette`]. Both fields
+/// are baked at construction time and the App rebuilds the viewer
+/// whenever the theme toggles, so view-time rendering stays a pure
+/// read.
 ///
 /// Overrides `code_block` to skip iced's default container chrome —
 /// bg + radius + padding come from the page-level container, the
@@ -555,13 +587,25 @@ fn snippet<'a>(
 /// horizontal scrollbar.
 pub struct SnippetViewer {
     map: markdown::highlighter::Map,
+    /// Palette-derived markdown style. Inline-code fields (color +
+    /// highlight bg) are driven by `palette.code`; everything else
+    /// is the icedxdy default. Private because only [`snippet`] in
+    /// this module reads it; the App swaps the whole viewer on theme
+    /// toggle rather than mutating in place.
+    style: markdown::Style,
 }
 
 impl SnippetViewer {
-    /// Build a viewer with an explicit code-theme map — typically a
-    /// VS Code theme parsed by `Map::from_vscode_theme`.
-    pub fn with_map(map: markdown::highlighter::Map) -> Self {
-        Self { map }
+    /// Build a viewer with an explicit code-theme map (typically a
+    /// VS Code theme parsed by `Map::from_vscode_theme`) and a
+    /// palette-derived [`markdown::Style`]. App-level construction site
+    /// recomputes both whenever the user toggles light/dark, mirroring
+    /// the existing `Map` rebuild path.
+    pub fn new(map: markdown::highlighter::Map, palette: &Palette) -> Self {
+        Self {
+            map,
+            style: inline_style_from_palette(palette),
+        }
     }
 }
 
