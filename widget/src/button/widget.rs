@@ -104,6 +104,11 @@ where
     width: Length,
     height: Length,
     padding: Padding,
+    /// Transparent margin between the button's bounds (used for hit testing
+    /// + hover detection) and the painted bg/border. Lets a parent column
+    /// keep `spacing(0)` so adjacent buttons share boundaries (continuous
+    /// hover) while the visible fills sit apart by `inset.top + inset.bottom`.
+    inset: Padding,
     clip: bool,
     translate: bool,
     interaction: Option<mouse::Interaction>,
@@ -146,6 +151,7 @@ where
             width: size.width.fluid(),
             height: size.height.fluid(),
             padding: DEFAULT_PADDING,
+            inset: Padding::ZERO,
             clip: false,
             translate: true,
             interaction: None,
@@ -169,6 +175,16 @@ where
     /// Sets the [`Padding`] of the [`Button`].
     pub fn padding<P: Into<Padding>>(mut self, padding: P) -> Self {
         self.padding = padding.into();
+        self
+    }
+
+    /// Sets a transparent inset between the button's bounds (hit-test +
+    /// hover region) and the painted bg/border. Lets a parent column keep
+    /// `spacing(0)` so adjacent buttons share boundaries (continuous
+    /// hover, no dead-zone gap) while the visible fills sit apart by
+    /// `inset.top + inset.bottom` vertically (likewise horizontally).
+    pub fn inset<P: Into<Padding>>(mut self, inset: P) -> Self {
+        self.inset = inset.into();
         self
     }
 
@@ -345,15 +361,15 @@ where
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
-        // When translate is on: 1px top + 1px bottom for press-down effect
-        let padding = if self.translate {
-            Padding {
-                top: self.padding.top + 1.0,
-                bottom: self.padding.bottom + 1.0,
-                ..self.padding
-            }
-        } else {
-            self.padding
+        // When translate is on: 1px top + 1px bottom for press-down effect.
+        // `inset` adds transparent margin around the painted bg/border —
+        // bounds grow to include it so hover/hit-test stay continuous.
+        let translate = if self.translate { 1.0 } else { 0.0 };
+        let padding = Padding {
+            top: self.padding.top + translate + self.inset.top,
+            bottom: self.padding.bottom + translate + self.inset.bottom,
+            left: self.padding.left + self.inset.left,
+            right: self.padding.right + self.inset.right,
         };
         layout::padded(
             limits,
@@ -586,15 +602,19 @@ where
         // At rest: draw translated by (0, 0). On press: translated by (0, 1).
         let press_y = if self.translate && status == Status::Pressed { 1.0 } else { 0.0 };
 
-        // Visual button bounds (inside the 1px top/bottom margin when translate is on)
-        let visual_bounds = if self.translate {
-            Rectangle {
-                y: bounds.y + 1.0,
-                height: bounds.height - 2.0,
-                ..bounds
-            }
-        } else {
-            bounds
+        // Visual button bounds: shrunk inward from `bounds` by the
+        // translate-margin (1px top/bottom when on) AND `inset`. The
+        // outer `bounds` stays as the hit-test region so adjacent
+        // buttons in a `spacing(0)` column hover continuously.
+        let translate = if self.translate { 1.0 } else { 0.0 };
+        let visual_bounds = Rectangle {
+            x: bounds.x + self.inset.left,
+            y: bounds.y + translate + self.inset.top,
+            width: bounds.width - self.inset.left - self.inset.right,
+            height: bounds.height
+                - 2.0 * translate
+                - self.inset.top
+                - self.inset.bottom,
         };
 
         // Translate everything down by press_y

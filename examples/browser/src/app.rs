@@ -260,11 +260,11 @@ impl App {
                 .size(13.0)
                 .weight(weight)
                 .style(style)
+                .inset([1, 0])
                 .interaction(Interaction::Pointer)
                 .on_press(Message::SelectPage(i))
                 .into()
-        }))
-        .spacing(2);
+        }));
 
         let sidebar = scrollable(
             column![sidebar_header, sidebar_items]

@@ -1,5 +1,6 @@
 use iced_core::Font;
 use iced_core::Length;
+use iced_core::Padding;
 use iced_core::text::Span;
 use iced_widget::text::Rich;
 
@@ -46,6 +47,7 @@ where
     square: bool,
     rounded: bool,
     translate: bool,
+    inset: Padding,
     interaction: Option<iced_core::mouse::Interaction>,
     width: Option<Length>,
     style: Theme::Class<'a>,
@@ -63,6 +65,7 @@ pub fn button<'a, Message: Clone + 'a>(
         square: false,
         rounded: false,
         translate: true,
+        inset: Padding::ZERO,
         interaction: None,
         width: None,
         style: Box::new(|t, s| theme::button::default(t, s).into()),
@@ -101,6 +104,15 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// Set the mouse interaction (cursor) when hovering.
     pub fn interaction(mut self, interaction: iced_core::mouse::Interaction) -> Self {
         self.interaction = Some(interaction);
+        self
+    }
+
+    /// Set a transparent inset between the button's bounds (hit-test +
+    /// hover region) and the painted bg/border. Used by sidebar items so
+    /// adjacent buttons in a `spacing(0)` column hover continuously while
+    /// the visible fills sit apart by `inset.top + inset.bottom`.
+    pub fn inset(mut self, inset: impl Into<Padding>) -> Self {
+        self.inset = inset.into();
         self
     }
 
@@ -156,7 +168,7 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
                 .padding(size.padding())
         };
 
-        iced_btn = iced_btn.translate(btn.translate);
+        iced_btn = iced_btn.translate(btn.translate).inset(btn.inset);
         if let Some(interaction) = btn.interaction {
             iced_btn = iced_btn.interaction(interaction);
         }

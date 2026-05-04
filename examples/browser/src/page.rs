@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use tokio::fs::read_to_string;
 
 use iced::border;
+use iced::mouse::Interaction;
 use iced::widget::{Id, column, sensor, stack};
 use iced::{Alignment, Background, Fill, Font, Pixels, Subscription, Task};
 
@@ -516,6 +517,8 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
             .size(Sm)
             .translate(false)
             .style(toc_style)
+            .inset([1, 0])
+            .interaction(Interaction::Pointer)
             .on_press(super::Message::Page(pi, Message::ScrollTo(i)))
             .into();
         let row: iced::Element<'_, super::Message, Theme> =
@@ -526,7 +529,7 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let header = Container::new(text::muted("On This Page")).padding([0, 8]);
 
     column![header]
-        .push(column(nav_items).spacing(2))
+        .push(column(nav_items))
         .spacing(16)
         .padding([24, 8])
         .width(200)
