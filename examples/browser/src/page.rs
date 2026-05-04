@@ -303,7 +303,7 @@ fn walk_blocks<'a>(
         // covers the entire block (heading + description + card or md body).
         // For Block::Group, the sensor wraps ONLY the heading — children
         // get their own subsequent flat indices and their own sensors.
-        let sensored = sensor(Container::new(body).id(block_id))
+        let sensored = sensor(Container::new(body).id(block_id).width(Fill))
             .on_show(move |_| super::Message::Page(pi, Message::BlockShown(i)))
             .on_hide(super::Message::Page(pi, Message::BlockHidden(i)))
             .anticipate(50);
