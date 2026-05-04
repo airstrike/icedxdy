@@ -21,7 +21,7 @@
 
 use iced_core::alignment::{Horizontal, Vertical};
 use iced_core::text::IntoFragment;
-use iced_core::{Length::*, Padding};
+use iced_core::{Length::*, Padding, Pixels};
 use iced_widget::Renderer;
 use icedxdy_core::{Theme, theme};
 
@@ -44,6 +44,7 @@ pub struct Alert<'a, Message> {
     description: Option<text::Text<'a>>,
     action: Option<Component<'a, Message>>,
     variant: Variant,
+    max_width: f32,
 }
 
 /// Create an [`Alert`] with default variant.
@@ -54,6 +55,7 @@ pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
         description: None,
         action: None,
         variant: Variant::Default,
+        max_width: f32::INFINITY,
     }
 }
 
@@ -105,6 +107,14 @@ impl<'a, Message: 'a> Alert<'a, Message> {
     pub fn destructive(self) -> Self {
         self.variant(Variant::Destructive)
     }
+
+    /// Cap the alert's outer width. Defaults to no cap. Mirrors shadcn's
+    /// `max-w-md` (448px) usage in the docs examples — most call sites
+    /// pass `.max_width(448)` to keep alerts comfortably narrow.
+    pub fn max_width(mut self, max_width: impl Into<Pixels>) -> Self {
+        self.max_width = max_width.into().0;
+        self
+    }
 }
 
 impl<'a, Message: 'a> From<Alert<'a, Message>>
@@ -123,7 +133,7 @@ impl<'a, Message: 'a> From<Alert<'a, Message>> for Component<'a, Message> {
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
-        let Alert { icon, title, description, action, variant } = *self;
+        let Alert { icon, title, description, action, variant, max_width } = *self;
 
         let description = description.map(|t| match variant {
             Variant::Default => t.style(theme::text::Muted),
@@ -168,7 +178,7 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
             .width(Fill)
             .style(container_style);
 
-        match action {
+        let outer: iced_core::Element<'a, Message, Theme, Renderer> = match action {
             None => card.into(),
             Some(action) => {
                 let overlay = iced_widget::container(action.into_iced())
@@ -179,6 +189,19 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
                     .padding(Padding { top: 8.0, right: 8.0, bottom: 0.0, left: 0.0 });
                 iced_widget::stack![card, overlay].into()
             }
+        };
+
+        // Self-cap the outer width when the caller set `.max_width(...)`.
+        // `Fill` here is what makes the constraint bind — without it the
+        // shrink-to-content behavior would ignore the cap. Skipped when
+        // no cap is set so the alert keeps its natural shrink behavior.
+        if max_width.is_finite() {
+            iced_widget::container(outer)
+                .width(Fill)
+                .max_width(max_width)
+                .into()
+        } else {
+            outer
         }
     }
 }
