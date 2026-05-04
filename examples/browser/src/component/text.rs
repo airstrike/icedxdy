@@ -112,6 +112,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/text-api-reference.md"),
 ];
 
 pub struct TextPage {
