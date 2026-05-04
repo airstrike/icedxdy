@@ -1,5 +1,5 @@
 ```rust
 use icedxdy::widget::button;
 
-button::icon(icon::arrow_up()).rounded()
+button::icon![arrow_up].rounded()
 ```

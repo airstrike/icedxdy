@@ -158,7 +158,7 @@ impl page::Page for TextPage {
     /// widget doesn't natively model inline `<a>` styling without
     /// rich_text plumbing that would balloon this page.
     fn hero(&self) -> Option<page::Hero<'_, Message, Theme>> {
-        Some(page::Hero::Inline(
+        Some(page::Hero::Card(
             column![
                 text::h1("Taxing Laughter: The Joke Tax Chronicles"),
                 text::lead(

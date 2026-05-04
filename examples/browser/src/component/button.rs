@@ -125,9 +125,12 @@ impl page::Page for ButtonPage {
         //   <Button variant="outline">Button</Button>
         //   <Button variant="outline" size="icon"><ArrowUpIcon /></Button>
         // page.rs handles the card chrome + centering.
+        let pi = self.state.page_index;
         let content: Component<'_, crate::Message> = row![
-            button::outline("Button"),
-            button::icon(crate::icon::arrow_up()),
+            button::outline("Button")
+                .on_press(crate::Message::Page(pi, page::Message::Noop)),
+            button::icon(crate::icon::arrow_up())
+                .on_press(crate::Message::Page(pi, page::Message::Noop)),
         ]
         .spacing(8)
         .into();

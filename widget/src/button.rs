@@ -8,8 +8,9 @@
 //! button("Submit").on_press(Message::Submit)
 //! button("Go").size(Size::Lg).on_press(Message::Go)
 //! button![icon::git_branch(), "New Branch"].on_press(Message::Go)
-//! button::outline("Outline").on_press(Message::Nav)
+//! button::outline!("Outline").on_press(Message::Nav)
 //! button::outline!["Outline ", icon::arrow_right()].on_press(Message::Nav)
+//! button::icon![arrow_up].rounded()
 //! ```
 
 mod element;
@@ -19,21 +20,52 @@ pub mod widget;
 pub use element::{button, Button, Link};
 pub use helpers::*;
 
-/// Create a button with one or more children.
+/// Create a button with one or more children using the default variant.
 ///
-/// With a single argument, behaves like `button(content)`.
-/// With multiple arguments, lays them out in a centered row with spacing.
+/// Two forms:
+/// - `button!("Submit")` — single child, defers to [`button`].
+/// - `button![child1, child2, ...]` — multiple children wrapped in a row
+///   and passed to [`button`]. Spacing comes from size propagation, not
+///   from the macro itself.
+///
+/// For non-default variants, use the per-variant macros at the module
+/// path: [`button::primary!`], [`button::secondary!`], [`button::outline!`],
+/// [`button::ghost!`], [`button::destructive!`], [`button::icon!`]. They
+/// share the same single-arg / multi-arg arms as `button!`.
 ///
 /// ```ignore
 /// button!["Submit"]
 /// button![icon::mail(), "Login with Email"]
-/// button![icon::loader_circle(), "Generating"].on_press(Message::Go)
+/// button::outline![icon::git_branch(), "Branch"]
+/// button::destructive!("Delete")
+/// button::icon![arrow_up].rounded()
+/// button![arrow_up, "Submit"]                  // leading-ident sugar
+/// button::outline![git_branch, "Branch"]       // leading-ident sugar on variant
 /// ```
 #[macro_export]
 macro_rules! button {
+    // Default-variant single-arg arm
     ($single:expr $(,)?) => {
         $crate::button::button($single)
     };
+    // Leading-ident icon sugar: the first arg as a bare ident is rewritten
+    // to `icon::$first()`. Requires `use crate::icon;` (or equivalent path
+    // to an `icon` module exposing `fn $first() -> Text`) in scope at the
+    // call site. Macro hygiene: `icon` here resolves at the call site, not
+    // the def site — matches `button_icon!`'s existing single-arg arm.
+    //
+    // `button![arrow_up, "Submit"]` => button(row![icon::arrow_up(), "Submit"])
+    ($first:ident, $($rest:expr),+ $(,)?) => {
+        $crate::button::button(
+            $crate::component::Component::new(
+                $crate::row::Row::with_children([
+                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                ])
+            )
+        )
+    };
+    // Default-variant multi-arg arm — wraps children in a row.
     ($($child:expr),+ $(,)?) => {
         $crate::button::button(
             $crate::component::Component::new(
@@ -45,20 +77,22 @@ macro_rules! button {
     };
 }
 
-// Variant macros — each mirrors the `button!` two-arm shape but calls the
-// matching variant fn from `helpers.rs` instead of `button()`. They're
-// declared at crate root via `#[macro_export]` (Rust requires it for
-// cross-crate visibility) and re-exported under the `button` module via
-// alias-free `pub use crate::<name>` so users invoke them as
-// `button::outline!(...)` etc. Macros and the variant fns coexist at the
-// same path because they live in different namespaces.
-
-/// Variant macro: `button::primary!(...)`. Mirrors [`button!`] for the
-/// primary variant.
+/// Primary-variant button macro. See [`button!`] for the arm shapes.
 #[macro_export]
-macro_rules! primary {
+macro_rules! button_primary {
     ($single:expr $(,)?) => {
         $crate::button::primary($single)
+    };
+    // Leading-ident icon sugar — see [`button!`] for details.
+    ($first:ident, $($rest:expr),+ $(,)?) => {
+        $crate::button::primary(
+            $crate::component::Component::new(
+                $crate::row::Row::with_children([
+                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                ])
+            )
+        )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::primary(
@@ -71,12 +105,22 @@ macro_rules! primary {
     };
 }
 
-/// Variant macro: `button::secondary!(...)`. Mirrors [`button!`] for the
-/// secondary variant.
+/// Secondary-variant button macro. See [`button!`] for the arm shapes.
 #[macro_export]
-macro_rules! secondary {
+macro_rules! button_secondary {
     ($single:expr $(,)?) => {
         $crate::button::secondary($single)
+    };
+    // Leading-ident icon sugar — see [`button!`] for details.
+    ($first:ident, $($rest:expr),+ $(,)?) => {
+        $crate::button::secondary(
+            $crate::component::Component::new(
+                $crate::row::Row::with_children([
+                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                ])
+            )
+        )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::secondary(
@@ -89,12 +133,22 @@ macro_rules! secondary {
     };
 }
 
-/// Variant macro: `button::outline!(...)`. Mirrors [`button!`] for the
-/// outline variant.
+/// Outline-variant button macro. See [`button!`] for the arm shapes.
 #[macro_export]
-macro_rules! outline {
+macro_rules! button_outline {
     ($single:expr $(,)?) => {
         $crate::button::outline($single)
+    };
+    // Leading-ident icon sugar — see [`button!`] for details.
+    ($first:ident, $($rest:expr),+ $(,)?) => {
+        $crate::button::outline(
+            $crate::component::Component::new(
+                $crate::row::Row::with_children([
+                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                ])
+            )
+        )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::outline(
@@ -107,12 +161,22 @@ macro_rules! outline {
     };
 }
 
-/// Variant macro: `button::ghost!(...)`. Mirrors [`button!`] for the ghost
-/// variant.
+/// Ghost-variant button macro. See [`button!`] for the arm shapes.
 #[macro_export]
-macro_rules! ghost {
+macro_rules! button_ghost {
     ($single:expr $(,)?) => {
         $crate::button::ghost($single)
+    };
+    // Leading-ident icon sugar — see [`button!`] for details.
+    ($first:ident, $($rest:expr),+ $(,)?) => {
+        $crate::button::ghost(
+            $crate::component::Component::new(
+                $crate::row::Row::with_children([
+                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                ])
+            )
+        )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::ghost(
@@ -125,12 +189,22 @@ macro_rules! ghost {
     };
 }
 
-/// Variant macro: `button::destructive!(...)`. Mirrors [`button!`] for the
-/// destructive variant.
+/// Destructive-variant button macro. See [`button!`] for the arm shapes.
 #[macro_export]
-macro_rules! destructive {
+macro_rules! button_destructive {
     ($single:expr $(,)?) => {
         $crate::button::destructive($single)
+    };
+    // Leading-ident icon sugar — see [`button!`] for details.
+    ($first:ident, $($rest:expr),+ $(,)?) => {
+        $crate::button::destructive(
+            $crate::component::Component::new(
+                $crate::row::Row::with_children([
+                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                ])
+            )
+        )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::destructive(
@@ -143,13 +217,30 @@ macro_rules! destructive {
     };
 }
 
-/// Variant macro: `button::icon!(...)`. Mirrors [`button!`] for the
-/// icon-only square variant.
+/// Icon-only button macro.
+///
+/// Three forms (in match order):
+/// - `button::icon![arrow_up]` — bare ident. Calls `icon::$name()` at the
+///   call site (so `use crate::icon;` must be in scope), then passes the
+///   resulting widget to [`icon`]. The convention every example file
+///   already follows.
+/// - `button::icon![icon::arrow_up]` — explicit path. Invokes `$f()` and
+///   passes the result to [`icon`]. Useful when `icon` is not in scope or
+///   when the user wants to reach for a custom icon module.
+/// - `button::icon![child1, child2, ...]` — multi-child fallback: wraps
+///   the children in a row and passes them to [`icon`].
 #[macro_export]
-macro_rules! icon {
-    ($single:expr $(,)?) => {
-        $crate::button::icon($single)
+macro_rules! button_icon {
+    // Bare ident — assumes `icon::$name` is in scope at the call site.
+    // Placed first so a single ident matches here before the path arm.
+    ($name:ident $(,)?) => {
+        $crate::button::icon(icon::$name())
     };
+    // Explicit path — module-qualified function reference.
+    ($f:path $(,)?) => {
+        $crate::button::icon($f())
+    };
+    // Multi-child fallback.
     ($($child:expr),+ $(,)?) => {
         $crate::button::icon(
             $crate::component::Component::new(
@@ -161,18 +252,27 @@ macro_rules! icon {
     };
 }
 
+// `#[macro_export]` always lands at the consuming crate's root, so two
+// widgets can't both claim a name like `secondary!` there. The fix: the
+// real macros above are exported with a `button_` prefix, then we re-alias
+// each to its idiomatic name at the module path (`button::secondary!`,
+// `button::outline!`, ...) right here. This is the carved exception in
+// CLAUDE.md hard rule #3 — the file-based exemption in the pre-commit
+// hook permits these two aliased re-exports (and matching ones in
+// `widget/src/badge.rs`). iced uses the same trick for `column!` /
+// `column()` coexisting in the `column` module.
 #[doc(inline)]
-pub use crate::primary;
+pub use crate::button_destructive as destructive;
 #[doc(inline)]
-pub use crate::secondary;
+pub use crate::button_ghost as ghost;
 #[doc(inline)]
-pub use crate::outline;
+pub use crate::button_icon as icon;
 #[doc(inline)]
-pub use crate::ghost;
+pub use crate::button_outline as outline;
 #[doc(inline)]
-pub use crate::destructive;
+pub use crate::button_primary as primary;
 #[doc(inline)]
-pub use crate::icon;
+pub use crate::button_secondary as secondary;
 
 #[cfg(test)]
 mod macro_smoke {
@@ -207,7 +307,67 @@ mod macro_smoke {
         let _: Button<'_, Msg> = crate::button::destructive!("d");
         let _: Button<'_, Msg> = crate::button::destructive!["d1", "d2"];
 
-        let _: Button<'_, Msg> = crate::button::icon!("i");
+        // `button::icon!` multi-child fallback.
         let _: Button<'_, Msg> = crate::button::icon!["i1", "i2"];
+    }
+
+    /// Path-arm + bare-ident smoke test: `button::icon![path::Foo]`
+    /// expands to `button::icon(path::Foo())`; `button::icon![bare]`
+    /// expands to `button::icon(icon::bare())` (ident arm), provided
+    /// `icon` is in scope at the call site.
+    #[test]
+    fn icon_macro_path_arm() {
+        // Local `icon` module mirroring the real `icon::*` helper
+        // signature in `examples/browser/src/icon.rs`. The bare-ident
+        // arm of `button::icon!` looks up `icon::$name()` at the call
+        // site, so this module name is load-bearing.
+        mod icon {
+            pub fn arrow_up<'a, T>() -> iced_widget::Text<'a, T>
+            where
+                T: iced_widget::text::Catalog,
+            {
+                iced_widget::Text::new("")
+            }
+        }
+
+        // Bare ident — resolves to `icon::arrow_up()` via the in-scope
+        // `icon` module above.
+        let _: Button<'_, Msg> = crate::button::icon![arrow_up];
+
+        // Module-qualified path also works (path arm).
+        mod inner {
+            pub fn ic<'a, T>() -> iced_widget::Text<'a, T>
+            where
+                T: iced_widget::text::Catalog,
+            {
+                iced_widget::Text::new("")
+            }
+        }
+        let _: Button<'_, Msg> = crate::button::icon![inner::ic];
+    }
+
+    /// Leading-ident sugar: `button![my_icon, "Submit"]` rewrites
+    /// the bare ident to `icon::my_icon()` at the call site, then
+    /// prepends it to the row of remaining children. Same arm exists
+    /// on every variant macro except `button::icon!`.
+    #[test]
+    fn leading_ident_sugar_arm() {
+        // Local `icon` module — name load-bearing for the same reason
+        // as `icon_macro_path_arm` above.
+        mod icon {
+            pub fn my_icon<'a, T>() -> iced_widget::Text<'a, T>
+            where
+                T: iced_widget::text::Catalog,
+            {
+                iced_widget::Text::new("")
+            }
+        }
+
+        let _: Button<'_, Msg> = crate::button![my_icon, "Submit"];
+        let _: Button<'_, Msg> = crate::button::primary![my_icon, "Click"];
+        let _: Button<'_, Msg> = crate::button::secondary![my_icon, "Click"];
+        let _: Button<'_, Msg> = crate::button::outline![my_icon, "Click"];
+        let _: Button<'_, Msg> = crate::button::ghost![my_icon, "Click"];
+        let _: Button<'_, Msg> = crate::button::destructive![my_icon, "Click"];
     }
 }

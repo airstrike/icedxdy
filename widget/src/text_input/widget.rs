@@ -547,7 +547,12 @@ where
         // OUTSIDE the input's own bounds. `border.width = ring.width`
         // paints inward from the expanded bounds, so the visible halo is
         // around (not over) the field.
+        //
+        // Belt-and-suspenders: also gate on `on_input.is_some()` so a stale
+        // `is_focused = Some(_)` from before disable can't keep painting the
+        // halo. Disabled inputs (no `on_input`) never show the ring.
         if state.is_focused()
+            && self.on_input.is_some()
             && let Some(ring) = focused_style.ring
         {
             let r = ring.width;
@@ -832,9 +837,16 @@ where
             }
         }
 
+        // HTML semantics: a disabled input (no `on_input`) is not focusable
+        // and shouldn't react to clicks at all — no focus mutation, no
+        // cursor placement, no `on_focus`/`on_blur` publish.
+        let is_disabled = self.on_input.is_none();
+
         match &event {
             Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-            | Event::Touch(touch::Event::FingerPressed { .. }) => {
+            | Event::Touch(touch::Event::FingerPressed { .. })
+                if !is_disabled =>
+            {
                 let state = state::<Renderer>(tree);
                 let cursor_before = state.cursor;
                 let was_focused = state.is_focused.is_some();

@@ -1,15 +1,19 @@
 ```rust
-use icedxdy::theme;
+use icedxdy::rich_text;
+use icedxdy::theme::tweak::Token;
+use icedxdy::widget::rich_text::span;
 use icedxdy::widget::{input, text};
 
 column![
-    row![
-        text::small("Required Field").medium(),
-        text::small("*").style(theme::text::Destructive),
-    ]
-    .spacing(2),
+    rich_text![
+        span("Required Field ").size(text::size::SM).medium(),
+        span("*").size(text::size::SM).color(Token::Destructive),
+    ],
     input("This field is required", &self.value)
-        .on_input(Message::Changed),
+        .on_input(Message::Changed)
+        .width(Fill),
     text::muted("This field must be filled out."),
 ]
+.spacing(8)
+.width(320)
 ```

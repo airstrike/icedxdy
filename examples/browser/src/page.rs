@@ -9,6 +9,7 @@ use icedxdy::Size::*;
 use icedxdy::theme::container::{card, card_preview};
 use icedxdy::theme::tweak::Opaque;
 use icedxdy::widget::markdown;
+use icedxdy::widget::container::Container;
 use icedxdy::widget::{button, rule, text};
 use icedxdy::{Component, Theme, radius, theme};
 
@@ -53,10 +54,11 @@ pub enum Message {
 
 /// Page hero variant. `Card` wraps content in the same card chrome as a
 /// per-example card (border + bg-card + padding). `Inline` renders
-/// content as plain page-level prose with no chrome (used by typography
-/// for the inline article).
+/// content as plain page-level prose with no chrome — kept around for
+/// pages that want to skip the card chrome entirely.
 pub enum Hero<'a, Message, Theme> {
     Card(iced::Element<'a, Message, Theme>),
+    #[allow(dead_code)]
     Inline(iced::Element<'a, Message, Theme>),
 }
 
@@ -234,13 +236,21 @@ fn examples<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Component<'a, 
         Hero::Inline(content) => Component::from(content),
         Hero::Card(content) => {
             // Same chrome as per-example cards: bg-card preview area
-            // (24px padding, min 288px tall) wrapped in a 1px border
-            // (the `card` style). Hero never has a code block under it.
-            let preview = container(center(content))
-                .height(PREVIEW_HEIGHT)
+            // (24px padding, MIN 288px tall — content taller than that
+            // grows the card vertically, e.g. the typography article)
+            // wrapped in a 1px border (the `card` style). Hero never has
+            // a code block under it. The inner preview uses our vendored
+            // container so `.min_height()` is available (stock iced
+            // container lacks it); the outer 1px border keeps using stock
+            // iced container for `.clip(true)`.
+            let preview_style: iced_widget::container::StyleFn<'static, Theme> =
+                Box::new(|t| card_preview(t).into());
+            let preview = Container::new(content)
+                .center(Fill)
+                .min_height(PREVIEW_HEIGHT)
                 .width(Fill)
                 .padding(PREVIEW_PADDING)
-                .style(|t| card_preview(t).into());
+                .style(preview_style);
             container(preview)
                 .style(|t| card(t).into())
                 .padding(1)

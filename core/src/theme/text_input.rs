@@ -247,6 +247,55 @@ pub fn default(theme: &Theme, status: Status) -> Style {
     }
 }
 
+/// Invalid text input variant — nova `aria-invalid:*` field.
+///
+/// Same layout as [`default`] but with the destructive token swapped in for
+/// border (rest), border-on-focus, and ring color. Mirrors the nova class
+/// triplet `aria-invalid:border-destructive`,
+/// `aria-invalid:focus-visible:ring-destructive/20`,
+/// `aria-invalid:focus-visible:border-destructive`.
+///
+/// Note: shadcn ships `ring-destructive/20` (20% alpha). We currently render
+/// the ring at full alpha — proper alpha tracking through the Ring atom is a
+/// separate follow-up (needs `Token` to carry an alpha override or a new
+/// alpha-aware Ring tweak).
+pub fn invalid(theme: &Theme, status: Status) -> Style {
+    let p = theme.palette();
+    let base = default(theme, status);
+
+    match status {
+        Status::Active | Status::Hovered => Style {
+            border: Border {
+                color: p.destructive.base,
+                ..base.border
+            },
+            ..base
+        },
+        Status::Focused { .. } => Style {
+            border: Border {
+                color: p.destructive.base,
+                ..base.border
+            },
+            ring: Some(Ring {
+                // FIXME: shadcn `ring-destructive/20` = 20% alpha; full alpha
+                // here pending an alpha-aware Ring tweak (see module docs).
+                color: p.destructive.base,
+                width: 3.0,
+            }),
+            ..base
+        },
+        // Disabled propagates the destructive border through the same
+        // `scale_alpha(0.5)` dimming applied by `default`.
+        Status::Disabled => Style {
+            border: Border {
+                color: p.destructive.base.scale_alpha(0.5),
+                ..base.border
+            },
+            ..base
+        },
+    }
+}
+
 // --- Variant unit structs ----------------------------------------------------
 //
 // Tag types matching the variant fns. Each impls `Add<T: Into<Tweak>>` to
@@ -255,6 +304,10 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 /// Default text input variant (nova `h-8` field).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Default;
+
+/// Invalid text input variant (nova `aria-invalid:*` field). See [`invalid`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Invalid;
 
 // --- Spec --------------------------------------------------------------------
 
@@ -298,7 +351,20 @@ impl From<Default> for Spec {
     }
 }
 
+impl From<Invalid> for Spec {
+    fn from(_: Invalid) -> Spec {
+        Spec::variant(invalid)
+    }
+}
+
 impl<T: Into<Tweak>> Add<T> for Default {
+    type Output = Spec;
+    fn add(self, rhs: T) -> Spec {
+        Spec::from(self).push(rhs.into())
+    }
+}
+
+impl<T: Into<Tweak>> Add<T> for Invalid {
     type Output = Spec;
     fn add(self, rhs: T) -> Spec {
         Spec::from(self).push(rhs.into())
@@ -392,6 +458,12 @@ fn triggered(trigger: Trigger, status: Status) -> bool {
 impl<'a> From<Default> for StyleFn<'a, Theme> {
     fn from(_: Default) -> Self {
         Box::new(default)
+    }
+}
+
+impl<'a> From<Invalid> for StyleFn<'a, Theme> {
+    fn from(_: Invalid) -> Self {
+        Box::new(invalid)
     }
 }
 

@@ -103,13 +103,13 @@ impl page::Page for AlertPage {
         // Verbatim shadcn `alert-demo.tsx`: two stacked alerts capped at
         // max-w-md (448px). page.rs handles the card chrome + centering.
         let stack = column![
-            alert::alert()
+            alert()
                 .icon(icon::circle_check_big())
                 .title("Payment successful")
                 .description(
                     "Your payment of $29.99 has been processed. A receipt has been sent to your email address.",
                 ),
-            alert::alert()
+            alert()
                 .icon(icon::info())
                 .title("New feature available")
                 .description(
@@ -119,7 +119,7 @@ impl page::Page for AlertPage {
         .spacing(16)
         .width(iced::Length::Fill);
 
-        let capped = container(stack).max_width(448);
+        let capped = container(stack).width(iced::Length::Fill).max_width(448);
 
         Some(page::Hero::Card(capped.into()))
     }

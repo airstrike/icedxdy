@@ -17,8 +17,7 @@ use crate::text_input;
 use crate::text_input::element::from_core;
 use icedxdy_core::Theme;
 use icedxdy_core::theme;
-use iced_core::Length::Fill;
-use iced_core::Padding;
+use iced_core::{Length, Padding};
 use iced_widget::Renderer;
 
 /// A styled text input field matching shadcn/ui's Input component.
@@ -32,6 +31,7 @@ pub struct Input<'a, Message> {
     placeholder: &'a str,
     value: &'a str,
     size: Size,
+    width: Length,
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
     on_submit: Option<Message>,
     on_focus: Option<Message>,
@@ -48,6 +48,7 @@ pub fn input<'a, Message: Clone + 'a>(
         placeholder,
         value,
         size: Size::Default,
+        width: Length::Shrink,
         on_input: None,
         on_submit: None,
         on_focus: None,
@@ -60,6 +61,16 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
     /// Set the size variant.
     pub fn size(mut self, size: impl Into<Size>) -> Self {
         self.size = size.into();
+        self
+    }
+
+    /// Set the input's width. Defaults to `Length::Shrink` — shadcn's
+    /// `<Input />` is `w-full` only because the parent `Field` lays children
+    /// out as `flex flex-col`; the input itself doesn't force `w-full`. Set
+    /// `Length::Fill` (or a numeric value) when the call site wants the input
+    /// to occupy its parent.
+    pub fn width(mut self, width: impl Into<Length>) -> Self {
+        self.width = width.into();
         self
     }
 
@@ -137,7 +148,7 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
             text_input::TextInput::new(input.placeholder, input.value)
                 .padding(padding)
                 .size(text_size)
-                .width(Fill)
+                .width(input.width)
                 .height(height);
 
         if let Some(style) = input.style {

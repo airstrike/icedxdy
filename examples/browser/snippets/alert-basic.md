@@ -3,7 +3,7 @@ use iced::widget::container;
 use icedxdy::widget::alert;
 
 container(
-    alert::alert()
+    alert()
         .icon(icon::circle_check_big())
         .title("Account updated successfully")
         .description("Your profile information has been saved. Changes will be reflected immediately."),

@@ -1,12 +1,15 @@
 use std::collections::BTreeSet;
 
+use iced::Fill;
 use iced::Task;
 use iced::widget::Id;
 use icedxdy::widget::markdown;
 
 use icedxdy::Theme;
+use icedxdy::rich_text;
 use icedxdy::theme;
-use icedxdy::theme::tweak;
+use icedxdy::theme::tweak::Token;
+use icedxdy::widget::rich_text::span;
 use icedxdy::widget::{button, column, input, row, text};
 
 use crate::Message;
@@ -143,7 +146,8 @@ impl page::Page for InputPage {
         let content = column![
             text::small("API Key").medium(),
             input("sk-...", &self.demo_value)
-                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(0, v))),
+                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(0, v)))
+                .width(Fill),
             text::muted("Your API key is encrypted and stored securely."),
         ]
         .spacing(8)
@@ -155,79 +159,76 @@ impl page::Page for InputPage {
     fn preview(&self, index: usize) -> iced::Element<'_, Message, Theme> {
         let pi = self.state.page_index;
         match index {
-            // Basic: simple input with placeholder
+            // Basic: simple input with placeholder. Width 320 matches nova's
+            // form input width — Input now defaults to Length::Shrink, so set
+            // it explicitly here.
             0 => input("Enter text", &self.basic_value)
                 .on_input(move |v| Message::Page(pi, page::Message::InputChanged(1, v)))
+                .width(320)
                 .into(),
-            // Field: input with label "Username" and description
+            // Field: input with label "Username" and description. The input
+            // fills the 320-wide column (post-Shrink-default flip).
             1 => column![
                 text::small("Username").medium(),
                 input("Enter your username", &self.field_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(2, v))),
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(2, v)))
+                    .width(Fill),
                 text::muted("Choose a unique username for your account."),
             ]
             .spacing(8)
             .width(320)
             .into(),
-            // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
+            // Disabled — no `.on_input(...)` call ⇒ widget is disabled. The
+            // input fills the 320-wide column (post-Shrink-default flip).
             2 => column![
                 text::small("Email").medium(),
-                input("Email", ""),
+                input("Email", "").width(Fill),
                 text::muted("This field is currently disabled."),
             ]
             .spacing(8)
             .width(320)
             .into(),
-            // Invalid: destructive border + destructive focus ring (aria-invalid).
-            // The nova classlist uses `aria-invalid:ring-destructive/20` (20% alpha)
-            // but our `tweak::Ring` resolves a `Token` to a full-alpha Color with
-            // no per-atom alpha override. Full-alpha destructive demonstrates the
-            // visual concept; matching the 0.2 alpha is a follow-up once an
-            // alpha-override mechanism lands. See report.
+            // Invalid: destructive border + destructive focus ring
+            // (aria-invalid). First-class `theme::text_input::Invalid` variant
+            // — no `tweak` escape hatch needed at the call site. The 0.2-alpha
+            // ring (`aria-invalid:ring-destructive/20`) remains a follow-up
+            // pending an alpha-aware Ring tweak.
             3 => column![
                 text::small("Invalid Input").medium(),
                 input("Error", &self.invalid_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(4, v)))
-                    .style(
-                        theme::text_input::Default
-                            + tweak::border::Color(tweak::Token::Destructive)
-                            + tweak::focus(
-                                tweak::border::Color(tweak::Token::Destructive)
-                                    + tweak::Ring {
-                                        color: tweak::Token::Destructive,
-                                        width: 3.0,
-                                        offset: 0.0,
-                                    },
-                            ),
-                    ),
+                    .width(Fill)
+                    .style(theme::text_input::Invalid),
                 text::muted("This field contains validation errors."),
             ]
             .spacing(8)
             .width(320)
             .into(),
-            // Inline: input + button side by side
-            4 => column![
-                row![
-                    input("Search...", &self.inline_value)
-                        .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v))),
-                    button("Search").on_press(Message::Page(pi, page::Message::Noop)),
-                ]
-                .spacing(8)
+            // Inline: input + button side by side. Row drives the 400px
+            // overall width; input fills the remaining space next to the
+            // intrinsic-width button.
+            4 => row![
+                input("Search...", &self.inline_value)
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v)))
+                    .width(Fill),
+                button("Search").on_press(Message::Page(pi, page::Message::Noop)),
             ]
-            .max_width(400.0)
+            .spacing(8)
+            .width(400)
             .into(),
-            // Required: label + destructive `*` separated by row spacing so the
-            // gap is layout-driven (not a leading-space text fragment that iced
-            // text shaping can collapse). nova uses flex `gap-2` between the
-            // FieldLabel and the destructive span.
+            // Required: nova does this as inline rich-text — a single
+            // <FieldLabel> with a destructive <span> for the asterisk.
+            // `rich_text!` resolves each span's `Token` color against the
+            // active palette at draw time, so the asterisk re-colors when
+            // the theme switches.
             5 => column![
-                row![
-                    text::small("Required Field").medium(),
-                    text::small("*").style(theme::text::Destructive),
-                ]
-                .spacing(2),
+                rich_text![
+                    span("Required Field ").size(text::size::SM).medium(),
+                    span("*").size(text::size::SM).color(Token::Destructive),
+                ],
                 input("This field is required", &self.required_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(5, v))),
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(5, v)))
+                    .width(Fill),
                 text::muted("This field must be filled out."),
             ]
             .spacing(8)

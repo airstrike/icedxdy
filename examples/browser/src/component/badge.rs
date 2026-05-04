@@ -53,21 +53,21 @@ fn view(index: usize) -> Component<'static, Message> {
         .into(),
         // With Icon
         1 => row![
-            badge::secondary(row![icon::badge_check().size(12), "Verified"].spacing(4)),
-            badge::outline(row!["Bookmark", icon::bookmark().size(12)].spacing(4)),
+            badge::secondary![icon::badge_check().size(12), "Verified"],
+            badge::outline!["Bookmark", icon::bookmark().size(12)],
         ]
         .spacing(8)
         .into(),
         // With Spinner
         2 => row![
-            badge::destructive(row![spinner().size(12.0), "Deleting"].spacing(4)),
-            badge::secondary(row!["Generating", spinner().size(12.0)].spacing(4)),
+            badge::destructive![spinner().size(12.0), "Deleting"],
+            badge::secondary!["Generating", spinner().size(12.0)],
         ]
         .spacing(8)
         .into(),
         // Link (clickable badge)
         3 => row![
-            badge(row!["Open Link", icon::arrow_up_right().size(12)].spacing(4))
+            badge!["Open Link", icon::arrow_up_right().size(12)]
                 .on_press(Message::Pressed),
         ]
         .spacing(8)

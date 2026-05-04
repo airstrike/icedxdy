@@ -16,6 +16,15 @@ pub mod widget {
     pub use icedxdy_widget::*;
 }
 
+// Re-export the `rich_text!` macro at our crate root so consumers don't
+// need a direct `icedxdy_widget` dep. Type-level `RichText` / `Span` /
+// `span` / `rich_text` (the constructor fn) are available via the
+// `widget` glob above. `#[doc(inline)]` keeps the macro visible in
+// rustdoc; `#[macro_export]` from `icedxdy_widget` makes it available
+// at `icedxdy_widget::rich_text` and we surface it here.
+#[doc(inline)]
+pub use icedxdy_widget::rich_text;
+
 pub use widget::Component;
 pub use widget::Size;
 pub use widget::Weight;

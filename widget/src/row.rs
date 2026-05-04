@@ -1,5 +1,6 @@
 use crate::Size;
 use crate::component::{Component, IntoElement};
+use iced_core::Length;
 use iced_widget::Renderer;
 use icedxdy_core::Theme;
 
@@ -24,6 +25,8 @@ macro_rules! row {
 pub struct Row<'a, Message> {
     children: Vec<Component<'a, Message>>,
     spacing: Option<f32>,
+    width: Length,
+    height: Length,
 }
 
 impl<'a, Message: 'a> Row<'a, Message> {
@@ -31,6 +34,8 @@ impl<'a, Message: 'a> Row<'a, Message> {
         Self {
             children: Vec::new(),
             spacing: None,
+            width: Length::Shrink,
+            height: Length::Shrink,
         }
     }
 
@@ -38,6 +43,8 @@ impl<'a, Message: 'a> Row<'a, Message> {
         Self {
             children: children.into_iter().collect(),
             spacing: None,
+            width: Length::Shrink,
+            height: Length::Shrink,
         }
     }
 
@@ -49,6 +56,16 @@ impl<'a, Message: 'a> Row<'a, Message> {
 
     pub fn spacing(mut self, spacing: impl Into<iced_core::Pixels>) -> Self {
         self.spacing = Some(spacing.into().0);
+        self
+    }
+
+    pub fn width(mut self, width: impl Into<Length>) -> Self {
+        self.width = width.into();
+        self
+    }
+
+    pub fn height(mut self, height: impl Into<Length>) -> Self {
+        self.height = height.into();
         self
     }
 }
@@ -86,6 +103,8 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Row<'a, Message> {
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         let mut row = iced_widget::Row::new()
             .spacing(self.spacing.unwrap_or(8.0))
+            .width(self.width)
+            .height(self.height)
             .align_y(iced_core::Alignment::Center);
 
         for child in self.children {

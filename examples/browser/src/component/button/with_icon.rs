@@ -7,7 +7,7 @@ use crate::icon;
 use super::Message;
 
 pub fn view<'a>() -> Component<'a, Message> {
-    button![icon::git_branch(), "New Branch"]
+    button![git_branch, "New Branch"]
         .size(Sm)
         .style(theme::button::Outline)
         .on_press(Message::Pressed)

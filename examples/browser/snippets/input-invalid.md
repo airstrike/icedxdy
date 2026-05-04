@@ -1,24 +1,15 @@
 ```rust
 use icedxdy::theme;
-use icedxdy::theme::tweak;
 use icedxdy::widget::{input, text};
 
 column![
     text::small("Invalid Input").medium(),
     input("Error", &self.value)
         .on_input(Message::Changed)
-        .style(
-            theme::text_input::Default
-                + tweak::border::Color(tweak::Token::Destructive)
-                + tweak::focus(
-                    tweak::border::Color(tweak::Token::Destructive)
-                        + tweak::Ring {
-                            color: tweak::Token::Destructive,
-                            width: 3.0,
-                            offset: 0.0,
-                        },
-                ),
-        ),
+        .width(Fill)
+        .style(theme::text_input::Invalid),
     text::muted("This field contains validation errors."),
 ]
+.spacing(8)
+.width(320)
 ```

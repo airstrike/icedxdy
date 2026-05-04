@@ -5,7 +5,7 @@ use crate::icon;
 use super::Message;
 
 pub fn view<'a>() -> Component<'a, Message> {
-    button::icon(icon::arrow_up())
+    button::icon![arrow_up]
         .rounded()
         .on_press(Message::Pressed)
         .into()

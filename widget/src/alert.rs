@@ -12,6 +12,11 @@
 //!     .icon(icon::terminal())
 //!     .title("Heads up!")
 //!     .description("You can add components to your app using the cli.")
+//!
+//! alert::destructive()
+//!     .icon(icon::circle_alert())
+//!     .title("Payment failed")
+//!     .description("Your payment could not be processed.")
 //! ```
 
 use iced_core::alignment::{Horizontal, Vertical};
@@ -50,6 +55,18 @@ pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
         action: None,
         variant: Variant::Default,
     }
+}
+
+/// Create an [`Alert`] with the default variant.
+///
+/// Equivalent to [`alert`]; provided for symmetry with the destructive helper.
+pub fn default<'a, Message: 'a>() -> Alert<'a, Message> {
+    alert()
+}
+
+/// Create an [`Alert`] with the destructive variant.
+pub fn destructive<'a, Message: 'a>() -> Alert<'a, Message> {
+    alert().variant(Variant::Destructive)
 }
 
 impl<'a, Message: 'a> Alert<'a, Message> {
