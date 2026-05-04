@@ -1,9 +1,5 @@
-use std::collections::BTreeSet;
-
 use iced::Fill;
 use iced::Task;
-use iced::widget::Id;
-use icedxdy::widget::markdown;
 
 use icedxdy::Theme;
 use icedxdy::rich_text;
@@ -13,51 +9,66 @@ use icedxdy::widget::rich_text::span;
 use icedxdy::widget::{button, column, input, row, text};
 
 use crate::Message;
-use crate::example;
 use crate::page;
 
 pub static META: page::Meta = page::Meta {
     title: "Input",
     description: "A text input component for forms and user data entry with built-in styling and accessibility features.",
-    examples: &[
-        example::Meta {
-            id: "basic",
-            title: "Basic",
-            description: Some("A simple input with a placeholder."),
-            snippet: "examples/browser/snippets/input-basic.md",
-        },
-        example::Meta {
-            id: "field",
-            title: "Field",
-            description: Some("An input with a label and description."),
-            snippet: "examples/browser/snippets/input-field.md",
-        },
-        example::Meta {
-            id: "disabled",
-            title: "Disabled",
-            description: Some("A disabled input field."),
-            snippet: "examples/browser/snippets/input-disabled.md",
-        },
-        example::Meta {
-            id: "invalid",
-            title: "Invalid",
-            description: Some("An input with validation errors, styled with a destructive border and focus ring."),
-            snippet: "examples/browser/snippets/input-invalid.md",
-        },
-        example::Meta {
-            id: "inline",
-            title: "Inline",
-            description: Some("Use an input with a button to create a search input."),
-            snippet: "examples/browser/snippets/input-inline.md",
-        },
-        example::Meta {
-            id: "required",
-            title: "Required",
-            description: Some("An input with a required label, marked by a destructive asterisk suffix."),
-            snippet: "examples/browser/snippets/input-required.md",
-        },
-    ],
 };
+
+pub static BLOCKS: &[page::Block] = &[
+    page::Block::Example {
+        id: "demo",
+        title: "",
+        description: None,
+        snippet: "",
+    },
+    page::Block::Example {
+        id: "basic",
+        title: "Basic",
+        description: Some("A simple input with a placeholder."),
+        snippet: "examples/browser/snippets/input-basic.md",
+    },
+    page::Block::Example {
+        id: "field",
+        title: "Field",
+        description: Some("An input with a label and description."),
+        snippet: "examples/browser/snippets/input-field.md",
+    },
+    page::Block::Example {
+        id: "disabled",
+        title: "Disabled",
+        description: Some("A disabled input field."),
+        snippet: "examples/browser/snippets/input-disabled.md",
+    },
+    page::Block::Example {
+        id: "invalid",
+        title: "Invalid",
+        description: Some("An input with validation errors, styled with a destructive border and focus ring."),
+        snippet: "examples/browser/snippets/input-invalid.md",
+    },
+    page::Block::Example {
+        id: "inline",
+        title: "Inline",
+        description: Some("Use an input with a button to create a search input."),
+        snippet: "examples/browser/snippets/input-inline.md",
+    },
+    page::Block::Example {
+        id: "required",
+        title: "Required",
+        description: Some("An input with a required label, marked by a destructive asterisk suffix."),
+        snippet: "examples/browser/snippets/input-required.md",
+    },
+];
+
+// Stable field ids for `InputChanged` dispatch — independent of block
+// position so reordering blocks doesn't break value routing.
+const F_DEMO: usize = 0;
+const F_BASIC: usize = 1;
+const F_FIELD: usize = 2;
+const F_INLINE: usize = 3;
+const F_INVALID: usize = 4;
+const F_REQUIRED: usize = 5;
 
 pub struct InputPage {
     state: page::State,
@@ -72,7 +83,7 @@ pub struct InputPage {
 impl InputPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
-            state: page::State::new(page_index, &META),
+            state: page::State::new(page_index, BLOCKS),
             demo_value: String::new(),
             basic_value: String::new(),
             field_value: String::new(),
@@ -84,29 +95,20 @@ impl InputPage {
 }
 
 impl page::Page for InputPage {
-    fn page_index(&self) -> usize { self.state.page_index }
+    fn page_index(&self) -> usize {
+        self.state.page_index
+    }
     fn meta(&self) -> &'static page::Meta {
         &META
     }
-
-    fn snippets(&self) -> &[Option<Vec<markdown::Item>>] {
-        &self.state.snippets
+    fn blocks(&self) -> &'static [page::Block] {
+        BLOCKS
     }
-
-    fn visible(&self) -> &BTreeSet<usize> {
-        &self.state.visible
+    fn state(&self) -> &page::State {
+        &self.state
     }
-
-    fn example_ids(&self) -> &[Id] {
-        &self.state.example_ids
-    }
-
-    fn scrollable_id(&self) -> Id {
+    fn scrollable_id(&self) -> iced::widget::Id {
         self.state.scrollable_id.clone()
-    }
-
-    fn code_expanded(&self) -> &BTreeSet<usize> {
-        &self.state.code_expanded
     }
 
     fn init(&self) -> Task<Message> {
@@ -120,12 +122,12 @@ impl page::Page for InputPage {
         match event {
             page::Message::InputChanged(field, value) => {
                 match field {
-                    0 => self.demo_value = value,
-                    1 => self.basic_value = value,
-                    2 => self.field_value = value,
-                    3 => self.inline_value = value,
-                    4 => self.invalid_value = value,
-                    5 => self.required_value = value,
+                    F_DEMO => self.demo_value = value,
+                    F_BASIC => self.basic_value = value,
+                    F_FIELD => self.field_value = value,
+                    F_INLINE => self.inline_value = value,
+                    F_INVALID => self.invalid_value = value,
+                    F_REQUIRED => self.required_value = value,
                     _ => {}
                 }
                 Task::none()
@@ -138,49 +140,44 @@ impl page::Page for InputPage {
         self.state.reset_volatile();
     }
 
-    fn hero(&self) -> Option<page::Hero<'_, Message, Theme>> {
-        // Verbatim shadcn `input-demo.tsx`: Field+Label+Input+Description for
-        // an "API Key" form. Label uses `font-medium` (not semibold) per
-        // FieldLabel in `.nova/.../field.tsx:109`. page.rs adds card chrome.
+    fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
         let pi = self.state.page_index;
-        let content = column![
-            text::small("API Key").medium(),
-            input("sk-...", &self.demo_value)
-                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(0, v)))
-                .width(Fill),
-            text::muted("Your API key is encrypted and stored securely."),
-        ]
-        .spacing(8)
-        .width(320);
+        match id {
+            // Demo (hero): Field+Label+Input+Description for an "API Key"
+            // form. Verbatim shadcn `input-demo.tsx`.
+            "demo" => column![
+                text::small("API Key").medium(),
+                input("sk-...", &self.demo_value)
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_DEMO, v)))
+                    .width(Fill),
+                text::muted("Your API key is encrypted and stored securely."),
+            ]
+            .spacing(8)
+            .width(320)
+            .into(),
 
-        Some(page::Hero::Card(content.into()))
-    }
-
-    fn preview(&self, index: usize) -> iced::Element<'_, Message, Theme> {
-        let pi = self.state.page_index;
-        match index {
             // Basic: simple input with placeholder. Width 320 matches nova's
             // form input width — Input now defaults to Length::Shrink, so set
             // it explicitly here.
-            0 => input("Enter text", &self.basic_value)
-                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(1, v)))
+            "basic" => input("Enter text", &self.basic_value)
+                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_BASIC, v)))
                 .width(320)
                 .into(),
-            // Field: input with label "Username" and description. The input
-            // fills the 320-wide column (post-Shrink-default flip).
-            1 => column![
+
+            // Field: input with label "Username" and description.
+            "field" => column![
                 text::small("Username").medium(),
                 input("Enter your username", &self.field_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(2, v)))
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_FIELD, v)))
                     .width(Fill),
                 text::muted("Choose a unique username for your account."),
             ]
             .spacing(8)
             .width(320)
             .into(),
-            // Disabled — no `.on_input(...)` call ⇒ widget is disabled. The
-            // input fills the 320-wide column (post-Shrink-default flip).
-            2 => column![
+
+            // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
+            "disabled" => column![
                 text::small("Email").medium(),
                 input("Email", "").width(Fill),
                 text::muted("This field is currently disabled."),
@@ -188,15 +185,13 @@ impl page::Page for InputPage {
             .spacing(8)
             .width(320)
             .into(),
+
             // Invalid: destructive border + destructive focus ring
-            // (aria-invalid). First-class `theme::text_input::Invalid` variant
-            // — no `tweak` escape hatch needed at the call site. The 0.2-alpha
-            // ring (`aria-invalid:ring-destructive/20`) remains a follow-up
-            // pending an alpha-aware Ring tweak.
-            3 => column![
+            // (aria-invalid). First-class `theme::text_input::Invalid`.
+            "invalid" => column![
                 text::small("Invalid Input").medium(),
                 input("Error", &self.invalid_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(4, v)))
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INVALID, v)))
                     .width(Fill)
                     .style(theme::text_input::Invalid),
                 text::muted("This field contains validation errors."),
@@ -204,37 +199,34 @@ impl page::Page for InputPage {
             .spacing(8)
             .width(320)
             .into(),
-            // Inline: input + button side by side. Row drives the 400px
-            // overall width; input fills the remaining space next to the
-            // intrinsic-width button.
-            4 => row![
+
+            // Inline: input + button side by side.
+            "inline" => row![
                 input("Search...", &self.inline_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(3, v)))
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INLINE, v)))
                     .width(Fill),
                 button("Search").on_press(Message::Page(pi, page::Message::Noop)),
             ]
             .spacing(8)
             .width(400)
             .into(),
-            // Required: nova does this as inline rich-text — a single
-            // <FieldLabel> with a destructive <span> for the asterisk.
-            // `rich_text!` resolves each span's `Token` color against the
-            // active palette at draw time, so the asterisk re-colors when
-            // the theme switches.
-            5 => column![
+
+            // Required: rich-text with a destructive asterisk.
+            "required" => column![
                 rich_text![
                     span("Required Field ").size(text::size::SM).medium(),
                     span("*").size(text::size::SM).color(Token::Destructive),
                 ],
                 input("This field is required", &self.required_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(5, v)))
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_REQUIRED, v)))
                     .width(Fill),
                 text::muted("This field must be filled out."),
             ]
             .spacing(8)
             .width(320)
             .into(),
-            _ => unreachable!(),
+
+            _ => unreachable!("unknown input preview id: {id}"),
         }
     }
 }

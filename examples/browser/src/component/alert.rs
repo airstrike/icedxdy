@@ -2,16 +2,11 @@ mod action;
 mod default;
 mod destructive;
 
-use std::collections::BTreeSet;
-
-use iced::widget::Id;
-use icedxdy::widget::markdown;
 use iced::Task;
 
 use icedxdy::widget::{alert, column, container};
 use icedxdy::{Component, Theme};
 
-use crate::example;
 use crate::icon;
 use crate::page;
 
@@ -20,12 +15,34 @@ use crate::page;
 pub static META: page::Meta = page::Meta {
     title: "Alert",
     description: "Displays a callout for user attention.",
-    examples: &[
-        example::Meta { id: "basic", title: "Basic", description: Some("A basic alert with an icon, title and description."), snippet: "examples/browser/snippets/alert-basic.md" },
-        example::Meta { id: "destructive", title: "Destructive", description: Some("Use variant destructive to create a destructive alert."), snippet: "examples/browser/snippets/alert-destructive.md" },
-        example::Meta { id: "action", title: "Action", description: Some("Use AlertAction to add a button or other action element to the alert."), snippet: "examples/browser/snippets/alert-action.md" },
-    ],
 };
+
+pub static BLOCKS: &[page::Block] = &[
+    page::Block::Example {
+        id: "demo",
+        title: "",
+        description: None,
+        snippet: "",
+    },
+    page::Block::Example {
+        id: "basic",
+        title: "Basic",
+        description: Some("A basic alert with an icon, title and description."),
+        snippet: "examples/browser/snippets/alert-basic.md",
+    },
+    page::Block::Example {
+        id: "destructive",
+        title: "Destructive",
+        description: Some("Use variant destructive to create a destructive alert."),
+        snippet: "examples/browser/snippets/alert-destructive.md",
+    },
+    page::Block::Example {
+        id: "action",
+        title: "Action",
+        description: Some("Use AlertAction to add a button or other action element to the alert."),
+        snippet: "examples/browser/snippets/alert-action.md",
+    },
+];
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -39,44 +56,52 @@ pub struct AlertPage {
 impl AlertPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
-            state: page::State::new(page_index, &META),
+            state: page::State::new(page_index, BLOCKS),
         })
     }
 }
 
-fn view(index: usize) -> Component<'static, Message> {
-    match index {
-        0 => default::view(),
-        1 => destructive::view(),
-        2 => action::view(),
-        _ => unreachable!(),
-    }
+fn demo<'a>() -> Component<'a, Message> {
+    // Verbatim shadcn `alert-demo.tsx`: two stacked alerts capped at
+    // max-w-md (448px).
+    let stack = column![
+        alert()
+            .icon(icon::circle_check_big())
+            .title("Payment successful")
+            .description(
+                "Your payment of $29.99 has been processed. A receipt has been sent to your email address.",
+            ),
+        alert()
+            .icon(icon::info())
+            .title("New feature available")
+            .description(
+                "We've added dark mode support. You can enable it in your account settings.",
+            ),
+    ]
+    .spacing(16)
+    .width(iced::Length::Fill);
+
+    container(stack)
+        .width(iced::Length::Fill)
+        .max_width(448)
+        .into()
 }
 
 impl page::Page for AlertPage {
-    fn page_index(&self) -> usize { self.state.page_index }
+    fn page_index(&self) -> usize {
+        self.state.page_index
+    }
     fn meta(&self) -> &'static page::Meta {
         &META
     }
-
-    fn snippets(&self) -> &[Option<Vec<markdown::Item>>] {
-        &self.state.snippets
+    fn blocks(&self) -> &'static [page::Block] {
+        BLOCKS
     }
-
-    fn visible(&self) -> &BTreeSet<usize> {
-        &self.state.visible
+    fn state(&self) -> &page::State {
+        &self.state
     }
-
-    fn example_ids(&self) -> &[Id] {
-        &self.state.example_ids
-    }
-
-    fn scrollable_id(&self) -> Id {
+    fn scrollable_id(&self) -> iced::widget::Id {
         self.state.scrollable_id.clone()
-    }
-
-    fn code_expanded(&self) -> &BTreeSet<usize> {
-        &self.state.code_expanded
     }
 
     fn init(&self) -> Task<crate::Message> {
@@ -94,33 +119,16 @@ impl page::Page for AlertPage {
         self.state.reset_volatile();
     }
 
-    fn preview(&self, index: usize) -> iced::Element<'_, crate::Message, Theme> {
+    fn preview(&self, id: &str) -> iced::Element<'_, crate::Message, Theme> {
         let pi = self.state.page_index;
-        view(index).map(move |_| crate::Message::Page(pi, page::Message::Noop)).into()
-    }
-
-    fn hero(&self) -> Option<page::Hero<'_, crate::Message, Theme>> {
-        // Verbatim shadcn `alert-demo.tsx`: two stacked alerts capped at
-        // max-w-md (448px). page.rs handles the card chrome + centering.
-        let stack = column![
-            alert()
-                .icon(icon::circle_check_big())
-                .title("Payment successful")
-                .description(
-                    "Your payment of $29.99 has been processed. A receipt has been sent to your email address.",
-                ),
-            alert()
-                .icon(icon::info())
-                .title("New feature available")
-                .description(
-                    "We've added dark mode support. You can enable it in your account settings.",
-                ),
-        ]
-        .spacing(16)
-        .width(iced::Length::Fill);
-
-        let capped = container(stack).width(iced::Length::Fill).max_width(448);
-
-        Some(page::Hero::Card(capped.into()))
+        let view: Component<'_, Message> = match id {
+            "demo" => demo(),
+            "basic" => default::view(),
+            "destructive" => destructive::view(),
+            "action" => action::view(),
+            _ => unreachable!("unknown alert preview id: {id}"),
+        };
+        view.map(move |_| crate::Message::Page(pi, page::Message::Noop))
+            .into()
     }
 }

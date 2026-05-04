@@ -10,16 +10,15 @@
 
 mod app;
 mod component;
-mod example;
 mod fonts;
 mod icon;
 mod page;
 
 use iced::widget::column;
 use iced::{Element, Subscription, Task};
+use icedxdy::Theme;
 use icedxdy::widget::markdown::highlighter::Map;
 use icedxdy::widget::{center, progress, text};
-use icedxdy::Theme;
 
 use app::App;
 
@@ -37,6 +36,7 @@ fn parse_code_map(json: &str) -> Map {
 fn main() -> iced::Result {
     iced::application(Browser::new, Browser::update, Browser::view)
         .title("icedxdy \u{2022} components browser")
+        .window_size([1440.0, 900.0])
         .antialiasing(true)
         .subscription(Browser::subscription)
         .theme(Browser::theme)
