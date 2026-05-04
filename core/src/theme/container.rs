@@ -138,8 +138,27 @@ pub fn card_muted(theme: &Theme) -> Style {
     }
 }
 
-/// Code panel — bg-code, only bottom corners rounded.
+/// Standalone fenced code block — bg-code, all four corners rounded
+/// (`rounded-md`). Used by the markdown viewer for ``` blocks in
+/// page-level prose (Usage, API Reference, Cursor, etc.).
 pub fn code_block(theme: &Theme) -> Style {
+    Style {
+        background: Some(theme.palette().code.base.into()),
+        border: Border {
+            radius: radius::MD.into(),
+            width: 0.0,
+            color: Color::TRANSPARENT,
+        },
+        ..Style::default()
+    }
+}
+
+/// Code panel attached to a preview above — bg-code, only bottom corners
+/// rounded so it sits flush below the preview half of an example card.
+/// The example-card outer container's `clip(true)` + `card` style handles
+/// the rounded outer chrome; the panel's flat top corners meet the divider
+/// rule cleanly.
+pub fn code_block_panel(theme: &Theme) -> Style {
     Style {
         background: Some(theme.palette().code.base.into()),
         border: Border {

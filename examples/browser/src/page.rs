@@ -8,7 +8,9 @@ use iced::widget::{Id, column, sensor, stack};
 use iced::{Alignment, Background, Fill, Font, Pixels, Subscription, Task};
 
 use icedxdy::Size::*;
-use icedxdy::theme::container::{card, card_preview, code_block, code_fade_overlay};
+use icedxdy::theme::container::{
+    card, card_preview, code_block, code_block_panel, code_fade_overlay,
+};
 use icedxdy::theme::tweak::Opaque;
 use icedxdy::widget::container::Container;
 use icedxdy::widget::markdown;
@@ -393,7 +395,7 @@ fn render_example<'a>(
             let inner = Container::new(body)
                 .padding([12, 16])
                 .width(Fill)
-                .style(code_block);
+                .style(code_block_panel);
 
             if st.code_expanded.contains(&block_pos) {
                 let copy_btn: Component<'_, super::Message> =

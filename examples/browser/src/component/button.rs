@@ -33,7 +33,6 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "",
     },
-    page::Block::Md("examples/browser/snippets/button-installation.md"),
     page::Block::Md("examples/browser/snippets/button-usage.md"),
     page::Block::Md("examples/browser/snippets/button-cursor.md"),
     page::Block::Group {

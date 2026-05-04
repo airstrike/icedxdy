@@ -19,7 +19,6 @@ pub static META: page::Meta = page::Meta {
 pub static BLOCKS: &[page::Block] = &[
     // Article hero: rendered as inline page-level prose with no card chrome.
     page::Block::Inline { id: "demo" },
-    page::Block::Md("examples/browser/snippets/text-installation.md"),
     page::Block::Md("examples/browser/snippets/text-usage.md"),
     page::Block::Group {
         title: "Examples",

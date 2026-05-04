@@ -20,7 +20,6 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "",
     },
-    page::Block::Md("examples/browser/snippets/progress-installation.md"),
     page::Block::Md("examples/browser/snippets/progress-usage.md"),
     page::Block::Group {
         title: "Examples",

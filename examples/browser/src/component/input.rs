@@ -27,7 +27,6 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "",
     },
-    page::Block::Md("examples/browser/snippets/input-installation.md"),
     page::Block::Md("examples/browser/snippets/input-usage.md"),
     page::Block::Group {
         title: "Examples",
