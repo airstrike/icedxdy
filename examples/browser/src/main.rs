@@ -10,6 +10,7 @@
 
 mod app;
 mod component;
+mod font;
 mod fonts;
 mod icon;
 mod page;
@@ -41,6 +42,7 @@ fn main() -> iced::Result {
         .subscription(Browser::subscription)
         .theme(Browser::theme)
         .font(icon::FONT)
+        .font(font::GEIST_MONO)
         .run()
 }
 

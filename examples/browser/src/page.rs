@@ -16,6 +16,7 @@ use icedxdy::widget::markdown::widget::Highlight;
 use icedxdy::widget::{button, rule, text};
 use icedxdy::{Component, Palette, Theme, radius, theme};
 
+use crate::font;
 use crate::icon;
 
 /// Height for preview containers (shadcn uses h-72 = 288px). Per-example
@@ -565,12 +566,16 @@ fn inline_style_from_palette(palette: &Palette) -> markdown::Style {
         // expresses chip padding in pixels of font-size; 1px on the sides
         // stays compact without overlapping adjacent words.
         inline_code_padding: iced::Padding::default().left(2).right(2),
-        inline_code_font: Font::MONOSPACE,
+        // Bundled Geist Mono — matches shadcn nova's monospace surface
+        // on the live docs site. Loaded at startup in `main.rs`; falls
+        // back to cosmic-text's default monospace if the registration
+        // fails for any reason.
+        inline_code_font: Font::new(font::GEIST_MONO_NAME),
         // Baseline matching body=16; `markdown::Settings::with_text_size`
         // overwrites this to `text_size * 0.875` when the snippet renders,
         // so this only matters if a caller wires up `Settings` manually.
         inline_code_size: Pixels(14.0),
-        code_block_font: Font::MONOSPACE,
+        code_block_font: Font::new(font::GEIST_MONO_NAME),
         // Snippet bodies rarely contain links, but when they do the
         // primary base reads as a "clickable" accent in either theme
         // (dark text on light, light text on dark).
