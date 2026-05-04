@@ -12,7 +12,9 @@ keywords.workspace = true
 [features]
 default = []
 markdown = ["iced_widget/markdown"]
+sweeten = ["dep:sweeten"]
 
 [dependencies]
 iced_core.workspace = true
 iced_widget.workspace = true
+sweeten = { workspace = true, optional = true }

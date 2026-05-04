@@ -13,6 +13,7 @@ keywords.workspace = true
 default = []
 markdown = ["icedxdy_core/markdown", "icedxdy_widget/markdown"]
 spinner = ["icedxdy_widget/spinner"]
+sweeten = ["icedxdy_core/sweeten"]
 
 [dependencies]
 icedxdy_core.workspace = true
@@ -49,6 +50,10 @@ iced_core = "0.15.0-dev"
 iced_runtime = "0.15.0-dev"
 iced_selector = "0.15.0-dev"
 iced_widget = "0.15.0-dev"
+# Sweeten ships an enhanced data-grid `Table` (border, sticky header,
+# header underline) on its `dev` branch. Once `dev` merges to `master`
+# upstream, drop the `branch` qualifier.
+sweeten = { git = "https://github.com/airstrike/sweeten.git", branch = "dev" }
 log = "0.4"
 pulldown-cmark = { version = "0.12", default-features = false, features = ["html"] }
 serde = { version = "1", features = ["derive"] }

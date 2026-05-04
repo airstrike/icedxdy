@@ -1,8 +1,9 @@
-use iced::widget::{column, row};
+use iced::widget::column;
 use iced::{Fill, Task};
 use icedxdy::Size::Sm;
 use icedxdy::widget::{container, rule, text};
 use icedxdy::{Theme, radius, theme};
+use sweeten::widget::table;
 
 use crate::Message;
 use crate::page;
@@ -285,23 +286,35 @@ fn inline_code_card<'a>(code: &'a str) -> iced::Element<'a, Message, Theme> {
         .into()
 }
 
-/// Render a small two-column table approximating nova's typography-table.
+/// Render the two-column nova typography-table via sweeten's enhanced
+/// `Table` (border + grid separators), matching the shadcn original's
+/// fully-bordered cells.
 fn table_card<'a>() -> iced::Element<'a, Message, Theme> {
-    let cell = |s: &'a str| container(text::p(s)).width(Fill).padding([8, 16]);
-    let header_cell =
-        |s: &'a str| container(text::p(s).bold()).width(Fill).padding([8, 16]);
+    let rows: &[(&'static str, &'static str)] = &[
+        ("Empty", "Overflowing"),
+        ("Modest", "Satisfied"),
+        ("Full", "Ecstatic"),
+    ];
 
-    column![
-        rule::horizontal(1),
-        row![header_cell("King's Treasury"), header_cell("People's happiness")],
-        rule::horizontal(1),
-        row![cell("Empty"), cell("Overflowing")],
-        rule::horizontal(1),
-        row![cell("Modest"), cell("Satisfied")],
-        rule::horizontal(1),
-        row![cell("Full"), cell("Ecstatic")],
-        rule::horizontal(1),
-    ]
-    .width(Fill)
-    .into()
+    let header = |label: &'static str| text::p(label).bold().into();
+
+    let columns = [
+        table::column(Some(header("King's Treasury")), |row: &(&str, &str)| {
+            text::p(row.0)
+        })
+        .width(Fill),
+        table::column(
+            Some(header("People's happiness")),
+            |row: &(&str, &str)| text::p(row.1),
+        )
+        .width(Fill),
+    ];
+
+    table::table(columns, rows)
+        .width(Fill)
+        .padding_x(16)
+        .padding_y(8)
+        .separator(1)
+        .border(1)
+        .into()
 }

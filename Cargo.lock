@@ -388,6 +388,7 @@ dependencies = [
  "iced_lucide",
  "iced_widget",
  "icedxdy",
+ "sweeten",
  "tokio",
 ]
 
@@ -1678,6 +1679,7 @@ version = "0.1.0"
 dependencies = [
  "iced_core",
  "iced_widget",
+ "sweeten",
 ]
 
 [[package]]
@@ -3664,6 +3666,17 @@ dependencies = [
  "skrifa 0.37.0",
  "yazi",
  "zeno",
+]
+
+[[package]]
+name = "sweeten"
+version = "0.15.0-dev"
+source = "git+https://github.com/airstrike/sweeten.git?branch=dev#1b9091bf7bad2b0acd5125a43a7e4a6700d73c2f"
+dependencies = [
+ "iced_core",
+ "iced_runtime",
+ "iced_widget",
+ "unicode-segmentation",
 ]
 
 [[package]]

@@ -1,24 +1,34 @@
 ```rust
-use icedxdy::widget::{column, container, row, rule, text};
-use iced::Length;
+use iced::Length::Fill;
+use icedxdy::widget::text;
+use sweeten::widget::table;
 
-// iced has no native table widget; nova's `<table>` lays out as bordered
-// rows of cells. We approximate with a column of `row![left, right]`
-// separated by 1px horizontal rules.
-let cell = |s: &str| container(text::p(s)).width(Length::Fill).padding([8, 16]);
-let header_cell =
-    |s: &str| container(text::p(s).bold()).width(Length::Fill).padding([8, 16]);
+// Sweeten's enhanced `Table` ships outer border + sticky-header + header
+// underline on top of iced's stock data-grid table. Two columns, three
+// rows of static data; cells are produced by per-column view closures.
+let rows: &[(&'static str, &'static str)] = &[
+    ("Empty", "Overflowing"),
+    ("Modest", "Satisfied"),
+    ("Full", "Ecstatic"),
+];
 
-column![
-    rule::horizontal(1),
-    row![header_cell("King's Treasury"), header_cell("People's happiness")],
-    rule::horizontal(1),
-    row![cell("Empty"), cell("Overflowing")],
-    rule::horizontal(1),
-    row![cell("Modest"), cell("Satisfied")],
-    rule::horizontal(1),
-    row![cell("Full"), cell("Ecstatic")],
-    rule::horizontal(1),
-]
-.width(Length::Fill)
+let header = |label: &'static str| text::p(label).bold().into();
+
+let columns = [
+    table::column(Some(header("King's Treasury")), |row: &(&str, &str)| {
+        text::p(row.0)
+    })
+    .width(Fill),
+    table::column(Some(header("People's happiness")), |row: &(&str, &str)| {
+        text::p(row.1)
+    })
+    .width(Fill),
+];
+
+table::table(columns, rows)
+    .width(Fill)
+    .padding_x(16)
+    .padding_y(8)
+    .separator(1)
+    .border(1)
 ```
