@@ -8,9 +8,7 @@ use icedxdy::widget::table;
 use crate::Message;
 use crate::page;
 
-// Intentional skips per CLAUDE.md: typography-rtl (RTL). Typography on
-// shadcn does not expose an API Reference page (it is a collection of
-// text helpers, not a single component) — match that here.
+// Intentional skips per CLAUDE.md: typography-rtl (RTL).
 pub static META: page::Meta = page::Meta {
     title: "Typography",
     description: "Styles for headings, paragraphs, lists...etc.",
@@ -161,8 +159,7 @@ impl page::Page for TextPage {
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
         match id {
-            // Article hero — verbatim shadcn `typography-demo.tsx`. Rendered
-            // as inline page-level prose (Block::Inline, no card chrome).
+            // Article hero — verbatim shadcn `typography-demo.tsx`.
             "demo" => column![
                 text::h1("Taxing Laughter: The Joke Tax Chronicles"),
                 text::lead(
