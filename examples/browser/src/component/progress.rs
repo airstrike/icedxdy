@@ -7,6 +7,7 @@ use icedxdy::widget::{column, container, progress, row, slider, space, text};
 use crate::Message;
 use crate::page;
 
+// Intentional skips per CLAUDE.md: progress-rtl (RTL).
 pub static META: page::Meta = page::Meta {
     title: "Progress",
     description: "Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.",
@@ -19,18 +20,26 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "",
     },
-    page::Block::Example {
-        id: "label",
-        title: "Label",
-        description: Some("Use a Field component to add a label to the progress bar."),
-        snippet: "examples/browser/snippets/progress-label.md",
+    page::Block::Md("examples/browser/snippets/progress-installation.md"),
+    page::Block::Md("examples/browser/snippets/progress-usage.md"),
+    page::Block::Group {
+        title: "Examples",
+        children: &[
+            page::Block::Example {
+                id: "label",
+                title: "Label",
+                description: Some("Use a Field component to add a label to the progress bar."),
+                snippet: "examples/browser/snippets/progress-label.md",
+            },
+            page::Block::Example {
+                id: "controlled",
+                title: "Controlled",
+                description: Some("A progress bar that can be controlled by a slider."),
+                snippet: "examples/browser/snippets/progress-controlled.md",
+            },
+        ],
     },
-    page::Block::Example {
-        id: "controlled",
-        title: "Controlled",
-        description: Some("A progress bar that can be controlled by a slider."),
-        snippet: "examples/browser/snippets/progress-controlled.md",
-    },
+    page::Block::Md("examples/browser/snippets/progress-api-reference.md"),
 ];
 
 /// Initial value while we wait for the delay-fire (matches React's

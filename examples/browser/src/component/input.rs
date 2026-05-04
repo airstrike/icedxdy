@@ -11,6 +11,10 @@ use icedxdy::widget::{button, column, input, row, text};
 use crate::Message;
 use crate::page;
 
+// Intentional skips per CLAUDE.md: input-rtl (RTL). Field Group, File,
+// Grid, Badge, Input Group, Button Group, and Form examples are also
+// skipped — they rely on widgets (Field, FieldGroup, InputGroup,
+// ButtonGroup, Select) that have not yet been ported.
 pub static META: page::Meta = page::Meta {
     title: "Input",
     description: "A text input component for forms and user data entry with built-in styling and accessibility features.",
@@ -23,42 +27,50 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "",
     },
-    page::Block::Example {
-        id: "basic",
-        title: "Basic",
-        description: Some("A simple input with a placeholder."),
-        snippet: "examples/browser/snippets/input-basic.md",
+    page::Block::Md("examples/browser/snippets/input-installation.md"),
+    page::Block::Md("examples/browser/snippets/input-usage.md"),
+    page::Block::Group {
+        title: "Examples",
+        children: &[
+            page::Block::Example {
+                id: "basic",
+                title: "Basic",
+                description: Some("A simple input with a placeholder."),
+                snippet: "examples/browser/snippets/input-basic.md",
+            },
+            page::Block::Example {
+                id: "field",
+                title: "Field",
+                description: Some("An input with a label and description."),
+                snippet: "examples/browser/snippets/input-field.md",
+            },
+            page::Block::Example {
+                id: "disabled",
+                title: "Disabled",
+                description: Some("A disabled input field."),
+                snippet: "examples/browser/snippets/input-disabled.md",
+            },
+            page::Block::Example {
+                id: "invalid",
+                title: "Invalid",
+                description: Some("An input with validation errors, styled with a destructive border and focus ring."),
+                snippet: "examples/browser/snippets/input-invalid.md",
+            },
+            page::Block::Example {
+                id: "inline",
+                title: "Inline",
+                description: Some("Use an input with a button to create a search input."),
+                snippet: "examples/browser/snippets/input-inline.md",
+            },
+            page::Block::Example {
+                id: "required",
+                title: "Required",
+                description: Some("An input with a required label, marked by a destructive asterisk suffix."),
+                snippet: "examples/browser/snippets/input-required.md",
+            },
+        ],
     },
-    page::Block::Example {
-        id: "field",
-        title: "Field",
-        description: Some("An input with a label and description."),
-        snippet: "examples/browser/snippets/input-field.md",
-    },
-    page::Block::Example {
-        id: "disabled",
-        title: "Disabled",
-        description: Some("A disabled input field."),
-        snippet: "examples/browser/snippets/input-disabled.md",
-    },
-    page::Block::Example {
-        id: "invalid",
-        title: "Invalid",
-        description: Some("An input with validation errors, styled with a destructive border and focus ring."),
-        snippet: "examples/browser/snippets/input-invalid.md",
-    },
-    page::Block::Example {
-        id: "inline",
-        title: "Inline",
-        description: Some("Use an input with a button to create a search input."),
-        snippet: "examples/browser/snippets/input-inline.md",
-    },
-    page::Block::Example {
-        id: "required",
-        title: "Required",
-        description: Some("An input with a required label, marked by a destructive asterisk suffix."),
-        snippet: "examples/browser/snippets/input-required.md",
-    },
+    page::Block::Md("examples/browser/snippets/input-api-reference.md"),
 ];
 
 // Stable field ids for `InputChanged` dispatch — independent of block

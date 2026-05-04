@@ -6,6 +6,8 @@ use icedxdy::{Component, Theme};
 use crate::icon;
 use crate::page;
 
+// Intentional skips per CLAUDE.md: badge-colors (Custom Colors) and
+// badge-rtl (RTL).
 pub static META: page::Meta = page::Meta {
     title: "Badge",
     description: "Displays a badge or a component that looks like a badge.",
@@ -18,30 +20,38 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "",
     },
-    page::Block::Example {
-        id: "variants",
-        title: "Variants",
-        description: Some("Use the variant prop to change the variant of the badge."),
-        snippet: "examples/browser/snippets/badge-variants.md",
+    page::Block::Md("examples/browser/snippets/badge-installation.md"),
+    page::Block::Md("examples/browser/snippets/badge-usage.md"),
+    page::Block::Group {
+        title: "Examples",
+        children: &[
+            page::Block::Example {
+                id: "variants",
+                title: "Variants",
+                description: Some("Use the variant prop to change the variant of the badge."),
+                snippet: "examples/browser/snippets/badge-variants.md",
+            },
+            page::Block::Example {
+                id: "icon",
+                title: "With Icon",
+                description: Some("You can render an icon inside the badge."),
+                snippet: "examples/browser/snippets/badge-icon.md",
+            },
+            page::Block::Example {
+                id: "spinner",
+                title: "With Spinner",
+                description: Some("You can render a spinner inside the badge."),
+                snippet: "examples/browser/snippets/badge-spinner.md",
+            },
+            page::Block::Example {
+                id: "link",
+                title: "Link",
+                description: Some("Use the on_press builder to render a clickable badge."),
+                snippet: "examples/browser/snippets/badge-link.md",
+            },
+        ],
     },
-    page::Block::Example {
-        id: "icon",
-        title: "With Icon",
-        description: Some("You can render an icon inside the badge."),
-        snippet: "examples/browser/snippets/badge-icon.md",
-    },
-    page::Block::Example {
-        id: "spinner",
-        title: "With Spinner",
-        description: Some("You can render a spinner inside the badge."),
-        snippet: "examples/browser/snippets/badge-spinner.md",
-    },
-    page::Block::Example {
-        id: "link",
-        title: "As Link",
-        description: Some("Use the on_press builder to render a clickable badge."),
-        snippet: "examples/browser/snippets/badge-link.md",
-    },
+    page::Block::Md("examples/browser/snippets/badge-api-reference.md"),
 ];
 
 #[derive(Debug, Clone)]

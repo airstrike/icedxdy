@@ -8,6 +8,9 @@ use icedxdy::{Theme, radius, theme};
 use crate::Message;
 use crate::page;
 
+// Intentional skips per CLAUDE.md: typography-rtl (RTL). Typography on
+// shadcn does not expose an API Reference page (it is a collection of
+// text helpers, not a single component) — match that here.
 pub static META: page::Meta = page::Meta {
     title: "Typography",
     description: "Styles for headings, paragraphs, lists...etc.",
@@ -16,83 +19,90 @@ pub static META: page::Meta = page::Meta {
 pub static BLOCKS: &[page::Block] = &[
     // Article hero: rendered as inline page-level prose with no card chrome.
     page::Block::Inline { id: "demo" },
-    page::Block::Example {
-        id: "h1",
-        title: "Heading 1",
-        description: None,
-        snippet: "examples/browser/snippets/text-h1.md",
-    },
-    page::Block::Example {
-        id: "h2",
-        title: "Heading 2",
-        description: None,
-        snippet: "examples/browser/snippets/text-h2.md",
-    },
-    page::Block::Example {
-        id: "h3",
-        title: "Heading 3",
-        description: None,
-        snippet: "examples/browser/snippets/text-h3.md",
-    },
-    page::Block::Example {
-        id: "h4",
-        title: "Heading 4",
-        description: None,
-        snippet: "examples/browser/snippets/text-h4.md",
-    },
-    page::Block::Example {
-        id: "p",
-        title: "Paragraph",
-        description: None,
-        snippet: "examples/browser/snippets/text-p.md",
-    },
-    page::Block::Example {
-        id: "blockquote",
-        title: "Blockquote",
-        description: None,
-        snippet: "examples/browser/snippets/text-blockquote.md",
-    },
-    page::Block::Example {
-        id: "table",
-        title: "Table",
-        description: None,
-        snippet: "examples/browser/snippets/text-table.md",
-    },
-    page::Block::Example {
-        id: "list",
-        title: "List",
-        description: None,
-        snippet: "examples/browser/snippets/text-list.md",
-    },
-    page::Block::Example {
-        id: "inline-code",
-        title: "Inline code",
-        description: None,
-        snippet: "examples/browser/snippets/text-inline-code.md",
-    },
-    page::Block::Example {
-        id: "lead",
-        title: "Lead",
-        description: None,
-        snippet: "examples/browser/snippets/text-lead.md",
-    },
-    page::Block::Example {
-        id: "large",
-        title: "Large",
-        description: None,
-        snippet: "examples/browser/snippets/text-large.md",
-    },
-    page::Block::Example {
-        id: "small",
-        title: "Small",
-        description: None,
-        snippet: "examples/browser/snippets/text-small.md",
-    },
-    page::Block::Example {
-        id: "muted",
-        title: "Muted",
-        description: None,
-        snippet: "examples/browser/snippets/text-muted.md",
+    page::Block::Md("examples/browser/snippets/text-installation.md"),
+    page::Block::Md("examples/browser/snippets/text-usage.md"),
+    page::Block::Group {
+        title: "Examples",
+        children: &[
+            page::Block::Example {
+                id: "h1",
+                title: "Heading 1",
+                description: None,
+                snippet: "examples/browser/snippets/text-h1.md",
+            },
+            page::Block::Example {
+                id: "h2",
+                title: "Heading 2",
+                description: None,
+                snippet: "examples/browser/snippets/text-h2.md",
+            },
+            page::Block::Example {
+                id: "h3",
+                title: "Heading 3",
+                description: None,
+                snippet: "examples/browser/snippets/text-h3.md",
+            },
+            page::Block::Example {
+                id: "h4",
+                title: "Heading 4",
+                description: None,
+                snippet: "examples/browser/snippets/text-h4.md",
+            },
+            page::Block::Example {
+                id: "p",
+                title: "Paragraph",
+                description: None,
+                snippet: "examples/browser/snippets/text-p.md",
+            },
+            page::Block::Example {
+                id: "blockquote",
+                title: "Blockquote",
+                description: None,
+                snippet: "examples/browser/snippets/text-blockquote.md",
+            },
+            page::Block::Example {
+                id: "table",
+                title: "Table",
+                description: None,
+                snippet: "examples/browser/snippets/text-table.md",
+            },
+            page::Block::Example {
+                id: "list",
+                title: "List",
+                description: None,
+                snippet: "examples/browser/snippets/text-list.md",
+            },
+            page::Block::Example {
+                id: "inline-code",
+                title: "Inline code",
+                description: None,
+                snippet: "examples/browser/snippets/text-inline-code.md",
+            },
+            page::Block::Example {
+                id: "lead",
+                title: "Lead",
+                description: None,
+                snippet: "examples/browser/snippets/text-lead.md",
+            },
+            page::Block::Example {
+                id: "large",
+                title: "Large",
+                description: None,
+                snippet: "examples/browser/snippets/text-large.md",
+            },
+            page::Block::Example {
+                id: "small",
+                title: "Small",
+                description: None,
+                snippet: "examples/browser/snippets/text-small.md",
+            },
+            page::Block::Example {
+                id: "muted",
+                title: "Muted",
+                description: None,
+                snippet: "examples/browser/snippets/text-muted.md",
+            },
+        ],
     },
 ];
 

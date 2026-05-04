@@ -17,6 +17,10 @@ use icedxdy::{Component, Theme};
 
 use crate::page;
 
+// Intentional skips per CLAUDE.md: button-rtl (RTL). Button Group and
+// As Child examples are also skipped — Button Group is a separate
+// widget we have not yet ported, and As Child relies on Tailwind's
+// `data-slot` cascade that we don't reproduce.
 pub static META: page::Meta = page::Meta {
     title: "Button",
     description: "Displays a button or a component that looks like a button.",
@@ -29,72 +33,81 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "",
     },
-    page::Block::Example {
-        id: "size",
-        title: "Size",
-        description: Some("Use the size prop to change the size of the button."),
-        snippet: "examples/browser/snippets/button-size.md",
+    page::Block::Md("examples/browser/snippets/button-installation.md"),
+    page::Block::Md("examples/browser/snippets/button-usage.md"),
+    page::Block::Md("examples/browser/snippets/button-cursor.md"),
+    page::Block::Group {
+        title: "Examples",
+        children: &[
+            page::Block::Example {
+                id: "size",
+                title: "Size",
+                description: Some("Use the size prop to change the size of the button."),
+                snippet: "examples/browser/snippets/button-size.md",
+            },
+            page::Block::Example {
+                id: "default",
+                title: "Default",
+                description: None,
+                snippet: "examples/browser/snippets/button-default.md",
+            },
+            page::Block::Example {
+                id: "outline",
+                title: "Outline",
+                description: None,
+                snippet: "examples/browser/snippets/button-outline.md",
+            },
+            page::Block::Example {
+                id: "secondary",
+                title: "Secondary",
+                description: None,
+                snippet: "examples/browser/snippets/button-secondary.md",
+            },
+            page::Block::Example {
+                id: "ghost",
+                title: "Ghost",
+                description: None,
+                snippet: "examples/browser/snippets/button-ghost.md",
+            },
+            page::Block::Example {
+                id: "destructive",
+                title: "Destructive",
+                description: None,
+                snippet: "examples/browser/snippets/button-destructive.md",
+            },
+            page::Block::Example {
+                id: "link",
+                title: "Link",
+                description: None,
+                snippet: "examples/browser/snippets/button-link.md",
+            },
+            page::Block::Example {
+                id: "icon",
+                title: "Icon",
+                description: None,
+                snippet: "examples/browser/snippets/button-icon.md",
+            },
+            page::Block::Example {
+                id: "with-icon",
+                title: "With Icon",
+                description: None,
+                snippet: "examples/browser/snippets/button-with-icon.md",
+            },
+            page::Block::Example {
+                id: "rounded",
+                title: "Rounded",
+                description: Some("Use rounded styling to make the button circular."),
+                snippet: "examples/browser/snippets/button-rounded.md",
+            },
+            page::Block::Example {
+                id: "spinner",
+                title: "Spinner",
+                description: Some("Show a loading spinner inside the button."),
+                snippet: "examples/browser/snippets/button-spinner.md",
+            },
+        ],
     },
-    page::Block::Example {
-        id: "default",
-        title: "Default",
-        description: None,
-        snippet: "examples/browser/snippets/button-default.md",
-    },
-    page::Block::Example {
-        id: "outline",
-        title: "Outline",
-        description: None,
-        snippet: "examples/browser/snippets/button-outline.md",
-    },
-    page::Block::Example {
-        id: "secondary",
-        title: "Secondary",
-        description: None,
-        snippet: "examples/browser/snippets/button-secondary.md",
-    },
-    page::Block::Example {
-        id: "ghost",
-        title: "Ghost",
-        description: None,
-        snippet: "examples/browser/snippets/button-ghost.md",
-    },
-    page::Block::Example {
-        id: "destructive",
-        title: "Destructive",
-        description: None,
-        snippet: "examples/browser/snippets/button-destructive.md",
-    },
-    page::Block::Example {
-        id: "link",
-        title: "Link",
-        description: None,
-        snippet: "examples/browser/snippets/button-link.md",
-    },
-    page::Block::Example {
-        id: "icon",
-        title: "Icon",
-        description: None,
-        snippet: "examples/browser/snippets/button-icon.md",
-    },
-    page::Block::Example {
-        id: "with-icon",
-        title: "With Icon",
-        description: None,
-        snippet: "examples/browser/snippets/button-with-icon.md",
-    },
-    page::Block::Example {
-        id: "rounded",
-        title: "Rounded",
-        description: Some("Use rounded styling to make the button circular."),
-        snippet: "examples/browser/snippets/button-rounded.md",
-    },
-    page::Block::Example {
-        id: "spinner",
-        title: "Spinner",
-        description: Some("Show a loading spinner inside the button."),
-        snippet: "examples/browser/snippets/button-spinner.md",
-    },
+    page::Block::Md("examples/browser/snippets/button-api-reference.md"),
 ];
 
 #[derive(Debug, Clone)]
