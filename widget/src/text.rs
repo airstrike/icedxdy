@@ -18,7 +18,8 @@ use crate::core::text::{Fragment, IntoFragment};
 use iced_widget::text::StyleFn;
 use iced_widget::Renderer;
 
-use crate::component::IntoElement;
+use crate::component::{Component, IntoElement};
+use crate::rule;
 use icedxdy_core::theme;
 use crate::Size;
 use icedxdy_core::Theme;
@@ -263,19 +264,69 @@ pub fn xs<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .style(theme::text::Foreground)
 }
 
-/// A blockquote line. Shadcn classlist: `mt-6 border-l-2 pl-6 italic`.
+/// A blockquote: 2px left rule + 24px gap + italic body, all in one
+/// widget. Mirrors shadcn nova's `border-l-2 pl-6 italic` cascade.
 ///
-/// Italic is applied via `font::Style::Italic`; the left-border + horizontal
-/// padding are paragraph-level decorations the Text widget alone can't
-/// express, so the call site composes the visual border via a `row` +
-/// `Rule`. This helper sets size, italic, foreground color, and a
-/// fill width so the quote wraps inside its parent.
-pub fn blockquote<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
-    Text::new(content)
-        .size(size::BASE)
-        .italic()
-        .style(theme::text::Foreground)
-        .width(Fill)
+/// Vertical spacing (`mt-6` in shadcn) is the caller's responsibility —
+/// drive it from the enclosing column's `.spacing(...)`.
+pub struct Blockquote<'a> {
+    body: Text<'a>,
+}
+
+impl<'a> Blockquote<'a> {
+    /// Override the body text size. Defaults to `size::BASE` (16px).
+    pub fn size(mut self, size: impl Into<Size>) -> Self {
+        self.body = self.body.size(size);
+        self
+    }
+
+    /// Override the body text style. Defaults to `theme::text::Foreground`.
+    pub fn style(mut self, style: impl Into<StyleFn<'a, Theme>>) -> Self {
+        self.body = self.body.style(style);
+        self
+    }
+}
+
+/// Create a [`Blockquote`] for the given quote text. Italic, foreground
+/// color, fill width — plus the 2px left rule + 24px left padding that
+/// the bare `Text` helper alone can't express.
+pub fn blockquote<'a>(content: impl IntoFragment<'a>) -> Blockquote<'a> {
+    Blockquote {
+        body: Text::new(content)
+            .size(size::BASE)
+            .italic()
+            .style(theme::text::Foreground)
+            .width(Fill),
+    }
+}
+
+impl<'a, Message: 'a> From<Blockquote<'a>>
+    for iced_core::Element<'a, Message, Theme, Renderer>
+{
+    fn from(b: Blockquote<'a>) -> Self {
+        Box::new(b).into_element()
+    }
+}
+
+impl<'a, Message: 'a> From<Blockquote<'a>> for Component<'a, Message> {
+    fn from(b: Blockquote<'a>) -> Self {
+        Component::new(b)
+    }
+}
+
+impl<'a, Message: 'a> IntoElement<'a, Message> for Blockquote<'a> {
+    fn into_element(
+        self: Box<Self>,
+    ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        let Blockquote { body } = *self;
+
+        iced_widget::Row::new()
+            .spacing(24)
+            .height(Length::Shrink)
+            .push(rule::vertical(2))
+            .push(body.build())
+            .into()
+    }
 }
 
 /// An inline `code`-styled fragment. Shadcn classlist:

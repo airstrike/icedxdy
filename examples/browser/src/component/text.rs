@@ -166,7 +166,7 @@ impl page::Page for TextPage {
                     "The king thought long and hard, and finally came up with a \
                      brilliant plan: he would tax the jokes in the kingdom."
                 ),
-                blockquote_card(
+                text::blockquote(
                     "\"After all,\" he said, \"everyone enjoys a good joke, so it's \
                      only fair that they should pay for the privilege.\""
                 ),
@@ -237,10 +237,11 @@ impl page::Page for TextPage {
             )
             .into(),
 
-            "blockquote" => blockquote_card(
+            "blockquote" => text::blockquote(
                 "\"After all,\" he said, \"everyone enjoys a good joke, so it's only \
                  fair that they should pay for the privilege.\""
-            ),
+            )
+            .into(),
 
             "table" => table_card(),
 
@@ -272,14 +273,6 @@ impl page::Page for TextPage {
 fn h2_with_border<'a>(content: &'a str) -> iced::Element<'a, Message, Theme> {
     column![text::h2(content), rule::horizontal(1)]
         .spacing(8)
-        .into()
-}
-
-/// Compose blockquote's left-border + horizontal padding via row + Rule.
-fn blockquote_card<'a>(quote: &'a str) -> iced::Element<'a, Message, Theme> {
-    row![rule::vertical(2), text::blockquote(quote)]
-        .spacing(24)
-        .height(Length::Shrink)
         .into()
 }
 
