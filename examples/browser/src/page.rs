@@ -536,10 +536,16 @@ fn snippet<'a>(
     items: &'a Vec<markdown::Item>,
     viewer: &'a SnippetViewer,
 ) -> Component<'a, super::Message> {
-    let settings = markdown::Settings {
+    let mut settings = markdown::Settings {
         code_size: Pixels(13.0),
         ..markdown::Settings::with_style(viewer.style)
     };
+    // `Settings::with_style` auto-derives inline_code_size as text_size *
+    // 0.875 (= 14 for body 16). Geist Mono's cap-height reads ~1px taller
+    // than Inter Tight at the same nominal size, so 14 still looks bigger
+    // than body. Pin inline at 13 to land visually-balanced with the
+    // surrounding prose.
+    settings.style.inline_code_size = Pixels(13.0);
     markdown::view_with(items, settings, viewer)
         .map(move |url| super::Message::Page(page_index, Message::LinkClicked(url)))
         .into()
