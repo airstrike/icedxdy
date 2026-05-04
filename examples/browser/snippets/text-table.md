@@ -1,28 +1,20 @@
 ```rust
-use iced::Length::Fill;
-use icedxdy::widget::text;
-use sweeten::widget::table;
+use iced::Fill;
+use icedxdy::widget::{table, text};
 
-// Sweeten's enhanced `Table` ships outer border + sticky-header + header
-// underline on top of iced's stock data-grid table. Two columns, three
-// rows of static data; cells are produced by per-column view closures.
-let rows: &[(&'static str, &'static str)] = &[
+let rows = &[
     ("Empty", "Overflowing"),
     ("Modest", "Satisfied"),
     ("Full", "Ecstatic"),
 ];
 
-let header = |label: &'static str| text::p(label).bold().into();
+let header = |label| text::p(label).bold().into();
 
 let columns = [
-    table::column(Some(header("King's Treasury")), |row: &(&str, &str)| {
-        text::p(row.0)
-    })
-    .width(Fill),
-    table::column(Some(header("People's happiness")), |row: &(&str, &str)| {
-        text::p(row.1)
-    })
-    .width(Fill),
+    table::column(Some(header("King's Treasury")), |row: &(_, _)| text::p(row.0))
+        .width(Fill),
+    table::column(Some(header("People's happiness")), |row: &(_, _)| text::p(row.1))
+        .width(Fill),
 ];
 
 table::table(columns, rows)

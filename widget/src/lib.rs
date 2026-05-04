@@ -19,6 +19,11 @@ pub mod separator;
 pub mod size;
 #[cfg(feature = "spinner")]
 pub mod spinner;
+/// Re-export of sweeten's table module so consumers reach the table API
+/// without taking sweeten as a direct dependency. Catalog impl for our
+/// `Theme` lives in core (also feature-gated).
+#[cfg(feature = "sweeten")]
+pub use sweeten::widget::table;
 pub mod text;
 pub mod text_input;
 pub mod weight;

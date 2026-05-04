@@ -13,7 +13,7 @@ keywords.workspace = true
 default = []
 markdown = ["icedxdy_core/markdown", "icedxdy_widget/markdown"]
 spinner = ["icedxdy_widget/spinner"]
-sweeten = ["icedxdy_core/sweeten"]
+sweeten = ["icedxdy_widget/sweeten"]
 
 [dependencies]
 icedxdy_core.workspace = true

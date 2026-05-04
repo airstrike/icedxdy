@@ -388,7 +388,6 @@ dependencies = [
  "iced_lucide",
  "iced_widget",
  "icedxdy",
- "sweeten",
  "tokio",
 ]
 
@@ -1696,6 +1695,7 @@ dependencies = [
  "pulldown-cmark",
  "serde",
  "serde_json",
+ "sweeten",
  "tree-sitter",
  "tree-sitter-highlight",
  "tree-sitter-rust",
