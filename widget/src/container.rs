@@ -4,6 +4,9 @@ mod element;
 use crate::component::{Component, IntoElement};
 use crate::Size;
 use icedxdy_core::Theme;
+use icedxdy_core::theme::container::Style;
+use iced_core::alignment::{Horizontal, Vertical};
+use iced_core::widget::Id;
 use iced_core::{Length, Padding, Pixels};
 use iced_widget::container::StyleFn;
 use iced_widget::Renderer;
@@ -15,14 +18,19 @@ use iced_widget::Renderer;
 /// ```
 pub struct Container<'a, Message> {
     content: Component<'a, Message>,
+    id: Option<Id>,
     width: Length,
     height: Length,
     max_width: f32,
+    max_height: f32,
     min_width: f32,
     min_height: f32,
     padding: Padding,
     center_x: Option<Length>,
     center_y: Option<Length>,
+    align_x: Option<Horizontal>,
+    align_y: Option<Vertical>,
+    clip: bool,
     style: Option<StyleFn<'static, Theme>>,
 }
 
@@ -30,16 +38,28 @@ impl<'a, Message: 'a> Container<'a, Message> {
     pub fn new(content: impl Into<Component<'a, Message>>) -> Self {
         Self {
             content: content.into(),
+            id: None,
             width: Length::Shrink,
             height: Length::Shrink,
             max_width: f32::INFINITY,
+            max_height: f32::INFINITY,
             min_width: 0.0,
             min_height: 0.0,
             padding: Padding::ZERO,
             center_x: None,
             center_y: None,
+            align_x: None,
+            align_y: None,
+            clip: false,
             style: None,
         }
+    }
+
+    /// Set this container's widget [`Id`] — required for
+    /// `scroll_into_view` and other Id-based operations.
+    pub fn id(mut self, id: impl Into<Id>) -> Self {
+        self.id = Some(id.into());
+        self
     }
 
     pub fn width(mut self, width: impl Into<Length>) -> Self {
@@ -54,6 +74,11 @@ impl<'a, Message: 'a> Container<'a, Message> {
 
     pub fn max_width(mut self, max_width: impl Into<Pixels>) -> Self {
         self.max_width = max_width.into().0;
+        self
+    }
+
+    pub fn max_height(mut self, max_height: impl Into<Pixels>) -> Self {
+        self.max_height = max_height.into().0;
         self
     }
 
@@ -82,11 +107,51 @@ impl<'a, Message: 'a> Container<'a, Message> {
         self
     }
 
+    /// Sets the content alignment for the horizontal axis.
+    pub fn align_x(mut self, alignment: impl Into<Horizontal>) -> Self {
+        self.align_x = Some(alignment.into());
+        self
+    }
+
+    /// Sets the content alignment for the vertical axis.
+    pub fn align_y(mut self, alignment: impl Into<Vertical>) -> Self {
+        self.align_y = Some(alignment.into());
+        self
+    }
+
+    /// Set the style of this container via a `Fn(&Theme) -> Style` closure
+    /// or fn-pointer, where `Style` is icedxdy's OKLCH-native [`Style`].
+    /// Mirrors iced's stock `Container::style` so bare fn pointers like
+    /// `card_preview` coerce directly.
+    ///
+    /// For variant unit structs that impl `Into<StyleFn>`
+    /// (e.g. `theme::container::Card`, `theme::container::CodeBlock`,
+    /// or a `Spec` produced by the `+` tweak combinators), use
+    /// [`Container::class`] instead.
     pub fn style(
         mut self,
-        style: impl Into<StyleFn<'static, Theme>>,
+        style: impl Fn(&Theme) -> Style + 'static,
     ) -> Self {
-        self.style = Some(style.into());
+        self.style = Some(Box::new(move |t: &Theme| (style)(t).into()));
+        self
+    }
+
+    /// Set the style class of this container — accepts anything that can
+    /// be turned into an [`iced_widget::container::StyleFn`], which is how
+    /// the variant unit structs in `theme::container` (and `Spec` values
+    /// from the tweak combinators) flow through.
+    pub fn class(
+        mut self,
+        class: impl Into<StyleFn<'static, Theme>>,
+    ) -> Self {
+        self.style = Some(class.into());
+        self
+    }
+
+    /// Sets whether the contents of this container should be clipped on
+    /// overflow. Mirrors iced's stock `Container::clip`.
+    pub fn clip(mut self, clip: bool) -> Self {
+        self.clip = clip;
         self
     }
 
@@ -126,15 +191,26 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Container<'a, Message> {
             .width(self.width)
             .height(self.height)
             .max_width(self.max_width)
+            .max_height(self.max_height)
             .min_width(self.min_width)
             .min_height(self.min_height)
-            .padding(self.padding);
+            .padding(self.padding)
+            .clip(self.clip);
 
+        if let Some(id) = self.id {
+            c = c.id(id);
+        }
         if let Some(w) = self.center_x {
             c = c.center_x(w);
         }
         if let Some(h) = self.center_y {
             c = c.center_y(h);
+        }
+        if let Some(a) = self.align_x {
+            c = c.align_x(a);
+        }
+        if let Some(a) = self.align_y {
+            c = c.align_y(a);
         }
         if let Some(style) = self.style {
             // Bridge: wrapper's `style` is `iced_widget::container::StyleFn`

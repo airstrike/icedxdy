@@ -288,7 +288,7 @@ fn blockquote_card<'a>(quote: &'a str) -> iced::Element<'a, Message, Theme> {
 fn inline_code_card<'a>(code: &'a str) -> iced::Element<'a, Message, Theme> {
     container(text::inline_code(code))
         .padding([3, 5])
-        .style(theme::container::CardMuted + radius(Sm))
+        .class(theme::container::CardMuted + radius(Sm))
         .into()
 }
 

@@ -4,15 +4,15 @@ use std::path::PathBuf;
 use tokio::fs::read_to_string;
 
 use iced::border;
-use iced::widget::{Id, center, column, container, sensor, stack};
+use iced::widget::{Id, column, sensor, stack};
 use iced::{Alignment, Background, Fill, Font, Pixels, Subscription, Task};
 
 use icedxdy::Size::*;
 use icedxdy::theme::container::{card, card_preview, code_block, code_fade_overlay};
 use icedxdy::theme::tweak::Opaque;
+use icedxdy::widget::container::Container;
 use icedxdy::widget::markdown;
 use icedxdy::widget::markdown::widget::Highlight;
-use icedxdy::widget::container::Container;
 use icedxdy::widget::{button, rule, text};
 use icedxdy::{Component, Palette, Theme, radius, theme};
 
@@ -302,7 +302,7 @@ fn walk_blocks<'a>(
         // covers the entire block (heading + description + card or md body).
         // For Block::Group, the sensor wraps ONLY the heading — children
         // get their own subsequent flat indices and their own sensors.
-        let sensored = sensor(container(body).id(block_id))
+        let sensored = sensor(Container::new(body).id(block_id))
             .on_show(move |_| super::Message::Page(pi, Message::BlockShown(i)))
             .on_hide(super::Message::Page(pi, Message::BlockHidden(i)))
             .anticipate(50);
@@ -359,24 +359,24 @@ fn render_example<'a>(
     viewer: &'a SnippetViewer,
     page: &'a dyn Page,
 ) -> iced::Element<'a, super::Message, Theme> {
-    // Hero (empty-title) example uses the vendored Container with min_height
-    // so taller content (e.g. inline article previews if any) can grow.
+    // Hero (empty-title) example uses min_height so taller content (e.g.
+    // inline article previews if any) can grow; non-hero examples pin
+    // height to PREVIEW_HEIGHT.
     let preview_el: iced::Element<'_, super::Message, Theme> = if title.is_empty() {
-        let preview_style: iced_widget::container::StyleFn<'static, Theme> =
-            Box::new(|t| card_preview(t).into());
         Container::new(page.preview(id))
             .center(Fill)
             .min_height(PREVIEW_HEIGHT)
             .width(Fill)
             .padding(PREVIEW_PADDING)
-            .style(preview_style)
+            .style(card_preview)
             .into()
     } else {
-        center(page.preview(id))
+        Container::new(page.preview(id))
+            .center(Fill)
             .height(PREVIEW_HEIGHT)
             .width(Fill)
             .padding(PREVIEW_PADDING)
-            .style(|t| card_preview(t).into())
+            .style(card_preview)
             .into()
     };
 
@@ -389,10 +389,10 @@ fn render_example<'a>(
                 .map(|items| snippet(page_index, items, viewer))
                 .unwrap_or_else(|| text("Loading...").into());
 
-            let inner = container(body)
+            let inner = Container::new(body)
                 .padding([12, 16])
                 .width(Fill)
-                .style(|t| code_block(t).into());
+                .style(code_block);
 
             if st.code_expanded.contains(&block_pos) {
                 let copy_btn: Component<'_, super::Message> =
@@ -402,7 +402,7 @@ fn render_example<'a>(
                         .on_press(super::Message::Page(page_index, Message::CopyCode(block_pos)))
                         .into();
 
-                let copy_corner = container(copy_btn)
+                let copy_corner = Container::new(copy_btn)
                     .align_x(Alignment::End)
                     .align_y(Alignment::Start)
                     .padding([8, 8])
@@ -418,8 +418,9 @@ fn render_example<'a>(
                     .on_press(super::Message::Page(page_index, Message::ExpandCode(block_pos)))
                     .into();
 
-                let overlay = center(view_code_btn)
-                    .style(|t| code_fade_overlay(t).into())
+                let overlay = Container::new(view_code_btn)
+                    .center(Fill)
+                    .style(code_fade_overlay)
                     .height(COLLAPSED_CODE_HEIGHT);
                 stack![truncated, overlay].into()
             }
@@ -428,9 +429,9 @@ fn render_example<'a>(
     let divider: Option<iced::Element<'_, super::Message, Theme>> =
         code.as_ref().map(|_| rule::horizontal(1).into());
 
-    let card: iced::Element<'_, super::Message, Theme> =
-        container(column![preview_el, divider, code])
-            .style(|t| card(t).into())
+    let card_el: iced::Element<'_, super::Message, Theme> =
+        Container::new(column![preview_el, divider, code])
+            .style(card)
             .padding(1)
             .clip(true)
             .width(Fill)
@@ -438,7 +439,7 @@ fn render_example<'a>(
 
     // Hero: no h3, no description, just the card.
     if title.is_empty() {
-        return card;
+        return card_el;
     }
 
     let desc: Option<iced::Element<'_, super::Message, Theme>> = description
@@ -449,7 +450,7 @@ fn render_example<'a>(
     if let Some(d) = desc {
         col = col.push(d);
     }
-    col = col.push(card);
+    col = col.push(card_el);
     col.into()
 }
 
@@ -515,11 +516,11 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
             .on_press(super::Message::Page(pi, Message::ScrollTo(i)))
             .into();
         let row: iced::Element<'_, super::Message, Theme> =
-            container(entry).padding([0.0, indent]).into();
+            Container::new(entry).padding([0.0, indent]).into();
         row
     });
 
-    let header = container(text::muted("On This Page")).padding([0, 8]);
+    let header = Container::new(text::muted("On This Page")).padding([0, 8]);
 
     column![header]
         .push(column(nav_items).spacing(2))

@@ -133,8 +133,8 @@ impl App {
             use icedxdy::theme::tweak::{Opaque, radius};
             let card = container(text::muted(format!("Loading {slug}\u{2026}")))
                 .padding([8, 16])
-                .style(theme::container::Card + Opaque + radius(Lg));
-            center(card).style(theme::container::CodeFadeOverlay)
+                .class(theme::container::Card + Opaque + radius(Lg));
+            center(card).class(theme::container::CodeFadeOverlay)
         });
 
         let mut style = markdown::Style::from(&iced::Theme::TokyoNight);
@@ -150,7 +150,7 @@ impl App {
             container(code)
                 .padding(16)
                 .width(Fill)
-                .style(theme::container::CodeBlock),
+                .class(theme::container::CodeBlock),
             label
         ];
 
