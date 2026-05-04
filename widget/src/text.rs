@@ -10,8 +10,11 @@
 //! text::p("Bold text").bold()
 //! ```
 
+use std::marker::PhantomData;
+
 use crate::core::Length;
 use crate::core::Length::Fill;
+use crate::core::Padding;
 use crate::core::font;
 use crate::core::font::Weight;
 use crate::core::text::{Fragment, IntoFragment};
@@ -97,9 +100,9 @@ impl<'a> Text<'a> {
     }
 
     /// Override the text widget's layout width. Paragraph helpers
-    /// (`p`, `lead`, `muted`, `blockquote`, `list`, `small`) default to
-    /// `Fill` so they wrap inside their parent; headings and
-    /// inline-styled fragments default to `Shrink`.
+    /// (`p`, `lead`, `muted`, `small`) default to `Fill` so they wrap
+    /// inside their parent; headings and inline-styled fragments
+    /// default to `Shrink`.
     pub fn width(mut self, width: impl Into<Length>) -> Self {
         self.width = Some(width.into());
         self
@@ -343,12 +346,69 @@ pub fn inline_code<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .style(theme::text::Foreground)
 }
 
-/// A single bulleted list item. Shadcn renders `<ul class="list-disc">`
-/// natively; we don't have a List widget, so callers compose a column
-/// of these for multi-item lists.
-pub fn list<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
-    Text::new(format!("\u{2022} {}", content.into_fragment()))
-        .size(size::BASE)
-        .style(theme::text::Foreground)
-        .width(Fill)
+/// A bulleted list. Mirrors shadcn nova's
+/// `<ul class="ml-6 list-disc [&>li]:mt-2">` cascade — 24px left
+/// indent, 8px gap between items, body-size foreground text with a
+/// hard `\u{2022}` prefix per item (the closest iced approximation
+/// of native browser bullets).
+///
+/// Vertical spacing around the list (`my-6` in shadcn) is the
+/// caller's responsibility — drive it from the enclosing column's
+/// `.spacing(...)`.
+pub struct List<'a, Message> {
+    items: Vec<Text<'a>>,
+    _phantom: PhantomData<Message>,
+}
+
+/// Create a [`List`] from an iterable of fragments. Empty input
+/// produces an empty list (no panic).
+pub fn list<'a, Message, I, F>(items: I) -> List<'a, Message>
+where
+    I: IntoIterator<Item = F>,
+    F: IntoFragment<'a>,
+{
+    let items = items
+        .into_iter()
+        .map(|f| {
+            Text::new(format!("\u{2022} {}", f.into_fragment()))
+                .size(size::BASE)
+                .style(theme::text::Foreground)
+                .width(Fill)
+        })
+        .collect();
+
+    List { items, _phantom: PhantomData }
+}
+
+impl<'a, Message: 'a> From<List<'a, Message>>
+    for iced_core::Element<'a, Message, Theme, Renderer>
+{
+    fn from(list: List<'a, Message>) -> Self {
+        Box::new(list).into_element()
+    }
+}
+
+impl<'a, Message: 'a> From<List<'a, Message>> for Component<'a, Message> {
+    fn from(list: List<'a, Message>) -> Self {
+        Component::new(list)
+    }
+}
+
+impl<'a, Message: 'a> IntoElement<'a, Message> for List<'a, Message> {
+    fn into_element(
+        self: Box<Self>,
+    ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        let List { items, .. } = *self;
+
+        let column = items.into_iter().fold(
+            iced_widget::Column::new().spacing(8).width(Fill),
+            |col, item| col.push(item.build()),
+        );
+
+        iced_widget::container(column)
+            .padding(Padding { left: 24.0, ..Padding::ZERO })
+            .width(Fill)
+            .height(Length::Shrink)
+            .into()
+    }
 }

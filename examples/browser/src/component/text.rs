@@ -1,6 +1,5 @@
-use iced::padding;
 use iced::widget::{column, row};
-use iced::{Fill, Length, Task};
+use iced::{Fill, Task};
 use icedxdy::Size::Sm;
 use icedxdy::widget::{container, rule, text};
 use icedxdy::{Theme, radius, theme};
@@ -175,7 +174,7 @@ impl page::Page for TextPage {
                     "The king's subjects were not amused. They grumbled and \
                      complained, but the king was firm:"
                 ),
-                indented_list(&[
+                text::list([
                     "1st level of puns: 5 gold coins",
                     "2nd level of jokes: 10 gold coins",
                     "3rd level of one-liners : 20 gold coins",
@@ -245,11 +244,12 @@ impl page::Page for TextPage {
 
             "table" => table_card(),
 
-            "list" => indented_list(&[
+            "list" => text::list([
                 "1st level of puns: 5 gold coins",
                 "2nd level of jokes: 10 gold coins",
                 "3rd level of one-liners : 20 gold coins",
-            ]),
+            ])
+            .into(),
 
             "inline-code" => inline_code_card("@radix-ui/react-alert-dialog"),
 
@@ -282,21 +282,6 @@ fn inline_code_card<'a>(code: &'a str) -> iced::Element<'a, Message, Theme> {
     container(text::inline_code(code))
         .padding([3, 5])
         .class(theme::container::CardMuted + radius(Sm))
-        .into()
-}
-
-/// Render a bulleted list with nova's `ml-6` (24px) left indent.
-fn indented_list<'a>(items: &'a [&'a str]) -> iced::Element<'a, Message, Theme> {
-    let body = column(
-        items
-            .iter()
-            .map(|s| text::p(format!("\u{2022} {}", s)).into()),
-    )
-    .spacing(8);
-    container(body)
-        .padding(padding::left(24))
-        .height(Length::Shrink)
-        .width(Fill)
         .into()
 }
 
