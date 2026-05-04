@@ -565,6 +565,10 @@ fn inline_style_from_palette(palette: &Palette) -> markdown::Style {
         // stays compact without overlapping adjacent words.
         inline_code_padding: iced::Padding::default().left(2).right(2),
         inline_code_font: Font::MONOSPACE,
+        // Baseline matching body=16; `markdown::Settings::with_text_size`
+        // overwrites this to `text_size * 0.875` when the snippet renders,
+        // so this only matters if a caller wires up `Settings` manually.
+        inline_code_size: Pixels(14.0),
         code_block_font: Font::MONOSPACE,
         // Snippet bodies rarely contain links, but when they do the
         // primary base reads as a "clickable" accent in either theme

@@ -343,6 +343,7 @@ impl Span {
 
                 let span = if *code {
                     span.font(style.inline_code_font)
+                        .size(style.inline_code_size)
                         .color(style.inline_code_color)
                         .background(style.inline_code_highlight.background)
                         .border(style.inline_code_highlight.border)
@@ -1088,6 +1089,10 @@ impl Settings {
     /// after that will be 25% smaller.
     pub fn with_text_size(text_size: impl Into<Pixels>, style: impl Into<Style>) -> Self {
         let text_size = text_size.into();
+        let mut style = style.into();
+        // shadcn renders inline `<code>` at `text-sm` (0.875em) — keep
+        // the chip in sync with the chosen body size automatically.
+        style.inline_code_size = text_size * 0.875;
 
         Self {
             text_size,
@@ -1099,7 +1104,7 @@ impl Settings {
             h6_size: text_size,
             code_size: text_size * 0.75,
             spacing: text_size * 0.875,
-            style: style.into(),
+            style,
         }
     }
 }
@@ -1129,6 +1134,14 @@ pub struct Style {
     pub inline_code_color: Color,
     /// The [`Font`] to be applied to inline code.
     pub inline_code_font: Font,
+    /// The text size of inline code.
+    ///
+    /// shadcn renders inline code at `0.875em` of the surrounding body
+    /// (e.g. 14px when body is 16px). [`Settings::with_text_size`]
+    /// auto-derives this as `text_size * 0.875` so call sites that
+    /// build a [`Style`] without going through the helper inherit a
+    /// reasonable baseline from [`Style::from_palette`].
+    pub inline_code_size: Pixels,
     /// The [`Font`] to be applied to code blocks.
     pub code_block_font: Font,
     /// The [`Color`] to be applied to links.
@@ -1147,6 +1160,7 @@ impl Style {
             },
             inline_code_color: Color::WHITE,
             inline_code_font: Font::MONOSPACE,
+            inline_code_size: Pixels(14.0),
             code_block_font: Font::MONOSPACE,
             link_color: seed.primary,
         }
