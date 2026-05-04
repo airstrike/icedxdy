@@ -1,13 +1,13 @@
 use iced::widget::{column, combo_box, row, scrollable, space};
+use iced::mouse::Interaction;
 use iced_widget::button::StyleFn;
 
 use iced::{Fill, Font, Pixels, Subscription, Task};
 use icedxdy::widget::container;
 use icedxdy::widget::markdown::highlighter::Map;
 
-use icedxdy::Size::*;
 use icedxdy::widget::{button, rule, separator, text};
-use icedxdy::{Theme, theme};
+use icedxdy::{Theme, Weight, theme};
 
 use crate::component;
 use crate::fonts;
@@ -226,20 +226,41 @@ impl App {
             .padding(16)
             .align_y(iced::Center);
 
-        // Sidebar
-        let sidebar_header = container(text::muted("Components")).padding([0, 8]);
+        // Sidebar — values lifted from `.nova/apps/v4/components/docs-sidebar.tsx`,
+        // not the registry default. The docs site overrides several values:
+        //   --sidebar-menu-width: spacing(56) = 14rem = 224px (not 256)
+        //   item height = h-[30px] (not h-8 = 32)
+        //   item font = text-[0.8rem] ≈ 13px (not text-sm = 14)
+        //   inter-item gap = gap-0.5 = 2px (not gap-0)
+        //   active bg = bg-accent (palette.accent, NOT sidebar.accent)
+        //   active border = border-accent 1px
+        //   hover bg = hover:bg-sidebar-accent (registry default)
+        // Both nova radix and docs override agree: data-[active=true]:font-medium.
+        let sidebar_header = container(
+            text::xs("Components")
+                .weight(Weight::Medium)
+                .style(theme::text::Muted),
+        )
+        .height(32)
+        .padding([0, 8])
+        .align_y(iced::Center);
 
+        // Per-item: 30px height + 13px text + Medium when active, Normal
+        // otherwise. Our button defaults to Medium, so the inactive drop
+        // is explicit.
         let sidebar_items = column(self.pages.iter().enumerate().map(|(i, page)| {
             let is_active = i == self.current_page;
-            let style: StyleFn<'_, Theme> = if is_active {
-                theme::button::SidebarActive.into()
+            let (style, weight): (StyleFn<'_, Theme>, Weight) = if is_active {
+                (theme::button::SidebarActive.into(), Weight::Medium)
             } else {
-                theme::button::Sidebar.into()
+                (theme::button::Sidebar.into(), Weight::Normal)
             };
             button(page.meta().title)
-                .size(Sm)
                 .translate(false)
+                .size(13.0)
+                .weight(weight)
                 .style(style)
+                .interaction(Interaction::Pointer)
                 .on_press(Message::SelectPage(i))
                 .into()
         }))
@@ -247,9 +268,8 @@ impl App {
 
         let sidebar = scrollable(
             column![sidebar_header, sidebar_items]
-                .spacing(16)
-                .padding([24, 13])
-                .width(150),
+                .padding([8, 16])
+                .width(224),
         )
         .height(Fill);
 

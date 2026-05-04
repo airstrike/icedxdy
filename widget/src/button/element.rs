@@ -1,4 +1,5 @@
 use iced_core::Font;
+use iced_core::Length;
 use iced_core::text::Span;
 use iced_widget::text::Rich;
 
@@ -46,6 +47,7 @@ where
     rounded: bool,
     translate: bool,
     interaction: Option<iced_core::mouse::Interaction>,
+    width: Option<Length>,
     style: Theme::Class<'a>,
     on_press: Option<Message>,
 }
@@ -62,6 +64,7 @@ pub fn button<'a, Message: Clone + 'a>(
         rounded: false,
         translate: true,
         interaction: None,
+        width: None,
         style: Box::new(|t, s| theme::button::default(t, s).into()),
         on_press: None,
     }
@@ -98,6 +101,14 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// Set the mouse interaction (cursor) when hovering.
     pub fn interaction(mut self, interaction: iced_core::mouse::Interaction) -> Self {
         self.interaction = Some(interaction);
+        self
+    }
+
+    /// Set the layout width. Defaults to the vendored widget's intrinsic
+    /// shrink-to-content sizing; pass `iced::Fill` to stretch (used by
+    /// sidebar nav items so the hover/active surface spans the row).
+    pub fn width(mut self, width: impl Into<Length>) -> Self {
+        self.width = Some(width.into());
         self
     }
 
@@ -148,6 +159,14 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
         iced_btn = iced_btn.translate(btn.translate);
         if let Some(interaction) = btn.interaction {
             iced_btn = iced_btn.interaction(interaction);
+        }
+        // `square` already set both width and height to the size's height;
+        // skip the user width override in that case so the square invariant
+        // holds.
+        if let Some(width) = btn.width
+            && !btn.square
+        {
+            iced_btn = iced_btn.width(width);
         }
 
         let rounded = btn.rounded;

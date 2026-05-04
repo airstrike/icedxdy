@@ -297,7 +297,12 @@ pub fn destructive(theme: &Theme, status: Status) -> Style {
 }
 
 /// Sidebar: inactive sidebar item
-/// No bg at rest, bg-accent on hover, text muted→accent-foreground
+/// No bg at rest. Hover/pressed match the registry default
+/// `hover:bg-sidebar-accent` — full-strength sidebar accent. The
+/// active item uses the main `palette.accent` (via [`sidebar_active`]),
+/// which is visibly stronger than `sidebar.accent`, so the active
+/// state stays clearly distinct from a hovered sibling without
+/// alpha-attenuating hover.
 pub fn sidebar(theme: &Theme, status: Status) -> Style {
     let sb = &theme.palette().sidebar;
 
@@ -313,12 +318,7 @@ pub fn sidebar(theme: &Theme, status: Status) -> Style {
 
     match status {
         Status::Active => base,
-        Status::Hovered => Style {
-            background: Some(sb.accent.base.into()),
-            text_color: sb.accent.foreground,
-            ..base
-        },
-        Status::Pressed => Style {
+        Status::Hovered | Status::Pressed => Style {
             background: Some(sb.accent.base.into()),
             text_color: sb.accent.foreground,
             ..base
@@ -331,16 +331,24 @@ pub fn sidebar(theme: &Theme, status: Status) -> Style {
 }
 
 /// Sidebar active: currently selected sidebar item
-/// Uses main accent (brighter) not sidebar-accent, matching shadcn docs-sidebar
+/// Matches nova `SidebarMenuButton` `data-active:bg-sidebar-accent
+/// data-active:text-sidebar-accent-foreground` — uses sidebar palette
+/// (subtler than main accent, especially in dark mode).
 pub fn sidebar_active(theme: &Theme, status: Status) -> Style {
     let p = theme.palette();
 
+    // Docs-site override (`.nova/apps/v4/components/docs-sidebar.tsx`):
+    // `data-[active=true]:border-accent data-[active=true]:bg-accent`. The
+    // accent is the main palette accent (NOT sidebar.accent) — visibly
+    // stronger than the inactive hover surface so the current selection
+    // stands out from the row a user is mousing over.
     let base = Style {
         background: Some(p.accent.base.into()),
         text_color: p.accent.foreground,
         border: Border {
             radius: radius::SM.into(),
-            ..Border::default()
+            width: 1.0,
+            color: p.accent.base,
         },
         ..Style::default()
     };

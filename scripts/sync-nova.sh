@@ -8,6 +8,10 @@
 #   .nova/apps/v4/examples/radix/              — example .tsx sources
 #   .nova/apps/v4/registry/styles/             — style-nova.css
 #   .nova/apps/v4/registry/new-york-v4/ui/     — base new-york-v4 (cross-ref)
+#   .nova/apps/v4/app/                         — docs-site Next app (sidebar / nav overrides)
+#   .nova/apps/v4/components/                  — docs-site shared components
+#   .nova/apps/v4/lib/                         — docs-site helpers (highlight, etc.)
+#   .nova/apps/v4/hooks/                       — docs-site hooks
 
 set -euo pipefail
 
@@ -20,11 +24,17 @@ SPARSE_PATHS=(
     "apps/v4/examples/radix"
     "apps/v4/registry/styles"
     "apps/v4/registry/new-york-v4/ui"
+    "apps/v4/app"
+    "apps/v4/components"
+    "apps/v4/lib"
+    "apps/v4/hooks"
 )
 
 if [ -d "$NOVA_DIR/.git" ]; then
     echo "Updating $NOVA_DIR (sparse pull) ..."
-    git -C "$NOVA_DIR" pull --quiet --depth=1
+    # Reapply sparse-checkout in case the path list changed since the last pull.
+    git -C "$NOVA_DIR" sparse-checkout set "${SPARSE_PATHS[@]}"
+    git -C "$NOVA_DIR" pull --quiet --depth=1 --ff-only
 else
     echo "Cloning shadcn-ui (sparse) into $NOVA_DIR ..."
     git clone --quiet --depth=1 --filter=blob:none --sparse \
