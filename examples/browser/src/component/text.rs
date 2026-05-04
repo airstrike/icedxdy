@@ -17,8 +17,17 @@ pub static META: page::Meta = page::Meta {
 };
 
 pub static BLOCKS: &[page::Block] = &[
-    // Article hero: rendered as inline page-level prose with no card chrome.
-    page::Block::Inline { id: "demo" },
+    // Article hero: empty-title example so the Joke Tax article gets the
+    // same card chrome every other page's hero uses. `render_example`
+    // applies `min_height(PREVIEW_HEIGHT)` (not fixed height) for
+    // empty-title cards, so the long article grows past 288px naturally
+    // instead of clipping.
+    page::Block::Example {
+        id: "demo",
+        title: "",
+        description: None,
+        snippet: "",
+    },
     page::Block::Md("examples/browser/snippets/text-usage.md"),
     page::Block::Group {
         title: "Examples",
