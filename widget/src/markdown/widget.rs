@@ -63,7 +63,7 @@ use std::ops::Range;
 use std::rc::Rc;
 use std::sync::Arc;
 
-pub use core::text::Highlight;
+pub use core::text::{Highlight, LineHeight};
 pub use pulldown_cmark::HeadingLevel;
 
 /// A [`String`] representing a [URI] in a Markdown document
@@ -1072,6 +1072,11 @@ pub struct Settings {
     pub code_size: Pixels,
     /// The spacing to be used between elements.
     pub spacing: Pixels,
+    /// Line-height applied to body paragraphs and list items. shadcn's
+    /// `prose leading-7` is `1.75rem` on a 16px body — so `Relative(1.75)`
+    /// matches the upstream feel. Defaults to `Relative(1.5)` (a balanced
+    /// prose default) when callers don't override.
+    pub line_height: core::text::LineHeight,
     /// The styling of the Markdown.
     pub style: Style,
 }
@@ -1104,6 +1109,7 @@ impl Settings {
             h6_size: text_size,
             code_size: text_size * 0.75,
             spacing: text_size * 0.875,
+            line_height: LineHeight::Relative(1.5),
             style,
         }
     }
@@ -1363,6 +1369,7 @@ where
         None,
     ))
     .size(settings.text_size)
+    .line_height(settings.line_height)
     .on_link_click(on_link_click)
     .into()
 }

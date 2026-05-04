@@ -20,7 +20,7 @@
 pub mod highlighter;
 pub mod widget;
 
-pub use widget::{Bullet, Catalog, HeadingLevel, Item, Settings, Style, Text, Uri, Viewer};
+pub use widget::{Bullet, Catalog, HeadingLevel, Item, LineHeight, Settings, Style, Text, Uri, Viewer};
 
 #[cfg(feature = "markdown")]
 pub use widget::{

@@ -538,6 +538,9 @@ fn snippet<'a>(
 ) -> Component<'a, super::Message> {
     let mut settings = markdown::Settings {
         code_size: Pixels(13.0),
+        // shadcn's `prose` body uses `leading-7` (28px on 16px body) — match
+        // for nova fidelity.
+        line_height: markdown::LineHeight::Relative(1.75),
         ..markdown::Settings::with_style(viewer.style)
     };
     // `Settings::with_style` auto-derives inline_code_size as text_size *
