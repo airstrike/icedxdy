@@ -1,8 +1,8 @@
 ## Cursor
 
-Tailwind v4 ships `cursor: default` on every `<button>` by default — shadcn's TSX explicitly does nothing here because the framework already gets it right. icedxdy's `button` follows iced's convention: an interactive button with `.on_press(...)` shows the default arrow cursor, NOT a pointer.
+iced's stock `Button` shows a pointer (hand) cursor on hover when `on_press` is set. Tailwind v4 switched buttons from `cursor: pointer` to `cursor: default`, so shadcn's TSX inherits the arrow. icedxdy's `button` matches shadcn — the default cursor is the arrow, not a pointer — by overriding iced's `mouse_interaction` and falling back to `Interaction::default()`.
 
-Override per call site via `.interaction(...)` when you genuinely want the pointer cursor (links, sidebar nav entries, etc.):
+If you want the pointer cursor at a specific call site (links, sidebar nav entries, etc.), opt in via `.interaction(Interaction::Pointer)`:
 
 ```rust
 use iced::mouse::Interaction;

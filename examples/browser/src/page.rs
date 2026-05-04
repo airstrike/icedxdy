@@ -555,11 +555,12 @@ fn snippet<'a>(
 fn inline_style_from_palette(palette: &Palette) -> markdown::Style {
     markdown::Style {
         font: Font::default(),
-        // shadcn's inline `<code>` uses the same code surface as code blocks,
-        // so the chip background / text color come directly from `palette.code`.
-        inline_code_color: palette.code.foreground.into(),
+        // shadcn's inline `<code>` uses `bg-muted` — there's no dedicated
+        // `--color-code` token in nova; the muted surface is the canonical
+        // inline-chip background, with foreground text inheriting body color.
+        inline_code_color: palette.foreground.into(),
         inline_code_highlight: Highlight {
-            background: Background::Color(palette.code.base.into()),
+            background: Background::Color(palette.muted.base.into()),
             border: border::rounded(4),
         },
         // shadcn squeezes inline code with `px-[0.3rem] py-[0.2rem]`. iced
@@ -645,13 +646,18 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
                 .into()
         }));
 
-        scrollable(body)
+        let scroll = scrollable(body)
             .direction(scrollable::Direction::Horizontal(
                 scrollable::Scrollbar::default()
                     .width(settings.code_size / 2)
                     .scroller_width(settings.code_size / 2),
             ))
-            .spacing(2)
+            .spacing(2);
+
+        Container::new(scroll)
+            .padding([12, 16])
+            .width(Fill)
+            .style(code_block)
             .into()
     }
 }
