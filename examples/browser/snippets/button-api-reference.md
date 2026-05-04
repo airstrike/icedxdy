@@ -14,6 +14,7 @@ Constructor for a default-variant `Button`. The single-arg constructor takes any
 | `.weight(weight)` | `impl Into<Weight>` | propagated | Override the inherited font weight. |
 | `.translate(bool)` | `bool` | `true` | Gates the 1px press-down effect (matches shadcn's `active:translate-y-px`). |
 | `.interaction(interaction)` | `iced::mouse::Interaction` | size-dependent default | Per-button cursor override (Pointer for navigation, NotAllowed for soft-disabled, etc.). |
+| `.inset(padding)` | `impl Into<Padding>` | `Padding::ZERO` | Transparent margin between the button's hit-test bounds and painted bg/border. Lets a parent column keep `spacing(0)` so adjacent buttons hover continuously while the visible fills sit apart by `inset.top + inset.bottom` (likewise horizontally). Used by sidebar items. |
 
 ### Variant constructors
 
