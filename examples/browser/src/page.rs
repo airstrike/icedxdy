@@ -39,20 +39,25 @@ pub struct Meta {
 /// rendered in order between the page title/description and the bottom of
 /// the scroll area.
 ///
-/// Three flavors:
+/// Four flavors:
 ///
 /// - [`Block::Md`] is text-shaped content (Installation, Usage, API
 ///   Reference, Cursor, free-standing prose) loaded asynchronously from a
 ///   markdown file. The first `# `, `## `, or `### ` heading in the file
 ///   is extracted as the section title for the right-side TOC and
-///   rendered via the same `text::h3` helper as `Block::Example`'s title
-///   — visual parity is the point.
+///   rendered with the depth-aware heading style.
 /// - [`Block::Example`] is a live preview rendered by `Page::preview(id)`
 ///   wrapped in shadcn's card chrome (288px-tall preview area + collapsible
-///   code block underneath). Empty `title` skips the h3 + TOC entry — used
-///   for the page hero.
+///   code block underneath). Empty `title` skips the heading + TOC entry —
+///   used for the page hero.
 /// - [`Block::Inline`] is a live preview rendered into the page flow with
 ///   no card chrome. Used by typography for the joke-tax article.
+/// - [`Block::Group`] wraps a section heading + nested children. The
+///   heading's depth is derived from the group's nesting level: depth 0
+///   uses `text::h2`, depth >= 1 uses `text::h3`. Children inherit
+///   `depth + 1` for THEIR own headings, and the right-side TOC indents
+///   them by 12px per level with a 0.85x alpha multiplier on each level
+///   below the top.
 pub enum Block {
     /// A pre-rendered markdown section. Path is relative to the repo root,
     /// loaded asynchronously via `page::State::init`.
@@ -64,10 +69,10 @@ pub enum Block {
     Example {
         /// Stable id; `Page::preview(id)` dispatches by this string.
         id: &'static str,
-        /// h3 heading rendered above the card; also drives the TOC anchor.
-        /// `""` means no h3 and no TOC entry — used for the page hero.
+        /// Heading rendered above the card; also drives the TOC anchor.
+        /// `""` means no heading and no TOC entry — used for the page hero.
         title: &'static str,
-        /// Inline description rendered between the h3 and the preview card.
+        /// Inline description rendered between the heading and the preview card.
         description: Option<&'static str>,
         /// Path to a `.md` file containing the code snippet. Empty string
         /// means no code block under the preview.
@@ -78,6 +83,19 @@ pub enum Block {
     /// chrome). For typography demos and similar inline content.
     #[allow(dead_code)]
     Inline { id: &'static str },
+
+    /// A grouping section with an explicit heading and nested children.
+    /// Replaces the auto-h2-injection trick the older renderer used to
+    /// drop an "Examples" heading before the first non-hero example.
+    /// Children render at the parent's indentation; only the heading
+    /// level + TOC indent change with depth.
+    #[allow(dead_code)]
+    Group {
+        /// Section heading rendered at the group's depth.
+        title: &'static str,
+        /// Nested blocks, rendered after the group heading.
+        children: &'static [Block],
+    },
 }
 
 impl Block {
@@ -89,19 +107,62 @@ impl Block {
                 .get(*p)
                 .and_then(|t| t.as_deref())
                 .filter(|s| !s.is_empty()),
-            Block::Example { title, .. } if !title.is_empty() => Some(*title),
-            _ => None,
+            Block::Example { title, .. } => {
+                if title.is_empty() { None } else { Some(*title) }
+            }
+            Block::Group { title, .. } => {
+                if title.is_empty() { None } else { Some(*title) }
+            }
+            Block::Inline { .. } => None,
         }
     }
 
     /// Path to the markdown source file loaded asynchronously, if any.
+    /// For [`Block::Group`], children expose their own paths via the
+    /// recursive walk in [`for_each_path`].
     fn path(&self) -> &'static str {
         match self {
             Block::Md(p) => p,
             Block::Example { snippet, .. } => snippet,
             Block::Inline { .. } => "",
+            Block::Group { .. } => "",
         }
     }
+}
+
+/// Recursively visit every block and invoke `f(path)` for every non-empty
+/// markdown source path — used by `State::init` to schedule snippet/markdown
+/// loads across nested groups.
+fn for_each_path(blocks: &[Block], f: &mut impl FnMut(&'static str)) {
+    for b in blocks {
+        let p = b.path();
+        if !p.is_empty() {
+            f(p);
+        }
+        if let Block::Group { children, .. } = b {
+            for_each_path(children, f);
+        }
+    }
+}
+
+/// Flatten the recursive block tree into a depth-tagged visit order.
+/// Each yielded entry corresponds to ONE addressable position in the
+/// page (sensor + scroll target + TOC entry), keyed by a flat `usize`
+/// index in visit order. Groups precede their children — a group's
+/// flat index points at its heading, and each nested child gets its
+/// own subsequent flat index.
+fn flatten(blocks: &'static [Block]) -> Vec<(&'static Block, u8)> {
+    fn walk(out: &mut Vec<(&'static Block, u8)>, blocks: &'static [Block], depth: u8) {
+        for b in blocks {
+            out.push((b, depth));
+            if let Block::Group { children, .. } = b {
+                walk(out, children, depth + 1);
+            }
+        }
+    }
+    let mut out = Vec::new();
+    walk(&mut out, blocks, 0);
+    out
 }
 
 /// Messages produced by page infrastructure and component interactions.
@@ -169,13 +230,28 @@ pub fn view<'a>(
     Option<Component<'a, super::Message>>,
 ) {
     let body = render_blocks(page, viewer);
-    let toc_count = page
-        .blocks()
-        .iter()
-        .filter(|b| b.toc_title(page.state()).is_some())
+    let st = page.state();
+    let toc_count = flatten(page.blocks())
+        .into_iter()
+        .filter(|(b, _)| b.toc_title(st).is_some())
         .count();
     let nav = (toc_count > 1).then(|| sidebar(page));
     (body, nav)
+}
+
+/// Heading widget for a TOC-bearing section. Depth 0 → `h2`, depth >= 1
+/// → `h3`. Centralized so render-side and any future depth-aware sizing
+/// changes update in one place.
+fn heading_for<'a>(
+    depth: u8,
+    title: impl Into<String>,
+) -> iced::Element<'a, super::Message, Theme> {
+    let title = title.into();
+    if depth == 0 {
+        text::h2(title).into()
+    } else {
+        text::h3(title).into()
+    }
 }
 
 fn render_blocks<'a>(
@@ -184,63 +260,62 @@ fn render_blocks<'a>(
 ) -> Component<'a, super::Message> {
     let pi = page.page_index();
     let st = page.state();
-    let blocks = page.blocks();
-
-    // Track whether we've emitted the "Examples" h2 yet — appears once,
-    // immediately before the first non-hero `Block::Example`.
-    let mut emitted_examples_h2 = false;
-
     let mut items: Vec<iced::Element<'_, super::Message, Theme>> = Vec::new();
+    let mut flat_idx: usize = 0;
+    walk_blocks(page.blocks(), 0, page, viewer, st, pi, &mut flat_idx, &mut items);
+    column(items).spacing(48).width(Fill).into()
+}
 
-    for (i, block) in blocks.iter().enumerate() {
+#[allow(clippy::too_many_arguments)]
+fn walk_blocks<'a>(
+    blocks: &'static [Block],
+    depth: u8,
+    page: &'a dyn Page,
+    viewer: &'a SnippetViewer,
+    st: &'a State,
+    pi: usize,
+    flat_idx: &mut usize,
+    items: &mut Vec<iced::Element<'a, super::Message, Theme>>,
+) {
+    for block in blocks {
+        let i = *flat_idx;
+        *flat_idx += 1;
         let block_id = st.block_ids[i].clone();
 
         let body: iced::Element<'_, super::Message, Theme> = match block {
-            Block::Md(path) => {
-                if !emitted_examples_h2
-                    && st
-                        .md_titles
-                        .get(*path)
-                        .and_then(|t| t.as_deref())
-                        .map(|t| t.eq_ignore_ascii_case("examples"))
-                        .unwrap_or(false)
-                {
-                    emitted_examples_h2 = true;
-                }
-                render_md(pi, *path, st, viewer)
-            }
+            Block::Md(path) => render_md(pi, depth, *path, st, viewer),
             Block::Example {
                 id,
                 title,
                 description,
                 snippet,
-            } => {
-                if !title.is_empty() && !emitted_examples_h2 {
-                    items.push(text::h2("Examples").into());
-                    emitted_examples_h2 = true;
-                }
-                render_example(
-                    pi, i, id, title, *description, snippet, st, viewer, page,
-                )
-            }
+            } => render_example(
+                pi, i, depth, id, title, *description, snippet, st, viewer, page,
+            ),
             Block::Inline { id } => page.preview(id),
+            Block::Group { title, .. } => heading_for(depth, *title),
         };
 
         // Wrap each block with a sensor for viewport tracking + a stable Id
-        // for `scroll_into_view`. The sensor is the outermost widget so
-        // it covers the entire block (h3 + description + card or md body).
+        // for `scroll_into_view`. The sensor is the outermost widget so it
+        // covers the entire block (heading + description + card or md body).
+        // For Block::Group, the sensor wraps ONLY the heading — children
+        // get their own subsequent flat indices and their own sensors.
         let sensored = sensor(container(body).id(block_id))
             .on_show(move |_| super::Message::Page(pi, Message::BlockShown(i)))
             .on_hide(super::Message::Page(pi, Message::BlockHidden(i)))
             .anticipate(50);
         items.push(sensored.into());
-    }
 
-    column(items).spacing(48).width(Fill).into()
+        if let Block::Group { children, .. } = block {
+            walk_blocks(children, depth + 1, page, viewer, st, pi, flat_idx, items);
+        }
+    }
 }
 
 fn render_md<'a>(
     page_index: usize,
+    depth: u8,
     path: &'static str,
     st: &'a State,
     viewer: &'a SnippetViewer,
@@ -253,7 +328,7 @@ fn render_md<'a>(
 
     let mut col = column![].spacing(16).width(Fill);
     if let Some(t) = title {
-        col = col.push(text::h3(t.to_owned()));
+        col = col.push(heading_for(depth, t.to_owned()));
     }
     match st.md_items.get(path) {
         Some(Some(items)) if !items.is_empty() => {
@@ -274,6 +349,7 @@ fn render_md<'a>(
 fn render_example<'a>(
     page_index: usize,
     block_pos: usize,
+    depth: u8,
     id: &'static str,
     title: &'static str,
     description: Option<&'static str>,
@@ -368,7 +444,7 @@ fn render_example<'a>(
         .map(|d| text::p(d).style(theme::text::Muted).into());
 
     let mut col = column![].spacing(16).width(Fill);
-    col = col.push(text::h3(title));
+    col = col.push(heading_for(depth, title));
     if let Some(d) = desc {
         col = col.push(d);
     }
@@ -379,19 +455,22 @@ fn render_example<'a>(
 fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let pi = page.page_index();
     let st = page.state();
-    let blocks = page.blocks();
 
-    let entries: Vec<(usize, String)> = blocks
-        .iter()
+    // Walk the block tree in flat-visit order, capturing each TOC-bearing
+    // entry's flat index, depth, and title.
+    let entries: Vec<(usize, u8, String)> = flatten(page.blocks())
+        .into_iter()
         .enumerate()
-        .filter_map(|(i, b)| b.toc_title(st).map(|t| (i, t.to_owned())))
+        .filter_map(|(flat, (b, depth))| {
+            b.toc_title(st).map(|t| (flat, depth, t.to_owned()))
+        })
         .collect();
 
     let visible_in_toc: Vec<usize> = st
         .visible
         .iter()
         .copied()
-        .filter(|i| entries.iter().any(|(j, _)| j == i))
+        .filter(|i| entries.iter().any(|(j, _, _)| j == i))
         .collect();
 
     let toc_count = visible_in_toc.len();
@@ -399,7 +478,9 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         if toc_count == 0 || !visible_in_toc.contains(&i) {
             return 0.25;
         }
-        let rank = visible_in_toc.iter().position(|&v| v == i).unwrap();
+        let Some(rank) = visible_in_toc.iter().position(|&v| v == i) else {
+            return 0.25;
+        };
         let center = (toc_count - 1) as f32 / 2.0;
         let distance = (rank as f32 - center).abs() / center.max(1.0);
         1.0 - 0.5 * distance
@@ -407,13 +488,17 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
 
     use iced_widget::button::StyleFn;
     use theme::button::{Status, Style};
-    let nav_items = entries.into_iter().map(|(i, title)| {
-        let alpha = alpha_for(i);
+    let nav_items = entries.into_iter().map(|(i, depth, title)| {
+        // Sub-items render slightly desaturated (0.85x) on top of the
+        // existing rank-based alpha gradient. Indent grows 12px per level.
+        let level_mul = if depth == 0 { 1.0 } else { 0.85 };
+        let alpha = alpha_for(i) * level_mul;
+        let indent = 8.0 + f32::from(depth) * 12.0;
         let toc_style: StyleFn<'_, Theme> = Box::new(move |theme, status| {
             let p = theme.palette();
             let base_color = match status {
                 Status::Active => p.foreground.alpha(alpha),
-                _ => p.foreground,
+                Status::Hovered | Status::Pressed | Status::Disabled => p.foreground,
             };
             Style {
                 background: None,
@@ -422,12 +507,15 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
             }
             .into()
         });
-        button(title)
+        let entry: Component<'_, super::Message> = button(title)
             .size(Sm)
             .translate(false)
             .style(toc_style)
             .on_press(super::Message::Page(pi, Message::ScrollTo(i)))
-            .into()
+            .into();
+        let row: iced::Element<'_, super::Message, Theme> =
+            container(entry).padding([0.0, indent]).into();
+        row
     });
 
     let header = container(text::muted("On This Page")).padding([0, 8]);
@@ -515,36 +603,45 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
 }
 
 /// Common state that each page owns via composition.
+///
+/// Sensor / scroll / code-expansion bookkeeping uses a FLAT index space
+/// keyed by `flatten(blocks)` visit order. Top-level blocks AND every
+/// nested child of a `Block::Group` each get their own flat index, their
+/// own widget [`Id`], and their own sensor — clicking a TOC entry for a
+/// nested example scrolls to the example, not its parent group, and
+/// expanding a child example's code block doesn't ripple to siblings.
 pub struct State {
     pub page_index: usize,
     /// Parsed markdown items keyed by path. For `Block::Example`, this is
     /// the code-snippet body. For `Block::Md`, this is the body with the
-    /// first heading peeled off (rendered separately as h3).
+    /// first heading peeled off (rendered separately as a depth-aware heading).
     pub md_items: HashMap<&'static str, Option<Vec<markdown::Item>>>,
     /// Raw markdown source keyed by path — kept for the copy button.
     pub md_raw: HashMap<&'static str, String>,
     /// Extracted first-heading title for `Block::Md` paths. `None` if not
     /// loaded yet; `Some("")` if the file had no heading.
     pub md_titles: HashMap<&'static str, Option<String>>,
-    /// Sensor-driven viewport tracking, indexed by block position.
+    /// Sensor-driven viewport tracking, indexed by FLAT block position.
     pub visible: BTreeSet<usize>,
-    /// Per-block widget ids for `scroll_into_view` and sensors.
+    /// Per-flat-block widget ids for `scroll_into_view` and sensors.
+    /// `block_ids.len() == flatten(blocks).len()`.
     pub block_ids: Vec<Id>,
     pub scrollable_id: Id,
-    /// Block positions whose code block is expanded.
+    /// FLAT block positions whose code block is expanded.
     pub code_expanded: BTreeSet<usize>,
     blocks: &'static [Block],
 }
 
 impl State {
     pub fn new(page_index: usize, blocks: &'static [Block]) -> Self {
+        let flat_count = flatten(blocks).len();
         Self {
             page_index,
             md_items: HashMap::new(),
             md_raw: HashMap::new(),
             md_titles: HashMap::new(),
             visible: BTreeSet::new(),
-            block_ids: (0..blocks.len()).map(|_| Id::unique()).collect(),
+            block_ids: (0..flat_count).map(|_| Id::unique()).collect(),
             scrollable_id: Id::unique(),
             code_expanded: BTreeSet::new(),
             blocks,
@@ -559,14 +656,8 @@ impl State {
 
     pub fn init(&self) -> Task<super::Message> {
         let pi = self.page_index;
-        let mut paths: Vec<&'static str> = self
-            .blocks
-            .iter()
-            .filter_map(|b| {
-                let p = b.path();
-                if p.is_empty() { None } else { Some(p) }
-            })
-            .collect();
+        let mut paths: Vec<&'static str> = Vec::new();
+        for_each_path(self.blocks, &mut |p| paths.push(p));
         paths.sort();
         paths.dedup();
 
@@ -593,10 +684,9 @@ impl State {
         match event {
             Message::SnippetLoaded(path, result) => {
                 if let Ok(content) = result {
-                    let is_md = self
-                        .blocks
+                    let is_md = flatten(self.blocks)
                         .iter()
-                        .any(|b| matches!(b, Block::Md(p) if *p == *path));
+                        .any(|(b, _)| matches!(b, Block::Md(p) if *p == *path));
                     let (title, body) = if is_md {
                         peel_first_heading(content)
                     } else {
@@ -618,21 +708,22 @@ impl State {
                 self.visible.remove(idx);
                 Some(Task::none())
             }
-            Message::ScrollTo(idx) => Some(scroll::scroll_into_view(
-                self.scrollable_id.clone(),
-                self.block_ids[*idx].clone(),
-            )),
+            Message::ScrollTo(idx) => self.block_ids.get(*idx).cloned().map(|id| {
+                scroll::scroll_into_view(self.scrollable_id.clone(), id)
+            }),
             Message::ExpandCode(idx) => {
                 self.code_expanded.insert(*idx);
                 Some(Task::none())
             }
             Message::CopyCode(idx) => {
-                let code = self
-                    .blocks
+                let code = flatten(self.blocks)
                     .get(*idx)
-                    .and_then(|b| match b {
+                    .and_then(|(b, _)| match b {
                         Block::Example { snippet, .. } if !snippet.is_empty() => Some(*snippet),
-                        _ => None,
+                        Block::Example { .. }
+                        | Block::Md(_)
+                        | Block::Inline { .. }
+                        | Block::Group { .. } => None,
                     })
                     .and_then(|p| self.md_raw.get(p))
                     .map(|raw| extract_code_from_markdown(raw))

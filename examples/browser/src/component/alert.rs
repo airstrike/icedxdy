@@ -26,24 +26,30 @@ pub static BLOCKS: &[page::Block] = &[
     },
     page::Block::Md("examples/browser/snippets/alert-api-reference.md"),
     page::Block::Md("examples/browser/snippets/alert-usage.md"),
-    page::Block::Md("examples/browser/snippets/alert-examples-h2.md"),
-    page::Block::Example {
-        id: "basic",
-        title: "Basic",
-        description: Some("A basic alert with an icon, title and description."),
-        snippet: "examples/browser/snippets/alert-basic.md",
-    },
-    page::Block::Example {
-        id: "destructive",
-        title: "Destructive",
-        description: Some("Use variant destructive to create a destructive alert."),
-        snippet: "examples/browser/snippets/alert-destructive.md",
-    },
-    page::Block::Example {
-        id: "action",
-        title: "Action",
-        description: Some("Use AlertAction to add a button or other action element to the alert."),
-        snippet: "examples/browser/snippets/alert-action.md",
+    page::Block::Group {
+        title: "Examples",
+        children: &[
+            page::Block::Example {
+                id: "basic",
+                title: "Basic",
+                description: Some("A basic alert with an icon, title and description."),
+                snippet: "examples/browser/snippets/alert-basic.md",
+            },
+            page::Block::Example {
+                id: "destructive",
+                title: "Destructive",
+                description: Some("Use variant destructive to create a destructive alert."),
+                snippet: "examples/browser/snippets/alert-destructive.md",
+            },
+            page::Block::Example {
+                id: "action",
+                title: "Action",
+                description: Some(
+                    "Use AlertAction to add a button or other action element to the alert.",
+                ),
+                snippet: "examples/browser/snippets/alert-action.md",
+            },
+        ],
     },
 ];
 
