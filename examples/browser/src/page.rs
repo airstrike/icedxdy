@@ -191,7 +191,7 @@ pub enum Message {
 }
 
 /// Object-safe trait for a component page.
-pub trait Page {
+pub trait Page: Send {
     fn meta(&self) -> &'static Meta;
     fn blocks(&self) -> &'static [Block];
     fn page_index(&self) -> usize;

@@ -1,3 +1,5 @@
+cargo-features = ["profile-crate-type"]
+
 [package]
 name = "icedxdy"
 description = "A shadcn-inspired component library for Iced"
@@ -62,6 +64,90 @@ tree-sitter = "0.26"
 tree-sitter-highlight = "0.26"
 tree-sitter-rust = "0.24"
 
+[profile.dev]
+rpath = true
+
+# Per-package crate-type overrides for granita hot-reload. Mirrors the
+# pattern in ~/projects/granita/Cargo.toml — promote the iced subcrates
+# granita's host dlopens (12-crate doctor allowlist, minus the three
+# rlib-shy ones: iced_runtime / iced_winit / iced_tiny_skia) plus
+# tracing-core (single Dispatch global), once_cell, and the no_std
+# transitive rlibs (cfg-if, hashbrown, foldhash, equivalent) that would
+# otherwise be statically embedded in multiple dylibs. Requires the
+# unstable `profile-crate-type` cargo feature plus the std-shim from
+# airstrike/cargo branch crate-type-override — use
+# ~/projects/cargo/target/release/cargo on nightly.
+[profile.dev.package.iced]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_core]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_widget]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_graphics]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_renderer]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_program]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_futures]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_wgpu]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_debug]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.iced_highlighter]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.tracing-core]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.once_cell]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.cfg-if]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.hashbrown]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.foldhash]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.equivalent]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.indexmap]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.memchr]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.bit-set]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.bit-vec]
+crate-type = ["lib", "dylib"]
+
+# Tokio uses thread-local storage to track its runtime context.
+# Without dylib promotion, each dylib (iced, granita, browser via fount)
+# would statically link its own tokio with its own TLS — iced enters
+# its tokio context, browser.dylib's tokio::fs queries its OWN tokio's
+# TLS and finds nothing, panics in spawn_blocking.
+[profile.dev.package.tokio]
+crate-type = ["lib", "dylib"]
+
+[profile.dev.package.bytes]
+crate-type = ["lib", "dylib"]
+
 [patch.crates-io]
 iced.git = "https://github.com/airstrike/iced.git"
 iced.branch = "dev"
@@ -73,4 +159,22 @@ iced_selector.git = "https://github.com/airstrike/iced.git"
 iced_selector.branch = "dev"
 iced_widget.git = "https://github.com/airstrike/iced.git"
 iced_widget.branch = "dev"
+iced_graphics.git = "https://github.com/airstrike/iced.git"
+iced_graphics.branch = "dev"
+iced_renderer.git = "https://github.com/airstrike/iced.git"
+iced_renderer.branch = "dev"
+iced_program.git = "https://github.com/airstrike/iced.git"
+iced_program.branch = "dev"
+iced_winit.git = "https://github.com/airstrike/iced.git"
+iced_winit.branch = "dev"
+iced_wgpu.git = "https://github.com/airstrike/iced.git"
+iced_wgpu.branch = "dev"
+iced_tiny_skia.git = "https://github.com/airstrike/iced.git"
+iced_tiny_skia.branch = "dev"
+iced_futures.git = "https://github.com/airstrike/iced.git"
+iced_futures.branch = "dev"
+iced_debug.git = "https://github.com/airstrike/iced.git"
+iced_debug.branch = "dev"
+iced_highlighter.git = "https://github.com/airstrike/iced.git"
+iced_highlighter.branch = "dev"
 cosmic-text = { git = "https://github.com/airstrike/cosmic-text", branch = "dev" }

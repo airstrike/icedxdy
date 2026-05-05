@@ -11,6 +11,11 @@ iced = { workspace = true, features = ["markdown", "highlighter", "selector", "t
 iced_widget.workspace = true
 fount = { git = "https://github.com/airstrike/fount" }
 tokio = { version = "1", features = ["fs"] }
+granita = { path = "/Users/andy/projects/granita/crates/granita" }
 
 [build-dependencies]
 iced_lucide = { git = "https://github.com/airstrike/iced_lucide" }
+granita-build = { path = "/Users/andy/projects/granita/crates/granita-build" }
+
+[lib]
+crate-type = ["lib", "dylib"]
