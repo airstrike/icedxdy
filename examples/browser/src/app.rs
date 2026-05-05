@@ -1,5 +1,5 @@
 use iced::mouse::Interaction;
-use iced::widget::{column, combo_box, row, scrollable, space};
+use iced::widget::{column, combo_box, row, scrollable, space, svg};
 use iced_widget::button::StyleFn;
 
 use iced::{Fill, Font, Pixels, Subscription, Task};
@@ -9,7 +9,14 @@ use icedxdy::widget::container;
 use icedxdy::widget::markdown::highlighter::Map;
 
 use icedxdy::widget::{button, rule, separator, sidebar, text};
-use icedxdy::{Theme, Weight, theme};
+use icedxdy::{Size, Theme, Weight, theme};
+
+/// Logo SVG, embedded at compile time so the binary is self-contained
+/// (no runtime file lookup, no working-directory dependence).
+const LOGO_BYTES: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../assets/logo.svg"
+));
 
 use crate::component;
 use crate::fonts;
@@ -250,7 +257,9 @@ impl App {
     }
 
     pub fn view(&self) -> iced::Element<'_, Message, Theme> {
-        let branding = text::h4("icedxdy");
+        let branding = svg(svg::Handle::from_memory(LOGO_BYTES))
+            .width(24)
+            .height(24);
 
         let font_selector = combo_box(
             &self.font_list,
@@ -269,11 +278,20 @@ impl App {
         let theme_toggle = button::ghost(theme_icon).on_press(Message::ToggleTheme);
 
         // Top-level docs-site nav, per `main-nav.tsx` — ghost buttons,
-        // size=sm, px-2.5 padding. No active-state highlighting yet; the
-        // navigation backend isn't wired (Message::NavSelect is a no-op
-        // sink in `update`).
+        // size=sm. No active-state highlighting yet; the navigation backend
+        // isn't wired (`Message::NavSelect` is a no-op sink in `update`).
+        //
+        // We pass the label as `&str` rather than `text::small(...)` because
+        // `text::small` sets `width(Fill)` (intended for paragraph-style
+        // body text), which propagates up through Button's `size_hint`
+        // resolution and forces every button to Fill width — adjacent
+        // buttons end up sharing a single row's worth of space and the
+        // labels run together. `&str` flows through `Component::from(&str)`
+        // → `Text::new(s)` (no width set, default Shrink) so each button
+        // sizes to its content.
         let nav = row(NavSection::ALL.iter().copied().map(|section| {
-            button::ghost(text::small(section.label()))
+            button::ghost(section.label())
+                .size(Size::Sm)
                 .on_press(Message::NavSelect(section))
                 .into()
         }))

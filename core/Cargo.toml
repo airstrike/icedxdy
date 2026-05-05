@@ -12,6 +12,7 @@ keywords.workspace = true
 [features]
 default = []
 markdown = ["iced_widget/markdown"]
+svg = ["iced_widget/svg"]
 sweeten = ["dep:sweeten"]
 
 [dependencies]

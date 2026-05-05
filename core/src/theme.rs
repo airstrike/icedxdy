@@ -18,6 +18,8 @@ pub mod rule;
 pub mod scrollable;
 pub mod sidebar;
 pub mod slider;
+#[cfg(feature = "svg")]
+pub mod svg;
 pub mod table;
 pub mod text;
 pub mod text_input;

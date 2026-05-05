@@ -15,6 +15,7 @@ keywords.workspace = true
 default = []
 markdown = ["icedxdy_core/markdown", "icedxdy_widget/markdown"]
 spinner = ["icedxdy_widget/spinner"]
+svg = ["icedxdy_core/svg"]
 sweeten = ["icedxdy_widget/sweeten"]
 
 [dependencies]
