@@ -1,6 +1,15 @@
 //! Semantic color palette
 //!
-//! Based on shadcn/ui's color token system with light and dark mode support.
+//! Verbatim port of shadcn/ui's nova v4 Neutral theme tokens. The
+//! canonical CSS source is mirrored at
+//! `.nova/apps/v4/app/globals.css` (`:root` for light, `.dark` for
+//! dark). Every value here matches that file OKLCH-component for
+//! OKLCH-component; the Neutral theme is fully achromatic except
+//! `destructive` (red) and dark `sidebar.primary` (a vivid blue).
+//!
+//! `info`/`success`/`warning` are project extensions — shadcn doesn't
+//! ship those tokens; they're tuned to share `destructive`'s L/C
+//! profile so the four status colors read as a coherent set.
 
 use crate::color::{Color, oklch, oklch_alpha};
 
@@ -95,9 +104,9 @@ impl Palette {
             secondary: SemanticColor::new(oklch(0.97, 0.0, 0.0), oklch(0.205, 0.0, 0.0)),
             muted: SemanticColor::new(oklch(0.97, 0.0, 0.0), oklch(0.556, 0.0, 0.0)),
             accent: SemanticColor::new(oklch(0.97, 0.0, 0.0), oklch(0.205, 0.0, 0.0)),
-            destructive: SemanticColor::new(oklch(0.58, 0.22, 27.0), oklch(0.985, 0.0, 0.0)),
-            // Status colors — same lightness/chroma profile as `destructive` so
-            // they read as a coherent set against the Neutral background.
+            destructive: SemanticColor::new(oklch(0.577, 0.245, 27.325), oklch(0.97, 0.01, 17.0)),
+            // Status colors — project extensions; tuned to read as a coherent
+            // set against the Neutral background.
             info: SemanticColor::new(oklch(0.55, 0.20, 245.0), oklch(0.985, 0.0, 0.0)),
             success: SemanticColor::new(oklch(0.58, 0.18, 150.0), oklch(0.985, 0.0, 0.0)),
             warning: SemanticColor::new(oklch(0.72, 0.16, 75.0), oklch(0.205, 0.0, 0.0)),
@@ -106,16 +115,16 @@ impl Palette {
             input: oklch(0.922, 0.0, 0.0),
             ring: oklch(0.708, 0.0, 0.0),
 
-            // shadcn --color-code (light) = oklch(0.98 0 0), fg = --foreground
+            // --code = var(--surface); shadcn --surface (light) = oklch(0.98 0 0)
             code: SemanticColor::new(oklch(0.98, 0.0, 0.0), oklch(0.145, 0.0, 0.0)),
 
             sidebar: SidebarPalette {
                 background: oklch(0.985, 0.0, 0.0),
-                foreground: oklch(0.337, 0.013, 286.0),
+                foreground: oklch(0.145, 0.0, 0.0),
                 primary: SemanticColor::new(oklch(0.205, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
-                accent: SemanticColor::new(oklch(0.967, 0.001, 286.0), oklch(0.205, 0.015, 286.0)),
-                border: oklch(0.930, 0.006, 250.0),
-                ring: oklch(0.623, 0.170, 255.0),
+                accent: SemanticColor::new(oklch(0.97, 0.0, 0.0), oklch(0.205, 0.0, 0.0)),
+                border: oklch(0.922, 0.0, 0.0),
+                ring: oklch(0.708, 0.0, 0.0),
             },
         }
     }
@@ -126,16 +135,16 @@ impl Palette {
             background: oklch(0.145, 0.0, 0.0),
             foreground: oklch(0.985, 0.0, 0.0),
 
-            card: SemanticColor::new(oklch(0.145, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
-            popover: SemanticColor::new(oklch(0.145, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
+            card: SemanticColor::new(oklch(0.205, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
+            popover: SemanticColor::new(oklch(0.205, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
 
             primary: SemanticColor::new(oklch(0.922, 0.0, 0.0), oklch(0.205, 0.0, 0.0)),
             secondary: SemanticColor::new(oklch(0.269, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
             muted: SemanticColor::new(oklch(0.269, 0.0, 0.0), oklch(0.708, 0.0, 0.0)),
             accent: SemanticColor::new(oklch(0.371, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
-            destructive: SemanticColor::new(oklch(0.704, 0.191, 22.216), oklch(0.985, 0.0, 0.0)),
-            // Status colors — pastel-bright variants matching `destructive`'s
-            // dark-mode lift so the four state colors form a coherent set.
+            destructive: SemanticColor::new(oklch(0.704, 0.191, 22.216), oklch(0.58, 0.22, 27.0)),
+            // Status colors — project extensions; pastel-bright variants tuned
+            // to share `destructive`'s dark-mode lift profile.
             info: SemanticColor::new(oklch(0.70, 0.16, 245.0), oklch(0.205, 0.0, 0.0)),
             success: SemanticColor::new(oklch(0.72, 0.16, 150.0), oklch(0.205, 0.0, 0.0)),
             warning: SemanticColor::new(oklch(0.80, 0.15, 80.0), oklch(0.205, 0.0, 0.0)),
@@ -144,16 +153,17 @@ impl Palette {
             input: oklch_alpha(1.0, 0.0, 0.0, 0.15),
             ring: oklch(0.556, 0.0, 0.0),
 
-            // shadcn --color-code (dark) = oklch(0.2 0 0), fg = oklch(0.708 0 0)
+            // --code = var(--surface); shadcn --surface (dark) = oklch(0.2 0 0)
+            // and --surface-foreground = oklch(0.708 0 0).
             code: SemanticColor::new(oklch(0.2, 0.0, 0.0), oklch(0.708, 0.0, 0.0)),
 
             sidebar: SidebarPalette {
-                background: oklch(0.205, 0.015, 286.0),
-                foreground: oklch(0.967, 0.001, 286.0),
-                primary: SemanticColor::new(oklch(0.922, 0.0, 0.0), oklch(0.205, 0.0, 0.0)),
-                accent: SemanticColor::new(oklch(0.269, 0.009, 286.0), oklch(0.967, 0.001, 286.0)),
-                border: oklch(0.269, 0.009, 286.0),
-                ring: oklch(0.623, 0.170, 255.0),
+                background: oklch(0.205, 0.0, 0.0),
+                foreground: oklch(0.985, 0.0, 0.0),
+                primary: SemanticColor::new(oklch(0.488, 0.243, 264.376), oklch(0.985, 0.0, 0.0)),
+                accent: SemanticColor::new(oklch(0.269, 0.0, 0.0), oklch(0.985, 0.0, 0.0)),
+                border: oklch_alpha(1.0, 0.0, 0.0, 0.1),
+                ring: oklch(0.439, 0.0, 0.0),
             },
         }
     }
