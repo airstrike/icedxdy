@@ -17,7 +17,7 @@ use icedxdy::widget::container::Container;
 use icedxdy::widget::markdown;
 use icedxdy::widget::markdown::widget::Highlight;
 use icedxdy::widget::{button, rule, text};
-use icedxdy::{Component, Palette, Theme, radius, theme};
+use icedxdy::{Component, Palette, Theme, Weight, radius, theme};
 
 use crate::font;
 use crate::icon;
@@ -248,7 +248,7 @@ pub fn view<'a>(
         .into_iter()
         .filter(|(b, _)| b.toc_title(st).is_some())
         .count();
-    let nav = (toc_count > 1).then(|| sidebar(page));
+    let nav = (toc_count > 1).then(|| toc(page));
     (body, nav)
 }
 
@@ -489,7 +489,22 @@ fn render_example<'a>(
     col.into()
 }
 
-fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
+/// Right-side "On This Page" navigation.
+///
+/// Per `.claude/research/SIDEBARS.md`: NOT a `SidebarMenuButton`. shadcn's
+/// docs-toc uses plain `<a>` tags with `text-muted-foreground` (inactive),
+/// `hover:text-foreground` (hover), and
+/// `data-[active=true]:font-medium data-[active=true]:text-foreground` for
+/// the currently-viewed section. No backgrounds at any state — text color
+/// only.
+///
+/// The browser's gloss on top of that spec is a viewport-driven alpha
+/// gradient: items already in the visible set fade down toward the edges
+/// of the visible set; items not visible at all get a baseline 0.25 alpha
+/// so they stay legible-but-recessive. The rank-center item (alpha == 1.0)
+/// is the closest analogue to the docs-toc "active" entry, so it gets the
+/// `Weight::Medium` bump.
+fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let pi = page.page_index();
     let st = page.state();
 
@@ -521,6 +536,16 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         1.0 - 0.5 * distance
     };
 
+    // The "active" TOC entry mirrors docs-toc: whichever entry currently
+    // sits at rank-center of the visible set (alpha == 1.0) is the one
+    // the reader is reading. Empty-visible-set pages have no active entry.
+    let active_index: Option<usize> = if visible_in_toc.is_empty() {
+        None
+    } else {
+        let center = (toc_count - 1) / 2;
+        visible_in_toc.get(center).copied()
+    };
+
     use iced_widget::button::StyleFn;
     use theme::button::{Status, Style};
     let nav_items = entries.into_iter().map(|(i, depth, title)| {
@@ -529,21 +554,33 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         let level_mul = if depth == 0 { 1.0 } else { 0.85 };
         let alpha = alpha_for(i) * level_mul;
         let indent = 8.0 + f32::from(depth) * 12.0;
+        let is_active = Some(i) == active_index;
         let toc_style: StyleFn<'_, Theme> = Box::new(move |theme, status| {
             let p = theme.palette();
-            let base_color = match status {
-                Status::Active => p.foreground.alpha(alpha),
+            // Inactive base = `muted_foreground` per docs-toc spec; the
+            // rank-based alpha then fades distant entries further. The
+            // active entry and any hovered/pressed entry promote to the
+            // brighter `foreground`. No backgrounds at any state.
+            let base = match status {
+                Status::Active if is_active => p.foreground.alpha(alpha),
+                Status::Active => p.muted.foreground.alpha(alpha),
                 Status::Hovered | Status::Pressed | Status::Disabled => p.foreground,
             };
             Style {
                 background: None,
-                text_color: base_color,
+                text_color: base,
                 ..Style::default()
             }
             .into()
         });
+        let weight = if is_active {
+            Weight::Medium
+        } else {
+            Weight::Normal
+        };
         let entry: Component<'_, super::Message> = button(title)
             .size(Sm)
+            .weight(weight)
             .translate(false)
             .style(toc_style)
             .inset([1, 0])

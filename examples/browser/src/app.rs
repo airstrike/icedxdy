@@ -3,10 +3,12 @@ use iced::widget::{column, combo_box, row, scrollable, space};
 use iced_widget::button::StyleFn;
 
 use iced::{Fill, Font, Pixels, Subscription, Task};
+use icedxdy::theme::tweak::Bg;
+use icedxdy::theme::tweak::token::Token;
 use icedxdy::widget::container;
 use icedxdy::widget::markdown::highlighter::Map;
 
-use icedxdy::widget::{button, rule, separator, text};
+use icedxdy::widget::{button, rule, separator, sidebar, text};
 use icedxdy::{Theme, Weight, theme};
 
 use crate::component;
@@ -255,8 +257,14 @@ impl App {
 
         // Per-item: 30px height + 13px text + Medium when active, Normal
         // otherwise. Our button defaults to Medium, so the inactive drop
-        // is explicit.
-        let sidebar_items = column(self.pages.iter().enumerate().map(|(i, page)| {
+        // is explicit. Items are wrapped in `sidebar::menu` (gap-1, full
+        // width) so the suite's column geometry is the one in play; the
+        // raw `Button` underneath preserves the docs-faithful 30px/13px/
+        // `inset([1, 0])` continuous-hover affordance landed in earlier
+        // phases — the suite's own `menu_button` builder targets the base
+        // shadcn registry sizes (h-8/text-sm), which the docs site
+        // overrides. See the comment block above for the divergence list.
+        let sidebar_items = sidebar::menu(self.pages.iter().enumerate().map(|(i, page)| {
             let is_active = i == self.current_page;
             let (style, weight): (StyleFn<'_, Theme>, Weight) = if is_active {
                 (theme::button::SidebarActive.into(), Weight::Medium)
@@ -274,12 +282,22 @@ impl App {
                 .into()
         }));
 
-        let sidebar = scrollable(
-            column![sidebar_header, sidebar_items]
-                .padding([8, 16])
-                .width(224),
+        // Atom-system demonstration on the sidebar root: `sidebar::Default`
+        // (the flush variant) plus an explicit `Bg(Token::Sidebar)` tweak.
+        // Functionally equivalent to the variant fn alone (the default
+        // variant already sets `palette.sidebar.background`), but spelled
+        // through the cross-widget atom system to exercise the third
+        // catalog (after button + container) on a user-visible surface.
+        let sidebar = sidebar::fixed(
+            scrollable(
+                column![sidebar_header, sidebar_items]
+                    .padding([8, 16])
+                    .width(224),
+            )
+            .height(Fill),
         )
-        .height(Fill);
+        .height(Fill)
+        .class(theme::sidebar::Default + Bg(Token::Sidebar));
 
         // Main content
         let current = &*self.pages[self.current_page];
