@@ -885,6 +885,51 @@ mod tests {
         );
     }
 
+    /// `sidebar` (inactive): hover/pressed bg uses `palette.sidebar.accent.base`
+    /// (the subtler sidebar palette, NOT the main palette accent). Active
+    /// has no bg (transparent on rest).
+    #[test]
+    fn sidebar_hover_uses_sidebar_palette_accent() {
+        let theme = Theme::dark();
+        let resting = sidebar(&theme, Status::Active);
+        assert!(
+            resting.background.is_none(),
+            "sidebar at rest must be backgroundless, got {:?}",
+            resting.background,
+        );
+
+        let hovered = sidebar(&theme, Status::Hovered);
+        let bg = bg_color(&hovered);
+        let expected = theme.palette().sidebar.accent.base;
+        assert!(
+            (bg.l - expected.l).abs() < 1e-4
+                && (bg.c - expected.c).abs() < 1e-4,
+            "sidebar hover must use sidebar.accent.base ({expected:?}), got {bg:?}",
+        );
+    }
+
+    /// `sidebar_active` (selected): bg uses the main `palette.accent.base`
+    /// (NOT `sidebar.accent`) per the docs-sidebar override — active items
+    /// are visibly stronger than mere hover surfaces on inactive siblings.
+    #[test]
+    fn sidebar_active_uses_main_palette_accent() {
+        let theme = Theme::dark();
+        let active = sidebar_active(&theme, Status::Active);
+        let bg = bg_color(&active);
+        let main_accent = theme.palette().accent.base;
+        let sb_accent = theme.palette().sidebar.accent.base;
+
+        assert!(
+            (bg.l - main_accent.l).abs() < 1e-4
+                && (bg.c - main_accent.c).abs() < 1e-4,
+            "sidebar_active must use main palette.accent.base ({main_accent:?}), got {bg:?}",
+        );
+        assert!(
+            (bg.l - sb_accent.l).abs() > 1e-3,
+            "sidebar_active must NOT use sidebar.accent (would defeat the docs-sidebar override)",
+        );
+    }
+
     /// Default + Opaque is a no-op — the primary variant is already opaque
     /// (alpha=1.0), so compositing src.a=1 over dst gives src unchanged.
     #[test]

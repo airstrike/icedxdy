@@ -1,6 +1,6 @@
 //! SidebarMenuButton — interactive sidebar menu item
 //!
-//! Uses `iced_widget::button()` (raw iced button) internally — NO press-down effect.
+//! Uses our raw button widget with `translate(false)` — NO press-down effect.
 //!
 //! # Example
 //!
@@ -12,31 +12,22 @@
 //!     .on_press(Message::Navigate)
 //!
 //! sidebar::menu_button("Settings")
-//!     .variant(MenuButtonVariant::Outline)
 //!     .size(MenuButtonSize::Sm)
 //!     .on_press(Message::Settings)
 //! ```
 
 use iced_core::mouse::Interaction;
 use iced_core::Length::Fill;
-use iced_core::{Alignment, Border};
-use iced_widget::button::{Status, Style};
+use iced_core::Alignment;
+use iced_widget::button::Status;
 use iced_widget::tooltip::Position;
 use iced_widget::Renderer;
 
 use crate::button::widget;
 use crate::component::{Component, IntoElement};
 use crate::Size;
-use icedxdy_core::radius;
+use icedxdy_core::theme::button;
 use icedxdy_core::Theme;
-
-/// Menu button variant
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum MenuButtonVariant {
-    #[default]
-    Default,
-    Outline,
-}
 
 /// Menu button size
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -74,11 +65,10 @@ impl MenuButtonSize {
 
 /// A sidebar menu button.
 ///
-/// Uses `iced_widget::button()` (raw iced button) internally so there is
-/// no 1px press-down effect. Supports active state, collapsed mode, and tooltips.
+/// Uses our raw button widget with `translate(false)` so there is no
+/// 1px press-down effect. Supports active state, collapsed mode, and tooltips.
 pub struct SidebarMenuButton<'a, Message> {
     content: Component<'a, Message>,
-    variant: MenuButtonVariant,
     size: MenuButtonSize,
     active: bool,
     collapsed: bool,
@@ -86,13 +76,12 @@ pub struct SidebarMenuButton<'a, Message> {
     on_press: Option<Message>,
 }
 
-/// Create a sidebar menu button with default variant and size.
+/// Create a sidebar menu button with default size.
 pub fn menu_button<'a, Message: Clone + 'a>(
     content: impl Into<Component<'a, Message>>,
 ) -> SidebarMenuButton<'a, Message> {
     SidebarMenuButton {
         content: content.into(),
-        variant: MenuButtonVariant::Default,
         size: MenuButtonSize::Default,
         active: false,
         collapsed: false,
@@ -102,12 +91,6 @@ pub fn menu_button<'a, Message: Clone + 'a>(
 }
 
 impl<'a, Message: Clone + 'a> SidebarMenuButton<'a, Message> {
-    /// Set the button variant.
-    pub fn variant(mut self, variant: MenuButtonVariant) -> Self {
-        self.variant = variant;
-        self
-    }
-
     /// Set the button size.
     pub fn size(mut self, size: MenuButtonSize) -> Self {
         self.size = size;
@@ -136,102 +119,6 @@ impl<'a, Message: Clone + 'a> SidebarMenuButton<'a, Message> {
     pub fn on_press(mut self, message: Message) -> Self {
         self.on_press = Some(message);
         self
-    }
-}
-
-// -- Style functions ----------------------------------------------------------
-// These match shadcn's docs-sidebar.tsx override (what the rendered docs site
-// actually shows): `font-medium` always, `bg-accent` (main palette) on active,
-// muted text color for inactive. They do NOT match the base SidebarMenuButton
-// CSS (which uses `bg-sidebar-accent`) — the icedxdy browser mimics the docs
-// site, so docs-sidebar styling is the intended default here.
-
-fn style_default(active: bool) -> impl Fn(&Theme, Status) -> Style {
-    move |theme, status| {
-        let p = theme.palette();
-
-        let base = Style {
-            background: if active {
-                Some(p.accent.base.into())
-            } else {
-                None
-            },
-            text_color: if active {
-                p.accent.foreground.into()
-            } else {
-                p.muted.foreground.into()
-            },
-            border: Border {
-                radius: radius::SM.into(),
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-
-        match status {
-            Status::Active => base,
-            Status::Hovered | Status::Pressed => Style {
-                background: Some(p.accent.base.into()),
-                text_color: p.accent.foreground.into(),
-                ..base
-            },
-            Status::Disabled => Style {
-                background: if active {
-                    Some(p.accent.base.alpha(0.5).into())
-                } else {
-                    None
-                },
-                text_color: p.muted.foreground.alpha(0.5).into(),
-                ..base
-            },
-        }
-    }
-}
-
-fn style_outline(active: bool) -> impl Fn(&Theme, Status) -> Style {
-    move |theme, status| {
-        let p = theme.palette();
-
-        let base = Style {
-            background: if active {
-                Some(p.accent.base.into())
-            } else {
-                Some(p.background.into())
-            },
-            text_color: if active {
-                p.accent.foreground.into()
-            } else {
-                p.foreground.into()
-            },
-            border: Border {
-                radius: radius::SM.into(),
-                width: 1.0,
-                color: p.border.into(),
-            },
-            ..Default::default()
-        };
-
-        match status {
-            Status::Active => base,
-            Status::Hovered | Status::Pressed => Style {
-                background: Some(p.accent.base.into()),
-                text_color: p.accent.foreground.into(),
-                ..base
-            },
-            Status::Disabled => Style {
-                background: if active {
-                    Some(p.accent.base.alpha(0.5).into())
-                } else {
-                    Some(p.background.alpha(0.5).into())
-                },
-                text_color: p.foreground.alpha(0.5).into(),
-                border: Border {
-                    color: p.border.alpha(0.5).into(),
-                    ..base.border
-                },
-                ..base
-            },
-        }
     }
 }
 
@@ -269,17 +156,25 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             .translate(false)
             .interaction(Interaction::Pointer);
 
-        // Style: convert iced button::Style → our widget::Style via Into
-        let active = btn.active;
-        let variant = btn.variant;
-        let style: widget::StyleFn<'a, Theme> = Box::new(move |t, s: widget::Status| {
-            let status: Status = s.into();
-            let style: Style = match variant {
-                MenuButtonVariant::Default => style_default(active)(t, status),
-                MenuButtonVariant::Outline => style_outline(active)(t, status),
-            };
-            style.into()
-        });
+        // Dispatch into existing theme::button variants. `button::sidebar`
+        // (inactive) hovers with `palette.sidebar.accent`; `button::sidebar_active`
+        // (active) uses the main `palette.accent` per the docs-sidebar override.
+        // The chained `.into()` lands core::Style → iced::Style → widget::Style.
+        let style: widget::StyleFn<'a, Theme> = if btn.active {
+            Box::new(move |t, s: widget::Status| {
+                let status: Status = s.into();
+                let iced: iced_widget::button::Style =
+                    button::sidebar_active(t, status).into();
+                iced.into()
+            })
+        } else {
+            Box::new(move |t, s: widget::Status| {
+                let status: Status = s.into();
+                let iced: iced_widget::button::Style =
+                    button::sidebar(t, status).into();
+                iced.into()
+            })
+        };
         raw_btn = raw_btn.style(style);
 
         if let Some(on_press) = btn.on_press {

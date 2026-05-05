@@ -11,6 +11,7 @@ mod menu_action;
 mod menu_badge;
 mod menu_button;
 mod menu_skeleton;
+mod rail;
 mod separator;
 mod state;
 mod submenu;
@@ -20,13 +21,14 @@ pub use content::content;
 pub use footer::footer;
 pub use group::{group, group_content, group_label};
 pub use header::header;
-pub use inset::inset;
+pub use inset::{main, main_styled};
 pub use input::input;
 pub use menu::{menu, menu_item};
 pub use menu_action::{menu_action, SidebarMenuAction};
 pub use menu_badge::menu_badge;
-pub use menu_button::{menu_button, MenuButtonSize, MenuButtonVariant, SidebarMenuButton};
+pub use menu_button::{menu_button, MenuButtonSize, SidebarMenuButton};
 pub use menu_skeleton::menu_skeleton;
+pub use rail::{rail, SidebarRail, RAIL_WIDTH};
 pub use separator::separator;
 pub use state::{Collapsible, Side, State, WIDTH, WIDTH_ICON, WIDTH_MOBILE};
 pub use submenu::{submenu, submenu_button, submenu_item};
@@ -48,4 +50,12 @@ pub fn floating<'a, Message: 'a>(
     content: impl Into<Component<'a, Message>>,
 ) -> Container<'a, Message> {
     Container::new(content).style(sidebar::floating)
+}
+
+/// An inset sidebar — no border on the sidebar itself; the content area
+/// (paired via [`main_styled`]) carries the rounded/border/shadow chrome.
+pub fn inset<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Container<'a, Message> {
+    Container::new(content).style(sidebar::inset)
 }

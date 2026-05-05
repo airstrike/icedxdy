@@ -6,8 +6,6 @@
 //! Other sidebar styling (menu buttons, separators, group labels) is handled
 //! inside each respective widget module, matching docs-sidebar rendering rather
 //! than base shadcn `SidebarMenuButton`.
-//!
-//! `Inset` is intentionally absent — Phase 4.
 
 use std::ops::Add;
 
@@ -47,6 +45,20 @@ pub fn floating(theme: &Theme) -> Style {
     }
 }
 
+/// Inset sidebar — sidebar bg, NO border, NO shadow.
+///
+/// Per shadcn nova `sidebar-inner` (sidebar.tsx:244): the floating variant
+/// adds `rounded-lg shadow-sm ring-1`, but the inset variant does not. The
+/// content area (`SidebarInset`) is what gets the rounded/border/shadow
+/// treatment when paired with this variant — see
+/// `super::container::sidebar_inset`.
+pub fn inset(theme: &Theme) -> Style {
+    Style {
+        background: Some(theme.palette().sidebar.background.into()),
+        ..Style::default()
+    }
+}
+
 // --- Variant unit structs ----------------------------------------------------
 
 /// Default (flush) sidebar variant.
@@ -56,6 +68,11 @@ pub struct Default;
 /// Floating sidebar variant.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Floating;
+
+/// Inset sidebar variant — no border on the sidebar itself; the content
+/// area (`SidebarInset`) carries the inset chrome.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Inset;
 
 // --- Spec --------------------------------------------------------------------
 
@@ -103,6 +120,12 @@ impl From<Floating> for Spec {
     }
 }
 
+impl From<Inset> for Spec {
+    fn from(_: Inset) -> Spec {
+        Spec::variant(inset)
+    }
+}
+
 macro_rules! variant_add {
     ($($variant:ident),* $(,)?) => {
         $(
@@ -116,7 +139,7 @@ macro_rules! variant_add {
     };
 }
 
-variant_add!(Default, Floating);
+variant_add!(Default, Floating, Inset);
 
 impl<T: Into<Tweak>> Add<T> for Spec {
     type Output = Spec;
@@ -187,6 +210,12 @@ impl<'a> From<Floating> for iced_widget::container::StyleFn<'a, Theme> {
     }
 }
 
+impl<'a> From<Inset> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: Inset) -> Self {
+        Box::new(|t| inset(t).into())
+    }
+}
+
 impl<'a> From<Spec> for iced_widget::container::StyleFn<'a, Theme> {
     fn from(spec: Spec) -> Self {
         Box::new(move |t| spec.resolve(t).into())
@@ -240,6 +269,31 @@ mod tests {
             resolved.border.radius,
             radius::LG.into(),
             "Floating must use rounded-lg corners",
+        );
+    }
+
+    /// `Inset` carries `palette.sidebar.background` only — no border, no
+    /// shadow. The sibling content area (`SidebarInset`) is what gets the
+    /// rounded/border/shadow treatment in this variant.
+    #[test]
+    fn inset_has_no_border_or_shadow() {
+        let theme = Theme::dark();
+        let resolved = inset(&theme);
+        let bg = bg_color(&resolved);
+        let expected = theme.palette().sidebar.background;
+        assert!(
+            (bg.l - expected.l).abs() < 1e-4
+                && (bg.c - expected.c).abs() < 1e-4
+                && (bg.a - expected.a).abs() < 1e-4,
+            "expected sidebar.background, got {bg:?}",
+        );
+        assert_eq!(
+            resolved.border.width, 0.0,
+            "Inset sidebar must have no border (width=0)",
+        );
+        assert_eq!(
+            resolved.shadow.blur_radius, 0.0,
+            "Inset sidebar must have no shadow",
         );
     }
 }

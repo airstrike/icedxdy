@@ -6,6 +6,8 @@
 
 use std::ops::Add;
 
+use iced_core::Vector;
+
 use super::Theme;
 use super::tweak::{Token, Trigger, Tweak, TweakSet};
 use crate::{Background, Border, Color, Palette, Shadow, radius};
@@ -175,6 +177,30 @@ pub fn code_block_panel(theme: &Theme) -> Style {
     }
 }
 
+/// Inset-variant sibling of `super::sidebar::inset` — the content area
+/// when paired with an Inset sidebar. Per shadcn nova
+/// (`sidebar.tsx::SidebarInset`, the `peer-data-[variant=inset]` branch):
+/// `bg-background rounded-xl shadow-sm`. We approximate `rounded-xl` with
+/// `radius::LG` (closest available) and add a 1px border for legibility
+/// in flat themes.
+pub fn sidebar_inset(theme: &Theme) -> Style {
+    let p = theme.palette();
+    Style {
+        background: Some(p.background.into()),
+        border: Border {
+            radius: radius::LG.into(),
+            width: 1.0,
+            color: p.border,
+        },
+        shadow: Shadow {
+            color: Color::BLACK.alpha(0.05),
+            offset: Vector::new(0.0, 1.0),
+            blur_radius: 2.0,
+        },
+        ..Style::default()
+    }
+}
+
 /// Vertical "to top" gradient fade for the View Code overlay — matches
 /// shadcn's `linear-gradient(to top, var(--color-code),
 /// color-mix(in oklab, var(--color-code) 60%, transparent), transparent)`.
@@ -233,6 +259,11 @@ pub struct CardMuted;
 /// Code-panel variant (bottom-rounded only).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CodeBlock;
+
+/// Sidebar-inset content-area variant — paired with the Inset sidebar
+/// variant; carries `bg-background rounded-xl shadow-sm` chrome.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SidebarInset;
 
 /// View-Code gradient overlay variant.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -312,6 +343,12 @@ impl From<CodeBlock> for Spec {
     }
 }
 
+impl From<SidebarInset> for Spec {
+    fn from(_: SidebarInset) -> Spec {
+        Spec::variant(sidebar_inset)
+    }
+}
+
 impl From<CodeFadeOverlay> for Spec {
     fn from(_: CodeFadeOverlay) -> Spec {
         Spec::variant(code_fade_overlay)
@@ -338,6 +375,7 @@ variant_add!(
     CardPreview,
     CardMuted,
     CodeBlock,
+    SidebarInset,
     CodeFadeOverlay
 );
 
@@ -440,6 +478,12 @@ impl<'a> From<CodeBlock> for StyleFn<'a, Theme> {
     }
 }
 
+impl<'a> From<SidebarInset> for StyleFn<'a, Theme> {
+    fn from(_: SidebarInset) -> Self {
+        Box::new(sidebar_inset)
+    }
+}
+
 impl<'a> From<CodeFadeOverlay> for StyleFn<'a, Theme> {
     fn from(_: CodeFadeOverlay) -> Self {
         Box::new(code_fade_overlay)
@@ -487,6 +531,12 @@ impl<'a> From<CardMuted> for iced_widget::container::StyleFn<'a, Theme> {
 impl<'a> From<CodeBlock> for iced_widget::container::StyleFn<'a, Theme> {
     fn from(_: CodeBlock) -> Self {
         Box::new(|t| code_block(t).into())
+    }
+}
+
+impl<'a> From<SidebarInset> for iced_widget::container::StyleFn<'a, Theme> {
+    fn from(_: SidebarInset) -> Self {
+        Box::new(|t| sidebar_inset(t).into())
     }
 }
 
@@ -539,6 +589,36 @@ mod tests {
         assert!(
             resolved.background.is_none(),
             "transparent has no bg; Alpha must not synthesize one",
+        );
+    }
+
+    /// `SidebarInset` content area carries the inset chrome: bg-background,
+    /// LG-rounded corners, 1px border, and a small shadow. Pairs with the
+    /// `theme::sidebar::Inset` (no-chrome) sidebar variant.
+    #[test]
+    fn sidebar_inset_has_chrome() {
+        use crate::radius;
+        let theme = Theme::dark();
+        let resolved = sidebar_inset(&theme);
+        let bg = bg_color(&resolved);
+        let expected = theme.palette().background;
+        assert!(
+            (bg.l - expected.l).abs() < 1e-4
+                && (bg.c - expected.c).abs() < 1e-4,
+            "SidebarInset bg must be palette.background ({expected:?}), got {bg:?}",
+        );
+        assert_eq!(
+            resolved.border.radius,
+            radius::LG.into(),
+            "SidebarInset must use rounded-lg corners",
+        );
+        assert!(
+            resolved.border.width > 0.0,
+            "SidebarInset must carry a non-zero border",
+        );
+        assert!(
+            resolved.shadow.blur_radius > 0.0,
+            "SidebarInset must carry a non-zero shadow",
         );
     }
 
