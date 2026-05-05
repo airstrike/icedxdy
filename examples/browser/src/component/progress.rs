@@ -158,7 +158,7 @@ impl page::Page for ProgressPage {
                 slider(0.0..=100.0, self.controlled_value, move |v| {
                     Message::Page(pi, page::Message::ValueChanged(F_CONTROLLED, v))
                 })
-                .step(1.0)
+                .step(1.0_f32)
                 .width(320),
             ]
             .spacing(16)
