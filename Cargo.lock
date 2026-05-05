@@ -1305,7 +1305,7 @@ dependencies = [
 
 [[package]]
 name = "granita"
-version = "0.4.0-dev"
+version = "0.4.1-dev"
 dependencies = [
  "cargo_metadata",
  "granita-macros",
@@ -1326,7 +1326,7 @@ dependencies = [
 
 [[package]]
 name = "granita-build"
-version = "0.4.0-dev"
+version = "0.4.1-dev"
 dependencies = [
  "cargo_metadata",
  "granita-hash",
@@ -1337,7 +1337,7 @@ dependencies = [
 
 [[package]]
 name = "granita-hash"
-version = "0.4.0-dev"
+version = "0.4.1-dev"
 dependencies = [
  "proc-macro2",
  "rustc-hash 2.1.1",
@@ -1346,7 +1346,7 @@ dependencies = [
 
 [[package]]
 name = "granita-macros"
-version = "0.4.0-dev"
+version = "0.4.1-dev"
 dependencies = [
  "granita-hash",
  "proc-macro2",
