@@ -32,22 +32,20 @@ pub use state::{Collapsible, Side, State, WIDTH, WIDTH_ICON, WIDTH_MOBILE};
 pub use submenu::{submenu, submenu_button, submenu_item};
 pub use trigger::trigger;
 
+use crate::component::Component;
 use crate::container::Container;
-use crate::element::Element;
-use icedxdy_core::theme;
+use icedxdy_core::theme::sidebar;
 
 /// A sidebar flush against the window edge.
 pub fn fixed<'a, Message: 'a>(
-    content: impl Into<Element<'a, Message>>,
+    content: impl Into<Component<'a, Message>>,
 ) -> Container<'a, Message> {
-    Container::new(content)
-        .style(theme::sidebar::sidebar_background)
+    Container::new(content).style(sidebar::default)
 }
 
 /// A sidebar floating with margin, rounded corners, border, and shadow.
 pub fn floating<'a, Message: 'a>(
-    content: impl Into<Element<'a, Message>>,
+    content: impl Into<Component<'a, Message>>,
 ) -> Container<'a, Message> {
-    Container::new(content)
-        .style(theme::sidebar::sidebar_floating)
+    Container::new(content).style(sidebar::floating)
 }

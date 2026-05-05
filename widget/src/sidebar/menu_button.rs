@@ -25,7 +25,7 @@ use iced_widget::tooltip::Position;
 use iced_widget::Renderer;
 
 use crate::button::widget;
-use crate::element::{Element, IntoElement};
+use crate::component::{Component, IntoElement};
 use crate::Size;
 use icedxdy_core::radius;
 use icedxdy_core::Theme;
@@ -77,7 +77,7 @@ impl MenuButtonSize {
 /// Uses `iced_widget::button()` (raw iced button) internally so there is
 /// no 1px press-down effect. Supports active state, collapsed mode, and tooltips.
 pub struct SidebarMenuButton<'a, Message> {
-    content: Element<'a, Message>,
+    content: Component<'a, Message>,
     variant: MenuButtonVariant,
     size: MenuButtonSize,
     active: bool,
@@ -88,7 +88,7 @@ pub struct SidebarMenuButton<'a, Message> {
 
 /// Create a sidebar menu button with default variant and size.
 pub fn menu_button<'a, Message: Clone + 'a>(
-    content: impl Into<Element<'a, Message>>,
+    content: impl Into<Component<'a, Message>>,
 ) -> SidebarMenuButton<'a, Message> {
     SidebarMenuButton {
         content: content.into(),
@@ -272,7 +272,7 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
         // Style: convert iced button::Style → our widget::Style via Into
         let active = btn.active;
         let variant = btn.variant;
-        raw_btn = raw_btn.style(move |t: &Theme, s: widget::Status| {
+        let style: widget::StyleFn<'a, Theme> = Box::new(move |t, s: widget::Status| {
             let status: Status = s.into();
             let style: Style = match variant {
                 MenuButtonVariant::Default => style_default(active)(t, status),
@@ -280,6 +280,7 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             };
             style.into()
         });
+        raw_btn = raw_btn.style(style);
 
         if let Some(on_press) = btn.on_press {
             raw_btn = raw_btn.on_press(on_press);
@@ -302,10 +303,10 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
 }
 
 impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
-    for crate::Element<'a, Message>
+    for crate::Component<'a, Message>
 {
     fn from(b: SidebarMenuButton<'a, Message>) -> Self {
-        crate::Element::new(b)
+        crate::Component::new(b)
     }
 }
 

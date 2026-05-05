@@ -15,7 +15,7 @@ pub fn menu_badge<'a, Message: 'a>(
     let text = Text::new(label)
         .size(12.0)
         .medium()
-        .style(theme::text::muted);
+        .style(theme::text::Muted);
 
     Container::new(text)
         .height(20)

@@ -1,7 +1,7 @@
 //! SidebarContent: scrollable, flex-1, gap-2, overflow-auto
 
 use crate::column::Column;
-use crate::element::Element;
+use crate::component::Component;
 use iced_core::Length::Fill;
 
 /// Create scrollable sidebar content.
@@ -10,7 +10,7 @@ use iced_core::Length::Fill;
 /// The caller can wrap this in an iced scrollable if needed.
 /// Uses `height(Fill)` to expand into available space.
 pub fn content<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Element<'a, Message>>,
+    children: impl IntoIterator<Item = Component<'a, Message>>,
 ) -> Column<'a, Message> {
     Column::with_children(children)
         .spacing(8)

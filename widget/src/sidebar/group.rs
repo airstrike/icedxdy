@@ -1,9 +1,9 @@
 //! SidebarGroup, SidebarGroupLabel, SidebarGroupContent
 
 use crate::column::Column;
-use crate::element::Element;
+use crate::component::Component;
 use crate::text::Text;
-use iced_core::Fill;
+use iced_core::Length::Fill;
 use icedxdy_core::theme;
 
 /// Create a sidebar group.
@@ -11,7 +11,7 @@ use icedxdy_core::theme;
 /// A column container with 8px padding and full width, used to group
 /// related sidebar items together.
 pub fn group<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Element<'a, Message>>,
+    children: impl IntoIterator<Item = Component<'a, Message>>,
 ) -> Column<'a, Message> {
     Column::with_children(children)
         .padding(8)
@@ -28,14 +28,14 @@ pub fn group_label<'a, Message: 'a>(
     Text::new(label)
         .size(12.0)
         .medium()
-        .style(theme::text::muted)
+        .style(theme::text::Muted)
 }
 
 /// Create sidebar group content.
 ///
 /// A simple column wrapper with full width for the group's children.
 pub fn group_content<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Element<'a, Message>>,
+    children: impl IntoIterator<Item = Component<'a, Message>>,
 ) -> Column<'a, Message> {
     Column::with_children(children).width(Fill)
 }

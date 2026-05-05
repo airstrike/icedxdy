@@ -16,6 +16,7 @@ pub mod rich_text;
 pub mod row;
 pub mod rule;
 pub mod separator;
+pub mod sidebar;
 pub mod size;
 #[cfg(feature = "spinner")]
 pub mod spinner;

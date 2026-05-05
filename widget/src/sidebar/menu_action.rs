@@ -15,22 +15,22 @@
 use iced_widget::Renderer;
 
 use crate::button::widget;
-use crate::element::{Element, IntoElement};
+use crate::component::{Component, IntoElement};
 use crate::Size;
-use icedxdy_core::theme;
+use icedxdy_core::theme::button;
 use icedxdy_core::Theme;
 
 /// A ghost-style action button for sidebar menu items.
 ///
 /// Small (24x24), ghost styling, centered content.
 pub struct SidebarMenuAction<'a, Message> {
-    content: Element<'a, Message>,
+    content: Component<'a, Message>,
     on_press: Option<Message>,
 }
 
 /// Create a sidebar menu action button (ghost-style, 24x24).
 pub fn menu_action<'a, Message: Clone + 'a>(
-    content: impl Into<Element<'a, Message>>,
+    content: impl Into<Component<'a, Message>>,
 ) -> SidebarMenuAction<'a, Message> {
     SidebarMenuAction {
         content: content.into(),
@@ -54,15 +54,18 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>>
         let content_iced = action.content.into_iced();
 
         // 24x24, our raw button with translate(false) and ghost style
+        let style: widget::StyleFn<'a, Theme> = Box::new(|t, s: widget::Status| {
+            let status: iced_widget::button::Status = s.into();
+            let iced: iced_widget::button::Style =
+                button::ghost(t, status).into();
+            iced.into()
+        });
         let mut raw_btn = widget::Button::new(iced_widget::center(content_iced))
             .width(24.0)
             .height(24.0)
             .padding(0)
             .translate(false)
-            .style(|t: &Theme, s: widget::Status| {
-                let status: iced_widget::button::Status = s.into();
-                theme::button::ghost(t, status).into()
-            });
+            .style(style);
 
         if let Some(on_press) = action.on_press {
             raw_btn = raw_btn.on_press(on_press);
@@ -73,10 +76,10 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>>
 }
 
 impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>>
-    for crate::Element<'a, Message>
+    for crate::Component<'a, Message>
 {
     fn from(a: SidebarMenuAction<'a, Message>) -> Self {
-        crate::Element::new(a)
+        crate::Component::new(a)
     }
 }
 
