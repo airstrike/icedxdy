@@ -34,6 +34,41 @@ pub struct App {
     current_font: String,
 }
 
+/// Top-level docs-site nav sections, mirroring shadcn's main-nav.
+///
+/// Replicates `apps/v4/components/main-nav.tsx` minus `Directory` (deferred
+/// per current scope). No real routing wired yet — the buttons emit
+/// [`Message::NavSelect`] which `update` ignores; this preserves the visual
+/// affordance while the navigation backend lands later.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NavSection {
+    Docs,
+    Components,
+    Blocks,
+    Charts,
+    Create,
+}
+
+impl NavSection {
+    const ALL: &'static [Self] = &[
+        Self::Docs,
+        Self::Components,
+        Self::Blocks,
+        Self::Charts,
+        Self::Create,
+    ];
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Docs => "Docs",
+            Self::Components => "Components",
+            Self::Blocks => "Blocks",
+            Self::Charts => "Charts",
+            Self::Create => "Create",
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
     ToggleTheme,
@@ -41,6 +76,7 @@ pub enum Message {
     FontSelected(String),
     Page(usize, page::Message),
     Font(fonts::Message),
+    NavSelect(NavSection),
     /// Emitted by the splash-screen progress bar each time its easing
     /// animation settles. `App` ignores it; `Browser` intercepts and uses
     /// the `value == 100` case to dismiss the splash so it stays up until
@@ -167,6 +203,7 @@ impl App {
                     Task::none()
                 }
             }
+            Message::NavSelect(_) => Task::none(),
             Message::SplashIdle(_) => Task::none(),
             Message::Font(msg) => match msg {
                 fonts::Message::SystemFontsLoaded(families) => {
@@ -231,7 +268,19 @@ impl App {
         };
         let theme_toggle = button::ghost(theme_icon).on_press(Message::ToggleTheme);
 
-        let header = row![branding, space::horizontal(), font_selector, theme_toggle]
+        // Top-level docs-site nav, per `main-nav.tsx` — ghost buttons,
+        // size=sm, px-2.5 padding. No active-state highlighting yet; the
+        // navigation backend isn't wired (Message::NavSelect is a no-op
+        // sink in `update`).
+        let nav = row(NavSection::ALL.iter().copied().map(|section| {
+            button::ghost(text::small(section.label()))
+                .on_press(Message::NavSelect(section))
+                .into()
+        }))
+        .spacing(0)
+        .align_y(iced::Center);
+
+        let header = row![branding, nav, space::horizontal(), font_selector, theme_toggle]
             .spacing(8)
             .padding(16)
             .align_y(iced::Center);
@@ -283,11 +332,14 @@ impl App {
         }));
 
         // Atom-system demonstration on the sidebar root: `sidebar::Default`
-        // (the flush variant) plus an explicit `Bg(Token::Sidebar)` tweak.
-        // Functionally equivalent to the variant fn alone (the default
-        // variant already sets `palette.sidebar.background`), but spelled
-        // through the cross-widget atom system to exercise the third
-        // catalog (after button + container) on a user-visible surface.
+        // (the flush variant) with `Bg(Token::Background)` overriding the
+        // variant's default sidebar bg with the page bg. Mirrors the
+        // docs-site `<Sidebar className="bg-transparent ...">` override
+        // (`apps/v4/components/docs-sidebar.tsx`) — the docs site renders
+        // its sidebar flush with the page rather than as a distinct surface,
+        // so we override `palette.sidebar.background` with `palette.background`
+        // to match. Cross-widget atom system is exercised on the third
+        // catalog (after button + container).
         let sidebar = sidebar::fixed(
             scrollable(
                 column![sidebar_header, sidebar_items]
@@ -297,7 +349,7 @@ impl App {
             .height(Fill),
         )
         .height(Fill)
-        .class(theme::sidebar::Default + Bg(Token::Sidebar));
+        .class(theme::sidebar::Default + Bg(Token::Background));
 
         // Main content
         let current = &*self.pages[self.current_page];
