@@ -22,8 +22,7 @@ pub fn cubic_bezier(x1: f32, y1: f32, x2: f32, y2: f32, x: f32) -> f32 {
         let t2 = t * t;
         let t3 = t2 * t;
         // B(t) for x = 3(1-t)²t·x1 + 3(1-t)t²·x2 + t³
-        let bx =
-            3.0 * (1.0 - t) * (1.0 - t) * t * x1 + 3.0 * (1.0 - t) * t2 * x2 + t3;
+        let bx = 3.0 * (1.0 - t) * (1.0 - t) * t * x1 + 3.0 * (1.0 - t) * t2 * x2 + t3;
         // B'(t) for x
         let dbx = 3.0 * (1.0 - t) * (1.0 - t) * x1
             + 6.0 * (1.0 - t) * t * (x2 - x1)

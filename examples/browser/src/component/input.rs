@@ -52,7 +52,9 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "invalid",
                 title: "Invalid",
-                description: Some("An input with validation errors, styled with a destructive border and focus ring."),
+                description: Some(
+                    "An input with validation errors, styled with a destructive border and focus ring.",
+                ),
                 snippet: "examples/browser/snippets/input-invalid.md",
             },
             page::Block::Example {
@@ -64,7 +66,9 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "required",
                 title: "Required",
-                description: Some("An input with a required label, marked by a destructive asterisk suffix."),
+                description: Some(
+                    "An input with a required label, marked by a destructive asterisk suffix.",
+                ),
                 snippet: "examples/browser/snippets/input-required.md",
             },
         ],
@@ -229,7 +233,10 @@ impl page::Page for InputPage {
                     span("*").size(text::size::SM).color(Token::Destructive),
                 ],
                 input("This field is required", &self.required_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_REQUIRED, v)))
+                    .on_input(move |v| Message::Page(
+                        pi,
+                        page::Message::InputChanged(F_REQUIRED, v)
+                    ))
                     .width(Fill),
                 text::muted("This field must be filled out."),
             ]

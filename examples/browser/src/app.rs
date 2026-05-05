@@ -1,5 +1,5 @@
-use iced::widget::{column, combo_box, row, scrollable, space};
 use iced::mouse::Interaction;
+use iced::widget::{column, combo_box, row, scrollable, space};
 use iced_widget::button::StyleFn;
 
 use iced::{Fill, Font, Pixels, Subscription, Task};
@@ -71,9 +71,17 @@ impl App {
         let default_font = "Geist".to_string();
 
         let dark_mode = theme::is_dark_mode();
-        let active_theme = if dark_mode { Theme::dark() } else { Theme::light() };
+        let active_theme = if dark_mode {
+            Theme::dark()
+        } else {
+            Theme::light()
+        };
         let snippet_viewer = SnippetViewer::new(
-            if dark_mode { gh_dark.clone() } else { gh_light.clone() },
+            if dark_mode {
+                gh_dark.clone()
+            } else {
+                gh_light.clone()
+            },
             active_theme.palette(),
         );
 
@@ -325,5 +333,4 @@ impl App {
             .height(Fill)
             .into()
     }
-
 }

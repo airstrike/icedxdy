@@ -603,8 +603,7 @@ mod tests {
         let bg = bg_color(&resolved);
         let expected = theme.palette().background;
         assert!(
-            (bg.l - expected.l).abs() < 1e-4
-                && (bg.c - expected.c).abs() < 1e-4,
+            (bg.l - expected.l).abs() < 1e-4 && (bg.c - expected.c).abs() < 1e-4,
             "SidebarInset bg must be palette.background ({expected:?}), got {bg:?}",
         );
         assert_eq!(

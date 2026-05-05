@@ -17,13 +17,13 @@
 //! ```
 
 use iced_core::text::IntoFragment;
-use iced_widget::container::Container;
 use iced_widget::Column;
 use iced_widget::Row;
+use iced_widget::container::Container;
 
-use crate::widget::text;
-use crate::theme;
 use crate::Theme;
+use crate::theme;
+use crate::widget::text;
 
 /// Padding values based on shadcn card (24px = 1.5rem)
 mod padding {

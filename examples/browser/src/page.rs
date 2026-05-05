@@ -113,10 +113,18 @@ impl Block {
                 .and_then(|t| t.as_deref())
                 .filter(|s| !s.is_empty()),
             Block::Example { title, .. } => {
-                if title.is_empty() { None } else { Some(*title) }
+                if title.is_empty() {
+                    None
+                } else {
+                    Some(*title)
+                }
             }
             Block::Group { title, .. } => {
-                if title.is_empty() { None } else { Some(*title) }
+                if title.is_empty() {
+                    None
+                } else {
+                    Some(*title)
+                }
             }
             Block::Inline { .. } => None,
         }
@@ -267,7 +275,16 @@ fn render_blocks<'a>(
     let st = page.state();
     let mut items: Vec<iced::Element<'_, super::Message, Theme>> = Vec::new();
     let mut flat_idx: usize = 0;
-    walk_blocks(page.blocks(), 0, page, viewer, st, pi, &mut flat_idx, &mut items);
+    walk_blocks(
+        page.blocks(),
+        0,
+        page,
+        viewer,
+        st,
+        pi,
+        &mut flat_idx,
+        &mut items,
+    );
     column(items).spacing(48).width(Fill).into()
 }
 
@@ -295,7 +312,16 @@ fn walk_blocks<'a>(
                 description,
                 snippet,
             } => render_example(
-                pi, i, depth, id, title, *description, snippet, st, viewer, page,
+                pi,
+                i,
+                depth,
+                id,
+                title,
+                *description,
+                snippet,
+                st,
+                viewer,
+                page,
             ),
             Block::Inline { id } => page.preview(id),
             Block::Group { title, .. } => heading_for(depth, *title),
@@ -384,8 +410,8 @@ fn render_example<'a>(
             .into()
     };
 
-    let code: Option<iced::Element<'_, super::Message, Theme>> = (!snippet_path.is_empty())
-        .then(|| {
+    let code: Option<iced::Element<'_, super::Message, Theme>> =
+        (!snippet_path.is_empty()).then(|| {
             let body = st
                 .md_items
                 .get(snippet_path)
@@ -399,12 +425,14 @@ fn render_example<'a>(
                 .style(code_block_panel);
 
             if st.code_expanded.contains(&block_pos) {
-                let copy_btn: Component<'_, super::Message> =
-                    button::ghost(icon::copy().size(14))
-                        .size(Sm)
-                        .square()
-                        .on_press(super::Message::Page(page_index, Message::CopyCode(block_pos)))
-                        .into();
+                let copy_btn: Component<'_, super::Message> = button::ghost(icon::copy().size(14))
+                    .size(Sm)
+                    .square()
+                    .on_press(super::Message::Page(
+                        page_index,
+                        Message::CopyCode(block_pos),
+                    ))
+                    .into();
 
                 let copy_corner = Container::new(copy_btn)
                     .align_x(Alignment::End)
@@ -419,7 +447,10 @@ fn render_example<'a>(
 
                 let view_code_btn: Component<'_, super::Message> = button("View Code")
                     .style(theme::button::Outline + Opaque + radius(Lg))
-                    .on_press(super::Message::Page(page_index, Message::ExpandCode(block_pos)))
+                    .on_press(super::Message::Page(
+                        page_index,
+                        Message::ExpandCode(block_pos),
+                    ))
                     .into();
 
                 let overlay = Container::new(view_code_btn)
@@ -446,8 +477,8 @@ fn render_example<'a>(
         return card_el;
     }
 
-    let desc: Option<iced::Element<'_, super::Message, Theme>> = description
-        .map(|d| text::p(d).style(theme::text::Muted).into());
+    let desc: Option<iced::Element<'_, super::Message, Theme>> =
+        description.map(|d| text::p(d).style(theme::text::Muted).into());
 
     let mut col = column![].spacing(16).width(Fill);
     col = col.push(heading_for(depth, title));
@@ -467,9 +498,7 @@ fn sidebar<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let entries: Vec<(usize, u8, String)> = flatten(page.blocks())
         .into_iter()
         .enumerate()
-        .filter_map(|(flat, (b, depth))| {
-            b.toc_title(st).map(|t| (flat, depth, t.to_owned()))
-        })
+        .filter_map(|(flat, (b, depth))| b.toc_title(st).map(|t| (flat, depth, t.to_owned())))
         .collect();
 
     let visible_in_toc: Vec<usize> = st
@@ -740,11 +769,7 @@ impl State {
             .map(|path| {
                 let buf = PathBuf::from(path);
                 Task::perform(
-                    async move {
-                        read_to_string(buf)
-                            .await
-                            .map_err(|e| e.to_string())
-                    },
+                    async move { read_to_string(buf).await.map_err(|e| e.to_string()) },
                     move |result| super::Message::Page(pi, Message::SnippetLoaded(path, result)),
                 )
             })
@@ -782,9 +807,11 @@ impl State {
                 self.visible.remove(idx);
                 Some(Task::none())
             }
-            Message::ScrollTo(idx) => self.block_ids.get(*idx).cloned().map(|id| {
-                scroll::scroll_into_view(self.scrollable_id.clone(), id)
-            }),
+            Message::ScrollTo(idx) => self
+                .block_ids
+                .get(*idx)
+                .cloned()
+                .map(|id| scroll::scroll_into_view(self.scrollable_id.clone(), id)),
             Message::ExpandCode(idx) => {
                 self.code_expanded.insert(*idx);
                 Some(Task::none())

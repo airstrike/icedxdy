@@ -33,8 +33,7 @@ use iced_runtime::widget::operation;
 ///
 /// Use `.discard()` if you don't need the ID, or `.map(|id| ...)` to use it.
 pub fn focus_next() -> Task<widget::Id> {
-    operation::focus_next()
-        .chain(task::widget(focusable::find_focused()))
+    operation::focus_next().chain(task::widget(focusable::find_focused()))
 }
 
 /// Produces a [`Task`] that focuses the previous focusable widget
@@ -45,8 +44,7 @@ pub fn focus_next() -> Task<widget::Id> {
 ///
 /// Use `.discard()` if you don't need the ID, or `.map(|id| ...)` to use it.
 pub fn focus_previous() -> Task<widget::Id> {
-    operation::focus_previous()
-        .chain(task::widget(focusable::find_focused()))
+    operation::focus_previous().chain(task::widget(focusable::find_focused()))
 }
 
 /// Produces a [`Task`] that focuses the widget with the given [`widget::Id`].

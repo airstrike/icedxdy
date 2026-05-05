@@ -58,7 +58,5 @@ pub fn submenu_item<'a, Message: 'a>(
 pub fn submenu_button<'a, Message: 'a>(
     content: impl Into<Component<'a, Message>>,
 ) -> Container<'a, Message> {
-    Container::new(content)
-        .width(Fill)
-        .height(28)
+    Container::new(content).width(Fill).height(28)
 }

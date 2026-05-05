@@ -42,8 +42,8 @@ use crate::core::widget::operation;
 use crate::core::widget::tree::{self, Tree};
 use crate::core::window;
 use crate::core::{
-    Background, Color, Element, Event, Layout, Length, Padding, Rectangle,
-    Shadow, Shell, Size, Theme, Vector, Widget,
+    Background, Color, Element, Event, Layout, Length, Padding, Rectangle, Shadow, Shell, Size,
+    Theme, Vector, Widget,
 };
 
 /// A generic widget that produces a message when pressed.
@@ -136,9 +136,7 @@ where
     Theme: Catalog,
 {
     /// Creates a new [`Button`] with the given content.
-    pub fn new(
-        content: impl Into<Element<'a, Message, Theme, Renderer>>,
-    ) -> Self {
+    pub fn new(content: impl Into<Element<'a, Message, Theme, Renderer>>) -> Self {
         let content = content.into();
         let size = content.as_widget().size_hint();
 
@@ -204,10 +202,7 @@ where
     /// This closure will only be called when the [`Button`] is actually pressed and,
     /// therefore, this method is useful to reduce overhead if creating the resulting
     /// message is slow.
-    pub fn on_press_with(
-        mut self,
-        on_press: impl Fn() -> Message + 'a,
-    ) -> Self {
+    pub fn on_press_with(mut self, on_press: impl Fn() -> Message + 'a) -> Self {
         self.on_press = Some(OnPress::Closure(Box::new(on_press)));
         self
     }
@@ -371,19 +366,11 @@ where
             left: self.padding.left + self.inset.left,
             right: self.padding.right + self.inset.right,
         };
-        layout::padded(
-            limits,
-            self.width,
-            self.height,
-            padding,
-            |limits| {
-                self.content.as_widget_mut().layout(
-                    &mut tree.children[0],
-                    renderer,
-                    limits,
-                )
-            },
-        )
+        layout::padded(limits, self.width, self.height, padding, |limits| {
+            self.content
+                .as_widget_mut()
+                .layout(&mut tree.children[0], renderer, limits)
+        })
     }
 
     fn operate(
@@ -573,24 +560,38 @@ where
             let hovered = theme.style(&self.class, Status::Hovered);
 
             fn bg_color(style: &Style) -> Option<Color> {
-                style.background
-                    .map(|b| match b { Background::Color(c) => c, _ => Color::TRANSPARENT })
+                style.background.map(|b| match b {
+                    Background::Color(c) => c,
+                    _ => Color::TRANSPARENT,
+                })
             }
 
             let hovered_bg = bg_color(&hovered).unwrap_or(Color::TRANSPARENT);
             // For active bg: if None (transparent), use the hovered color with 0 alpha
             // so we interpolate the alpha channel cleanly without color shift
-            let active_bg = bg_color(&active)
-                .unwrap_or(Color { a: 0.0, ..hovered_bg });
+            let active_bg = bg_color(&active).unwrap_or(Color {
+                a: 0.0,
+                ..hovered_bg
+            });
 
             let bg = state.hover.interpolate(active_bg, hovered_bg, now);
-            let text = state.hover.interpolate(active.text_color, hovered.text_color, now);
+            let text = state
+                .hover
+                .interpolate(active.text_color, hovered.text_color, now);
 
             Style {
                 background: Some(Background::Color(bg)),
                 text_color: text,
-                border: if state.hover.value() { hovered.border } else { active.border },
-                shadow: if state.hover.value() { hovered.shadow } else { active.shadow },
+                border: if state.hover.value() {
+                    hovered.border
+                } else {
+                    active.border
+                },
+                shadow: if state.hover.value() {
+                    hovered.shadow
+                } else {
+                    active.shadow
+                },
                 snap: active.snap,
             }
         } else {
@@ -600,7 +601,11 @@ where
         // 1px press-down effect (active:translate-y-px)
         // Layout has 1px top + 1px bottom extra padding when translate is on.
         // At rest: draw translated by (0, 0). On press: translated by (0, 1).
-        let press_y = if self.translate && status == Status::Pressed { 1.0 } else { 0.0 };
+        let press_y = if self.translate && status == Status::Pressed {
+            1.0
+        } else {
+            0.0
+        };
 
         // Visual button bounds: shrunk inward from `bounds` by the
         // translate-margin (1px top/bottom when on) AND `inset`. The
@@ -611,52 +616,44 @@ where
             x: bounds.x + self.inset.left,
             y: bounds.y + translate + self.inset.top,
             width: bounds.width - self.inset.left - self.inset.right,
-            height: bounds.height
-                - 2.0 * translate
-                - self.inset.top
-                - self.inset.bottom,
+            height: bounds.height - 2.0 * translate - self.inset.top - self.inset.bottom,
         };
 
         // Translate everything down by press_y
-        renderer.with_translation(
-            Vector::new(0.0, press_y),
-            |renderer| {
-                if style.background.is_some()
-                    || style.border.width > 0.0
-                    || style.shadow.color.a > 0.0
-                {
-                    renderer.fill_quad(
-                        renderer::Quad {
-                            bounds: visual_bounds,
-                            border: style.border,
-                            shadow: style.shadow,
-                            snap: style.snap,
-                        },
-                        style
-                            .background
-                            .unwrap_or(Background::Color(Color::TRANSPARENT)),
-                    );
-                }
-
-                let viewport = if self.clip {
-                    visual_bounds.intersection(viewport).unwrap_or(*viewport)
-                } else {
-                    *viewport
-                };
-
-                self.content.as_widget().draw(
-                    &tree.children[0],
-                    renderer,
-                    theme,
-                    &renderer::Style {
-                        text_color: style.text_color,
+        renderer.with_translation(Vector::new(0.0, press_y), |renderer| {
+            if style.background.is_some() || style.border.width > 0.0 || style.shadow.color.a > 0.0
+            {
+                renderer.fill_quad(
+                    renderer::Quad {
+                        bounds: visual_bounds,
+                        border: style.border,
+                        shadow: style.shadow,
+                        snap: style.snap,
                     },
-                    content_layout,
-                    cursor,
-                    &viewport,
+                    style
+                        .background
+                        .unwrap_or(Background::Color(Color::TRANSPARENT)),
                 );
-            },
-        );
+            }
+
+            let viewport = if self.clip {
+                visual_bounds.intersection(viewport).unwrap_or(*viewport)
+            } else {
+                *viewport
+            };
+
+            self.content.as_widget().draw(
+                &tree.children[0],
+                renderer,
+                theme,
+                &renderer::Style {
+                    text_color: style.text_color,
+                },
+                content_layout,
+                cursor,
+                &viewport,
+            );
+        });
     }
 
     fn mouse_interaction(
@@ -860,17 +857,16 @@ impl From<iced_widget::button::Style> for Style {
 
 impl From<Status> for iced_widget::button::Status {
     fn from(status: Status) -> Self {
+        mod iced {
+            pub use iced_widget::button::Status;
+        }
         match status {
-            Status::Active => iced_widget::button::Status::Active,
-            Status::Hovered => iced_widget::button::Status::Hovered,
-            Status::Pressed => iced_widget::button::Status::Pressed,
-            Status::Focused { is_hovered: true } => {
-                iced_widget::button::Status::Hovered
-            }
-            Status::Focused { is_hovered: false } => {
-                iced_widget::button::Status::Active
-            }
-            Status::Disabled => iced_widget::button::Status::Disabled,
+            Status::Active => iced::Status::Active,
+            Status::Hovered => iced::Status::Hovered,
+            Status::Pressed => iced::Status::Pressed,
+            Status::Focused { is_hovered: true } => iced::Status::Hovered,
+            Status::Focused { is_hovered: false } => iced::Status::Active,
+            Status::Disabled => iced::Status::Disabled,
         }
     }
 }
@@ -880,9 +876,7 @@ impl From<Status> for iced_widget::button::Status {
 ///
 /// Our [`Status::Focused`] variant degrades to `Hovered` (if hovered) or
 /// `Active` (if not) when calling the upstream style function.
-pub fn from_iced_style<'a>(
-    f: iced_widget::button::StyleFn<'a, Theme>,
-) -> StyleFn<'a, Theme> {
+pub fn from_iced_style<'a>(f: iced_widget::button::StyleFn<'a, Theme>) -> StyleFn<'a, Theme> {
     Box::new(move |theme, status| f(theme, status.into()).into())
 }
 
@@ -1066,9 +1060,7 @@ pub fn background(theme: &Theme, status: Status) -> Style {
     match status {
         Status::Active => base,
         Status::Pressed => Style {
-            background: Some(Background::Color(
-                palette.background.strong.color,
-            )),
+            background: Some(Background::Color(palette.background.strong.color)),
             ..base
         },
         Status::Hovered => Style {
@@ -1100,15 +1092,11 @@ pub fn subtle(theme: &Theme, status: Status) -> Style {
     match status {
         Status::Active => base,
         Status::Pressed => Style {
-            background: Some(Background::Color(
-                palette.background.strong.color,
-            )),
+            background: Some(Background::Color(palette.background.strong.color)),
             ..base
         },
         Status::Hovered => Style {
-            background: Some(Background::Color(
-                palette.background.weaker.color,
-            )),
+            background: Some(Background::Color(palette.background.weaker.color)),
             ..base
         },
         Status::Focused { is_hovered } => Style {
@@ -1146,4 +1134,3 @@ fn disabled(style: Style) -> Style {
         ..style
     }
 }
-

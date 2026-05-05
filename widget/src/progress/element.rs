@@ -64,10 +64,7 @@ impl<'a, Message: 'a> Progress<'a, Message> {
     /// Fire `on_idle(value)` when the easing animation settles at its
     /// target. Useful for gating follow-up actions (dismissing a splash,
     /// navigation, etc.) on the bar reaching a specific value.
-    pub fn on_idle(
-        mut self,
-        on_idle: impl Fn(f32) -> Message + 'a,
-    ) -> Self {
+    pub fn on_idle(mut self, on_idle: impl Fn(f32) -> Message + 'a) -> Self {
         self.on_idle = Some(Box::new(on_idle));
         self
     }

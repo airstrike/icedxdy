@@ -12,9 +12,7 @@ use iced_core::Length::Fill;
 pub fn menu<'a, Message: 'a>(
     children: impl IntoIterator<Item = Component<'a, Message>>,
 ) -> Column<'a, Message> {
-    Column::with_children(children)
-        .spacing(4)
-        .width(Fill)
+    Column::with_children(children).spacing(4).width(Fill)
 }
 
 /// Create a sidebar menu item.

@@ -10,7 +10,11 @@ impl Catalog for Theme {
     fn default<'a>() -> Self::Class<'a> {
         Box::new(|theme, status| {
             let iced = theme.iced_theme();
-            <iced_core::Theme as Catalog>::style(iced, &<iced_core::Theme as Catalog>::default(), status)
+            <iced_core::Theme as Catalog>::style(
+                iced,
+                &<iced_core::Theme as Catalog>::default(),
+                status,
+            )
         })
     }
 

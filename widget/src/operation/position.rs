@@ -116,10 +116,7 @@ impl Position for PositionMap {
 /// or `None` if the index is out of range.
 ///
 /// The task produces no value if the target widget was not found.
-pub fn find_position(
-    target: Id,
-    index: usize,
-) -> iced_runtime::Task<Option<Rectangle>> {
+pub fn find_position(target: Id, index: usize) -> iced_runtime::Task<Option<Rectangle>> {
     iced_runtime::task::widget(FindPosition {
         target,
         index,
@@ -134,21 +131,13 @@ struct FindPosition {
 }
 
 impl Operation<Option<Rectangle>> for FindPosition {
-    fn traverse(
-        &mut self,
-        operate: &mut dyn FnMut(&mut dyn Operation<Option<Rectangle>>),
-    ) {
+    fn traverse(&mut self, operate: &mut dyn FnMut(&mut dyn Operation<Option<Rectangle>>)) {
         if self.result.is_none() {
             operate(self);
         }
     }
 
-    fn custom(
-        &mut self,
-        id: Option<&widget::Id>,
-        _bounds: Rectangle,
-        state: &mut dyn Any,
-    ) {
+    fn custom(&mut self, id: Option<&widget::Id>, _bounds: Rectangle, state: &mut dyn Any) {
         if self.result.is_none()
             && let Some(id) = id
             && *id == self.target.0

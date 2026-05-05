@@ -17,7 +17,7 @@ mod element;
 mod helpers;
 pub mod widget;
 
-pub use element::{button, Button, Link};
+pub use element::{Button, Link, button};
 pub use helpers::*;
 
 /// Create a button with one or more children using the default variant.

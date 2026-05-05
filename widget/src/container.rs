@@ -1,15 +1,15 @@
-pub mod widget;
 mod element;
+pub mod widget;
 
-use crate::component::{Component, IntoElement};
 use crate::Size;
-use icedxdy_core::Theme;
-use icedxdy_core::theme::container::Style;
+use crate::component::{Component, IntoElement};
 use iced_core::alignment::{Horizontal, Vertical};
 use iced_core::widget::Id;
 use iced_core::{Length, Padding, Pixels};
-use iced_widget::container::StyleFn;
 use iced_widget::Renderer;
+use iced_widget::container::StyleFn;
+use icedxdy_core::Theme;
+use icedxdy_core::theme::container::Style;
 
 /// Create a [`Container`] wrapping the given content.
 ///
@@ -124,10 +124,7 @@ impl<'a, Message: 'a> Container<'a, Message> {
     /// (e.g. `theme::container::Card`, `theme::container::CodeBlock`,
     /// or a `Spec` produced by the `+` tweak combinators), use
     /// [`Container::class`] instead.
-    pub fn style(
-        mut self,
-        style: impl Fn(&Theme) -> Style + 'static,
-    ) -> Self {
+    pub fn style(mut self, style: impl Fn(&Theme) -> Style + 'static) -> Self {
         self.style = Some(Box::new(move |t: &Theme| (style)(t).into()));
         self
     }
@@ -136,10 +133,7 @@ impl<'a, Message: 'a> Container<'a, Message> {
     /// be turned into an [`iced_widget::container::StyleFn`], which is how
     /// the variant unit structs in `theme::container` (and `Spec` values
     /// from the tweak combinators) flow through.
-    pub fn class(
-        mut self,
-        class: impl Into<StyleFn<'static, Theme>>,
-    ) -> Self {
+    pub fn class(mut self, class: impl Into<StyleFn<'static, Theme>>) -> Self {
         self.style = Some(class.into());
         self
     }

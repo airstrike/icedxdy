@@ -11,14 +11,13 @@ use iced_core::widget::tree::{self, Tree};
 use iced_core::{
     Color, Element, Event, Layout, Length, Radians, Rectangle, Shell, Size, Vector, Widget,
 };
-use iced_widget::canvas;
 use iced_widget::Renderer;
+use iced_widget::canvas;
 
 use icedxdy_core::Theme;
 
 use std::f32::consts::PI;
 use std::time::Duration;
-
 
 /// The style of a [`Spinner`].
 #[derive(Debug, Clone, Copy, Default)]

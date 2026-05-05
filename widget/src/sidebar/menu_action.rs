@@ -14,11 +14,11 @@
 
 use iced_widget::Renderer;
 
+use crate::Size;
 use crate::button::widget;
 use crate::component::{Component, IntoElement};
-use crate::Size;
-use icedxdy_core::theme::button;
 use icedxdy_core::Theme;
+use icedxdy_core::theme::button;
 
 /// A ghost-style action button for sidebar menu items.
 ///
@@ -56,8 +56,7 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>>
         // 24x24, our raw button with translate(false) and ghost style
         let style: widget::StyleFn<'a, Theme> = Box::new(|t, s: widget::Status| {
             let status: iced_widget::button::Status = s.into();
-            let iced: iced_widget::button::Style =
-                button::ghost(t, status).into();
+            let iced: iced_widget::button::Style = button::ghost(t, status).into();
             iced.into()
         });
         let mut raw_btn = widget::Button::new(iced_widget::center(content_iced))

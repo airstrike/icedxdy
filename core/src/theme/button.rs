@@ -84,11 +84,7 @@ impl iced_widget::button::Catalog for Theme {
         Box::new(|t, s| default(t, s).into())
     }
 
-    fn style(
-        &self,
-        class: &Self::Class<'_>,
-        status: Status,
-    ) -> iced_widget::button::Style {
+    fn style(&self, class: &Self::Class<'_>, status: Status) -> iced_widget::button::Style {
         class(self, status)
     }
 }
@@ -166,15 +162,15 @@ pub fn outline(theme: &Theme, status: Status) -> Style {
     let input_a = p.input.a;
     let (bg, border_color, hover_bg) = if dark {
         (
-            p.input.alpha(input_a * 0.3),  // ~4.5% white
-            p.input,                       // oklch(1 0 0 / 15%)
-            p.input.alpha(input_a * 0.5),  // ~7.5% white
+            p.input.alpha(input_a * 0.3), // ~4.5% white
+            p.input,                      // oklch(1 0 0 / 15%)
+            p.input.alpha(input_a * 0.5), // ~7.5% white
         )
     } else {
         (
-            p.background,                  // white
-            p.border,                      // oklch(0.922 0 0)
-            p.muted.base,                  // oklch(0.97 0 0)
+            p.background, // white
+            p.border,     // oklch(0.922 0 0)
+            p.muted.base, // oklch(0.97 0 0)
         )
     };
 
@@ -196,11 +192,14 @@ pub fn outline(theme: &Theme, status: Status) -> Style {
             ..base
         },
         Status::Pressed => Style {
-            background: Some(if dark {
-                p.input.alpha(input_a * 0.6)
-            } else {
-                p.muted.base.alpha(0.9)
-            }.into()),
+            background: Some(
+                if dark {
+                    p.input.alpha(input_a * 0.6)
+                } else {
+                    p.muted.base.alpha(0.9)
+                }
+                .into(),
+            ),
             ..base
         },
         Status::Disabled => Style {
@@ -262,11 +261,7 @@ pub fn destructive(theme: &Theme, status: Status) -> Style {
     let p = theme.palette();
     let dark = is_dark(theme);
 
-    let (rest_alpha, hover_alpha) = if dark {
-        (0.2, 0.3)
-    } else {
-        (0.1, 0.2)
-    };
+    let (rest_alpha, hover_alpha) = if dark { (0.2, 0.3) } else { (0.1, 0.2) };
 
     let base = Style {
         background: Some(p.destructive.base.alpha(rest_alpha).into()),
@@ -806,7 +801,11 @@ mod tests {
             "expected small lift above bg.l={bg_l}, got l={}",
             bg.l
         );
-        assert!(bg.l < 0.5, "dark-mode bg must not be near-white: l={}", bg.l);
+        assert!(
+            bg.l < 0.5,
+            "dark-mode bg must not be near-white: l={}",
+            bg.l
+        );
     }
 
     /// Outline + Opaque on light: bg ≈ palette.background (which is white).
@@ -902,8 +901,7 @@ mod tests {
         let bg = bg_color(&hovered);
         let expected = theme.palette().sidebar.accent.base;
         assert!(
-            (bg.l - expected.l).abs() < 1e-4
-                && (bg.c - expected.c).abs() < 1e-4,
+            (bg.l - expected.l).abs() < 1e-4 && (bg.c - expected.c).abs() < 1e-4,
             "sidebar hover must use sidebar.accent.base ({expected:?}), got {bg:?}",
         );
     }
@@ -920,8 +918,7 @@ mod tests {
         let sb_accent = theme.palette().sidebar.accent.base;
 
         assert!(
-            (bg.l - main_accent.l).abs() < 1e-4
-                && (bg.c - main_accent.c).abs() < 1e-4,
+            (bg.l - main_accent.l).abs() < 1e-4 && (bg.c - main_accent.c).abs() < 1e-4,
             "sidebar_active must use main palette.accent.base ({main_accent:?}), got {bg:?}",
         );
         assert!(
@@ -936,12 +933,9 @@ mod tests {
     fn default_plus_opaque_no_change() {
         let theme = Theme::dark();
         let bare = bg_color(&default(&theme, Status::Active));
-        let with_opaque = bg_color(
-            &(Spec::from(Default) + Opaque).resolve(&theme, Status::Active),
-        );
+        let with_opaque = bg_color(&(Spec::from(Default) + Opaque).resolve(&theme, Status::Active));
         assert!(
-            (bare.l - with_opaque.l).abs() < 1e-4
-                && (bare.c - with_opaque.c).abs() < 1e-4,
+            (bare.l - with_opaque.l).abs() < 1e-4 && (bare.c - with_opaque.c).abs() < 1e-4,
             "Default already opaque; Opaque must be a no-op. bare={bare:?}, with={with_opaque:?}",
         );
     }

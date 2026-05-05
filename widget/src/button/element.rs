@@ -14,8 +14,7 @@ use super::widget;
 fn default(theme: &Theme, status: widget::Status) -> widget::Style {
     // theme::button::default returns our OKLCH-native Style; convert
     // through iced::button::Style → widget::Style.
-    let iced: iced_widget::button::Style =
-        theme::button::default(theme, status.into()).into();
+    let iced: iced_widget::button::Style = theme::button::default(theme, status.into()).into();
     iced.into()
 }
 
@@ -131,10 +130,7 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     }
 
     /// Set the style
-    pub fn style(
-        mut self,
-        style: impl Into<iced_widget::button::StyleFn<'a, Theme>>,
-    ) -> Self {
+    pub fn style(mut self, style: impl Into<iced_widget::button::StyleFn<'a, Theme>>) -> Self {
         self.style = style.into();
         self
     }

@@ -19,17 +19,17 @@
 //! sidebar::rail(Message::ToggleSidebar)
 //! ```
 
-use iced_core::mouse::Interaction;
 use iced_core::Length::Fill;
+use iced_core::mouse::Interaction;
+use iced_widget::Renderer;
 use iced_widget::button::Status;
 use iced_widget::space;
-use iced_widget::Renderer;
 
+use crate::Size;
 use crate::button::widget;
 use crate::component::IntoElement;
-use crate::Size;
-use icedxdy_core::theme::button;
 use icedxdy_core::Theme;
+use icedxdy_core::theme::button;
 
 /// Width of the rail hit target (matches shadcn's `w-4` = 16px).
 pub const RAIL_WIDTH: f32 = 16.0;
@@ -83,9 +83,7 @@ impl<'a, Message: Clone + 'a> From<SidebarRail<Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> From<SidebarRail<Message>>
-    for crate::Component<'a, Message>
-{
+impl<'a, Message: Clone + 'a> From<SidebarRail<Message>> for crate::Component<'a, Message> {
     fn from(r: SidebarRail<Message>) -> Self {
         crate::Component::new(r)
     }

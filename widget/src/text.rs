@@ -18,14 +18,14 @@ use crate::core::Padding;
 use crate::core::font;
 use crate::core::font::Weight;
 use crate::core::text::{Fragment, IntoFragment};
-use iced_widget::text::StyleFn;
 use iced_widget::Renderer;
+use iced_widget::text::StyleFn;
 
+use crate::Size;
 use crate::component::{Component, IntoElement};
 use crate::rule;
-use icedxdy_core::theme;
-use crate::Size;
 use icedxdy_core::Theme;
+use icedxdy_core::theme;
 
 /// Font sizes based on Tailwind/shadcn scale
 pub mod size {
@@ -187,9 +187,7 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
         }
     }
 
-    fn into_element(
-        self: Box<Self>,
-    ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         self.build().into()
     }
 }
@@ -303,9 +301,7 @@ pub fn blockquote<'a>(content: impl IntoFragment<'a>) -> Blockquote<'a> {
     }
 }
 
-impl<'a, Message: 'a> From<Blockquote<'a>>
-    for iced_core::Element<'a, Message, Theme, Renderer>
-{
+impl<'a, Message: 'a> From<Blockquote<'a>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(b: Blockquote<'a>) -> Self {
         Box::new(b).into_element()
     }
@@ -318,9 +314,7 @@ impl<'a, Message: 'a> From<Blockquote<'a>> for Component<'a, Message> {
 }
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for Blockquote<'a> {
-    fn into_element(
-        self: Box<Self>,
-    ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         let Blockquote { body } = *self;
 
         iced_widget::Row::new()
@@ -377,12 +371,13 @@ where
         })
         .collect();
 
-    List { items, _phantom: PhantomData }
+    List {
+        items,
+        _phantom: PhantomData,
+    }
 }
 
-impl<'a, Message: 'a> From<List<'a, Message>>
-    for iced_core::Element<'a, Message, Theme, Renderer>
-{
+impl<'a, Message: 'a> From<List<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(list: List<'a, Message>) -> Self {
         Box::new(list).into_element()
     }
@@ -395,9 +390,7 @@ impl<'a, Message: 'a> From<List<'a, Message>> for Component<'a, Message> {
 }
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for List<'a, Message> {
-    fn into_element(
-        self: Box<Self>,
-    ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         let List { items, .. } = *self;
 
         let column = items.into_iter().fold(
@@ -406,7 +399,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for List<'a, Message> {
         );
 
         iced_widget::container(column)
-            .padding(Padding { left: 24.0, ..Padding::ZERO })
+            .padding(Padding {
+                left: 24.0,
+                ..Padding::ZERO
+            })
             .width(Fill)
             .height(Length::Shrink)
             .into()

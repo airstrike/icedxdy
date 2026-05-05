@@ -446,29 +446,52 @@ impl Map {
 const CAPTURE_TO_TM_SCOPES: &[(&str, &[&str])] = &[
     ("comment", &["comment"]),
     ("string", &["string", "string.quoted"]),
-    ("string.regexp", &["string.regexp", "source.regexp", "string"]),
+    (
+        "string.regexp",
+        &["string.regexp", "source.regexp", "string"],
+    ),
     ("string.special", &["string.special", "string"]),
     (
         "string.escape",
-        &["constant.character.escape", "string.regexp constant.character.escape"],
+        &[
+            "constant.character.escape",
+            "string.regexp constant.character.escape",
+        ],
     ),
     ("number", &["constant.numeric"]),
-    ("constant", &["constant", "variable.other.constant", "variable.language"]),
+    (
+        "constant",
+        &["constant", "variable.other.constant", "variable.language"],
+    ),
     (
         "constant.builtin",
-        &["support.constant", "constant.language", "variable.language", "constant"],
+        &[
+            "support.constant",
+            "constant.language",
+            "variable.language",
+            "constant",
+        ],
     ),
     ("keyword", &["keyword", "storage", "storage.type"]),
     ("operator", &["keyword.operator", "keyword"]),
     ("special", &["keyword.operator", "keyword"]),
     ("function", &["entity.name.function"]),
-    ("function.builtin", &["support.function", "entity.name.function"]),
+    (
+        "function.builtin",
+        &["support.function", "entity.name.function"],
+    ),
     ("function.macro", &["entity.name.function"]),
     ("function.method", &["entity.name.function"]),
     ("constructor", &["entity.name.function", "entity.name.tag"]),
-    ("type", &["entity.name.type", "support.class", "entity.name.class"]),
+    (
+        "type",
+        &["entity.name.type", "support.class", "entity.name.class"],
+    ),
     ("type.builtin", &["support.type", "storage.type"]),
-    ("type.enum", &["variable.other.enummember", "entity.name.type"]),
+    (
+        "type.enum",
+        &["variable.other.enummember", "entity.name.type"],
+    ),
     ("tag", &["entity.name.tag"]),
     ("variable", &["variable", "variable.other"]),
     ("variable.mutable", &["variable", "variable.other"]),
@@ -476,15 +499,31 @@ const CAPTURE_TO_TM_SCOPES: &[(&str, &[&str])] = &[
     ("variable.parameter", &["variable.parameter"]),
     (
         "variable.other.member",
-        &["variable.other.property", "meta.property-name", "support.type.property-name"],
+        &[
+            "variable.other.property",
+            "meta.property-name",
+            "support.type.property-name",
+        ],
     ),
-    ("attribute", &["entity.other.attribute-name", "meta.attribute"]),
+    (
+        "attribute",
+        &["entity.other.attribute-name", "meta.attribute"],
+    ),
     ("module", &["entity.name.namespace", "entity.name.module"]),
-    ("namespace", &["entity.name.namespace", "entity.name.module"]),
+    (
+        "namespace",
+        &["entity.name.namespace", "entity.name.module"],
+    ),
     ("punctuation.bracket", &["punctuation"]),
     ("label", &["entity.name.label"]),
-    ("property", &["meta.property-name", "variable.other.property"]),
-    ("property.builtin", &["support.type.property-name", "meta.property-name"]),
+    (
+        "property",
+        &["meta.property-name", "variable.other.property"],
+    ),
+    (
+        "property.builtin",
+        &["support.type.property-name", "meta.property-name"],
+    ),
 ];
 
 /// VS Code theme JSON shape (just the bits we care about).
@@ -534,9 +573,7 @@ fn match_specificity(rule_scope: &str, target: &str) -> usize {
     if rule_scope == target {
         return rule_scope.split('.').count();
     }
-    if target.starts_with(rule_scope)
-        && target.as_bytes().get(rule_scope.len()) == Some(&b'.')
-    {
+    if target.starts_with(rule_scope) && target.as_bytes().get(rule_scope.len()) == Some(&b'.') {
         return rule_scope.split('.').count();
     }
     0
@@ -591,7 +628,11 @@ fn find_style(theme: &VsCodeTheme, target: &str) -> Option<Style> {
 
     let rule = best?;
     let color = rule.settings.foreground.as_deref().and_then(parse_hex);
-    let font = rule.settings.font_style.as_deref().and_then(parse_font_style);
+    let font = rule
+        .settings
+        .font_style
+        .as_deref()
+        .and_then(parse_font_style);
     color.map(|c| Style {
         color: Some(c),
         font,
@@ -657,7 +698,13 @@ impl From<&icedxdy_core::Theme> for Map {
         //   amber   warning                       — attributes, properties
         //   purple  info.blend(destructive, 0.30) — function names
         let teal = p.info.base.shift_hue(-25.0).into();
-        let cyan = p.info.base.shift_hue(-20.0).lighten(0.10).desaturate(0.20).into();
+        let cyan = p
+            .info
+            .base
+            .shift_hue(-20.0)
+            .lighten(0.10)
+            .desaturate(0.20)
+            .into();
         let subtle = p
             .info
             .base
@@ -680,16 +727,13 @@ impl From<&icedxdy_core::Theme> for Map {
 
         Map::from_entries([
             ("comment", semantic(muted)),
-
             ("string", semantic(blue)),
             ("string.regexp", semantic(blue)),
             ("string.special", semantic(blue)),
             ("string.escape", semantic(red)),
-
             ("number", semantic(blue)),
             ("constant", semantic(blue)),
             ("constant.builtin", semantic(blue)),
-
             ("keyword", semantic(red)),
             // `use` / `mod` / `as` get TN's light-cyan slot so they read
             // distinctly from both regular keywords (red) and the
@@ -698,32 +742,26 @@ impl From<&icedxdy_core::Theme> for Map {
             ("operator", semantic(subtle)),
             ("embedded", semantic(red)),
             ("special", semantic(red)),
-
             ("function", semantic(purple)),
             ("function.builtin", semantic(purple)),
             ("function.macro", semantic(purple)),
             ("function.method", semantic(purple)),
             ("constructor", semantic(green)),
-
             ("type", semantic(green)),
             ("type.builtin", semantic(green)),
             ("type.enum", semantic(green)),
             ("tag", semantic(green)),
-
             ("attribute", semantic(amber)),
             ("property", semantic(amber)),
             ("property.builtin", semantic(amber)),
             ("variable.other.member", semantic(cyan)),
-
             ("module", semantic(teal)),
             ("namespace", semantic(teal)),
-
             ("variable", semantic(fg)),
             ("variable.mutable", semantic(fg)),
             ("variable.builtin", semantic(red)),
             ("variable.parameter", semantic(amber)),
             ("label", semantic(fg)),
-
             ("punctuation", semantic(subtle)),
             ("punctuation.bracket", semantic(subtle)),
             ("punctuation.delimiter", semantic(subtle)),
@@ -1037,4 +1075,3 @@ row![
         );
     }
 }
-

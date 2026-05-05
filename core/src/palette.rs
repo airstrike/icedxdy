@@ -2,7 +2,7 @@
 //!
 //! Based on shadcn/ui's color token system with light and dark mode support.
 
-use crate::color::{oklch, oklch_alpha, Color};
+use crate::color::{Color, oklch, oklch_alpha};
 
 /// A semantic color with base and foreground variants
 #[derive(Debug, Clone, Copy, PartialEq)]

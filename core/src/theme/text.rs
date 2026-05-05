@@ -336,8 +336,7 @@ mod tests {
         let expected = theme.palette().primary.base;
         let actual = resolved.color.expect("Fg sets color");
         assert!(
-            (actual.l - expected.l).abs() < 1e-4
-                && (actual.c - expected.c).abs() < 1e-4,
+            (actual.l - expected.l).abs() < 1e-4 && (actual.c - expected.c).abs() < 1e-4,
             "expected primary, got {actual:?}",
         );
     }

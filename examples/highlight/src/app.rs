@@ -47,11 +47,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(
-        entries: Vec<registry::Entry>,
-        slug: &str,
-        map: highlighter::Map,
-    ) -> Self {
+    pub fn new(entries: Vec<registry::Entry>, slug: &str, map: highlighter::Map) -> Self {
         let selected = entry_for(&entries, slug);
         let picker_state = combo_box::State::new(entries.clone());
         let items = markdown::parse(SAMPLE).collect();
@@ -94,8 +90,7 @@ impl App {
                 fetch_theme_task(slug)
             }
             Message::Switch(direction) => {
-                let Some(index) = entry_index(&self.entries, &self.selected.slug)
-                else {
+                let Some(index) = entry_index(&self.entries, &self.selected.slug) else {
                     return Task::none();
                 };
                 let len = self.entries.len();

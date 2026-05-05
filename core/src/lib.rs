@@ -14,7 +14,7 @@ pub mod theme;
 
 pub use background::Background;
 pub use border::{Border, Radius, radius};
-pub use color::{oklch, oklch_alpha, Color};
+pub use color::{Color, oklch, oklch_alpha};
 pub use constants::*;
 pub use design::{Design, FontFamily};
 pub use palette::{Palette, SemanticColor, SidebarPalette};

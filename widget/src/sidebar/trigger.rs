@@ -12,8 +12,8 @@
 
 use iced_widget::Renderer;
 
-use icedxdy_core::theme::button;
 use icedxdy_core::Theme;
+use icedxdy_core::theme::button;
 
 /// Create a sidebar trigger button (ghost, 28x28).
 ///
@@ -21,9 +21,9 @@ use icedxdy_core::Theme;
 pub fn trigger<'a, Message: Clone + 'a>(
     on_toggle: Message,
 ) -> iced_widget::Button<'a, Message, Theme, Renderer> {
-    iced_widget::button(
-        iced_widget::center(iced_widget::text("\u{2630}").size(16.0)),
-    )
+    iced_widget::button(iced_widget::center(
+        iced_widget::text("\u{2630}").size(16.0),
+    ))
     .width(28.0)
     .height(28.0)
     .padding(0)

@@ -17,9 +17,7 @@ use icedxdy_core::theme::container;
 /// The main content area next to the sidebar. Takes full width and
 /// height (flex-1 equivalent), used as the primary content region with
 /// `fixed` and `floating` sidebars.
-pub fn main<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Container<'a, Message> {
+pub fn main<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Container<'a, Message> {
     Container::new(content).width(Fill).height(Fill)
 }
 

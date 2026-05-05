@@ -20,4 +20,4 @@
 mod element;
 pub mod widget;
 
-pub use element::{progress, Progress};
+pub use element::{Progress, progress};

@@ -418,7 +418,11 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
                 }
             }
         }
-        Tweak::Ring { color, width, offset: _ } => {
+        Tweak::Ring {
+            color,
+            width,
+            offset: _,
+        } => {
             // Ring renders as a halo at `width` px around the bounds, behind
             // the main fill. `offset` is dropped (no iced equivalent for
             // Tailwind's `ring-offset` / CSS `outline-offset`).
@@ -486,9 +490,7 @@ mod tests {
     }
 
     fn close(a: Color, b: Color) -> bool {
-        (a.l - b.l).abs() < 1e-4
-            && (a.c - b.c).abs() < 1e-4
-            && (a.a - b.a).abs() < 1e-4
+        (a.l - b.l).abs() < 1e-4 && (a.c - b.c).abs() < 1e-4 && (a.a - b.a).abs() < 1e-4
     }
 
     /// Dark theme rest bg = `palette.input` with alpha *set* to 0.3.
@@ -556,7 +558,11 @@ mod tests {
     fn ring_atom_writes_to_style_ring() {
         let theme = Theme::light();
         let spec: Spec = (Default
-            + tweak::Ring { color: Token::Ring, width: 3.0, offset: 2.0 })
+            + tweak::Ring {
+                color: Token::Ring,
+                width: 3.0,
+                offset: 2.0,
+            })
         .into();
         let resolved = spec.resolve(&theme, Status::Active);
         let ring = resolved.ring.expect("ring should be set");
@@ -570,7 +576,11 @@ mod tests {
     fn focus_trigger_gates_ring() {
         let theme = Theme::light();
         let spec: Spec = (Default
-            + tweak::focus(tweak::Ring { color: Token::Ring, width: 3.0, offset: 0.0 }))
+            + tweak::focus(tweak::Ring {
+                color: Token::Ring,
+                width: 3.0,
+                offset: 0.0,
+            }))
         .into();
         for status in [Status::Active, Status::Hovered, Status::Disabled] {
             let resolved = spec.resolve(&theme, status);

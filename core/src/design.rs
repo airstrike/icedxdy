@@ -2,8 +2,8 @@
 //!
 //! Design contains the palette, the derived iced Theme, and font families.
 
-use iced_core::font::Weight;
 use iced_core::Font;
+use iced_core::font::Weight;
 
 use crate::palette::Palette;
 

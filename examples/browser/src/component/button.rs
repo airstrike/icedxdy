@@ -132,7 +132,8 @@ fn demo(pi: usize) -> Component<'static, crate::Message> {
     //   <Button variant="outline" size="icon"><ArrowUpIcon /></Button>
     row![
         button::outline("Button").on_press(crate::Message::Page(pi, page::Message::Noop)),
-        button::icon(crate::icon::arrow_up()).on_press(crate::Message::Page(pi, page::Message::Noop)),
+        button::icon(crate::icon::arrow_up())
+            .on_press(crate::Message::Page(pi, page::Message::Noop)),
     ]
     .spacing(8)
     .into()

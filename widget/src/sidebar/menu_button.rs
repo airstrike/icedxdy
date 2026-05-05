@@ -16,26 +16,26 @@
 //!     .on_press(Message::Settings)
 //! ```
 
-use iced_core::mouse::Interaction;
-use iced_core::Length::Fill;
 use iced_core::Alignment;
+use iced_core::Length::Fill;
+use iced_core::mouse::Interaction;
+use iced_widget::Renderer;
 use iced_widget::button::Status;
 use iced_widget::tooltip::Position;
-use iced_widget::Renderer;
 
+use crate::Size;
 use crate::button::widget;
 use crate::component::{Component, IntoElement};
-use crate::Size;
-use icedxdy_core::theme::button;
 use icedxdy_core::Theme;
+use icedxdy_core::theme::button;
 
 /// Menu button size
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MenuButtonSize {
     #[default]
     Default, // h-8 = 32px
-    Sm,      // h-7 = 28px
-    Lg,      // h-12 = 48px
+    Sm, // h-7 = 28px
+    Lg, // h-12 = 48px
 }
 
 impl MenuButtonSize {
@@ -50,7 +50,7 @@ impl MenuButtonSize {
     pub fn text_size(&self) -> f32 {
         match self {
             Self::Default | Self::Lg => 14.0, // text-sm
-            Self::Sm => 12.0,                  // text-xs
+            Self::Sm => 12.0,                 // text-xs
         }
     }
 
@@ -152,9 +152,7 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             .padding(btn.size.padding())
         };
 
-        raw_btn = raw_btn
-            .translate(false)
-            .interaction(Interaction::Pointer);
+        raw_btn = raw_btn.translate(false).interaction(Interaction::Pointer);
 
         // Dispatch into existing theme::button variants. `button::sidebar`
         // (inactive) hovers with `palette.sidebar.accent`; `button::sidebar_active`
@@ -163,15 +161,13 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
         let style: widget::StyleFn<'a, Theme> = if btn.active {
             Box::new(move |t, s: widget::Status| {
                 let status: Status = s.into();
-                let iced: iced_widget::button::Style =
-                    button::sidebar_active(t, status).into();
+                let iced: iced_widget::button::Style = button::sidebar_active(t, status).into();
                 iced.into()
             })
         } else {
             Box::new(move |t, s: widget::Status| {
                 let status: Status = s.into();
-                let iced: iced_widget::button::Style =
-                    button::sidebar(t, status).into();
+                let iced: iced_widget::button::Style = button::sidebar(t, status).into();
                 iced.into()
             })
         };

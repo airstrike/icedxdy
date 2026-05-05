@@ -43,12 +43,12 @@
 //!     }
 //! }
 //! ```
+use crate::core::Length::{Fill, Shrink};
 use crate::core::alignment;
 use crate::core::border;
 use crate::core::font::{self, Font};
 use crate::core::padding;
 use crate::core::theme::palette;
-use crate::core::Length::{Fill, Shrink};
 use crate::core::{self, Color, Element, Padding, Pixels, Theme, color};
 use iced_widget::{checkbox, column, container, rich_text, row, rule, scrollable, span, text};
 
@@ -318,10 +318,7 @@ enum Span {
     /// time; the active [`super::highlighter::Theme`] (passed in by the
     /// [`Viewer`]) maps `capture` → colour at draw time.
     #[cfg(feature = "highlighter")]
-    Scoped {
-        text: String,
-        capture: Option<u32>,
-    },
+    Scoped { text: String, capture: Option<u32> },
 }
 
 impl Span {

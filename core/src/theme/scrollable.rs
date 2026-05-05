@@ -1,8 +1,8 @@
 //! Scrollable styling
 
+use iced_core::{Background, Border, Color, Shadow, Vector};
 use iced_widget::container;
 use iced_widget::scrollable::{AutoScroll, Catalog, Rail, Scroller, Status, Style, StyleFn};
-use iced_core::{Background, Border, Color, Shadow, Vector};
 
 use super::Theme;
 

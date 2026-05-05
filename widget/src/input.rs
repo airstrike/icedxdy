@@ -15,10 +15,10 @@ use crate::Size;
 use crate::component::{Component, IntoElement};
 use crate::text_input;
 use crate::text_input::element::from_core;
-use icedxdy_core::Theme;
-use icedxdy_core::theme;
 use iced_core::{Length, Padding};
 use iced_widget::Renderer;
+use icedxdy_core::Theme;
+use icedxdy_core::theme;
 
 /// A styled text input field matching shadcn/ui's Input component.
 ///
@@ -40,10 +40,7 @@ pub struct Input<'a, Message> {
 }
 
 /// Create an [`Input`] with the given placeholder and current value.
-pub fn input<'a, Message: Clone + 'a>(
-    placeholder: &'a str,
-    value: &'a str,
-) -> Input<'a, Message> {
+pub fn input<'a, Message: Clone + 'a>(placeholder: &'a str, value: &'a str) -> Input<'a, Message> {
     Input {
         placeholder,
         value,
@@ -102,10 +99,7 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
     /// or any `Spec` (e.g. `Default + Bg(...) + focus(Ring(...))`). Ring is
     /// preserved across the crate boundary by the bridge in
     /// [`text_input::element`](crate::text_input::element).
-    pub fn style(
-        mut self,
-        style: impl Into<theme::text_input::StyleFn<'a, Theme>>,
-    ) -> Self {
+    pub fn style(mut self, style: impl Into<theme::text_input::StyleFn<'a, Theme>>) -> Self {
         self.style = Some(style.into());
         self
     }
@@ -156,9 +150,7 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
             // Status types match across crates (vendored re-exports core's),
             // so no Status conversion is needed here.
             let bridge: text_input::StyleFn<'a, Theme> =
-                Box::new(move |theme, status| {
-                    from_core(style(theme, status))
-                });
+                Box::new(move |theme, status| from_core(style(theme, status)));
             ti = ti.class(bridge);
         }
 

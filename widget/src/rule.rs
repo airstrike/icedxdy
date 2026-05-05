@@ -7,9 +7,7 @@ use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
 use iced_core::widget::Tree;
-use iced_core::{
-    Background, Color, Element, Layout, Length, Pixels, Rectangle, Size, Widget,
-};
+use iced_core::{Background, Color, Element, Layout, Length, Pixels, Rectangle, Size, Widget};
 
 /// Creates a horizontal [`Rule`] with the given height.
 pub fn horizontal<'a, Theme: Catalog>(height: impl Into<Pixels>) -> Rule<'a, Theme> {
@@ -62,9 +60,15 @@ where
 {
     fn size(&self) -> Size<Length> {
         if self.is_vertical {
-            Size { width: self.thickness, height: Length::Fill }
+            Size {
+                width: self.thickness,
+                height: Length::Fill,
+            }
         } else {
-            Size { width: Length::Fill, height: self.thickness }
+            Size {
+                width: Length::Fill,
+                height: self.thickness,
+            }
         }
     }
 
@@ -127,8 +131,7 @@ where
     }
 }
 
-impl<'a, Message, Theme, Renderer> From<Rule<'a, Theme>>
-    for Element<'a, Message, Theme, Renderer>
+impl<'a, Message, Theme, Renderer> From<Rule<'a, Theme>> for Element<'a, Message, Theme, Renderer>
 where
     Message: 'a,
     Theme: 'a + Catalog,

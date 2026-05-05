@@ -7,8 +7,8 @@ pub mod card;
 pub mod separator;
 
 pub use icedxdy_core as core;
-pub use icedxdy_core::{Color, Design, FontFamily, Palette, Theme};
 pub use icedxdy_core::theme;
+pub use icedxdy_core::{Color, Design, FontFamily, Palette, Theme};
 pub use icedxdy_core::{font_size, height, icon_size, radius, spacing};
 
 #[allow(hidden_glob_reexports)]

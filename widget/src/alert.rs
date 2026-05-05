@@ -133,7 +133,14 @@ impl<'a, Message: 'a> From<Alert<'a, Message>> for Component<'a, Message> {
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
-        let Alert { icon, title, description, action, variant, max_width } = *self;
+        let Alert {
+            icon,
+            title,
+            description,
+            action,
+            variant,
+            max_width,
+        } = *self;
 
         let description = description.map(|t| match variant {
             Variant::Default => t.style(theme::text::Muted),
@@ -150,8 +157,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
 
         let body: iced_core::Element<'a, Message, Theme, Renderer> = if let Some(mut icon) = icon {
             icon.size(Size::Custom(16.0));
-            let icon_wrapper = iced_widget::container(icon.into_iced())
-                .padding(Padding { top: 2.0, ..Padding::ZERO });
+            let icon_wrapper = iced_widget::container(icon.into_iced()).padding(Padding {
+                top: 2.0,
+                ..Padding::ZERO
+            });
             iced_widget::Row::new()
                 .spacing(8)
                 .align_y(iced_core::Alignment::Start)
@@ -168,9 +177,19 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
         };
 
         let padding = if action.is_some() {
-            Padding { top: 8.0, right: 72.0, bottom: 8.0, left: 10.0 }
+            Padding {
+                top: 8.0,
+                right: 72.0,
+                bottom: 8.0,
+                left: 10.0,
+            }
         } else {
-            Padding { top: 8.0, right: 10.0, bottom: 8.0, left: 10.0 }
+            Padding {
+                top: 8.0,
+                right: 10.0,
+                bottom: 8.0,
+                left: 10.0,
+            }
         };
 
         let card = iced_widget::container(body)
@@ -186,7 +205,12 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
                     .height(Fill)
                     .align_x(Horizontal::Right)
                     .align_y(Vertical::Top)
-                    .padding(Padding { top: 8.0, right: 8.0, bottom: 0.0, left: 0.0 });
+                    .padding(Padding {
+                        top: 8.0,
+                        right: 8.0,
+                        bottom: 0.0,
+                        left: 0.0,
+                    });
                 iced_widget::stack![card, overlay].into()
             }
         };

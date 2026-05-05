@@ -12,7 +12,5 @@ use iced_core::Length::Fill;
 pub fn content<'a, Message: 'a>(
     children: impl IntoIterator<Item = Component<'a, Message>>,
 ) -> Column<'a, Message> {
-    Column::with_children(children)
-        .spacing(8)
-        .height(Fill)
+    Column::with_children(children).spacing(8).height(Fill)
 }

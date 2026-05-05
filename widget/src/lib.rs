@@ -88,9 +88,7 @@ pub fn row<'a, Message: 'a>() -> Row<'a, Message> {
 }
 
 /// Create a [`Badge`] with the given content.
-pub fn badge<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Badge<'a, Message> {
+pub fn badge<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
     badge::badge(content)
 }
 
@@ -100,10 +98,7 @@ pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
 }
 
 /// Create an [`Input`].
-pub fn input<'a, Message: Clone + 'a>(
-    placeholder: &'a str,
-    value: &'a str,
-) -> Input<'a, Message> {
+pub fn input<'a, Message: Clone + 'a>(placeholder: &'a str, value: &'a str) -> Input<'a, Message> {
     input::input(placeholder, value)
 }
 

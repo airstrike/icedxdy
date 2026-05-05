@@ -1,9 +1,9 @@
 use iced::widget::column;
 use iced::{Fill, Task};
 use icedxdy::Size::Sm;
+use icedxdy::widget::table;
 use icedxdy::widget::{container, rule, text};
 use icedxdy::{Theme, radius, theme};
-use icedxdy::widget::table;
 
 use crate::Message;
 use crate::page;
@@ -239,13 +239,13 @@ impl page::Page for TextPage {
 
             "p" => text::p(
                 "The king, seeing how much happier his subjects were, realized the \
-                 error of his ways and repealed the joke tax."
+                 error of his ways and repealed the joke tax.",
             )
             .into(),
 
             "blockquote" => text::blockquote(
                 "\"After all,\" he said, \"everyone enjoys a good joke, so it's only \
-                 fair that they should pay for the privilege.\""
+                 fair that they should pay for the privilege.\"",
             )
             .into(),
 
@@ -262,7 +262,7 @@ impl page::Page for TextPage {
 
             "lead" => text::lead(
                 "A modal dialog that interrupts the user with important content and \
-                 expects a response."
+                 expects a response.",
             )
             .into(),
 
@@ -303,10 +303,14 @@ fn table_card<'a>() -> iced::Element<'a, Message, Theme> {
     let header = |label| text::p(label).bold().into();
 
     let columns = [
-        table::column(Some(header("King's Treasury")), |row: &(_, _)| text::p(row.0))
-            .width(Fill),
-        table::column(Some(header("People's happiness")), |row: &(_, _)| text::p(row.1))
-            .width(Fill),
+        table::column(Some(header("King's Treasury")), |row: &(_, _)| {
+            text::p(row.0)
+        })
+        .width(Fill),
+        table::column(Some(header("People's happiness")), |row: &(_, _)| {
+            text::p(row.1)
+        })
+        .width(Fill),
     ];
 
     table::table(columns, rows)

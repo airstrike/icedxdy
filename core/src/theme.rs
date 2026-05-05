@@ -10,11 +10,10 @@ pub mod checkbox;
 pub mod combo_box;
 pub mod container;
 pub mod float;
-pub mod progress_bar;
-pub mod toggler;
 #[cfg(feature = "markdown")]
 pub mod markdown;
 pub mod menu;
+pub mod progress_bar;
 pub mod rule;
 pub mod scrollable;
 pub mod sidebar;
@@ -22,6 +21,7 @@ pub mod slider;
 pub mod table;
 pub mod text;
 pub mod text_input;
+pub mod toggler;
 pub mod tweak;
 
 use crate::Design;

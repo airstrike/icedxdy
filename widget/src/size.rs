@@ -44,16 +44,46 @@ impl Size {
     pub const fn padding(self) -> Padding {
         match self {
             // h-6 (24px), text-xs ~16px line height → (24-16)/2 = 4
-            Size::Xs => Padding { top: 4.0, bottom: 4.0, left: 8.0, right: 8.0 },
+            Size::Xs => Padding {
+                top: 4.0,
+                bottom: 4.0,
+                left: 8.0,
+                right: 8.0,
+            },
             // h-7 (28px), text-[0.8rem] ~18px line height → (28-18)/2 = 5
-            Size::Sm => Padding { top: 5.0, bottom: 5.0, left: 10.0, right: 10.0 },
+            Size::Sm => Padding {
+                top: 5.0,
+                bottom: 5.0,
+                left: 10.0,
+                right: 10.0,
+            },
             // h-8 (32px), text-sm ~18px line height → (32-18)/2 = 7
-            Size::Default => Padding { top: 7.0, bottom: 7.0, left: 10.0, right: 10.0 },
+            Size::Default => Padding {
+                top: 7.0,
+                bottom: 7.0,
+                left: 10.0,
+                right: 10.0,
+            },
             // h-9 (36px), text-sm ~18px line height → (36-18)/2 = 9
-            Size::Lg => Padding { top: 9.0, bottom: 9.0, left: 10.0, right: 10.0 },
+            Size::Lg => Padding {
+                top: 9.0,
+                bottom: 9.0,
+                left: 10.0,
+                right: 10.0,
+            },
             // square — icon centered via center() wrapper in element.rs
-            Size::Icon => Padding { top: 0.0, bottom: 0.0, left: 0.0, right: 0.0 },
-            Size::Custom(_) => Padding { top: 6.0, bottom: 6.0, left: 10.0, right: 10.0 },
+            Size::Icon => Padding {
+                top: 0.0,
+                bottom: 0.0,
+                left: 0.0,
+                right: 0.0,
+            },
+            Size::Custom(_) => Padding {
+                top: 6.0,
+                bottom: 6.0,
+                left: 10.0,
+                right: 10.0,
+            },
         }
     }
 

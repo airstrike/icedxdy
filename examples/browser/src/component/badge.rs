@@ -103,11 +103,11 @@ fn view(id: &str) -> Component<'static, Message> {
         ]
         .spacing(8)
         .into(),
-        "link" => row![
-            badge!["Open Link", icon::arrow_up_right().size(12)].on_press(Message::Pressed),
-        ]
-        .spacing(8)
-        .into(),
+        "link" => {
+            row![badge!["Open Link", icon::arrow_up_right().size(12)].on_press(Message::Pressed),]
+                .spacing(8)
+                .into()
+        }
         _ => unreachable!("unknown badge preview id: {id}"),
     }
 }

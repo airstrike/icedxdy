@@ -30,6 +30,7 @@
 
 use std::ops::Add;
 
+use crate::core::Renderer as _;
 use crate::core::alignment;
 use crate::core::font;
 use crate::core::font::{Feature, Variation};
@@ -37,17 +38,16 @@ use crate::core::layout;
 use crate::core::mouse;
 use crate::core::renderer;
 use crate::core::text;
-use crate::core::text::paragraph::Paragraph as _;
 use crate::core::text::Renderer as _;
-use crate::core::widget::text::{draw, Alignment, Catalog, Shaping, Wrapping};
+use crate::core::text::paragraph::Paragraph as _;
+use crate::core::widget::text::{Alignment, Catalog, Shaping, Wrapping, draw};
 use crate::core::widget::tree::{self, Tree};
-use crate::core::Renderer as _;
 use crate::core::{
     Color, Element, Em, Event, Layout, Length, Pixels, Rectangle, Shell, Size, Text, Widget,
 };
 use iced_widget::Renderer;
-use icedxdy_core::theme::tweak::Token;
 use icedxdy_core::Theme;
+use icedxdy_core::theme::tweak::Token;
 
 use crate::component::{Component, IntoElement};
 
@@ -186,7 +186,10 @@ impl<'a> Span<'a> {
 
     /// Build the iced span used for *drawing*, with `color` resolved
     /// against `palette`.
-    fn to_draw_span(&self, palette: &icedxdy_core::Palette) -> text::Span<'static, (), iced_core::Font> {
+    fn to_draw_span(
+        &self,
+        palette: &icedxdy_core::Palette,
+    ) -> text::Span<'static, (), iced_core::Font> {
         let mut span = self.to_layout_span();
         if let Some(token) = self.color {
             let color: Color = token.resolve(palette).into();
@@ -305,10 +308,7 @@ impl<'a> RichText<'a> {
 
     /// Set the catalog class for the default span color (analogous to
     /// iced's `Rich::style`).
-    pub fn style(
-        mut self,
-        style: impl Into<iced_widget::text::StyleFn<'a, Theme>>,
-    ) -> Self {
+    pub fn style(mut self, style: impl Into<iced_widget::text::StyleFn<'a, Theme>>) -> Self {
         self.class = style.into();
         self
     }
@@ -355,7 +355,9 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         // *layout* shape (no color). Color is rendering-only and gets
         // applied in `draw` by reshaping the paragraph against the live
         // palette. The cached paragraph's dimensions are color-independent.
-        let state = tree.state.downcast_mut::<State<<Renderer as text::Renderer>::Paragraph>>();
+        let state = tree
+            .state
+            .downcast_mut::<State<<Renderer as text::Renderer>::Paragraph>>();
         let layout_spans: Vec<_> = self.spans.iter().map(Span::to_layout_span).collect();
 
         layout::sized(limits, self.width, self.height, |limits| {
@@ -385,10 +387,12 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
             // differ. This catches changes in size, weight, font, italic,
             // letter spacing — anything that affects shape.
             if state.spans != layout_spans {
-                state.paragraph =
-                    <<Renderer as text::Renderer>::Paragraph>::with_spans(text);
-                state.spans =
-                    layout_spans.iter().cloned().map(text::Span::to_static).collect();
+                state.paragraph = <<Renderer as text::Renderer>::Paragraph>::with_spans(text);
+                state.spans = layout_spans
+                    .iter()
+                    .cloned()
+                    .map(text::Span::to_static)
+                    .collect();
             } else {
                 let probe = Text {
                     content: (),
@@ -434,7 +438,9 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         if !layout.bounds().intersects(viewport) {
             return;
         }
-        let state = tree.state.downcast_ref::<State<<Renderer as text::Renderer>::Paragraph>>();
+        let state = tree
+            .state
+            .downcast_ref::<State<<Renderer as text::Renderer>::Paragraph>>();
         let palette = theme.palette();
 
         // Resolve each span's Token against the live palette. Build a
@@ -459,25 +465,23 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         let size = self.size.unwrap_or_else(|| renderer.default_size());
         let font = renderer.default_font();
 
-        let draw_paragraph = <<Renderer as text::Renderer>::Paragraph>::with_spans(
-            Text {
-                content: draw_spans.as_slice(),
-                bounds,
-                size,
-                line_height: self.line_height,
-                font,
-                align_x: self.align_x,
-                align_y: self.align_y,
-                shaping: Shaping::Advanced,
-                wrapping: self.wrapping,
-                ellipsis: text::Ellipsis::default(),
-                letter_spacing: self.letter_spacing,
-                font_features: Vec::<Feature>::new(),
-                font_variations: Vec::<Variation>::new(),
-                weight: None,
-                hint_factor: renderer.scale_factor(),
-            },
-        );
+        let draw_paragraph = <<Renderer as text::Renderer>::Paragraph>::with_spans(Text {
+            content: draw_spans.as_slice(),
+            bounds,
+            size,
+            line_height: self.line_height,
+            font,
+            align_x: self.align_x,
+            align_y: self.align_y,
+            shaping: Shaping::Advanced,
+            wrapping: self.wrapping,
+            ellipsis: text::Ellipsis::default(),
+            letter_spacing: self.letter_spacing,
+            font_features: Vec::<Feature>::new(),
+            font_variations: Vec::<Variation>::new(),
+            weight: None,
+            hint_factor: renderer.scale_factor(),
+        });
 
         // Match iced's `Rich::draw` underline / strikethrough
         // / highlight handling — none of our `Span` builder methods enable
@@ -579,4 +583,3 @@ macro_rules! rich_text {
         ])
     };
 }
-

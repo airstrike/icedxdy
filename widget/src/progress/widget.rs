@@ -27,8 +27,7 @@ use iced_core::time::Instant;
 use iced_core::widget::tree::{self, Tree};
 use iced_core::window;
 use iced_core::{
-    self, Animation, Color, Element, Event, Layout, Length, Rectangle, Shell,
-    Size, Widget,
+    self, Animation, Color, Element, Event, Layout, Length, Rectangle, Shell, Size, Widget,
 };
 use iced_widget::progress_bar;
 
@@ -94,17 +93,11 @@ where
 
     /// Sets the style of the [`ProgressBar`].
     #[must_use]
-    pub fn style(
-        mut self,
-        style: impl Fn(&Theme) -> progress_bar::Style + 'a,
-    ) -> Self
+    pub fn style(mut self, style: impl Fn(&Theme) -> progress_bar::Style + 'a) -> Self
     where
-        Theme::Class<'a>:
-            From<progress_bar::StyleFn<'a, Theme>>,
+        Theme::Class<'a>: From<progress_bar::StyleFn<'a, Theme>>,
     {
-        self.class = (Box::new(style)
-            as progress_bar::StyleFn<'a, Theme>)
-            .into();
+        self.class = (Box::new(style) as progress_bar::StyleFn<'a, Theme>).into();
         self
     }
 
@@ -120,10 +113,7 @@ where
     /// follow-up actions (dismiss splash, navigate, etc.) on the bar
     /// reaching a particular value.
     #[must_use]
-    pub fn on_idle(
-        mut self,
-        on_idle: impl Fn(f32) -> Message + 'a,
-    ) -> Self {
+    pub fn on_idle(mut self, on_idle: impl Fn(f32) -> Message + 'a) -> Self {
         self.on_idle = Some(Box::new(on_idle));
         self
     }
@@ -158,8 +148,7 @@ impl State {
     }
 }
 
-impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer>
-    for ProgressBar<'_, Message, Theme>
+impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer> for ProgressBar<'_, Message, Theme>
 where
     Theme: progress_bar::Catalog,
     Renderer: iced_core::Renderer,

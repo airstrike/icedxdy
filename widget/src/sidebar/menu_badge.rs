@@ -17,7 +17,5 @@ pub fn menu_badge<'a, Message: 'a>(
         .medium()
         .style(theme::text::Muted);
 
-    Container::new(text)
-        .height(20)
-        .center_y(20)
+    Container::new(text).height(20).center_y(20)
 }

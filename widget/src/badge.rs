@@ -214,12 +214,12 @@ pub use crate::badge_outline as outline;
 #[doc(inline)]
 pub use crate::badge_secondary as secondary;
 
-use crate::component::{Component, IntoElement};
 use crate::Weight;
+use crate::component::{Component, IntoElement};
 use iced_core::mouse::Interaction;
-use iced_widget::{mouse_area, Renderer};
-use icedxdy_core::theme;
+use iced_widget::{Renderer, mouse_area};
 use icedxdy_core::Theme;
+use icedxdy_core::theme;
 
 /// Badge variant matching shadcn/ui
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -252,9 +252,7 @@ pub fn badge<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Bad
 ///
 /// Equivalent to [`badge`]; provided for symmetry with the other variant
 /// helpers.
-pub fn default<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Badge<'a, Message> {
+pub fn default<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
     badge(content).variant(Variant::Default)
 }
 
@@ -266,9 +264,7 @@ pub fn secondary<'a, Message: 'a>(
 }
 
 /// Create a [`Badge`] with the outline variant.
-pub fn outline<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Badge<'a, Message> {
+pub fn outline<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
     badge(content).variant(Variant::Outline)
 }
 
@@ -280,9 +276,7 @@ pub fn destructive<'a, Message: 'a>(
 }
 
 /// Create a [`Badge`] with the ghost variant.
-pub fn ghost<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Badge<'a, Message> {
+pub fn ghost<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
     badge(content).variant(Variant::Ghost)
 }
 

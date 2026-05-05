@@ -6,7 +6,6 @@
 //! - chroma: 0.0 (gray) to ~0.4 (vivid)
 //! - hue: 0-360 degrees
 
-
 /// A color in OKLCH color space
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Color {
@@ -286,25 +285,16 @@ mod tests {
     }
 
     fn assert_color_close(a: Color, b: Color, tol: f32) {
-        assert!(
-            (a.l - b.l).abs() < tol,
-            "L mismatch: {a:?} vs {b:?}",
-        );
+        assert!((a.l - b.l).abs() < tol, "L mismatch: {a:?} vs {b:?}",);
         // Below this chroma threshold, hue is unstable (atan2 noise) — only
         // compare chroma. Above it, also compare hue with wrap.
         if a.c > 1e-3 && b.c > 1e-3 {
-            assert!(
-                (a.c - b.c).abs() < tol,
-                "C mismatch: {a:?} vs {b:?}",
-            );
+            assert!((a.c - b.c).abs() < tol, "C mismatch: {a:?} vs {b:?}",);
             let dh = (a.h - b.h).abs();
             let dh = dh.min(360.0 - dh);
             assert!(dh < 0.1, "H mismatch: {a:?} vs {b:?} (Δ {dh})");
         }
-        assert!(
-            (a.a - b.a).abs() < tol,
-            "alpha mismatch: {a:?} vs {b:?}",
-        );
+        assert!((a.a - b.a).abs() < tol, "alpha mismatch: {a:?} vs {b:?}",);
     }
 
     // Round-trip tolerance: f32 precision + gamma nonlinearity gives ~3e-3
@@ -315,10 +305,10 @@ mod tests {
     #[test]
     fn srgb_round_trip_neutrals() {
         for original in [
-            oklch(1.0, 0.0, 0.0),     // white
-            oklch(0.5, 0.0, 0.0),     // mid gray
-            oklch(0.145, 0.0, 0.0),   // palette.dark.background
-            oklch(0.0, 0.0, 0.0),     // black
+            oklch(1.0, 0.0, 0.0),   // white
+            oklch(0.5, 0.0, 0.0),   // mid gray
+            oklch(0.145, 0.0, 0.0), // palette.dark.background
+            oklch(0.0, 0.0, 0.0),   // black
         ] {
             let iced: iced_core::Color = original.into();
             let back: Color = iced.into();
@@ -332,9 +322,9 @@ mod tests {
         // Higher-chroma palette tokens (info/success/warning) clip; their
         // round-trip behavior is documented in `from_srgb`.
         for original in [
-            oklch(0.50, 0.08, 30.0),    // dusty red
-            oklch(0.60, 0.07, 120.0),   // muted green
-            oklch(0.55, 0.09, 250.0),   // soft blue
+            oklch(0.50, 0.08, 30.0),  // dusty red
+            oklch(0.60, 0.07, 120.0), // muted green
+            oklch(0.55, 0.09, 250.0), // soft blue
         ] {
             let iced: iced_core::Color = original.into();
             let back: Color = iced.into();
@@ -359,6 +349,9 @@ mod tests {
         let original = oklch_alpha(1.0, 0.0, 0.0, 0.15); // palette.dark.input
         let iced: iced_core::Color = original.into();
         let back: Color = iced.into();
-        assert!((back.a - 0.15).abs() < 1e-3, "alpha must round-trip: {back:?}");
+        assert!(
+            (back.a - 0.15).abs() < 1e-3,
+            "alpha must round-trip: {back:?}"
+        );
     }
 }
