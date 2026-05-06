@@ -218,32 +218,18 @@ crate-type = ["lib", "dylib"]
 crate-type = ["lib", "dylib"]
 
 [patch.crates-io]
-iced.git = "https://github.com/airstrike/iced.git"
-iced.branch = "dev"
-iced_core.git = "https://github.com/airstrike/iced.git"
-iced_core.branch = "dev"
-iced_runtime.git = "https://github.com/airstrike/iced.git"
-iced_runtime.branch = "dev"
-iced_selector.git = "https://github.com/airstrike/iced.git"
-iced_selector.branch = "dev"
-iced_widget.git = "https://github.com/airstrike/iced.git"
-iced_widget.branch = "dev"
-iced_graphics.git = "https://github.com/airstrike/iced.git"
-iced_graphics.branch = "dev"
-iced_renderer.git = "https://github.com/airstrike/iced.git"
-iced_renderer.branch = "dev"
-iced_program.git = "https://github.com/airstrike/iced.git"
-iced_program.branch = "dev"
-iced_winit.git = "https://github.com/airstrike/iced.git"
-iced_winit.branch = "dev"
-iced_wgpu.git = "https://github.com/airstrike/iced.git"
-iced_wgpu.branch = "dev"
-iced_tiny_skia.git = "https://github.com/airstrike/iced.git"
-iced_tiny_skia.branch = "dev"
-iced_futures.git = "https://github.com/airstrike/iced.git"
-iced_futures.branch = "dev"
-iced_debug.git = "https://github.com/airstrike/iced.git"
-iced_debug.branch = "dev"
-iced_highlighter.git = "https://github.com/airstrike/iced.git"
-iced_highlighter.branch = "dev"
+iced = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_core = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_runtime = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_selector = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_widget = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_graphics = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_renderer = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_program = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_winit = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_wgpu = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_tiny_skia = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_futures = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_debug = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_highlighter = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 cosmic-text = { git = "https://github.com/airstrike/cosmic-text", branch = "dev" }
