@@ -123,6 +123,7 @@ impl Browser {
     }
 }
 
+#[granita::preview(name = "Progress", bind = ("Loading", 30.0))]
 fn splash<'a>(message: &str, progress_value: f32) -> Element<'a, Message, Theme> {
     center(
         column![

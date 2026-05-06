@@ -3,17 +3,18 @@ use std::path::PathBuf;
 
 use tokio::fs::read_to_string;
 
+use iced::Alignment::*;
 use iced::border;
 use iced::mouse::Interaction;
 use iced::widget::{Id, column, sensor, stack};
-use iced::{Alignment, Background, Fill, Font, Pixels, Subscription, Task};
+use iced::{Background, Fill, Font, Pixels, Subscription, Task};
 
 use icedxdy::Size::*;
 use icedxdy::theme::container::{
     card, card_preview, code_block, code_block_panel, code_fade_overlay,
 };
 use icedxdy::theme::tweak::Opaque;
-use icedxdy::widget::container::Container;
+use icedxdy::widget::container;
 use icedxdy::widget::markdown;
 use icedxdy::widget::markdown::widget::Highlight;
 use icedxdy::widget::{button, rule, text};
@@ -332,7 +333,7 @@ fn walk_blocks<'a>(
         // covers the entire block (heading + description + card or md body).
         // For Block::Group, the sensor wraps ONLY the heading — children
         // get their own subsequent flat indices and their own sensors.
-        let sensored = sensor(Container::new(body).id(block_id).width(Fill))
+        let sensored = sensor(container(body).id(block_id).width(Fill))
             .on_show(move |_| super::Message::Page(pi, Message::BlockShown(i)))
             .on_hide(super::Message::Page(pi, Message::BlockHidden(i)))
             .anticipate(50);
@@ -393,7 +394,7 @@ fn render_example<'a>(
     // inline article previews if any) can grow; non-hero examples pin
     // height to PREVIEW_HEIGHT.
     let preview_el: iced::Element<'_, super::Message, Theme> = if title.is_empty() {
-        Container::new(page.preview(id))
+        container(page.preview(id))
             .center(Fill)
             .min_height(PREVIEW_HEIGHT)
             .width(Fill)
@@ -401,7 +402,7 @@ fn render_example<'a>(
             .style(card_preview)
             .into()
     } else {
-        Container::new(page.preview(id))
+        container(page.preview(id))
             .center(Fill)
             .height(PREVIEW_HEIGHT)
             .width(Fill)
@@ -419,7 +420,7 @@ fn render_example<'a>(
                 .map(|items| snippet(page_index, items, viewer))
                 .unwrap_or_else(|| text("Loading...").into());
 
-            let inner = Container::new(body)
+            let inner = container(body)
                 .padding([12, 16])
                 .width(Fill)
                 .style(code_block_panel);
@@ -434,9 +435,9 @@ fn render_example<'a>(
                     ))
                     .into();
 
-                let copy_corner = Container::new(copy_btn)
-                    .align_x(Alignment::End)
-                    .align_y(Alignment::Start)
+                let copy_corner = container(copy_btn)
+                    .align_x(End)
+                    .align_y(Start)
                     .padding([8, 8])
                     .width(Fill)
                     .height(Fill);
@@ -453,7 +454,7 @@ fn render_example<'a>(
                     ))
                     .into();
 
-                let overlay = Container::new(view_code_btn)
+                let overlay = container(view_code_btn)
                     .center(Fill)
                     .style(code_fade_overlay)
                     .height(COLLAPSED_CODE_HEIGHT);
@@ -465,7 +466,7 @@ fn render_example<'a>(
         code.as_ref().map(|_| rule::horizontal(1).into());
 
     let card_el: iced::Element<'_, super::Message, Theme> =
-        Container::new(column![preview_el, divider, code])
+        container(column![preview_el, divider, code])
             .style(card)
             .padding(1)
             .clip(true)
@@ -588,11 +589,11 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
             .on_press(super::Message::Page(pi, Message::ScrollTo(i)))
             .into();
         let row: iced::Element<'_, super::Message, Theme> =
-            Container::new(entry).padding([0.0, indent]).into();
+            container(entry).padding([0.0, indent]).into();
         row
     });
 
-    let header = Container::new(text::muted("On This Page")).padding([0, 8]);
+    let header = container(text::muted("On This Page")).padding([0, 8]);
 
     column![header]
         .push(column(nav_items))
@@ -734,7 +735,7 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
             ))
             .spacing(2);
 
-        Container::new(scroll)
+        container(scroll)
             .padding([12, 16])
             .width(Fill)
             .style(code_block)
