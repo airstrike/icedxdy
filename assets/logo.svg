@@ -1,9 +1,6 @@
 <svg viewBox="-15 -15 150 150" xmlns="http://www.w3.org/2000/svg">
-  <polygon points="41.34,51.60 0.15,27.91 64.19,0.07 84.78,11.92" fill="#fff" stroke="#000" stroke-width="1.0" stroke-linejoin="round"/>
-  <polygon points="41.34,51.60 55.81,59.93 119.85,32.09 84.78,11.92" fill="#000" stroke="#000" stroke-width="1.0" stroke-linejoin="round"/>
-  <polygon points="0.15,27.91 41.34,51.60 41.34,111.60 0.15,87.91" fill="#fff" stroke="#000" stroke-width="1.0" stroke-linejoin="round"/>
-  <polygon points="41.34,51.60 55.81,59.93 55.81,119.93 41.34,111.60" fill="#000" stroke="#000" stroke-width="1.0" stroke-linejoin="round"/>
-  <polygon points="55.81,59.93 119.85,32.09 119.85,92.09 55.81,119.93" fill="#000" stroke="#000" stroke-width="1.0" stroke-linejoin="round"/>
-  <circle cx="47.61" cy="22.88" r="3.0" fill="#000"/>
-  <circle cx="87.83" cy="76.01" r="3.0" fill="#fff"/>
+  <polygon points="41.79,53.98 41.79,113.98 0.91,84.79 0.91,24.79 70.42,0.46 91.35,15.40" fill="#fefefe" stroke="#141414" stroke-width="3.0" stroke-linejoin="round"/>
+  <polygon points="41.79,53.98 91.35,15.40 119.09,35.21 119.09,95.21 49.58,119.54 41.79,113.98" fill="#141414" stroke="#fefefe" stroke-width="3.0" stroke-linejoin="round"/>
+  <circle cx="51.12" cy="23.66" r="6.0" fill="#141414"/>
+  <circle cx="84.33" cy="77.38" r="6.0" fill="#fefefe"/>
 </svg>
