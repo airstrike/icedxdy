@@ -96,7 +96,9 @@ impl App {
         let mut pages: Vec<Box<dyn page::Page>> = Vec::new();
         let mut tasks: Vec<Task<Message>> = Vec::new();
 
-        use component::{alert, badge, button, checkbox, input, label, progress, switch, text};
+        use component::{
+            alert, badge, button, checkbox, field, input, label, progress, switch, text,
+        };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
             button::ButtonPage::new,
@@ -105,6 +107,7 @@ impl App {
             checkbox::CheckboxPage::new,
             switch::SwitchPage::new,
             label::LabelPage::new,
+            field::FieldPage::new,
             progress::ProgressPage::new,
             alert::AlertPage::new,
             text::TextPage::new,

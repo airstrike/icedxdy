@@ -2,6 +2,7 @@ pub mod alert;
 pub mod badge;
 pub mod button;
 pub mod checkbox;
+pub mod field;
 pub mod input;
 pub mod label;
 pub mod progress;

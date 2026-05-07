@@ -8,6 +8,7 @@ pub mod checkbox;
 pub mod column;
 pub mod component;
 pub mod container;
+pub mod field;
 pub mod input;
 #[cfg(feature = "markdown")]
 pub mod markdown;
@@ -40,6 +41,7 @@ pub use button::Button;
 pub use checkbox::Checkbox;
 pub use column::Column;
 pub use component::{Component, IntoElement};
+pub use field::Field;
 pub use input::Input;
 pub use progress::Progress;
 pub use rich_text::{RichText, Span, rich_text, span};
@@ -116,6 +118,13 @@ pub fn checkbox<'a, Message: 'a>(
 /// Create a [`Progress`] bar with the given value (0..=100).
 pub fn progress<'a, Message: 'a>(value: f32) -> Progress<'a, Message> {
     progress::progress(value)
+}
+
+/// Create a [`Field`] wrapping the given input content.
+pub fn field<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Field<'a, Message> {
+    field::field(content)
 }
 
 /// Create a [`Switch`] with the given on/off state.
