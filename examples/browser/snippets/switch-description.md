@@ -3,7 +3,7 @@ use icedxdy::widget::{column, row, switch, text};
 
 row![
     column![
-        text::small("Share across devices").medium(),
+        text::label("Share across devices"),
         text::muted(
             "Focus is shared across devices, and turns off when you leave the app.",
         ),

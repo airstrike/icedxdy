@@ -3,7 +3,7 @@ use icedxdy::theme;
 use icedxdy::widget::{input, text};
 
 column![
-    text::small("Invalid Input").medium(),
+    text::label("Invalid Input"),
     input("Error", &self.value)
         .on_input(Message::Changed)
         .width(Fill)

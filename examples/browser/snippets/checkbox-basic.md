@@ -3,7 +3,7 @@ use icedxdy::widget::{checkbox, row, text};
 
 row![
     checkbox(self.is_checked).on_toggle(Message::ToggleTerms),
-    text::small("Accept terms and conditions").medium(),
+    text::label("Accept terms and conditions"),
 ]
 .spacing(8)
 .width(224)

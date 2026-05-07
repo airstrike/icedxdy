@@ -4,8 +4,7 @@ use icedxdy::widget::{column, row, switch, text};
 
 row![
     column![
-        text::small("Accept terms and conditions")
-            .medium()
+        text::label("Accept terms and conditions")
             .style(theme::text::Destructive),
         text::muted("You must accept the terms and conditions to continue."),
     ]

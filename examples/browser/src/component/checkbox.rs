@@ -155,13 +155,13 @@ impl page::Page for CheckboxPage {
             "demo" => column![
                 row![
                     checkbox(self.demo_terms_1).on_toggle(toggle(F_DEMO_TERMS_1)),
-                    text::small("Accept terms and conditions").medium(),
+                    text::label("Accept terms and conditions"),
                 ]
                 .spacing(8),
                 row![
                     checkbox(self.demo_terms_2).on_toggle(toggle(F_DEMO_TERMS_2)),
                     column![
-                        text::small("Accept terms and conditions").medium(),
+                        text::label("Accept terms and conditions"),
                         text::muted("By clicking this checkbox, you agree to the terms."),
                     ]
                     .spacing(2),
@@ -179,7 +179,7 @@ impl page::Page for CheckboxPage {
                 row![
                     checkbox(self.demo_notif_2).on_toggle(toggle(F_DEMO_NOTIF_2)),
                     column![
-                        text::small("Enable notifications").medium(),
+                        text::label("Enable notifications"),
                         text::muted("You can enable or disable notifications at any time."),
                     ]
                     .spacing(2),
@@ -197,7 +197,7 @@ impl page::Page for CheckboxPage {
             // `w-56` constraint on the parent FieldGroup.
             "basic" => row![
                 checkbox(self.basic).on_toggle(toggle(F_BASIC)),
-                text::small("Accept terms and conditions").medium(),
+                text::label("Accept terms and conditions"),
             ]
             .spacing(8)
             .width(224)
@@ -207,7 +207,7 @@ impl page::Page for CheckboxPage {
             "description" => row![
                 checkbox(self.desc).on_toggle(toggle(F_DESC)),
                 column![
-                    text::small("Accept terms and conditions").medium(),
+                    text::label("Accept terms and conditions"),
                     text::muted(
                         "By clicking this checkbox, you agree to the terms and conditions.",
                     ),
@@ -239,8 +239,7 @@ impl page::Page for CheckboxPage {
                 checkbox(self.invalid)
                     .on_toggle(toggle(F_INVALID))
                     .style(theme::checkbox::Invalid),
-                text::small("Accept terms and conditions")
-                    .medium()
+                text::label("Accept terms and conditions")
                     .style(theme::text::Destructive),
             ]
             .spacing(8)

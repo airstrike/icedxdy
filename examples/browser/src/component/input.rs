@@ -161,7 +161,7 @@ impl page::Page for InputPage {
             // Demo (hero): Field+Label+Input+Description for an "API Key"
             // form. Verbatim shadcn `input-demo.tsx`.
             "demo" => column![
-                text::small("API Key").medium(),
+                text::label("API Key"),
                 input("sk-...", &self.demo_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_DEMO, v)))
                     .width(Fill),
@@ -181,7 +181,7 @@ impl page::Page for InputPage {
 
             // Field: input with label "Username" and description.
             "field" => column![
-                text::small("Username").medium(),
+                text::label("Username"),
                 input("Enter your username", &self.field_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_FIELD, v)))
                     .width(Fill),
@@ -193,7 +193,7 @@ impl page::Page for InputPage {
 
             // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
             "disabled" => column![
-                text::small("Email").medium(),
+                text::label("Email"),
                 input("Email", "").width(Fill),
                 text::muted("This field is currently disabled."),
             ]
@@ -204,7 +204,7 @@ impl page::Page for InputPage {
             // Invalid: destructive border + destructive focus ring
             // (aria-invalid). First-class `theme::text_input::Invalid`.
             "invalid" => column![
-                text::small("Invalid Input").medium(),
+                text::label("Invalid Input"),
                 input("Error", &self.invalid_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INVALID, v)))
                     .width(Fill)

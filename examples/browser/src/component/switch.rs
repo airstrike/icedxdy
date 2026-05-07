@@ -131,7 +131,7 @@ impl page::Page for SwitchPage {
             // `.nova/apps/v4/examples/radix/switch-demo.tsx`.
             "demo" => row![
                 switch(self.demo).on_toggle(toggle(F_DEMO)),
-                text::small("Airplane Mode").medium(),
+                text::label("Airplane Mode"),
             ]
             .spacing(8)
             .into(),
@@ -147,7 +147,7 @@ impl page::Page for SwitchPage {
             // max_width(); swap .width(384) to .max_width(384) once available).
             "description" => row![
                 column![
-                    text::small("Share across devices").medium(),
+                    text::label("Share across devices"),
                     text::muted(
                         "Focus is shared across devices, and turns off when you leave the app.",
                     ),
@@ -180,8 +180,7 @@ impl page::Page for SwitchPage {
             // Field. text::error (Phase 3) will consolidate this idiom.
             "invalid" => row![
                 column![
-                    text::small("Accept terms and conditions")
-                        .medium()
+                    text::label("Accept terms and conditions")
                         .style(theme::text::Destructive),
                     text::muted("You must accept the terms and conditions to continue."),
                 ]

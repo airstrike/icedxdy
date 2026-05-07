@@ -2,7 +2,7 @@
 use icedxdy::widget::{input, text};
 
 column![
-    text::small("Username").medium(),
+    text::label("Username"),
     input("Enter your username", &self.value)
         .on_input(Message::Changed)
         .width(Fill),

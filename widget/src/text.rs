@@ -252,10 +252,29 @@ pub fn small<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .width(Fill)
 }
 
+/// Field-style label typography (Tailwind `text-sm font-medium`). Use for
+/// inline form labels (`<FieldLabel>` in shadcn parlance).
+pub fn label<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
+    Text::new(content)
+        .size(size::SM)
+        .medium()
+        .style(theme::text::Foreground)
+        .width(Fill)
+}
+
 pub fn muted<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
         .style(theme::text::Muted)
+        .width(Fill)
+}
+
+/// Field-style error message typography (Tailwind `text-sm text-destructive`).
+/// Use for inline validation feedback (`<FieldError>` in shadcn parlance).
+pub fn error<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
+    Text::new(content)
+        .size(size::SM)
+        .style(theme::text::Destructive)
         .width(Fill)
 }
 

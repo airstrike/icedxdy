@@ -4,13 +4,13 @@ use icedxdy::widget::{checkbox, column, row, text};
 column![
     row![
         checkbox(self.terms_1).on_toggle(Message::ToggleTerms1),
-        text::small("Accept terms and conditions").medium(),
+        text::label("Accept terms and conditions"),
     ]
     .spacing(8),
     row![
         checkbox(self.terms_2).on_toggle(Message::ToggleTerms2),
         column![
-            text::small("Accept terms and conditions").medium(),
+            text::label("Accept terms and conditions"),
             text::muted("By clicking this checkbox, you agree to the terms."),
         ]
         .spacing(2),
@@ -25,7 +25,7 @@ column![
     row![
         checkbox(self.notif_2).on_toggle(Message::ToggleNotif),
         column![
-            text::small("Enable notifications").medium(),
+            text::label("Enable notifications"),
             text::muted("You can enable or disable notifications at any time."),
         ]
         .spacing(2),

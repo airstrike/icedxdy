@@ -141,9 +141,9 @@ impl page::Page for ProgressPage {
             // Label: an inline label row above a static 66% progress bar.
             "label" => column![
                 row![
-                    text::small("Upload progress").medium(),
+                    text::label("Upload progress"),
                     space::horizontal(),
-                    text::small("66%").medium(),
+                    text::label("66%"),
                 ]
                 .spacing(0),
                 progress(66.0).width(320),
