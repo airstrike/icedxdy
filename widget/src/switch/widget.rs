@@ -73,11 +73,17 @@ where
     Theme: Catalog,
     Renderer: text::Renderer,
 {
-    /// The default size of a [`Toggler`]. Matches shadcn's default size
-    /// (18.4px tall × 32px wide → height 18.4 = the `size` knob × 1.15).
-    /// Sweeten uses 16; we honor the same default for vendor parity and
-    /// expose `.size(...)` for callers who want shadcn's exact metric.
-    pub const DEFAULT_SIZE: f32 = 16.0;
+    /// The default size of a [`Toggler`].
+    ///
+    /// `DEFAULT_SIZE` represents the **track height** in pixels. Nova default:
+    /// `data-[size=default]:h-[18.4px]`. The track **width** is derived as
+    /// `32.0 / 18.4 * size` so the 32 × 18.4 aspect ratio is preserved at
+    /// any caller-supplied size. The thumb diameter is
+    /// `size - 2 * (padding_ratio * size) ≈ 16 px` at the default size,
+    /// matching `group-data-[size=default]/switch:size-4` (16 × 16 px).
+    ///
+    /// Sweeten uses 16; we use 18.4 to match the nova spec exactly.
+    pub const DEFAULT_SIZE: f32 = 18.4;
 
     /// Creates a new [`Toggler`].
     pub fn new(is_toggled: bool) -> Self {
@@ -94,7 +100,10 @@ where
             wrapping: text::Wrapping::default(),
             letter_spacing: Em::default(),
             font_features: Vec::new(),
-            spacing: Self::DEFAULT_SIZE / 2.0,
+            // Nova's demo uses `space-x-2` = 8 px between the switch and its
+            // inline label. Fix at 8 px regardless of size so it doesn't
+            // drift when callers pass a custom size.
+            spacing: 8.0,
             font: None,
             class: Theme::default(),
             interaction: None,
@@ -295,7 +304,11 @@ where
                     self.size
                 };
 
-                layout::Node::new(Size::new(2.0 * size, size))
+                // Nova default: `data-[size=default]:w-[32px] h-[18.4px]`.
+                // Width = (32 / 18.4) * size preserves the exact aspect ratio
+                // at any caller-supplied size. At DEFAULT_SIZE = 18.4 this
+                // yields exactly 32 × 18.4. (Sweeten used 2.0 × size = 32 × 16.)
+                layout::Node::new(Size::new(32.0 / 18.4 * size, size))
             },
             |limits| {
                 if let Some(label) = self.label.as_deref() {

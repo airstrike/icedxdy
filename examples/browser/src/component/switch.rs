@@ -2,7 +2,7 @@ use iced::Task;
 
 use icedxdy::Theme;
 use icedxdy::theme;
-use icedxdy::widget::{column, row, switch, text};
+use icedxdy::widget::{column, container, row, switch, text};
 
 use crate::Message;
 use crate::page;
@@ -126,7 +126,11 @@ impl page::Page for SwitchPage {
         let toggle =
             move |field: usize| move |b: bool| Message::Page(pi, page::Message::BoolChanged(field, b));
 
-        let preview: iced::Element<'_, Message, Theme> = match id {
+        // Each preview is wrapped in a center_x container so it renders
+        // horizontally centered within the 288 px card, matching shadcn's
+        // centered demo layout. The page-level container already centers
+        // vertically; this layer handles the horizontal axis explicitly.
+        let inner: iced::Element<'_, Message, Theme> = match id {
             // Demo (hero): switch + plain inline label. Verbatim from
             // `.nova/apps/v4/examples/radix/switch-demo.tsx`.
             "demo" => row![
@@ -197,6 +201,6 @@ impl page::Page for SwitchPage {
             _ => unreachable!("unknown switch preview id: {id}"),
         };
 
-        preview
+        container(inner).center_x(iced::Fill).into()
     }
 }

@@ -93,10 +93,10 @@ impl std::default::Default for Style {
             foreground_border_color: Color::TRANSPARENT,
             text_color: None,
             border_radius: None,
-            // shadcn's track is roughly `(18.4 - 16) / 2 ≈ 1.2px` of padding
-            // on an 18.4px track, ratio ≈ 0.065. Sweeten's upstream baseline
-            // is 0.06; preserve it (`feedback_vendor_close_to_vanilla`).
-            padding_ratio: 0.06,
+            // Nova: thumb is `size-4` (16 × 16 px), track height is 18.4 px.
+            // Padding = (18.4 − 16) / 2 = 1.2 px → ratio = 1.2 / 18.4 ≈ 0.065.
+            // (Sweeten's upstream baseline was 0.06; adjusted for exact spec.)
+            padding_ratio: 0.065,
             ring: None,
         }
     }
