@@ -196,6 +196,9 @@ pub enum Message {
     /// Float-valued counterpart of `InputChanged`. For sliders and other
     /// continuous-value pages.
     ValueChanged(usize, f32),
+    /// Boolean-valued counterpart of `InputChanged`. For checkboxes,
+    /// switches, and other on/off toggles.
+    BoolChanged(usize, bool),
     Noop,
 }
 

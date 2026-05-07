@@ -56,10 +56,8 @@ pub static BLOCKS: &[page::Block] = &[
     },
 ];
 
-// Stable field ids for `InputChanged` dispatch — independent of block
-// position so reordering blocks doesn't break value routing. We piggy-back
-// on `page::Message::InputChanged(usize, String)` (carrying "true"/"false")
-// to avoid touching `page.rs` from a Phase-1-scoped commit.
+// Stable field ids for `BoolChanged` dispatch — independent of block
+// position so reordering blocks doesn't break value routing.
 const F_BASIC: usize = 0;
 const F_DEMO_TERMS_1: usize = 1;
 const F_DEMO_TERMS_2: usize = 2;
@@ -118,10 +116,7 @@ impl page::Page for CheckboxPage {
         if let Some(task) = self.state.update(&event) {
             return task;
         }
-        if let page::Message::InputChanged(field, value) = event {
-            // "true" / "false" stringify trick — see the field-id block above
-            // for why we ride on `InputChanged` instead of a bool variant.
-            let v = value == "true";
+        if let page::Message::BoolChanged(field, v) = event {
             match field {
                 F_BASIC => self.basic = v,
                 F_DEMO_TERMS_1 => self.demo_terms_1 = v,
@@ -141,15 +136,8 @@ impl page::Page for CheckboxPage {
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
         let pi = self.state.page_index;
-        // Stringify the bool as "true"/"false" — `page::Message::InputChanged`
-        // is a `(usize, String)` shape; our update fn parses back.
         let toggle = move |field: usize| {
-            move |b: bool| {
-                Message::Page(
-                    pi,
-                    page::Message::InputChanged(field, b.to_string()),
-                )
-            }
+            move |b: bool| Message::Page(pi, page::Message::BoolChanged(field, b))
         };
 
         let preview: iced::Element<'_, Message, Theme> = match id {
