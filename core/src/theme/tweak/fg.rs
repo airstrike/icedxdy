@@ -1,10 +1,12 @@
-//! Foreground (text) color atom.
+//! Foreground/active-region color atom.
 
 use std::ops::Add;
 
 use super::{Token, Tweak, TweakSet};
 
-/// Foreground/text color tweak. Resolves to `style.text_color`.
+/// Foreground/active-region color tweak. By convention binds to a widget's
+/// figure region (text for typography widgets; bar for progress; icon for
+/// checkbox; thumb for switch).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Fg(pub Token);
 

@@ -22,8 +22,8 @@ pub mod slider;
 pub mod svg;
 pub mod table;
 pub mod text;
+pub mod switch;
 pub mod text_input;
-pub mod toggler;
 pub mod tweak;
 
 use crate::Design;

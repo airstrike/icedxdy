@@ -21,6 +21,7 @@ pub mod sidebar;
 pub mod size;
 #[cfg(feature = "spinner")]
 pub mod spinner;
+pub mod switch;
 /// Re-export of sweeten's table module so consumers reach the table API
 /// without taking sweeten as a direct dependency. Catalog impl for our
 /// `Theme` lives in core (also feature-gated).
@@ -44,6 +45,7 @@ pub use progress::Progress;
 pub use rich_text::{RichText, Span, rich_text, span};
 pub use row::Row;
 pub use size::Size;
+pub use switch::Switch;
 pub use text::Text;
 pub use weight::Weight;
 
@@ -114,6 +116,11 @@ pub fn checkbox<'a, Message: 'a>(
 /// Create a [`Progress`] bar with the given value (0..=100).
 pub fn progress<'a, Message: 'a>(value: f32) -> Progress<'a, Message> {
     progress::progress(value)
+}
+
+/// Create a [`Switch`] with the given on/off state.
+pub fn switch<'a, Message: 'a>(is_toggled: bool) -> Switch<'a, Message> {
+    switch::switch(is_toggled)
 }
 
 /// Create a [`Spinner`].
