@@ -3,7 +3,7 @@ use icedxdy::theme;
 use icedxdy::widget::{column, field, input};
 
 column![
-    field::field(
+    field(
         input("Error", &self.value)
             .on_input(Message::Changed)
             .width(Fill)

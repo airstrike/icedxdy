@@ -4,7 +4,7 @@ use icedxdy::theme::tweak::Token;
 use icedxdy::widget::rich_text::span;
 use icedxdy::widget::{column, field, input, text, Component};
 
-column![field::field(
+column![field(
     input("This field is required", &self.value)
         .on_input(Message::Changed)
         .width(Fill),

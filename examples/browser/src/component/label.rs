@@ -78,7 +78,7 @@ impl page::Page for LabelPage {
             // typography (text-sm font-medium). Verbatim shape of shadcn's
             // `label-demo.tsx`: a Label + Input pair at fixed width.
             "demo" => column![
-                field::field(
+                field(
                     input("m@example.com", &self.demo_value)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_DEMO, v))

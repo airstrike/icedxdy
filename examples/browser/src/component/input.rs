@@ -161,7 +161,7 @@ impl page::Page for InputPage {
             // Demo (hero): Field+Label+Input+Description for an "API Key"
             // form. Verbatim shadcn `input-demo.tsx`.
             "demo" => column![
-                field::field(
+                field(
                     input("sk-...", &self.demo_value)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_DEMO, v))
@@ -184,7 +184,7 @@ impl page::Page for InputPage {
 
             // Field: input with label "Username" and description.
             "field" => column![
-                field::field(
+                field(
                     input("Enter your username", &self.field_value)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_FIELD, v))
@@ -199,7 +199,7 @@ impl page::Page for InputPage {
 
             // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
             "disabled" => column![
-                field::field(input("Email", "").width(Fill))
+                field(input("Email", "").width(Fill))
                     .label("Email")
                     .description("This field is currently disabled."),
             ]
@@ -209,7 +209,7 @@ impl page::Page for InputPage {
             // Invalid: destructive border + destructive focus ring
             // (aria-invalid). First-class `theme::text_input::Invalid`.
             "invalid" => column![
-                field::field(
+                field(
                     input("Error", &self.invalid_value)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_INVALID, v))
@@ -235,7 +235,7 @@ impl page::Page for InputPage {
             .into(),
 
             // Required: rich-text label with a destructive asterisk.
-            "required" => column![field::field(
+            "required" => column![field(
                 input("This field is required", &self.required_value)
                     .on_input(move |v| {
                         Message::Page(pi, page::Message::InputChanged(F_REQUIRED, v))

@@ -2,7 +2,7 @@
 use icedxdy::widget::{column, field, input};
 
 column![
-    field::field(
+    field(
         input("Enter your username", &self.value)
             .on_input(Message::Changed)
             .width(Fill),
