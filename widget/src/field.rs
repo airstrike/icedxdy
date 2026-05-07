@@ -244,10 +244,23 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
             Orientation::Horizontal => {
                 // shadcn `field.tsx` horizontal: `flex-row items-center
                 // has-[>[data-slot=field-content]]:items-start`
+                // The Center → Start switch is driven by FieldContent presence,
+                // which in shadcn appears when there's a description / error /
+                // multi-element block alongside the label. We mirror this by
+                // checking whether description or error is set: with neither,
+                // the right column is just the label (single-line) and
+                // alignment stays Center; with either, the right column is a
+                // multi-line stack and alignment switches to Start.
                 // Slot order: content (left) — FieldContent column (right).
                 // FieldContent inner: `gap-0.5` (2px). Row gap: `gap-2` (8px).
                 let has_right = label.is_some() || description.is_some() || error.is_some();
                 if has_right {
+                    let has_field_content = description.is_some() || error.is_some();
+                    let align = if has_field_content {
+                        iced_core::Alignment::Start
+                    } else {
+                        iced_core::Alignment::Center
+                    };
                     let mut right = iced_widget::Column::new().spacing(2);
                     if let Some(label) = label {
                         right = right.push(label.into_iced());
@@ -260,7 +273,7 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
                     }
                     iced_widget::Row::new()
                         .spacing(8)
-                        .align_y(iced_core::Alignment::Start)
+                        .align_y(align)
                         .push(content.into_iced())
                         .push(right)
                         .into()

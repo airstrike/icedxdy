@@ -1,14 +1,11 @@
 ```rust
-use icedxdy::widget::{checkbox, column, row, text};
+use icedxdy::widget::{checkbox, column, field};
 
-row![
-    checkbox(self.is_checked).on_toggle(Message::ToggleTerms),
-    column![
-        text::label("Accept terms and conditions"),
-        text::muted("By clicking this checkbox, you agree to the terms and conditions."),
-    ]
-    .spacing(2),
+column![
+    field::field(checkbox(self.is_checked).on_toggle(Message::ToggleTerms))
+        .orientation(field::Orientation::Horizontal)
+        .label("Accept terms and conditions")
+        .description("By clicking this checkbox, you agree to the terms and conditions."),
 ]
-.spacing(8)
 .width(288)
 ```

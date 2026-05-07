@@ -1,14 +1,15 @@
 ```rust
 use icedxdy::theme;
-use icedxdy::widget::{checkbox, row, text};
+use icedxdy::widget::{checkbox, column, field, text};
 
-row![
-    checkbox(self.is_checked)
-        .on_toggle(Message::Toggle)
-        .style(theme::checkbox::Invalid),
-    text::label("Accept terms and conditions")
-        .style(theme::text::Destructive),
+column![
+    field::field(
+        checkbox(self.is_checked)
+            .on_toggle(Message::Toggle)
+            .style(theme::checkbox::Invalid),
+    )
+    .orientation(field::Orientation::Horizontal)
+    .label(text::label("Accept terms and conditions").style(theme::text::Destructive)),
 ]
-.spacing(8)
 .width(224)
 ```
