@@ -119,7 +119,12 @@ impl<'a, Message: 'a> From<Checkbox<'a, Message>>
 
 impl<'a, Message: 'a> From<Checkbox<'a, Message>> for Component<'a, Message> {
     fn from(c: Checkbox<'a, Message>) -> Self {
-        Component::new(c)
+        // Materialize the toggle message for !current_state BEFORE moving `c`
+        // into Component::new. Field reads this via `toggle_target()` to wrap
+        // the rendered label in mouse_area — matching shadcn's `<label for>`
+        // semantic without any caller change.
+        let toggle_target = c.on_toggle.as_ref().map(|f| f(!c.state.is_marked()));
+        Component::new(c).with_toggle_target(toggle_target)
     }
 }
 

@@ -27,27 +27,56 @@ pub trait IntoElement<'a, Message, T = Theme, R = Renderer>: 'a {
 }
 
 /// A generic wrapper around any `icedxdy` component.
-pub struct Component<'a, Message, T = Theme, R = Renderer>(Box<dyn IntoElement<'a, Message, T, R>>);
+pub struct Component<'a, Message, T = Theme, R = Renderer> {
+    inner: Box<dyn IntoElement<'a, Message, T, R>>,
+    /// Optional click-target message that should fire when this Component's
+    /// label is clicked. Populated by `From<Checkbox>` and `From<Switch>` from
+    /// the inner widget's `on_toggle(!current_state)`. Field consults this at
+    /// mount-time to wrap its rendered label widget in `mouse_area` — matching
+    /// shadcn's `<FieldLabel htmlFor>` semantic where the label fires a
+    /// synthetic click on the linked control. `None` for non-labeled content
+    /// (input, etc.) — Field renders the label widget unwrapped.
+    toggle_target: Option<Message>,
+}
 
 impl<'a, Message: 'a, T: 'a, R: 'a> Component<'a, Message, T, R> {
     /// Wrap any [`IntoElement`] implementor.
     pub fn new(widget: impl IntoElement<'a, Message, T, R>) -> Self {
-        Self(Box::new(widget))
+        Self {
+            inner: Box::new(widget),
+            toggle_target: None,
+        }
+    }
+
+    /// Attach a click-target message. Called by `From<Checkbox>` and
+    /// `From<Switch>` with the message that fires `on_toggle(!current_state)`.
+    /// Field reads this via [`toggle_target`] to wrap the rendered label in
+    /// `mouse_area` — no caller change needed.
+    pub fn with_toggle_target(mut self, target: Option<Message>) -> Self {
+        self.toggle_target = target;
+        self
+    }
+
+    /// Return the stored click-target message, if any. Field reads this before
+    /// consuming `self` via `into_iced()` so the label can be wrapped in
+    /// `mouse_area` without extra builder args on `Field` itself.
+    pub fn toggle_target(&self) -> Option<&Message> {
+        self.toggle_target.as_ref()
     }
 
     /// Push a size hint down to the wrapped widget.
     pub fn size(&mut self, size: Size) {
-        self.0.size(size);
+        self.inner.size(size);
     }
 
     /// Push a font weight hint down to the wrapped widget.
     pub fn weight(&mut self, weight: Weight) {
-        self.0.weight(weight);
+        self.inner.weight(weight);
     }
 
     /// Convert into an `iced::Element`.
     pub fn into_iced(self) -> iced_core::Element<'a, Message, T, R> {
-        self.0.into_element()
+        self.inner.into_element()
     }
 
     /// Map the message type, like `iced::Element::map`.

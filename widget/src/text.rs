@@ -17,7 +17,7 @@ use crate::core::Length::Fill;
 use crate::core::Padding;
 use crate::core::font;
 use crate::core::font::Weight;
-use crate::core::text::{Fragment, IntoFragment};
+use crate::core::text::{Fragment, IntoFragment, LineHeight};
 use iced_widget::Renderer;
 use iced_widget::text::StyleFn;
 
@@ -47,6 +47,7 @@ pub struct Text<'a> {
     weight: Option<Weight>,
     italic: bool,
     letter_spacing: Option<iced_core::Em>,
+    line_height: Option<LineHeight>,
     style: Option<StyleFn<'a, Theme>>,
     width: Option<Length>,
 }
@@ -60,6 +61,7 @@ impl<'a> Text<'a> {
             weight: None,
             italic: false,
             letter_spacing: None,
+            line_height: None,
             style: None,
             width: None,
         }
@@ -96,6 +98,11 @@ impl<'a> Text<'a> {
 
     pub fn letter_spacing(mut self, spacing: impl Into<iced_core::Em>) -> Self {
         self.letter_spacing = Some(spacing.into());
+        self
+    }
+
+    pub fn line_height(mut self, line_height: impl Into<LineHeight>) -> Self {
+        self.line_height = Some(line_height.into());
         self
     }
 
@@ -148,6 +155,10 @@ impl<'a> Text<'a> {
 
         if let Some(letter_spacing) = self.letter_spacing {
             widget = widget.letter_spacing(letter_spacing);
+        }
+
+        if let Some(line_height) = self.line_height {
+            widget = widget.line_height(line_height);
         }
 
         if let Some(style) = self.style {
@@ -252,13 +263,17 @@ pub fn small<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .width(Fill)
 }
 
-/// Field-style label typography (Tailwind `text-sm font-medium`). Use for
-/// inline form labels (`<FieldLabel>` in shadcn parlance).
+/// Field-style label typography (Tailwind `text-sm font-medium leading-none`).
+/// Use for inline form labels (`<FieldLabel>` in shadcn parlance).
+/// `leading-none` (`line_height(1.0)`) strips the invisible line-height
+/// padding that otherwise throws off vertical alignment math in horizontal
+/// Field layouts — mirroring shadcn's `<Label>` cascade exactly.
 pub fn label<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
         .medium()
         .style(theme::text::Foreground)
+        .line_height(LineHeight::Relative(1.0))
         .width(Fill)
 }
 
@@ -269,12 +284,16 @@ pub fn muted<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .width(Fill)
 }
 
-/// Field-style error message typography (Tailwind `text-sm text-destructive`).
-/// Use for inline validation feedback (`<FieldError>` in shadcn parlance).
+/// Field-style error message typography
+/// (Tailwind `text-sm text-destructive leading-none`). Use for inline
+/// validation feedback (`<FieldError>` in shadcn parlance).
+/// `leading-none` matches shadcn's `<FieldError>` typography and keeps
+/// the vertical rhythm consistent with the label above it.
 pub fn error<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
         .style(theme::text::Destructive)
+        .line_height(LineHeight::Relative(1.0))
         .width(Fill)
 }
 

@@ -222,6 +222,11 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
             on_press,
         } = *self;
 
+        // Read toggle_target BEFORE consuming content. Field uses this to wrap
+        // the rendered label in mouse_area, matching shadcn's `<label for>`
+        // click-target semantic. Message: Clone is already on the impl.
+        let toggle_target: Option<Message> = content.toggle_target().cloned();
+
         // Build the inner layout depending on orientation.
         let inner: iced_core::Element<'a, Message, Theme, Renderer> = match orientation {
             Orientation::Vertical => {
@@ -230,7 +235,14 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
                 // pattern `alert::Alert::into_element` uses.
                 let mut col = iced_widget::Column::new().spacing(8);
                 if let Some(label) = label {
-                    col = col.push(label.into_iced());
+                    let label_element = label.into_iced();
+                    let label_element = match toggle_target.as_ref() {
+                        Some(target) => iced_widget::mouse_area(label_element)
+                            .on_press(target.clone())
+                            .into(),
+                        None => label_element,
+                    };
+                    col = col.push(label_element);
                 }
                 col = col.push(content.into_iced());
                 if let Some(description) = description {
@@ -261,9 +273,39 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
                     } else {
                         iced_core::Alignment::Center
                     };
+
+                    // shadcn `mt-px` on Checkbox in `items-start` mode — a 1px
+                    // top nudge that compensates for the cap-height-vs-bounding-
+                    // box optical offset so the checkbox box aligns to the label
+                    // cap-height rather than the label line-box top.
+                    let content_element = content.into_iced();
+                    let content_element: iced_core::Element<'_, Message, Theme, Renderer> =
+                        if has_field_content {
+                            iced_widget::container(content_element)
+                                .padding(iced_core::Padding {
+                                    top: 1.0,
+                                    ..iced_core::Padding::ZERO
+                                })
+                                .into()
+                        } else {
+                            content_element
+                        };
+
                     let mut right = iced_widget::Column::new().spacing(2);
                     if let Some(label) = label {
-                        right = right.push(label.into_iced());
+                        // Wrap label in mouse_area when a toggle target is
+                        // present — mirrors shadcn's `<FieldLabel htmlFor>`
+                        // that fires a synthetic click on the linked control.
+                        // ONLY the label is wrapped; description and error are
+                        // passive text (no htmlFor in shadcn's cascade).
+                        let label_element = label.into_iced();
+                        let label_element = match toggle_target.as_ref() {
+                            Some(target) => iced_widget::mouse_area(label_element)
+                                .on_press(target.clone())
+                                .into(),
+                            None => label_element,
+                        };
+                        right = right.push(label_element);
                     }
                     if let Some(description) = description {
                         right = right.push(description.into_iced());
@@ -274,7 +316,7 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
                     iced_widget::Row::new()
                         .spacing(8)
                         .align_y(align)
-                        .push(content.into_iced())
+                        .push(content_element)
                         .push(right)
                         .into()
                 } else {

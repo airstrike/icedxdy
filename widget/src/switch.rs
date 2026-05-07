@@ -117,7 +117,12 @@ impl<'a, Message: 'a> From<Switch<'a, Message>>
 
 impl<'a, Message: 'a> From<Switch<'a, Message>> for Component<'a, Message> {
     fn from(s: Switch<'a, Message>) -> Self {
-        Component::new(s)
+        // Materialize the toggle message for !current_state BEFORE moving `s`
+        // into Component::new. Field reads this via `toggle_target()` to wrap
+        // the rendered label in mouse_area — matching shadcn's `<label for>`
+        // semantic without any caller change.
+        let toggle_target = s.on_toggle.as_ref().map(|f| f(!s.is_toggled));
+        Component::new(s).with_toggle_target(toggle_target)
     }
 }
 
