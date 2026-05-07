@@ -1,15 +1,16 @@
 ```rust
 use icedxdy::theme;
-use icedxdy::widget::{input, text};
+use icedxdy::widget::{column, field, input};
 
 column![
-    text::label("Invalid Input"),
-    input("Error", &self.value)
-        .on_input(Message::Changed)
-        .width(Fill)
-        .style(theme::text_input::Invalid),
-    text::muted("This field contains validation errors."),
+    field::field(
+        input("Error", &self.value)
+            .on_input(Message::Changed)
+            .width(Fill)
+            .style(theme::text_input::Invalid),
+    )
+    .label("Invalid Input")
+    .description("This field contains validation errors."),
 ]
-.spacing(8)
 .width(320)
 ```

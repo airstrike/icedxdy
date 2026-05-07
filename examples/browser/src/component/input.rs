@@ -6,7 +6,7 @@ use icedxdy::rich_text;
 use icedxdy::theme;
 use icedxdy::theme::tweak::Token;
 use icedxdy::widget::rich_text::span;
-use icedxdy::widget::{button, column, input, row, text};
+use icedxdy::widget::{button, column, field, input, row, text, Component};
 
 use crate::Message;
 use crate::page;
@@ -161,13 +161,16 @@ impl page::Page for InputPage {
             // Demo (hero): Field+Label+Input+Description for an "API Key"
             // form. Verbatim shadcn `input-demo.tsx`.
             "demo" => column![
-                text::label("API Key"),
-                input("sk-...", &self.demo_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_DEMO, v)))
-                    .width(Fill),
-                text::muted("Your API key is encrypted and stored securely."),
+                field::field(
+                    input("sk-...", &self.demo_value)
+                        .on_input(move |v| {
+                            Message::Page(pi, page::Message::InputChanged(F_DEMO, v))
+                        })
+                        .width(Fill),
+                )
+                .label("API Key")
+                .description("Your API key is encrypted and stored securely."),
             ]
-            .spacing(8)
             .width(320)
             .into(),
 
@@ -181,37 +184,42 @@ impl page::Page for InputPage {
 
             // Field: input with label "Username" and description.
             "field" => column![
-                text::label("Username"),
-                input("Enter your username", &self.field_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_FIELD, v)))
-                    .width(Fill),
-                text::muted("Choose a unique username for your account."),
+                field::field(
+                    input("Enter your username", &self.field_value)
+                        .on_input(move |v| {
+                            Message::Page(pi, page::Message::InputChanged(F_FIELD, v))
+                        })
+                        .width(Fill),
+                )
+                .label("Username")
+                .description("Choose a unique username for your account."),
             ]
-            .spacing(8)
             .width(320)
             .into(),
 
             // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
             "disabled" => column![
-                text::label("Email"),
-                input("Email", "").width(Fill),
-                text::muted("This field is currently disabled."),
+                field::field(input("Email", "").width(Fill))
+                    .label("Email")
+                    .description("This field is currently disabled."),
             ]
-            .spacing(8)
             .width(320)
             .into(),
 
             // Invalid: destructive border + destructive focus ring
             // (aria-invalid). First-class `theme::text_input::Invalid`.
             "invalid" => column![
-                text::label("Invalid Input"),
-                input("Error", &self.invalid_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INVALID, v)))
-                    .width(Fill)
-                    .style(theme::text_input::Invalid),
-                text::muted("This field contains validation errors."),
+                field::field(
+                    input("Error", &self.invalid_value)
+                        .on_input(move |v| {
+                            Message::Page(pi, page::Message::InputChanged(F_INVALID, v))
+                        })
+                        .width(Fill)
+                        .style(theme::text_input::Invalid),
+                )
+                .label("Invalid Input")
+                .description("This field contains validation errors."),
             ]
-            .spacing(8)
             .width(320)
             .into(),
 
@@ -226,21 +234,19 @@ impl page::Page for InputPage {
             .width(400)
             .into(),
 
-            // Required: rich-text with a destructive asterisk.
-            "required" => column![
-                rich_text![
-                    span("Required Field ").size(text::size::SM).medium(),
-                    span("*").size(text::size::SM).color(Token::Destructive),
-                ],
+            // Required: rich-text label with a destructive asterisk.
+            "required" => column![field::field(
                 input("This field is required", &self.required_value)
-                    .on_input(move |v| Message::Page(
-                        pi,
-                        page::Message::InputChanged(F_REQUIRED, v)
-                    ))
+                    .on_input(move |v| {
+                        Message::Page(pi, page::Message::InputChanged(F_REQUIRED, v))
+                    })
                     .width(Fill),
-                text::muted("This field must be filled out."),
-            ]
-            .spacing(8)
+            )
+            .label(Component::from(rich_text![
+                span("Required Field ").size(text::size::SM).medium(),
+                span("*").size(text::size::SM).color(Token::Destructive),
+            ]))
+            .description("This field must be filled out."),]
             .width(320)
             .into(),
 

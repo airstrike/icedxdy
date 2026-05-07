@@ -1,12 +1,11 @@
 ```rust
-use icedxdy::widget::{input, text};
+use icedxdy::widget::{column, field, input};
 
 // Omitting `.on_input(...)` disables the input — the iced convention.
 column![
-    text::label("Email"),
-    input("Email", "").width(Fill),
-    text::muted("This field is currently disabled."),
+    field::field(input("Email", "").width(Fill))
+        .label("Email")
+        .description("This field is currently disabled."),
 ]
-.spacing(8)
 .width(320)
 ```

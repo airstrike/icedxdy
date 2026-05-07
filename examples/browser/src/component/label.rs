@@ -1,7 +1,7 @@
 use iced::Task;
 
 use icedxdy::Theme;
-use icedxdy::widget::{column, input, text};
+use icedxdy::widget::{column, field, input};
 
 use crate::Message;
 use crate::page;
@@ -78,12 +78,15 @@ impl page::Page for LabelPage {
             // typography (text-sm font-medium). Verbatim shape of shadcn's
             // `label-demo.tsx`: a Label + Input pair at fixed width.
             "demo" => column![
-                text::label("Your email"),
-                input("m@example.com", &self.demo_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_DEMO, v)))
-                    .width(iced::Fill),
+                field::field(
+                    input("m@example.com", &self.demo_value)
+                        .on_input(move |v| {
+                            Message::Page(pi, page::Message::InputChanged(F_DEMO, v))
+                        })
+                        .width(iced::Fill),
+                )
+                .label("Your email"),
             ]
-            .spacing(8)
             .width(320)
             .into(),
 

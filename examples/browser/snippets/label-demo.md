@@ -1,12 +1,13 @@
 ```rust
-use icedxdy::widget::{column, input, text};
+use icedxdy::widget::{column, field, input};
 
 column![
-    text::label("Your email"),
-    input("m@example.com", &self.value)
-        .on_input(Message::Changed)
-        .width(Fill),
+    field::field(
+        input("m@example.com", &self.value)
+            .on_input(Message::Changed)
+            .width(Fill),
+    )
+    .label("Your email"),
 ]
-.spacing(8)
 .width(320)
 ```

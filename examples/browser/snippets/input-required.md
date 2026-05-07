@@ -2,18 +2,17 @@
 use icedxdy::rich_text;
 use icedxdy::theme::tweak::Token;
 use icedxdy::widget::rich_text::span;
-use icedxdy::widget::{input, text};
+use icedxdy::widget::{column, field, input, text, Component};
 
-column![
-    rich_text![
-        span("Required Field ").size(text::size::SM).medium(),
-        span("*").size(text::size::SM).color(Token::Destructive),
-    ],
+column![field::field(
     input("This field is required", &self.value)
         .on_input(Message::Changed)
         .width(Fill),
-    text::muted("This field must be filled out."),
-]
-.spacing(8)
+)
+.label(Component::from(rich_text![
+    span("Required Field ").size(text::size::SM).medium(),
+    span("*").size(text::size::SM).color(Token::Destructive),
+]))
+.description("This field must be filled out."),]
 .width(320)
 ```
