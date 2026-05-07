@@ -162,7 +162,11 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             background: p.primary.base.into(),
             icon_color: p.primary.foreground,
             border: Border {
-                radius: radius::SM.into(),
+                // shadcn nova: `rounded-[4px]` — a literal pixel value, NOT a
+                // Tailwind preset. We expose this as `radius::XS` rather than
+                // a magic literal so future 4px-radius widgets pick it up
+                // consistently.
+                radius: radius::XS.into(),
                 width: 1.0,
                 color: p.primary.base,
             },
@@ -174,7 +178,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             background: unchecked_bg.into(),
             icon_color: p.primary.foreground,
             border: Border {
-                radius: radius::SM.into(),
+                radius: radius::XS.into(),
                 width: 1.0,
                 color: p.input,
             },
@@ -205,9 +209,10 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 /// Invalid checkbox variant — nova `aria-invalid:*` box.
 ///
 /// Border swaps to `palette.destructive` (`aria-invalid:border-destructive`);
-/// the focused ring uses `palette.destructive` at low alpha
-/// (`aria-invalid:ring-destructive/20`). Special case: when invalid AND
-/// checked, the border returns to `palette.primary`
+/// a 3px ring is rendered at `palette.destructive` @ 20% alpha
+/// (`aria-invalid:ring-3 ring-destructive/20`) — in dark mode the ring drops
+/// to 40% alpha (`dark:aria-invalid:ring-destructive/40`). Special case: when
+/// invalid AND checked, the border returns to `palette.primary`
 /// (`aria-invalid:aria-checked:border-primary`). In dark mode the
 /// destructive border drops to alpha 0.5 (`dark:aria-invalid:border-destructive/50`).
 pub fn invalid(theme: &Theme, status: Status) -> Style {
@@ -225,12 +230,22 @@ pub fn invalid(theme: &Theme, status: Status) -> Style {
         p.destructive.base
     };
 
+    // shadcn `aria-invalid:ring-3 ring-destructive/20` (`/40` in dark).
+    // Always rendered for the invalid variant — shadcn's `aria-invalid:`
+    // prefix unconditionally enables the ring, no focus required (different
+    // from the `focus-visible:ring-3` ring which gates on focus).
+    let invalid_ring = Some(Ring {
+        color: p.destructive.base.alpha(if dark { 0.40 } else { 0.20 }),
+        width: 3.0,
+    });
+
     match status {
         Status::Active { .. } | Status::Hovered { .. } => Style {
             border: Border {
                 color: invalid_border,
                 ..base.border
             },
+            ring: invalid_ring,
             ..base
         },
         Status::Disabled { .. } => Style {
@@ -238,6 +253,12 @@ pub fn invalid(theme: &Theme, status: Status) -> Style {
                 color: invalid_border.scale_alpha(0.5),
                 ..base.border
             },
+            // Disabled invalid: dim the ring along with everything else
+            // (mirrors `disabled:opacity-50`).
+            ring: invalid_ring.map(|r| Ring {
+                color: r.color.scale_alpha(0.5),
+                ..r
+            }),
             ..base
         },
     }
@@ -618,5 +639,61 @@ mod tests {
         let ring = resolved.ring.expect("ring should be set");
         assert_eq!(ring.width, 3.0);
         assert!(close(ring.color, theme.palette().ring));
+    }
+
+    /// shadcn `rounded-[4px]` — literal 4 (NOT a Tailwind preset). We expose
+    /// it as `radius::XS` so future 4px-radius widgets pick it up consistently.
+    #[test]
+    fn default_uses_xs_radius() {
+        let theme = Theme::light();
+        for is_checked in [false, true] {
+            let resolved = default(&theme, Status::Active { is_checked });
+            let r = resolved.border.radius;
+            // Border::Radius has uniform corners when set from a single f32.
+            assert!(
+                (r.top_left - 4.0).abs() < 1e-4
+                    && (r.top_right - 4.0).abs() < 1e-4
+                    && (r.bottom_left - 4.0).abs() < 1e-4
+                    && (r.bottom_right - 4.0).abs() < 1e-4,
+                "expected radius ≈ 4 on every corner, got {r:?}",
+            );
+        }
+    }
+
+    /// shadcn `aria-invalid:ring-3 ring-destructive/20` — invalid checkbox
+    /// emits a 3px ring at destructive @ 20% alpha (light) / 40% (dark) by
+    /// default, no focus required. Verifies the variant fn writes the ring
+    /// directly (not via a tweak).
+    #[test]
+    fn invalid_emits_destructive_ring_3px_at_20_percent() {
+        let theme = Theme::light();
+        let resolved = invalid(&theme, Status::Active { is_checked: false });
+        let p = theme.palette();
+        let ring = resolved.ring.expect("invalid variant must emit a ring");
+        assert!(
+            (ring.width - 3.0).abs() < 1e-4,
+            "expected 3px ring (shadcn `ring-3`), got {}",
+            ring.width,
+        );
+        let expected_color = p.destructive.base.alpha(0.20);
+        assert!(
+            close(ring.color, expected_color),
+            "expected ring.color = destructive @ 0.20 ({expected_color:?}), got {:?}",
+            ring.color,
+        );
+    }
+
+    /// `dark:aria-invalid:ring-destructive/40` — dark mode bumps the
+    /// invalid ring alpha from 0.20 to 0.40.
+    #[test]
+    fn invalid_dark_ring_alpha_is_40_percent() {
+        let theme = Theme::dark();
+        let resolved = invalid(&theme, Status::Active { is_checked: false });
+        let ring = resolved.ring.expect("invalid variant must emit a ring");
+        assert!(
+            (ring.color.a - 0.40).abs() < 1e-4,
+            "expected dark invalid ring alpha = 0.40, got {}",
+            ring.color.a,
+        );
     }
 }

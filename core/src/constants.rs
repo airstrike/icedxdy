@@ -7,6 +7,9 @@
 ///
 /// Base radius is 10px, with variants calculated relative to it.
 pub mod radius {
+    /// 4px - extra small radius. shadcn checkbox uses this verbatim
+    /// (`rounded-[4px]` — a literal pixel value, not a Tailwind preset).
+    pub const XS: f32 = 4.0;
     /// 6px - small radius
     pub const SM: f32 = 6.0;
     /// 8px - medium radius

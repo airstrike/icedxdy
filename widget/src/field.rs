@@ -56,12 +56,15 @@
 //! conditional-push pattern `alert::Alert` uses for its title/description
 //! pair.
 
+mod animated_card;
+
 use iced_widget::Renderer;
 use icedxdy_core::Theme;
 use icedxdy_core::theme::field::Card;
 use icedxdy_core::theme::field::CardActive;
 
 use crate::component::{Component, IntoElement};
+use animated_card::AnimatedCard;
 
 /// Layout orientation for a [`Field`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -278,16 +281,20 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
         //   *:data-[slot=field]:p-2.5
         //   has-data-checked:border-primary/30
         //   has-data-checked:bg-primary/5`
+        //
+        // We swap stock `iced_widget::container` for an [`AnimatedCard`]
+        // when card mode is on — the card chrome (border + bg) cross-fades
+        // in lockstep with the inner checkbox / switch when `is_active`
+        // toggles, matching shadcn's `transition-colors` cascade. The
+        // bezier curve and easing match the inner checkbox + switch
+        // widgets exactly so a card + its inner control animate as one
+        // synchronized state change.
         let carded: iced_core::Element<'a, Message, Theme, Renderer> = match card {
             Some(is_active) => {
-                let style: iced_widget::container::StyleFn<'_, Theme> = if is_active {
-                    CardActive.into()
-                } else {
-                    Card.into()
-                };
-                iced_widget::container(inner)
+                let inactive: iced_widget::container::StyleFn<'_, Theme> = Card.into();
+                let active: iced_widget::container::StyleFn<'_, Theme> = CardActive.into();
+                AnimatedCard::new(inner, is_active, inactive, active)
                     .padding(10)
-                    .style(style)
                     .into()
             }
             None => inner,
