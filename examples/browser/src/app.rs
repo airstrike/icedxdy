@@ -97,19 +97,20 @@ impl App {
         let mut tasks: Vec<Task<Message>> = Vec::new();
 
         use component::{
-            alert, badge, button, checkbox, field, input, label, progress, switch, text,
+            alert, badge, button, checkbox, field, input, label, progress, sidebar, switch, text,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
-            button::ButtonPage::new,
-            badge::BadgePage::new,
-            input::InputPage::new,
-            checkbox::CheckboxPage::new,
-            switch::SwitchPage::new,
-            label::LabelPage::new,
-            field::FieldPage::new,
-            progress::ProgressPage::new,
             alert::AlertPage::new,
+            badge::BadgePage::new,
+            button::ButtonPage::new,
+            checkbox::CheckboxPage::new,
+            field::FieldPage::new,
+            input::InputPage::new,
+            label::LabelPage::new,
+            progress::ProgressPage::new,
+            sidebar::SidebarPage::new,
+            switch::SwitchPage::new,
             text::TextPage::new,
         ];
 
@@ -364,10 +365,18 @@ impl App {
         // so we override `palette.sidebar.background` with `palette.background`
         // to match. Cross-widget atom system is exercised on the third
         // catalog (after button + container).
+        // padding([top, right, bottom, left]):
+        //   top=24px — matches shadcn docs sidebar; the "Components" label
+        //             starts ~24px below the header rule, creating visible
+        //             breathing room (image 5 reference).
+        //   left=24px — shifts content inset so it aligns with the "Docs"
+        //              text in the top nav (shadcn's sidebar content is
+        //              inset ~8px more than our old left=16 value).
+        //   right/bottom=8px — unchanged from prior padding.
         let sidebar = sidebar::fixed(
             scrollable(
                 column![sidebar_header, sidebar_items]
-                    .padding([8, 16])
+                    .padding([24, 8, 8, 24])
                     .width(224),
             )
             .height(Fill),

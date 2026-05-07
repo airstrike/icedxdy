@@ -1,0 +1,51 @@
+```rust
+use icedxdy::widget::sidebar;
+
+sidebar::floating(
+    sidebar::content([
+        sidebar::group([
+            sidebar::group_label("Projects").into(),
+            sidebar::group_content([
+                sidebar::menu([
+                    sidebar::menu_item([
+                        sidebar::menu_button("Design Engineering")
+                            .active(true)
+                            .on_press(Message::Select(0))
+                            .into(),
+                    ])
+                    .into(),
+                    sidebar::menu_item([
+                        sidebar::menu_button("Sales & Marketing")
+                            .on_press(Message::Select(1))
+                            .into(),
+                    ])
+                    .into(),
+                    sidebar::menu_item([
+                        sidebar::menu_button("Travel")
+                            .on_press(Message::Select(2))
+                            .into(),
+                    ])
+                    .into(),
+                    sidebar::menu_item([
+                        sidebar::menu_button("Support")
+                            .on_press(Message::Select(3))
+                            .into(),
+                    ])
+                    .into(),
+                    sidebar::menu_item([
+                        sidebar::menu_button("Feedback")
+                            .on_press(Message::Select(4))
+                            .into(),
+                    ])
+                    .into(),
+                ])
+                .into(),
+            ])
+            .into(),
+        ])
+        .into(),
+    ]),
+)
+.height(288)
+.width(sidebar::WIDTH)
+```

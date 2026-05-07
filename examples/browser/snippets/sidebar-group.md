@@ -1,0 +1,32 @@
+```rust
+use icedxdy::widget::sidebar;
+
+sidebar::floating(
+    sidebar::content([
+        sidebar::group([
+            sidebar::group_label("Help").into(),
+            sidebar::group_content([
+                sidebar::menu([
+                    sidebar::menu_item([
+                        sidebar::menu_button("Support")
+                            .on_press(Message::Support)
+                            .into(),
+                    ])
+                    .into(),
+                    sidebar::menu_item([
+                        sidebar::menu_button("Feedback")
+                            .on_press(Message::Feedback)
+                            .into(),
+                    ])
+                    .into(),
+                ])
+                .into(),
+            ])
+            .into(),
+        ])
+        .into(),
+    ]),
+)
+.height(288)
+.width(sidebar::WIDTH)
+```
