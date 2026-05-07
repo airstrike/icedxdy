@@ -1,4 +1,4 @@
-cargo-features = ["profile-crate-type"]
+cargo-features = ["cascade-dylib"]
 
 [package]
 name = "icedxdy"
@@ -68,154 +68,23 @@ tree-sitter-rust = "0.24"
 [profile.dev]
 rpath = true
 
-# Per-package crate-type overrides for granita hot-reload. Mirrors the
-# pattern in ~/projects/granita/Cargo.toml — promote the iced subcrates
-# granita's host dlopens (12-crate doctor allowlist, minus the three
-# rlib-shy ones: iced_runtime / iced_winit / iced_tiny_skia) plus
-# tracing-core (single Dispatch global), once_cell, and the no_std
-# transitive rlibs (cfg-if, hashbrown, foldhash, equivalent) that would
-# otherwise be statically embedded in multiple dylibs. Requires the
-# unstable `profile-crate-type` cargo feature plus the std-shim from
-# airstrike/cargo branch crate-type-override — use
-# ~/projects/cargo/target/release/cargo on nightly.
-[profile.dev.package.iced]
-crate-type = ["lib", "dylib"]
+# Opt OUT of the cascade-dylib promotion — tree-sitter ships C source built
+# by its build.rs (`cc` archive of `ts_*` symbols). When the cascade
+# promotes tree-sitter to dylib, the C archive doesn't make it across the
+# dylib boundary and tree-sitter-highlight fails to link
+# (`Undefined symbol: _ts_query_cursor_next_capture`). Forcing rlib keeps
+# the C objects bundled the way the build script expects.
+[profile.dev.package.tree-sitter]
+crate-type = ["lib"]
 
-[profile.dev.package.iced_core]
-crate-type = ["lib", "dylib"]
+[profile.dev.package.tree-sitter-highlight]
+crate-type = ["lib"]
 
-[profile.dev.package.iced_widget]
-crate-type = ["lib", "dylib"]
+[profile.dev.package.tree-sitter-language]
+crate-type = ["lib"]
 
-[profile.dev.package.iced_graphics]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.iced_renderer]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.iced_program]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.iced_futures]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.iced_wgpu]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.iced_debug]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.iced_highlighter]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.tracing-core]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.once_cell]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.cfg-if]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.hashbrown]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.foldhash]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.equivalent]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.indexmap]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.memchr]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.bit-set]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.bit-vec]
-crate-type = ["lib", "dylib"]
-
-# Tokio uses thread-local storage to track its runtime context.
-# Without dylib promotion, each dylib (iced, granita, browser via fount)
-# would statically link its own tokio with its own TLS — iced enters
-# its tokio context, browser.dylib's tokio::fs queries its OWN tokio's
-# TLS and finds nothing, panics in spawn_blocking.
-[profile.dev.package.tokio]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.bytes]
-crate-type = ["lib", "dylib"]
-
-# resvg pulls these in transitively when iced/svg is enabled. Without
-# dylib promotion they collide with the rest of the dylib graph in test
-# mode ("cannot satisfy dependencies so X only shows up once").
-[profile.dev.package.resvg]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.flate2]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.crc32fast]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.miniz_oxide]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.simd_adler32]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.base64]
-crate-type = ["lib", "dylib"]
-
-# resvg/usvg/fontdb-driven text-shaping transitives that also collide
-# under the dylib graph once iced/svg is enabled.
-[profile.dev.package.fontdb]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.ttf-parser]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.memmap2]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.slotmap]
-crate-type = ["lib", "dylib"]
-
-# Numeric / utility rlibs — all over the iced + resvg + cosmic-text graph;
-# any one of them existing in both rlib-only and dylib-promoted form
-# trips the "only shows up once" check.
-[profile.dev.package.arrayvec]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.bitflags]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.bytemuck]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.libc]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.log]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.smallvec]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.tinyvec]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.tinyvec_macros]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.unicode-bidi]
-crate-type = ["lib", "dylib"]
-
-[profile.dev.package.unicode-script]
-crate-type = ["lib", "dylib"]
+[profile.dev.package.tree-sitter-rust]
+crate-type = ["lib"]
 
 [patch.crates-io]
 iced = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
