@@ -20,7 +20,7 @@ pub fn group<'a, Message: 'a>(
 ///
 /// Renders as text-xs (12px), font-medium, with muted foreground color.
 /// Corresponds to shadcn's SidebarGroupLabel (h-8, text-xs, font-medium).
-pub fn group_label<'a, Message: 'a>(label: impl iced_core::text::IntoFragment<'a>) -> Text<'a> {
+pub fn group_label<'a>(label: impl iced_core::text::IntoFragment<'a>) -> Text<'a> {
     Text::new(label)
         .size(12.0)
         .medium()

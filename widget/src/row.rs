@@ -27,6 +27,7 @@ pub struct Row<'a, Message> {
     spacing: Option<f32>,
     width: Length,
     height: Length,
+    align_y: iced_core::Alignment,
 }
 
 impl<'a, Message: 'a> Row<'a, Message> {
@@ -36,6 +37,7 @@ impl<'a, Message: 'a> Row<'a, Message> {
             spacing: None,
             width: Length::Shrink,
             height: Length::Shrink,
+            align_y: iced_core::Alignment::Center,
         }
     }
 
@@ -45,6 +47,7 @@ impl<'a, Message: 'a> Row<'a, Message> {
             spacing: None,
             width: Length::Shrink,
             height: Length::Shrink,
+            align_y: iced_core::Alignment::Center,
         }
     }
 
@@ -66,6 +69,11 @@ impl<'a, Message: 'a> Row<'a, Message> {
 
     pub fn height(mut self, height: impl Into<Length>) -> Self {
         self.height = height.into();
+        self
+    }
+
+    pub fn align_y(mut self, align: impl Into<iced_core::Alignment>) -> Self {
+        self.align_y = align.into();
         self
     }
 }
@@ -105,7 +113,7 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Row<'a, Message> {
             .spacing(self.spacing.unwrap_or(8.0))
             .width(self.width)
             .height(self.height)
-            .align_y(iced_core::Alignment::Center);
+            .align_y(self.align_y);
 
         for child in self.children {
             row = row.push(child.into_iced());

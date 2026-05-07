@@ -376,7 +376,7 @@ impl App {
         let sidebar = sidebar::fixed(
             scrollable(
                 column![sidebar_header, sidebar_items]
-                    .padding([24, 8, 8, 24])
+                    .padding(iced::Padding::ZERO.top(24).right(8).bottom(8).left(24))
                     .width(224),
             )
             .height(Fill),
