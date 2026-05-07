@@ -4,6 +4,7 @@ pub mod alert;
 pub mod animation;
 pub mod badge;
 pub mod button;
+pub mod checkbox;
 pub mod column;
 pub mod component;
 pub mod container;
@@ -35,6 +36,7 @@ pub use iced_widget::space;
 pub use alert::Alert;
 pub use badge::Badge;
 pub use button::Button;
+pub use checkbox::Checkbox;
 pub use column::Column;
 pub use component::{Component, IntoElement};
 pub use input::Input;
@@ -100,6 +102,13 @@ pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
 /// Create an [`Input`].
 pub fn input<'a, Message: Clone + 'a>(placeholder: &'a str, value: &'a str) -> Input<'a, Message> {
     input::input(placeholder, value)
+}
+
+/// Create a [`Checkbox`] in the given state.
+pub fn checkbox<'a, Message: 'a>(
+    state: impl Into<checkbox::State>,
+) -> Checkbox<'a, Message> {
+    checkbox::checkbox(state)
 }
 
 /// Create a [`Progress`] bar with the given value (0..=100).
