@@ -3,7 +3,7 @@ use icedxdy::widget::{column, row, switch, text};
 
 row![
     column![
-        text("Share across devices"),
+        text::small("Share across devices").medium(),
         text::muted(
             "Focus is shared across devices, and turns off when you leave the app.",
         ),
@@ -12,5 +12,6 @@ row![
     .width(iced::Fill),
     switch(self.is_on).on_toggle(Message::Toggled),
 ]
-.spacing(16)
+.spacing(8)
+.width(384)
 ```

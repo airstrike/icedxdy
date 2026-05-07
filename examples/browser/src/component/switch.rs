@@ -12,6 +12,10 @@ use crate::page;
 // minimap), switch-sizes (size variants are out-of-scope for the MVP —
 // shadcn ships `sm` and `default`; vendoring the full size matrix is its
 // own design surface).
+//
+// TODO Phase 4: htmlFor label-click-toggle association — shadcn's Field
+// provides `htmlFor` semantics so clicking the label toggles the switch.
+// iced has no equivalent; will wire once Field MVP lands.
 pub static META: page::Meta = page::Meta {
     title: "Switch",
     description: "A control that allows the user to toggle between checked and not checked.",
@@ -127,7 +131,7 @@ impl page::Page for SwitchPage {
             // `.nova/apps/v4/examples/radix/switch-demo.tsx`.
             "demo" => row![
                 switch(self.demo).on_toggle(toggle(F_DEMO)),
-                text("Airplane Mode"),
+                text::small("Airplane Mode").medium(),
             ]
             .spacing(8)
             .into(),
@@ -139,9 +143,11 @@ impl page::Page for SwitchPage {
             // shipped — Phase 4 lands them; for now we hand-roll the row +
             // column + muted-description shape that Field will eventually
             // wrap.
+            // TODO Phase 4: max-width 384 (currently fixed width — Row lacks
+            // max_width(); swap .width(384) to .max_width(384) once available).
             "description" => row![
                 column![
-                    text("Share across devices"),
+                    text::small("Share across devices").medium(),
                     text::muted(
                         "Focus is shared across devices, and turns off when you leave the app.",
                     ),
@@ -150,14 +156,17 @@ impl page::Page for SwitchPage {
                 .width(iced::Fill),
                 switch(self.desc).on_toggle(toggle(F_DESC)),
             ]
-            .spacing(16)
+            .spacing(8)
             .width(384)
             .into(),
 
             // Disabled: no `.on_toggle(...)` call ⇒ widget is disabled.
+            // Disabled label: nova cascades opacity-50 via data-disabled on Field.
+            // text::muted approximates the dimming today; text::label (Phase 3)
+            // + a proper opacity tweak (Phase 4) will land the exact spec.
             "disabled" => row![
                 switch(false),
-                text("Disabled"),
+                text::muted("Disabled").medium(),
             ]
             .spacing(8)
             .into(),
@@ -165,9 +174,15 @@ impl page::Page for SwitchPage {
             // Invalid: destructive border via the `theme::switch::Invalid`
             // variant, matching shadcn's `aria-invalid` styling. Layout
             // mirrors the Description example.
+            // TODO Phase 4: max-width 384 (currently fixed width — Row lacks
+            // max_width(); swap .width(384) to .max_width(384) once available).
+            // Invalid label: nova cascades text-destructive via data-invalid on
+            // Field. text::error (Phase 3) will consolidate this idiom.
             "invalid" => row![
                 column![
-                    text("Accept terms and conditions"),
+                    text::small("Accept terms and conditions")
+                        .medium()
+                        .style(theme::text::Destructive),
                     text::muted("You must accept the terms and conditions to continue."),
                 ]
                 .spacing(2)
@@ -176,7 +191,7 @@ impl page::Page for SwitchPage {
                     .on_toggle(toggle(F_INVALID))
                     .style(theme::switch::Invalid),
             ]
-            .spacing(16)
+            .spacing(8)
             .width(384)
             .into(),
 
