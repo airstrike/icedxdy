@@ -1,10 +1,8 @@
 ```rust
-use icedxdy::widget::{checkbox, column, field, text};
+use icedxdy::widget::{checkbox, field, text};
 
-column![
-    field(checkbox(false))
-        .orientation(field::Orientation::Horizontal)
-        .label(text::muted("Enable notifications")),
-]
-.width(224)
+field(checkbox(false))
+    .orientation(field::Horizontal)
+    .label(text::muted("Enable notifications"))
+    .width(224)
 ```

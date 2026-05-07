@@ -58,6 +58,7 @@
 
 mod animated_card;
 
+use iced_core::Length;
 use iced_widget::Renderer;
 use icedxdy_core::Theme;
 use icedxdy_core::theme::field::Card;
@@ -70,12 +71,20 @@ use animated_card::AnimatedCard;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Orientation {
     /// Label → content → description → error, stacked vertically (default).
+    /// Matches shadcn's default vertical field shape used by Input, Textarea,
+    /// etc. — `<Field><FieldLabel>...</FieldLabel><Input/></Field>`.
     #[default]
     Vertical,
     /// Content on the left, FieldContent column (label / description / error)
-    /// on the right, in a row. Matches shadcn's `orientation="horizontal"`.
+    /// on the right, in a row. Matches shadcn's `orientation="horizontal"`
+    /// — used by Checkbox, Switch, and other compact controls where the
+    /// label sits inline with the control.
     Horizontal,
 }
+
+// Allow callers to reach the variants at module scope: `field::Horizontal`
+// rather than `field::Orientation::Horizontal`.
+pub use Orientation::*;
 
 /// A labeled-input wrapper with optional card chrome and click-anywhere handling.
 ///
@@ -92,6 +101,7 @@ pub struct Field<'a, Message> {
     /// `None` = no card wrapper.
     card: Option<bool>,
     on_press: Option<Message>,
+    width: Option<Length>,
 }
 
 /// Create a [`Field`] wrapping the given input content.
@@ -107,6 +117,7 @@ pub fn field<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Fie
         orientation: Orientation::Vertical,
         card: None,
         on_press: None,
+        width: None,
     }
 }
 
@@ -167,6 +178,14 @@ impl<'a, Message: 'a> Field<'a, Message> {
         self.card = Some(is_active);
         self
     }
+
+    /// Set the field's outer width. Applied to the final rendered element so
+    /// callers don't need to wrap a single Field in a `column![field].width(N)`
+    /// just to constrain its width.
+    pub fn width(mut self, width: impl Into<Length>) -> Self {
+        self.width = Some(width.into());
+        self
+    }
 }
 
 impl<'a, Message: Clone + 'a> Field<'a, Message> {
@@ -220,6 +239,7 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
             orientation,
             card,
             on_press,
+            width,
         } = *self;
 
         // Read toggle_target BEFORE consuming content. Field uses this to wrap
@@ -274,23 +294,7 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
                         iced_core::Alignment::Center
                     };
 
-                    // shadcn `mt-px` on Checkbox in `items-start` mode — a 1px
-                    // top nudge that compensates for the cap-height-vs-bounding-
-                    // box optical offset so the checkbox box aligns to the label
-                    // cap-height rather than the label line-box top.
                     let content_element = content.into_iced();
-                    let content_element: iced_core::Element<'_, Message, Theme, Renderer> =
-                        if has_field_content {
-                            iced_widget::container(content_element)
-                                .padding(iced_core::Padding {
-                                    top: 1.0,
-                                    ..iced_core::Padding::ZERO
-                                })
-                                .into()
-                        } else {
-                            content_element
-                        };
-
                     let mut right = iced_widget::Column::new().spacing(2);
                     if let Some(label) = label {
                         // Wrap label in mouse_area when a toggle target is
@@ -356,9 +360,18 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
         };
 
         // Optionally wrap in a mouse_area for click-anywhere handling.
-        match on_press {
+        let pressed: iced_core::Element<'a, Message, Theme, Renderer> = match on_press {
             Some(message) => iced_widget::mouse_area(carded).on_press(message).into(),
             None => carded,
+        };
+
+        // Optionally apply the outer width via a thin container wrapper.
+        // Cheaper than threading width through every layout branch (Row, Column,
+        // AnimatedCard, mouse_area), and matches the convention of similar
+        // wrapper widgets.
+        match width {
+            Some(w) => iced_widget::container(pressed).width(w).into(),
+            None => pressed,
         }
     }
 }

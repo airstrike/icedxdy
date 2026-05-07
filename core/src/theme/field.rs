@@ -35,18 +35,26 @@ pub fn card(theme: &Theme) -> Style {
     }
 }
 
-/// Active card: 1px `border-primary/30`, `bg-primary/5`, `rounded-lg`.
+/// Active card: primary-tinted border + bg, `rounded-lg`. Dark-mode-aware.
 ///
-/// Matches shadcn's `has-data-checked:border-primary/30 has-data-checked:bg-primary/5`.
+/// Matches shadcn's full FieldLabel-as-card spec from `field.tsx`:
+///   light: `has-data-checked:border-primary/30 has-data-checked:bg-primary/5`
+///   dark:  `dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10`
+///
+/// In dark mode the bg alpha doubles (5% → 10%) for a more visible tint, and
+/// the border alpha drops (30% → 20%) so the chrome doesn't compete with
+/// the bg fill.
 pub fn card_active(theme: &Theme) -> Style {
     use crate::Background;
     let p = theme.palette();
+    let dark = p.background.l < 0.5;
+    let (bg_alpha, border_alpha) = if dark { (0.10, 0.20) } else { (0.05, 0.30) };
     Style {
-        background: Some(Background::Color(p.primary.base.alpha(0.05))),
+        background: Some(Background::Color(p.primary.base.alpha(bg_alpha))),
         border: Border {
             radius: radius::MD.into(),
             width: 1.0,
-            color: p.primary.base.alpha(0.30),
+            color: p.primary.base.alpha(border_alpha),
         },
         ..Style::default()
     }
@@ -112,39 +120,66 @@ mod tests {
         );
     }
 
-    /// Active card: primary-tinted bg and border.
+    /// Active card light mode: primary @ 5% bg, primary @ 30% border.
+    /// Matches shadcn `has-data-checked:bg-primary/5 has-data-checked:border-primary/30`.
     #[test]
-    fn card_active_uses_palette_primary() {
+    fn card_active_light_alphas() {
+        use crate::Background;
+        let theme = Theme::light();
+        let p = theme.palette();
+        let style = card_active(&theme);
+        let ep = p.primary.base;
+        let bc = style.border.color;
+        assert!(
+            (bc.l - ep.l).abs() < 1e-3 && (bc.c - ep.c).abs() < 1e-3,
+            "active card border must share primary hue, got {bc:?}",
+        );
+        assert!(
+            (bc.a - 0.30).abs() < 1e-3,
+            "light-mode border alpha must be 0.30, got {}",
+            bc.a,
+        );
+        let Some(Background::Color(bg)) = style.background else {
+            panic!("expected Background::Color, got {:?}", style.background);
+        };
+        assert!(
+            (bg.l - ep.l).abs() < 1e-3 && (bg.c - ep.c).abs() < 1e-3,
+            "active card bg must share primary hue, got {bg:?}",
+        );
+        assert!(
+            (bg.a - 0.05).abs() < 1e-3,
+            "light-mode bg alpha must be 0.05, got {}",
+            bg.a,
+        );
+    }
+
+    /// Active card dark mode: primary @ 10% bg, primary @ 20% border.
+    /// Matches shadcn `dark:has-data-checked:bg-primary/10 dark:has-data-checked:border-primary/20`.
+    #[test]
+    fn card_active_dark_alphas() {
         use crate::Background;
         let theme = Theme::dark();
         let p = theme.palette();
         let style = card_active(&theme);
-        // Border: primary @ 30%
-        let bc = style.border.color;
         let ep = p.primary.base;
+        let bc = style.border.color;
         assert!(
-            (bc.l - ep.l).abs() < 1e-3 && (bc.c - ep.c).abs() < 1e-3,
-            "active card border must share primary hue. got {bc:?}",
-        );
-        assert!(
-            (bc.a - 0.30).abs() < 1e-3,
-            "active card border alpha must be 0.30, got {}",
+            (bc.a - 0.20).abs() < 1e-3,
+            "dark-mode border alpha must be 0.20, got {}",
             bc.a,
         );
-        // Background: primary @ 5%
-        match style.background {
-            Some(Background::Color(bg)) => {
-                assert!(
-                    (bg.l - ep.l).abs() < 1e-3 && (bg.c - ep.c).abs() < 1e-3,
-                    "active card bg must share primary hue. got {bg:?}",
-                );
-                assert!(
-                    (bg.a - 0.05).abs() < 1e-3,
-                    "active card bg alpha must be 0.05, got {}",
-                    bg.a,
-                );
-            }
-            other => panic!("expected Background::Color for active card, got {other:?}"),
-        }
+        let Some(Background::Color(bg)) = style.background else {
+            panic!("expected Background::Color, got {:?}", style.background);
+        };
+        assert!(
+            (bg.a - 0.10).abs() < 1e-3,
+            "dark-mode bg alpha must be 0.10, got {}",
+            bg.a,
+        );
+        // Sanity: hue is still primary in dark mode.
+        assert!(
+            (bg.l - ep.l).abs() < 1e-3 && (bg.c - ep.c).abs() < 1e-3,
+            "dark-mode bg must share primary hue, got {bg:?}",
+        );
     }
 }

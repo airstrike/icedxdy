@@ -2,9 +2,9 @@
 use icedxdy::rich_text;
 use icedxdy::theme::tweak::Token;
 use icedxdy::widget::rich_text::span;
-use icedxdy::widget::{column, field, input, text, Component};
+use icedxdy::widget::{field, input, text, Component};
 
-column![field(
+field(
     input("This field is required", &self.value)
         .on_input(Message::Changed)
         .width(Fill),
@@ -13,6 +13,6 @@ column![field(
     span("Required Field ").size(text::size::SM).medium(),
     span("*").size(text::size::SM).color(Token::Destructive),
 ]))
-.description("This field must be filled out."),]
+.description("This field must be filled out.")
 .width(320)
 ```
