@@ -1,3 +1,4 @@
+use iced::Alignment::Start;
 use iced::Task;
 
 use icedxdy::Theme;
@@ -8,19 +9,40 @@ use crate::Message;
 use crate::page;
 
 // Intentional skips per CLAUDE.md: checkbox-rtl (RTL), checkbox-group
-// (requires Field — defer to Phase 4), checkbox-table (out of scope).
+// (requires FieldGroup with multiple horizontally-labelled fields — deferred),
+// checkbox-table (out of scope).
 pub static META: page::Meta = page::Meta {
     title: "Checkbox",
     description: "A control that allows the user to toggle between checked and not checked.",
 };
 
 pub static BLOCKS: &[page::Block] = &[
+    // Hero demo
     page::Block::Example {
         id: "demo",
         title: "",
         description: None,
         snippet: "examples/browser/snippets/checkbox-demo.md",
     },
+    // Preamble: Checked State — interactive demo showing checked visual
+    page::Block::Example {
+        id: "checked-state",
+        title: "Checked State",
+        description: Some(
+            "When checked, the checkbox fills with the primary color and the check icon appears.",
+        ),
+        snippet: "examples/browser/snippets/checkbox-checked-state.md",
+    },
+    // Preamble: Invalid State — interactive demo showing destructive ring
+    page::Block::Example {
+        id: "invalid-state",
+        title: "Invalid State",
+        description: Some(
+            "When invalid, the checkbox border changes to the destructive color to surface a validation error.",
+        ),
+        snippet: "examples/browser/snippets/checkbox-invalid-state.md",
+    },
+    // Examples group
     page::Block::Group {
         title: "Examples",
         children: &[
@@ -44,14 +66,6 @@ pub static BLOCKS: &[page::Block] = &[
                 description: Some("A disabled checkbox cannot be toggled."),
                 snippet: "examples/browser/snippets/checkbox-disabled.md",
             },
-            page::Block::Example {
-                id: "invalid",
-                title: "Invalid",
-                description: Some(
-                    "Use the invalid variant to surface validation errors with a destructive border.",
-                ),
-                snippet: "examples/browser/snippets/checkbox-invalid.md",
-            },
         ],
     },
 ];
@@ -63,7 +77,8 @@ const F_DEMO_TERMS_1: usize = 1;
 const F_DEMO_TERMS_2: usize = 2;
 const F_DEMO_NOTIF_2: usize = 3;
 const F_DESC: usize = 4;
-const F_INVALID: usize = 5;
+const F_CHECKED_STATE: usize = 5;
+const F_INVALID_STATE: usize = 6;
 
 pub struct CheckboxPage {
     state: page::State,
@@ -72,7 +87,8 @@ pub struct CheckboxPage {
     demo_terms_2: bool,
     demo_notif_2: bool,
     desc: bool,
-    invalid: bool,
+    checked_state: bool,
+    invalid_state: bool,
 }
 
 impl CheckboxPage {
@@ -86,7 +102,9 @@ impl CheckboxPage {
             demo_notif_2: false,
             // Description ships pre-checked (`defaultChecked` in shadcn).
             desc: true,
-            invalid: false,
+            // Checked-state preamble ships pre-checked to show the filled state.
+            checked_state: true,
+            invalid_state: false,
         })
     }
 }
@@ -123,7 +141,8 @@ impl page::Page for CheckboxPage {
                 F_DEMO_TERMS_2 => self.demo_terms_2 = v,
                 F_DEMO_NOTIF_2 => self.demo_notif_2 = v,
                 F_DESC => self.desc = v,
-                F_INVALID => self.invalid = v,
+                F_CHECKED_STATE => self.checked_state = v,
+                F_INVALID_STATE => self.invalid_state = v,
                 _ => {}
             }
         }
@@ -163,9 +182,13 @@ impl page::Page for CheckboxPage {
                         ]
                         .spacing(2),
                     ]
-                    .spacing(8),
-                    // Row 3: disabled — no `.on_toggle(...)`. FieldLabel inherits
-                    // opacity-50 via `data-disabled`; hand-rolled with `text::muted`.
+                    .spacing(8)
+                    .align_y(Start),
+                    // Row 3: disabled — no `.on_toggle(...)`. The checkbox
+                    // widget resolves to `Status::Disabled` which applies
+                    // `scale_alpha(0.5)` to the box. Label rendered muted to
+                    // approximate shadcn's `data-disabled:opacity-50` cascade
+                    // on the FieldLabel (color shift, not a true alpha overlay).
                     row![
                         checkbox(false),
                         text::muted("Enable notifications"),
@@ -193,6 +216,30 @@ impl page::Page for CheckboxPage {
                 .into()
             }
 
+            // Checked State preamble: interactive checkbox pre-checked to
+            // show the filled primary state. Width 224 matches `w-56`.
+            "checked-state" => row![
+                checkbox(self.checked_state).on_toggle(toggle(F_CHECKED_STATE)),
+                text::label("Accept terms and conditions"),
+            ]
+            .spacing(8)
+            .width(224)
+            .into(),
+
+            // Invalid State preamble: destructive border via `theme::checkbox::Invalid`.
+            // Label styled with Destructive to mirror `data-invalid:text-destructive`
+            // on shadcn's FieldLabel.
+            "invalid-state" => row![
+                checkbox(self.invalid_state)
+                    .on_toggle(toggle(F_INVALID_STATE))
+                    .style(theme::checkbox::Invalid),
+                text::label("Accept terms and conditions")
+                    .style(theme::text::Destructive),
+            ]
+            .spacing(8)
+            .width(224)
+            .into(),
+
             // Basic: single checkbox + label. Width 224 matches shadcn's
             // `w-56` constraint on the parent FieldGroup.
             "basic" => row![
@@ -204,6 +251,9 @@ impl page::Page for CheckboxPage {
             .into(),
 
             // Description: checked by default, label + muted description.
+            // `align_y(Start)` matches shadcn's
+            // `has-[>[data-slot=field-content]]:items-start` + `mt-px` on
+            // the checkbox — the box top-aligns with the label line.
             "description" => row![
                 checkbox(self.desc).on_toggle(toggle(F_DESC)),
                 column![
@@ -215,32 +265,19 @@ impl page::Page for CheckboxPage {
                 .spacing(2),
             ]
             .spacing(8)
+            .align_y(Start)
             .width(288)
             .into(),
 
-            // Disabled: no `.on_toggle(...)` call ⇒ widget is disabled.
-            // FieldLabel inherits opacity-50 via `data-disabled`; hand-rolled
-            // with `text::muted`.
-            // TODO Phase 4: replace with proper opacity-50 cascade once Field
-            // propagates disabled state to label.
+            // Disabled: no `.on_toggle(...)` call ⇒ iced resolves to
+            // `Status::Disabled` which applies `scale_alpha(0.5)` on the
+            // checkbox box. The label uses `text::muted` which approximates
+            // shadcn's `data-disabled:opacity-50` cascade via color shift.
+            // Gap: a true 50% alpha overlay would require per-widget opacity
+            // support not yet available in our Container catalog.
             "disabled" => row![
                 checkbox(false),
                 text::muted("Enable notifications"),
-            ]
-            .spacing(8)
-            .width(224)
-            .into(),
-
-            // Invalid: destructive border via the `theme::checkbox::Invalid`
-            // variant, mirroring shadcn's `aria-invalid` styling.
-            // FieldLabel inherits `text-destructive` via `data-invalid`;
-            // hand-rolled with `.style(theme::text::Destructive)`.
-            "invalid" => row![
-                checkbox(self.invalid)
-                    .on_toggle(toggle(F_INVALID))
-                    .style(theme::checkbox::Invalid),
-                text::label("Accept terms and conditions")
-                    .style(theme::text::Destructive),
             ]
             .spacing(8)
             .width(224)
