@@ -9,6 +9,7 @@ pub mod button;
 pub mod checkbox;
 pub mod combo_box;
 pub mod container;
+pub mod field;
 pub mod float;
 #[cfg(feature = "markdown")]
 pub mod markdown;

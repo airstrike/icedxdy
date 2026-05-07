@@ -2,18 +2,13 @@ use iced::Task;
 
 use icedxdy::Theme;
 use icedxdy::theme;
-use icedxdy::widget::{checkbox, column, row, text};
+use icedxdy::widget::{checkbox, column, field, row, text};
 
 use crate::Message;
 use crate::page;
 
 // Intentional skips per CLAUDE.md: checkbox-rtl (RTL), checkbox-group
 // (requires Field — defer to Phase 4), checkbox-table (out of scope).
-//
-// TODO Phase 4: htmlFor label-click-toggle association (across all 5 examples)
-// requires Field's FieldLabel-as-wrapping-container. Deferred — iced has no
-// sibling-selector analogue; Phase 4 will use FieldLabel wrapping the entire
-// horizontal Field to get click-anywhere-to-toggle.
 pub static META: page::Meta = page::Meta {
     title: "Checkbox",
     description: "A control that allows the user to toggle between checked and not checked.",
@@ -148,50 +143,55 @@ impl page::Page for CheckboxPage {
         let preview: iced::Element<'_, Message, Theme> = match id {
             // Demo (hero): 4 stacked field-shaped rows. Verbatim from
             // `.nova/apps/v4/examples/radix/checkbox-demo.tsx`.
-            //
-            // TODO Phase 4: row 4 wraps the entire Field in FieldLabel
-            // (bordered + padded card with primary-tint when checked,
-            // click-anywhere-to-toggle). Deferred — needs FieldLabel-as-card.
-            "demo" => column![
-                row![
-                    checkbox(self.demo_terms_1).on_toggle(toggle(F_DEMO_TERMS_1)),
-                    text::label("Accept terms and conditions"),
-                ]
-                .spacing(8),
-                row![
-                    checkbox(self.demo_terms_2).on_toggle(toggle(F_DEMO_TERMS_2)),
-                    column![
+            "demo" => {
+                let notif_2 = self.demo_notif_2;
+                // Pre-compute the on_press message (set to opposite state) so
+                // we can pass it by value, while the on_toggle closure is built
+                // fresh for the checkbox handler.
+                let notif_on_press = Message::Page(pi, page::Message::BoolChanged(F_DEMO_NOTIF_2, !notif_2));
+                column![
+                    row![
+                        checkbox(self.demo_terms_1).on_toggle(toggle(F_DEMO_TERMS_1)),
                         text::label("Accept terms and conditions"),
-                        text::muted("By clicking this checkbox, you agree to the terms."),
                     ]
-                    .spacing(2),
-                ]
-                .spacing(8),
-                // Row 3: disabled — no `.on_toggle(...)`. FieldLabel inherits
-                // opacity-50 via `data-disabled`; hand-rolled with `text::muted`.
-                // TODO Phase 4: replace with proper opacity-50 cascade once Field
-                // propagates disabled state to label.
-                row![
-                    checkbox(false),
-                    text::muted("Enable notifications"),
-                ]
-                .spacing(8),
-                row![
-                    checkbox(self.demo_notif_2).on_toggle(toggle(F_DEMO_NOTIF_2)),
-                    column![
-                        text::label("Enable notifications"),
-                        text::muted("You can enable or disable notifications at any time."),
+                    .spacing(8),
+                    row![
+                        checkbox(self.demo_terms_2).on_toggle(toggle(F_DEMO_TERMS_2)),
+                        column![
+                            text::label("Accept terms and conditions"),
+                            text::muted("By clicking this checkbox, you agree to the terms."),
+                        ]
+                        .spacing(2),
                     ]
-                    .spacing(2),
+                    .spacing(8),
+                    // Row 3: disabled — no `.on_toggle(...)`. FieldLabel inherits
+                    // opacity-50 via `data-disabled`; hand-rolled with `text::muted`.
+                    row![
+                        checkbox(false),
+                        text::muted("Enable notifications"),
+                    ]
+                    .spacing(8),
+                    // Row 4: FieldLabel-as-card — bordered + padded card with
+                    // primary tint when checked. Matches shadcn checkbox-demo.tsx
+                    // lines 40-50 (`<FieldLabel><Field orientation="horizontal">`).
+                    // `.card(notif_2)` drives active/inactive tint. `.on_press`
+                    // fires the toggle for clicks outside the checkbox area.
+                    field::field(
+                        checkbox(notif_2).on_toggle(toggle(F_DEMO_NOTIF_2)),
+                    )
+                    .orientation(field::Orientation::Horizontal)
+                    .label("Enable notifications")
+                    .description("You can enable or disable notifications at any time.")
+                    .card(notif_2)
+                    .on_press(notif_on_press),
                 ]
-                .spacing(8),
-            ]
-            .spacing(20)
-            // TODO Phase 4: nova uses `max-w-sm` (max-width 384px, not fixed).
-            // iced Column lacks max_width; using fixed 384 as the nearest
-            // approximation until our Column gains a max_width builder.
-            .width(384)
-            .into(),
+                .spacing(20)
+                // nova uses `max-w-sm` (max-width 384px, not fixed).
+                // iced Column lacks max_width; using fixed 384 as the nearest
+                // approximation until our Column gains a max_width builder.
+                .width(384)
+                .into()
+            }
 
             // Basic: single checkbox + label. Width 224 matches shadcn's
             // `w-56` constraint on the parent FieldGroup.

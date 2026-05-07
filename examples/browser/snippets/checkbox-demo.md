@@ -1,5 +1,5 @@
 ```rust
-use icedxdy::widget::{checkbox, column, row, text};
+use icedxdy::widget::{checkbox, column, field, row, text};
 
 column![
     row![
@@ -22,15 +22,12 @@ column![
         text::muted("Enable notifications"),
     ]
     .spacing(8),
-    row![
-        checkbox(self.notif_2).on_toggle(Message::ToggleNotif),
-        column![
-            text::label("Enable notifications"),
-            text::muted("You can enable or disable notifications at any time."),
-        ]
-        .spacing(2),
-    ]
-    .spacing(8),
+    field::field(checkbox(self.notif_2).on_toggle(Message::ToggleNotif))
+        .orientation(field::Orientation::Horizontal)
+        .label("Enable notifications")
+        .description("You can enable or disable notifications at any time.")
+        .card(self.notif_2)
+        .on_press(Message::ToggleNotif(!self.notif_2)),
 ]
 .spacing(20)
 .width(384)
