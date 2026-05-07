@@ -1,6 +1,7 @@
 //! Checkboxes can be used to let users make binary (or tri-state) choices.
 //!
-//! This is a sweetened version of `iced`'s [`checkbox`] with two additions:
+//! This is a sweetened version of `iced`'s [`checkbox`], vendored from
+//! sweeten with two additions on top of sweeten's animated mark fade:
 //!
 //! - **Indeterminate state** via the [`State`] domain enum. Stock iced's
 //!   `is_checked: bool` lacks the `data-state="indeterminate"` flavor that
@@ -9,23 +10,25 @@
 //! - **Focus ring painter** in `draw()` — when `Style::ring` is `Some`, a
 //!   colored halo is rendered behind the box bounds. Stock iced's
 //!   `checkbox::Style` has no ring field; we add it here so our nova-correct
-//!   focus-visible halo renders.
+//!   focus-visible halo (`focus-visible:ring-3 ring-ring/50`) renders.
 //!
 //! [`checkbox`]: https://docs.iced.rs/iced/widget/checkbox/
+use crate::animation::cubic_bezier;
 use crate::core::alignment;
+use crate::core::animation::Easing;
 use crate::core::font;
 use crate::core::layout;
 use crate::core::mouse;
 use crate::core::renderer;
 use crate::core::text;
-use crate::core::theme::palette;
+use crate::core::time::Instant;
 use crate::core::touch;
 use crate::core::widget;
 use crate::core::widget::tree::{self, Tree};
 use crate::core::window;
 use crate::core::{
-    Background, Border, Color, Element, Em, Event, Layout, Length, Pixels, Rectangle, Shell, Size,
-    Theme, Widget,
+    Animation, Background, Border, Color, Element, Em, Event, Layout, Length, Pixels, Rectangle,
+    Shell, Size, Theme, Widget,
 };
 
 // Iced's widget crate re-exports `core::widget::text::*` at `crate::text`. We
@@ -33,14 +36,14 @@ use crate::core::{
 // and `use iced_widget::text` collides with `crate::core::text` already in
 // scope above). A private re-exporting module gives the vendored draw + layout
 // calls shallow `text_helpers::*` paths that satisfy the pre-commit deep-path
-// / aliased-import checks.
+// / aliased-import checks. Mirrors `widget/src/switch/widget.rs`.
 mod text_helpers {
     pub use iced_widget::text::{Format, State, Style, draw, layout};
 }
 
 /// A box that can be checked, unchecked, or indeterminate.
 ///
-/// **Deviation from upstream iced**: `state` is a [`State`] domain enum
+/// **Deviation from upstream sweeten/iced**: `state` is a [`State`] domain enum
 /// (`Checked` / `Unchecked` / `Indeterminate`) instead of a `bool`. The
 /// `From<bool> for State` impl preserves the bool-shaped call site:
 /// `Checkbox::new(self.is_checked)` keeps working.
@@ -163,7 +166,10 @@ where
     }
 
     /// Sets the text [`text::LineHeight`] of the [`Checkbox`].
-    pub fn line_height(mut self, line_height: impl Into<text::LineHeight>) -> Self {
+    pub fn line_height(
+        mut self,
+        line_height: impl Into<text::LineHeight>,
+    ) -> Self {
         self.line_height = line_height.into();
         self
     }
@@ -223,16 +229,39 @@ where
     }
 
     /// Sets the style class of the [`Checkbox`].
-    /// **Deviation from upstream iced**: stock iced gates `class` behind the
-    /// `advanced` feature flag. We always expose it because our `.style(...)`
-    /// bridge in `widget/src/checkbox.rs` needs to land a pre-baked
-    /// `widget::StyleFn` (the closure that runs `from_core` on the core
-    /// StyleFn's output). Without `class`, that bridge has nowhere to land.
+    /// **Deviation from upstream sweeten**: stock sweeten gates `class` behind
+    /// the `advanced` feature flag. We always expose it because our
+    /// `.style(...)` bridge in `widget/src/checkbox.rs` needs to land a
+    /// pre-baked `widget::StyleFn` (the closure that runs `from_core` on the
+    /// core StyleFn's output). Without `class`, that bridge has nowhere to
+    /// land. Mirrors the same deviation in `widget/src/switch/widget.rs`.
     #[must_use]
     pub fn class(mut self, class: impl Into<Theme::Class<'a>>) -> Self {
         self.class = class.into();
         self
     }
+}
+
+/// Internal state for the animated [`Checkbox`].
+///
+/// **Deviation from upstream sweeten**: sweeten names this `State<P>` and
+/// uses `is_checked: bool` as the public driver. Our public driver is the
+/// [`State`] domain enum (Checked / Unchecked / Indeterminate), so the
+/// internal widget-state struct is renamed to [`Internal<P>`] to avoid the
+/// name collision. The animation tracks `state.is_marked()` (the boolean
+/// projection that maps Indeterminate to "marked = true"), so the bg/border
+/// fade fires identically when toggling between any two states.
+struct Internal<P: text::Paragraph> {
+    paragraph: text_helpers::State<P>,
+    animation: Animation<bool>,
+    now: Option<Instant>,
+    last_is_marked: bool,
+    /// Whether the most recent left-button / finger press landed inside
+    /// the checkbox. Toggling fires on release, gated by this flag plus
+    /// a fresh "still inside on release" bounds check — pressing
+    /// outside and dragging in (or pressing in and dragging out before
+    /// release) must not toggle.
+    is_pressed: bool,
 }
 
 impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer>
@@ -242,11 +271,21 @@ where
     Theme: Catalog,
 {
     fn tag(&self) -> tree::Tag {
-        tree::Tag::of::<text_helpers::State<Renderer::Paragraph>>()
+        tree::Tag::of::<Internal<Renderer::Paragraph>>()
     }
 
     fn state(&self) -> tree::State {
-        tree::State::new(text_helpers::State::<Renderer::Paragraph>::default())
+        tree::State::new(Internal::<Renderer::Paragraph> {
+            paragraph: text_helpers::State::default(),
+            animation: Animation::new(self.state.is_marked())
+                .very_quick()
+                // cubic-bezier(0, 0, 0.2, 1) — Tailwind v4's
+                // `--ease-out`. Same curve the switch (toggler) uses.
+                .easing(Easing::Custom(|t| cubic_bezier(0.0, 0.0, 0.2, 1.0, t))),
+            now: None,
+            last_is_marked: self.state.is_marked(),
+            is_pressed: false,
+        })
     }
 
     fn size(&self) -> Size<Length> {
@@ -272,12 +311,10 @@ where
             |_| layout::Node::new(Size::new(self.size, self.size)),
             |limits| {
                 if let Some(label) = self.label.as_deref() {
-                    let state = tree
-                        .state
-                        .downcast_mut::<text_helpers::State<Renderer::Paragraph>>();
+                    let state = tree.state.downcast_mut::<Internal<Renderer::Paragraph>>();
 
                     text_helpers::layout(
-                        state,
+                        &mut state.paragraph,
                         renderer,
                         limits,
                         label,
@@ -307,7 +344,7 @@ where
 
     fn update(
         &mut self,
-        _tree: &mut Tree,
+        tree: &mut Tree,
         event: &Event,
         layout: Layout<'_>,
         cursor: mouse::Cursor,
@@ -315,12 +352,57 @@ where
         shell: &mut Shell<'_, Message>,
         _viewport: &Rectangle,
     ) {
+        let internal = tree.state.downcast_mut::<Internal<Renderer::Paragraph>>();
+
+        // Animation bookkeeping — runs regardless of whether the widget is
+        // enabled, so that in-flight animations complete even if the
+        // checkbox becomes disabled.
+        if let Event::Window(window::Event::RedrawRequested(now)) = event {
+            internal.now = Some(*now);
+
+            if internal.animation.is_animating(*now) {
+                shell.request_redraw();
+            }
+        }
+
+        // Animation tracks `is_marked()` — Checked and Indeterminate are both
+        // "marked" surfaces, Unchecked is the empty surface. This means
+        // Indeterminate ↔ Unchecked toggles still cross-fade bg/border, but
+        // Indeterminate ↔ Checked is a no-op transition (the surface stays
+        // marked; only the inner glyph changes — which we snap, not animate,
+        // matching shadcn's `transition-none` on the indicator).
+        let is_marked = self.state.is_marked();
+        if is_marked != internal.last_is_marked {
+            internal.last_is_marked = is_marked;
+
+            if let Some(now) = internal.now {
+                internal.animation.go_mut(is_marked, now);
+                shell.request_redraw();
+            }
+        }
+
+        // Toggle on release, but only when *both* press and release
+        // happened inside the bounds — pressing outside and dragging
+        // in, or pressing inside and dragging out before release, must
+        // not toggle. We track press-inside in `internal.is_pressed` and
+        // gate the publish on a fresh "still inside" bounds check.
         match event {
             Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-            | Event::Touch(touch::Event::FingerPressed { .. }) => {
-                let mouse_over = cursor.is_over(layout.bounds());
+            | Event::Touch(touch::Event::FingerPressed { .. })
+                if self.on_toggle.is_some() && cursor.is_over(layout.bounds()) =>
+            {
+                internal.is_pressed = true;
+                shell.capture_event();
+            }
+            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))
+            | Event::Touch(touch::Event::FingerLifted { .. })
+            | Event::Touch(touch::Event::FingerLost { .. }) => {
+                let was_pressed = std::mem::replace(&mut internal.is_pressed, false);
 
-                if mouse_over && let Some(on_toggle) = &self.on_toggle {
+                if was_pressed
+                    && cursor.is_over(layout.bounds())
+                    && let Some(on_toggle) = &self.on_toggle
+                {
                     // Indeterminate clicks resolve to "checked" (matches the
                     // shadcn / radix convention: clicking a tri-state checkbox
                     // commits to the on state). True/False simply flip.
@@ -341,7 +423,7 @@ where
             // For status purposes, Indeterminate paints with the "checked"
             // surface (the icon shows; nova styles `data-state=indeterminate`
             // and `data-state=checked` identically).
-            let is_checked = self.state.is_marked();
+            let is_checked = is_marked;
 
             if is_disabled {
                 Status::Disabled { is_checked }
@@ -387,22 +469,77 @@ where
         _cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
+        let internal = tree.state.downcast_ref::<Internal<Renderer::Paragraph>>();
+
         let mut children = layout.children();
 
-        let style = theme.style(
-            &self.class,
-            self.last_status.unwrap_or(Status::Disabled {
-                is_checked: self.state.is_marked(),
-            }),
-        );
+        let current_status = self.last_status.unwrap_or(Status::Disabled {
+            is_checked: self.state.is_marked(),
+        });
+
+        // While the checkbox is animating, interpolate ONLY background and
+        // border color so they fade in sync. Sweeten's checkbox also fades
+        // the icon color and scales the glyph; we snap the indicator
+        // (`transition-none` on shadcn's `<Checkbox.Indicator>`) — the
+        // shadcn-faithful behavior is bg/border fades with `transition-colors`,
+        // indicator appears/disappears instantly when state flips.
+        let style = match internal.now {
+            Some(now) if internal.animation.is_animating(now) => {
+                let off = theme.style(&self.class, current_status.with_checked(false));
+                let on = theme.style(&self.class, current_status.with_checked(true));
+
+                // Only `Background::Color` is interpolable here; fall back
+                // to transparent for gradients so the draw code stays
+                // simple.
+                let bg_color = |bg: Background| match bg {
+                    Background::Color(c) => c,
+                    _ => Color::TRANSPARENT,
+                };
+
+                let background = Background::Color(internal.animation.interpolate(
+                    bg_color(off.background),
+                    bg_color(on.background),
+                    now,
+                ));
+
+                // Snap border width and radius — interpolating them looks
+                // jittery — but interpolate the color along with the fill.
+                let target_border = if internal.animation.value() {
+                    on.border
+                } else {
+                    off.border
+                };
+                let border = Border {
+                    color: internal.animation.interpolate(
+                        off.border.color,
+                        on.border.color,
+                        now,
+                    ),
+                    ..target_border
+                };
+
+                // Snap to the on/off target for everything not interpolated
+                // (icon_color, ring, text_color). `transition-none` on the
+                // indicator means the icon flips identity at the moment the
+                // animation crosses the midpoint of `is_marked`.
+                let target = if internal.animation.value() { on } else { off };
+                Style {
+                    background,
+                    border,
+                    ..target
+                }
+            }
+            _ => theme.style(&self.class, current_status),
+        };
 
         {
             let layout = children.next().unwrap();
             let bounds = layout.bounds();
 
             // Ring: paint a halo *outside* the box bounds, behind the main
-            // fill, when `style.ring` is `Some`. Mirrors the text_input
-            // painter (see `widget/src/text_input/widget.rs` lines 503-516).
+            // fill, when `style.ring` is `Some`. Mirrors the text_input + switch
+            // painters (see `widget/src/text_input/widget.rs` lines 503-516,
+            // `widget/src/switch/widget.rs` ring block in `draw`).
             // `border.width = ring.width` paints inward from the expanded
             // bounds, so the visible halo wraps around the box.
             if let Some(ring) = style.ring {
@@ -504,20 +641,12 @@ where
 
         {
             let label_layout = children.next().unwrap();
-            let state: &text_helpers::State<Renderer::Paragraph> = tree.state.downcast_ref();
 
-            // **Deviation from upstream iced**: stock iced says
-            // `crate::text::draw` / `crate::text::Style` because its widget
-            // crate re-exports `core::widget::text::*` at `crate::text`. Our
-            // `crate::text` is a local typography module; we route through
-            // `iced_widget::text::{draw, Style}` (which DOES re-export those)
-            // via `use` imports below to keep call-site call paths shallow.
-            // Functionally identical.
             text_helpers::draw(
                 renderer,
                 defaults,
                 label_layout.bounds(),
-                state.raw(),
+                internal.paragraph.raw(),
                 text_helpers::Style {
                     color: style.text_color,
                 },
@@ -570,7 +699,7 @@ pub struct Icon<Font> {
 
 /// The check / mark state of a [`Checkbox`].
 ///
-/// **Deviation from upstream iced**: stock iced represents the check as a
+/// **Deviation from upstream sweeten/iced**: stock represents the check as a
 /// `bool`; we use a domain enum so `Indeterminate` (matching shadcn /
 /// radix's `data-state="indeterminate"`) is a first-class state. The
 /// `From<bool> for State` impl preserves the bool-shaped call site:
@@ -602,19 +731,34 @@ impl From<bool> for State {
 }
 
 /// The possible status of a [`Checkbox`].
-/// **Deviation from upstream iced**: `Status` is re-exported from
+///
+/// **Deviation from upstream sweeten/iced**: `Status` is re-exported from
 /// `icedxdy_core` so the whole crate (theme + widget + wrapper) speaks one
 /// canonical type. Variants match upstream 1:1 so the rest of this file's
 /// pattern matches keep working.
 pub use icedxdy_core::theme::checkbox::Status;
 
+trait StatusExt {
+    fn with_checked(self, is_checked: bool) -> Self;
+}
+
+impl StatusExt for Status {
+    fn with_checked(self, is_checked: bool) -> Self {
+        match self {
+            Status::Active { .. } => Status::Active { is_checked },
+            Status::Hovered { .. } => Status::Hovered { is_checked },
+            Status::Disabled { .. } => Status::Disabled { is_checked },
+        }
+    }
+}
+
 /// A focus ring rendered around the checkbox — a solid colored halo of
 /// `width` pixels painted behind the main fill. Equivalent to CSS
 /// `box-shadow: 0 0 0 {width}px {color}` (Tailwind `ring-*`).
 ///
-/// **Deviation from upstream iced**: this widget renders a focus ring in
-/// `draw()` when `Style::ring` is `Some`. Iced's stock `checkbox::Style` has
-/// no ring field; we add it here so our nova-correct focus halo
+/// **Deviation from upstream sweeten/iced**: this widget renders a focus ring
+/// in `draw()` when `Style::ring` is `Some`. Stock `checkbox::Style` has no
+/// ring field; we add it here so our nova-correct focus-visible halo
 /// (`focus-visible:ring-3 ring-ring/50`) renders.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ring {
@@ -656,160 +800,6 @@ pub trait Catalog: Sized {
 /// This is just a boxed closure: `Fn(&Theme, Status) -> Style`.
 pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 
-impl Catalog for Theme {
-    type Class<'a> = StyleFn<'a, Self>;
-
-    fn default<'a>() -> Self::Class<'a> {
-        Box::new(primary)
-    }
-
-    fn style(&self, class: &Self::Class<'_>, status: Status) -> Style {
-        class(self, status)
-    }
-}
-
-/// A primary checkbox; denoting a main toggle.
-pub fn primary(theme: &Theme, status: Status) -> Style {
-    let palette = theme.palette();
-
-    match status {
-        Status::Active { is_checked } => styled(
-            palette.background.strong.color,
-            palette.background.base,
-            palette.primary.base.text,
-            palette.primary.base,
-            is_checked,
-        ),
-        Status::Hovered { is_checked } => styled(
-            palette.background.strong.color,
-            palette.background.weak,
-            palette.primary.base.text,
-            palette.primary.strong,
-            is_checked,
-        ),
-        Status::Disabled { is_checked } => styled(
-            palette.background.weak.color,
-            palette.background.weaker,
-            palette.primary.base.text,
-            palette.background.strong,
-            is_checked,
-        ),
-    }
-}
-
-/// A secondary checkbox; denoting a complementary toggle.
-pub fn secondary(theme: &Theme, status: Status) -> Style {
-    let palette = theme.palette();
-
-    match status {
-        Status::Active { is_checked } => styled(
-            palette.background.strong.color,
-            palette.background.base,
-            palette.background.base.text,
-            palette.background.strong,
-            is_checked,
-        ),
-        Status::Hovered { is_checked } => styled(
-            palette.background.strong.color,
-            palette.background.weak,
-            palette.background.base.text,
-            palette.background.strong,
-            is_checked,
-        ),
-        Status::Disabled { is_checked } => styled(
-            palette.background.weak.color,
-            palette.background.weak,
-            palette.background.base.text,
-            palette.background.weak,
-            is_checked,
-        ),
-    }
-}
-
-/// A success checkbox; denoting a positive toggle.
-pub fn success(theme: &Theme, status: Status) -> Style {
-    let palette = theme.palette();
-
-    match status {
-        Status::Active { is_checked } => styled(
-            palette.background.weak.color,
-            palette.background.base,
-            palette.success.base.text,
-            palette.success.base,
-            is_checked,
-        ),
-        Status::Hovered { is_checked } => styled(
-            palette.background.strong.color,
-            palette.background.weak,
-            palette.success.base.text,
-            palette.success.strong,
-            is_checked,
-        ),
-        Status::Disabled { is_checked } => styled(
-            palette.background.weak.color,
-            palette.background.weak,
-            palette.success.base.text,
-            palette.success.weak,
-            is_checked,
-        ),
-    }
-}
-
-/// A danger checkbox; denoting a negative toggle.
-pub fn danger(theme: &Theme, status: Status) -> Style {
-    let palette = theme.palette();
-
-    match status {
-        Status::Active { is_checked } => styled(
-            palette.background.strong.color,
-            palette.background.base,
-            palette.danger.base.text,
-            palette.danger.base,
-            is_checked,
-        ),
-        Status::Hovered { is_checked } => styled(
-            palette.background.strong.color,
-            palette.background.weak,
-            palette.danger.base.text,
-            palette.danger.strong,
-            is_checked,
-        ),
-        Status::Disabled { is_checked } => styled(
-            palette.background.weak.color,
-            palette.background.weak,
-            palette.danger.base.text,
-            palette.danger.weak,
-            is_checked,
-        ),
-    }
-}
-
-fn styled(
-    border_color: Color,
-    base: palette::Pair,
-    icon_color: Color,
-    accent: palette::Pair,
-    is_checked: bool,
-) -> Style {
-    let (background, border) = if is_checked {
-        (accent, accent.color)
-    } else {
-        (base, border_color)
-    };
-
-    Style {
-        background: Background::Color(background.color),
-        icon_color,
-        border: Border {
-            radius: 2.0.into(),
-            width: 1.0,
-            color: border,
-        },
-        text_color: None,
-        ring: None,
-    }
-}
-
 /// Convert from iced's stock `checkbox::Style` into the vendored widget's
 /// `Style`. Lossless in this direction (iced has no `ring` field, so we set
 /// `ring: None`). Used by `Catalog for iced_widget::Theme` to satisfy callers
@@ -825,3 +815,33 @@ impl From<iced_widget::checkbox::Style> for Style {
         }
     }
 }
+
+/// Stock-iced fallback Catalog impl — for callers who pick
+/// `iced_core::Theme` (== `iced_widget::Theme`) instead of
+/// `icedxdy_core::Theme`. Routes through iced's stock checkbox default and
+/// lifts the result through `From<iced_widget::checkbox::Style> for Style`.
+/// Ring stays `None`.
+impl Catalog for Theme {
+    type Class<'a> = StyleFn<'a, Self>;
+
+    fn default<'a>() -> Self::Class<'a> {
+        Box::new(default)
+    }
+
+    fn style(&self, class: &Self::Class<'_>, status: Status) -> Style {
+        class(self, status)
+    }
+}
+
+/// The default style of a stock-iced themed checkbox. Lifts through iced's
+/// own default checkbox resolver and converts to our `Style`.
+pub fn default(theme: &Theme, status: Status) -> Style {
+    let iced: iced_widget::checkbox::Style =
+        <Theme as iced_widget::checkbox::Catalog>::style(
+            theme,
+            &<Theme as iced_widget::checkbox::Catalog>::default(),
+            status,
+        );
+    iced.into()
+}
+
