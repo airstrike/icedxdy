@@ -9,6 +9,11 @@ use crate::page;
 
 // Intentional skips per CLAUDE.md: checkbox-rtl (RTL), checkbox-group
 // (requires Field — defer to Phase 4), checkbox-table (out of scope).
+//
+// TODO Phase 4: htmlFor label-click-toggle association (across all 5 examples)
+// requires Field's FieldLabel-as-wrapping-container. Deferred — iced has no
+// sibling-selector analogue; Phase 4 will use FieldLabel wrapping the entire
+// horizontal Field to get click-anywhere-to-toggle.
 pub static META: page::Meta = page::Meta {
     title: "Checkbox",
     description: "A control that allows the user to toggle between checked and not checked.",
@@ -19,7 +24,7 @@ pub static BLOCKS: &[page::Block] = &[
         id: "demo",
         title: "",
         description: None,
-        snippet: "",
+        snippet: "examples/browser/snippets/checkbox-demo.md",
     },
     page::Block::Group {
         title: "Examples",
@@ -143,46 +148,56 @@ impl page::Page for CheckboxPage {
         let preview: iced::Element<'_, Message, Theme> = match id {
             // Demo (hero): 4 stacked field-shaped rows. Verbatim from
             // `.nova/apps/v4/examples/radix/checkbox-demo.tsx`.
+            //
+            // TODO Phase 4: row 4 wraps the entire Field in FieldLabel
+            // (bordered + padded card with primary-tint when checked,
+            // click-anywhere-to-toggle). Deferred — needs FieldLabel-as-card.
             "demo" => column![
                 row![
                     checkbox(self.demo_terms_1).on_toggle(toggle(F_DEMO_TERMS_1)),
-                    text("Accept terms and conditions"),
+                    text::small("Accept terms and conditions").medium(),
                 ]
                 .spacing(8),
                 row![
                     checkbox(self.demo_terms_2).on_toggle(toggle(F_DEMO_TERMS_2)),
                     column![
-                        text("Accept terms and conditions"),
+                        text::small("Accept terms and conditions").medium(),
                         text::muted("By clicking this checkbox, you agree to the terms."),
                     ]
                     .spacing(2),
                 ]
                 .spacing(8),
+                // Row 3: disabled — no `.on_toggle(...)`. FieldLabel inherits
+                // opacity-50 via `data-disabled`; hand-rolled with `text::muted`.
+                // TODO Phase 4: replace with proper opacity-50 cascade once Field
+                // propagates disabled state to label.
                 row![
-                    // No `.on_toggle(...)` ⇒ disabled.
                     checkbox(false),
-                    text("Enable notifications"),
+                    text::muted("Enable notifications"),
                 ]
                 .spacing(8),
                 row![
                     checkbox(self.demo_notif_2).on_toggle(toggle(F_DEMO_NOTIF_2)),
                     column![
-                        text("Enable notifications"),
+                        text::small("Enable notifications").medium(),
                         text::muted("You can enable or disable notifications at any time."),
                     ]
                     .spacing(2),
                 ]
                 .spacing(8),
             ]
-            .spacing(12)
-            .width(320)
+            .spacing(20)
+            // TODO Phase 4: nova uses `max-w-sm` (max-width 384px, not fixed).
+            // iced Column lacks max_width; using fixed 384 as the nearest
+            // approximation until our Column gains a max_width builder.
+            .width(384)
             .into(),
 
             // Basic: single checkbox + label. Width 224 matches shadcn's
             // `w-56` constraint on the parent FieldGroup.
             "basic" => row![
                 checkbox(self.basic).on_toggle(toggle(F_BASIC)),
-                text("Accept terms and conditions"),
+                text::small("Accept terms and conditions").medium(),
             ]
             .spacing(8)
             .width(224)
@@ -192,7 +207,7 @@ impl page::Page for CheckboxPage {
             "description" => row![
                 checkbox(self.desc).on_toggle(toggle(F_DESC)),
                 column![
-                    text("Accept terms and conditions"),
+                    text::small("Accept terms and conditions").medium(),
                     text::muted(
                         "By clicking this checkbox, you agree to the terms and conditions.",
                     ),
@@ -204,9 +219,13 @@ impl page::Page for CheckboxPage {
             .into(),
 
             // Disabled: no `.on_toggle(...)` call ⇒ widget is disabled.
+            // FieldLabel inherits opacity-50 via `data-disabled`; hand-rolled
+            // with `text::muted`.
+            // TODO Phase 4: replace with proper opacity-50 cascade once Field
+            // propagates disabled state to label.
             "disabled" => row![
                 checkbox(false),
-                text("Enable notifications"),
+                text::muted("Enable notifications"),
             ]
             .spacing(8)
             .width(224)
@@ -214,11 +233,15 @@ impl page::Page for CheckboxPage {
 
             // Invalid: destructive border via the `theme::checkbox::Invalid`
             // variant, mirroring shadcn's `aria-invalid` styling.
+            // FieldLabel inherits `text-destructive` via `data-invalid`;
+            // hand-rolled with `.style(theme::text::Destructive)`.
             "invalid" => row![
                 checkbox(self.invalid)
                     .on_toggle(toggle(F_INVALID))
                     .style(theme::checkbox::Invalid),
-                text("Accept terms and conditions"),
+                text::small("Accept terms and conditions")
+                    .medium()
+                    .style(theme::text::Destructive),
             ]
             .spacing(8)
             .width(224)
