@@ -163,11 +163,11 @@ impl page::Page for CheckboxPage {
                     Message::Page(pi, page::Message::BoolChanged(F_DEMO_NOTIF_2, !notif_2));
                 column![
                     // Row 1: simple Field with Label.
-                    field::field(checkbox(self.demo_terms_1).on_toggle(toggle(F_DEMO_TERMS_1)))
+                    field(checkbox(self.demo_terms_1).on_toggle(toggle(F_DEMO_TERMS_1)))
                         .orientation(field::Orientation::Horizontal)
                         .label("Accept terms and conditions"),
                     // Row 2: Field with FieldContent (label + description).
-                    field::field(checkbox(self.demo_terms_2).on_toggle(toggle(F_DEMO_TERMS_2)))
+                    field(checkbox(self.demo_terms_2).on_toggle(toggle(F_DEMO_TERMS_2)))
                         .orientation(field::Orientation::Horizontal)
                         .label("Accept terms and conditions")
                         .description("By clicking this checkbox, you agree to the terms."),
@@ -175,14 +175,14 @@ impl page::Page for CheckboxPage {
                     // `Status::Disabled`. Label rendered muted to approximate
                     // shadcn's `data-disabled:opacity-50` cascade on the
                     // FieldLabel (color shift, not a true alpha overlay).
-                    field::field(checkbox(false))
+                    field(checkbox(false))
                         .orientation(field::Orientation::Horizontal)
                         .label(text::muted("Enable notifications")),
                     // Row 4: FieldLabel-as-card — bordered + padded card with
                     // primary tint when checked. `.card(notif_2)` drives
                     // active/inactive tint; `.on_press` fires the toggle for
                     // clicks outside the checkbox area.
-                    field::field(checkbox(notif_2).on_toggle(toggle(F_DEMO_NOTIF_2)))
+                    field(checkbox(notif_2).on_toggle(toggle(F_DEMO_NOTIF_2)))
                         .orientation(field::Orientation::Horizontal)
                         .label("Enable notifications")
                         .description("You can enable or disable notifications at any time.")
@@ -200,7 +200,7 @@ impl page::Page for CheckboxPage {
             // Checked State preamble: interactive checkbox pre-checked to
             // show the primary-filled state. Width 224 matches `w-56`.
             "checked-state" => column![
-                field::field(
+                field(
                     checkbox(self.checked_state).on_toggle(toggle(F_CHECKED_STATE)),
                 )
                 .orientation(field::Orientation::Horizontal)
@@ -213,7 +213,7 @@ impl page::Page for CheckboxPage {
             // `theme::checkbox::Invalid`; label tinted destructive to mirror
             // shadcn's `data-invalid:text-destructive` cascade on FieldLabel.
             "invalid-state" => column![
-                field::field(
+                field(
                     checkbox(self.invalid_state)
                         .on_toggle(toggle(F_INVALID_STATE))
                         .style(theme::checkbox::Invalid),
@@ -226,7 +226,7 @@ impl page::Page for CheckboxPage {
 
             // Basic: single Field with Label. Width 224 matches `w-56`.
             "basic" => column![
-                field::field(checkbox(self.basic).on_toggle(toggle(F_BASIC)))
+                field(checkbox(self.basic).on_toggle(toggle(F_BASIC)))
                     .orientation(field::Orientation::Horizontal)
                     .label("Accept terms and conditions"),
             ]
@@ -238,7 +238,7 @@ impl page::Page for CheckboxPage {
             // top-aligns automatically when description is present (mirroring
             // shadcn's `has-[>[data-slot=field-content]]:items-start`).
             "description" => column![
-                field::field(checkbox(self.desc).on_toggle(toggle(F_DESC)))
+                field(checkbox(self.desc).on_toggle(toggle(F_DESC)))
                     .orientation(field::Orientation::Horizontal)
                     .label("Accept terms and conditions")
                     .description("By clicking this checkbox, you agree to the terms and conditions."),
@@ -252,7 +252,7 @@ impl page::Page for CheckboxPage {
             // true alpha overlay (real Field-level data-disabled propagation
             // is deferred until the cascade infra lands).
             "disabled" => column![
-                field::field(checkbox(false))
+                field(checkbox(false))
                     .orientation(field::Orientation::Horizontal)
                     .label(text::muted("Enable notifications")),
             ]

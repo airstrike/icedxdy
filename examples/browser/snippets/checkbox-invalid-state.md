@@ -3,7 +3,7 @@ use icedxdy::theme;
 use icedxdy::widget::{checkbox, column, field, text};
 
 column![
-    field::field(
+    field(
         checkbox(self.is_checked)
             .on_toggle(Message::Toggle)
             .style(theme::checkbox::Invalid),
