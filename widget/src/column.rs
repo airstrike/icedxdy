@@ -141,6 +141,12 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Column<'a, Message> {
         }
     }
 
+    fn line_height(&mut self, line_height: f32) {
+        for child in &mut self.children {
+            child.line_height(line_height);
+        }
+    }
+
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         let iced_children: Vec<iced_core::Element<'a, Message, Theme, Renderer>> = self
             .children

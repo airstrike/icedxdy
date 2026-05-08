@@ -22,6 +22,12 @@ pub trait IntoElement<'a, Message, T = Theme, R = Renderer>: 'a {
     /// Implementors should respect explicit user overrides (no-op if already set).
     fn weight(&mut self, _weight: Weight) {}
 
+    /// Parent is telling you what absolute line-height (in logical pixels)
+    /// to use. Used by Badge to push `text-xs`'s nova `leading-4` (16px)
+    /// down to its content so the rendered pill height matches shadcn.
+    /// Implementors should respect explicit user overrides (no-op if already set).
+    fn line_height(&mut self, _line_height: f32) {}
+
     /// Consume self and produce an iced Element.
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, T, R>;
 }
@@ -72,6 +78,12 @@ impl<'a, Message: 'a, T: 'a, R: 'a> Component<'a, Message, T, R> {
     /// Push a font weight hint down to the wrapped widget.
     pub fn weight(&mut self, weight: Weight) {
         self.inner.weight(weight);
+    }
+
+    /// Push an absolute line-height (in logical pixels) down to the wrapped
+    /// widget. See [`IntoElement::line_height`].
+    pub fn line_height(&mut self, line_height: f32) {
+        self.inner.line_height(line_height);
     }
 
     /// Convert into an `iced::Element`.

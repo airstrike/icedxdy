@@ -198,6 +198,15 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
         }
     }
 
+    fn line_height(&mut self, line_height: f32) {
+        // Treat the pushed value as absolute logical pixels (matches nova's
+        // `leading-4` = 16px semantic). `From<f32> for LineHeight` would
+        // interpret it as a relative factor, so build `Absolute` explicitly.
+        if self.line_height.is_none() {
+            self.line_height = Some(LineHeight::Absolute(iced_core::Pixels(line_height)));
+        }
+    }
+
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         self.build().into()
     }

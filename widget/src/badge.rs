@@ -322,10 +322,18 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Badge<'a, Message> {
         self.content.weight(weight);
     }
 
+    fn line_height(&mut self, line_height: f32) {
+        self.content.line_height(line_height);
+    }
+
     fn into_element(mut self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
-        // Push text-xs (12px) and medium down to content (nova `font-medium`)
+        // Push text-xs (12px), medium, and `leading-4` (16px) down to content
+        // (nova `font-medium text-xs leading-none` — the badge wrapper supplies
+        // the explicit `leading-4` parent so the rendered pill height matches
+        // shadcn's 22px vertical extent rather than iced's default 1.3 ratio).
         self.content.size(crate::Size::Xs);
         self.content.weight(Weight::Medium);
+        self.content.line_height(16.0);
 
         let style_fn: iced_widget::container::StyleFn<'_, Theme> = match self.variant {
             Variant::Default => theme::badge::Default.into(),
