@@ -7,8 +7,21 @@
 // the table widget lands.
 //
 // Intentional skips:
+// - Composition preamble (live-docs section between Usage and Examples) —
+//   it's an ASCII tree of `Avatar`/`AvatarGroup` subcomponent shapes
+//   (`Avatar ├── AvatarImage ├── AvatarFallback └── AvatarBadge`, etc.).
+//   Pure docs scaffolding; nothing to render as a `Block::Example`. Will fold
+//   in once a `Block::Md` (or equivalent prose block) primitive lands.
 // - avatar-dropdown — needs a dropdown-menu primitive (not yet ported).
 // - avatar-rtl — RTL is not in scope (per CLAUDE.md).
+//
+// Snippet-vs-page asymmetry:
+// - Snippets reference aspirational `shadcn_handle()` / `evilrabbit_handle()`
+//   / `maxleiter_handle()` / `pranathip_handle()` helpers (mirroring the
+//   shadcn .tsx imports) so the snippet reads as the canonical shape a user
+//   would copy-paste. The rendered page passes `None` to `avatar(...)` and
+//   relies on the fallback — see the `preview()` docstring and the avatar
+//   widget docstring for the image-load-failure deviation that motivates it.
 
 use iced::Task;
 
