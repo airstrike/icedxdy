@@ -191,8 +191,17 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         // `data-checked:bg-primary` — same in both themes.
         p.primary.base
     } else if dark {
-        // `dark:data-unchecked:bg-input/80` — input at α 0.8 in dark mode.
-        p.input.alpha(0.8)
+        // FIXME(renderer): nova ships `dark:data-unchecked:bg-input/80` —
+        // i.e. `oklch(1 0 0 / 12%)` (input is `oklch(1 0 0 / 15%)`, scaled
+        // by 0.8). Composited over `--background` (`oklch(0.145 0 0)`) in
+        // a faithful renderer that yields a muted dark gray. iced's
+        // current alpha-compositing path renders that translucent white
+        // close to opaque white, making the unchecked track read as
+        // bright on the dark page bg. Workaround: substitute the
+        // perceptually-similar opaque `muted.base` token (also a flat
+        // dark gray in the dark palette). When iced's compositor is
+        // fixed upstream, restore `p.input.alpha(0.8)` here.
+        p.muted.base
     } else {
         // `data-unchecked:bg-input`.
         p.input
@@ -563,16 +572,22 @@ mod tests {
         );
     }
 
-    /// Dark unchecked track = `dark:data-unchecked:bg-input/80` — input at α 0.8.
+    /// Dark unchecked track is the `muted.base` workaround for the renderer
+    /// alpha-compositing issue (see FIXME in [`default`]). Nova's CSS source
+    /// is `dark:data-unchecked:bg-input/80` (`oklch(1 0 0 / 12%)`); the
+    /// faithful render is a muted gray that iced's current compositor
+    /// can't reproduce from the translucent value, so we substitute the
+    /// opaque `muted.base` token. Restore the alpha-multiplied assertion
+    /// when the compositor is fixed.
     #[test]
-    fn dark_unchecked_track_is_input_alpha_0_8() {
+    fn dark_unchecked_track_is_muted_base_workaround() {
         let theme = Theme::dark();
         let resolved = default(&theme, Status::Active { is_toggled: false });
         let track = bg_color(resolved.background);
-        let expected = theme.palette().input.alpha(0.8);
+        let expected = theme.palette().muted.base;
         assert!(
             close(track, expected),
-            "expected track ≈ {expected:?}, got {track:?}",
+            "expected track = muted.base ({expected:?}), got {track:?}",
         );
     }
 
