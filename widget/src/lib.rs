@@ -4,6 +4,7 @@ pub mod alert;
 pub mod animation;
 pub mod aspect_ratio;
 pub mod badge;
+pub mod breadcrumb;
 pub mod button;
 pub mod checkbox;
 pub mod column;
@@ -39,6 +40,7 @@ pub use iced_widget::space;
 pub use alert::Alert;
 pub use aspect_ratio::AspectRatio;
 pub use badge::Badge;
+pub use breadcrumb::Breadcrumb;
 pub use button::Button;
 pub use checkbox::Checkbox;
 pub use column::Column;
@@ -98,6 +100,17 @@ pub fn row<'a, Message: 'a>() -> Row<'a, Message> {
 /// Create a [`Badge`] with the given content.
 pub fn badge<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
     badge::badge(content)
+}
+
+/// Create a [`Breadcrumb`] from a list of items.
+///
+/// Item constructors stay namespaced under [`breadcrumb`] (`breadcrumb::link`,
+/// `breadcrumb::page`, `breadcrumb::ellipsis`) — the bare crate-root re-export
+/// is the trail builder, not the items.
+pub fn breadcrumb<'a, Message: 'a>(
+    items: impl IntoIterator<Item = breadcrumb::Item<'a, Message>>,
+) -> Breadcrumb<'a, Message> {
+    breadcrumb::breadcrumb(items)
 }
 
 /// Create an [`Alert`].

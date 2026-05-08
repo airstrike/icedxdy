@@ -1,6 +1,7 @@
 pub mod alert;
 pub mod aspect_ratio;
 pub mod badge;
+pub mod breadcrumb;
 pub mod button;
 pub mod card;
 pub mod checkbox;
