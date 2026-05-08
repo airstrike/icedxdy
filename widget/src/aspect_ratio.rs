@@ -2,10 +2,10 @@
 //! width-to-height ratio.
 //!
 //! Mirrors shadcn's `<AspectRatio ratio={16 / 9}>...</AspectRatio>` (a thin
-//! Radix wrapper). The widget consumes whatever width its parent provides
-//! (`Length::Fill`) and reports `width / ratio` as its height — matching
-//! Radix's behavior of `padding-bottom: (1 / ratio) * 100%` on the inner
-//! wrapper, which grows the box to the desired ratio relative to the
+//! Radix wrapper). By default the widget consumes whatever width its parent
+//! provides (`Length::Fill`) and reports `width / ratio` as its height —
+//! matching Radix's behavior of `padding-bottom: (1 / ratio) * 100%` on the
+//! inner wrapper, which grows the box to the desired ratio relative to the
 //! caller-supplied width.
 //!
 //! There's no theme catalog here: aspect-ratio is purely structural. Style
@@ -13,26 +13,31 @@
 //! shadcn's examples do.
 //!
 //! ```ignore
-//! use icedxdy::widget::{aspect_ratio, container};
-//! use iced::Fill;
+//! use icedxdy::widget::aspect_ratio;
 //!
-//! container(aspect_ratio(my_image, 16.0 / 9.0)).max_width(384.0)
+//! aspect_ratio(my_image, 16.0 / 9.0).max_width(384.0)
 //! ```
 //!
-//! # Caveats
+//! # Width control
 //!
-//! Like CSS `aspect-ratio`, the widget needs a known width upstream to
-//! produce a sensible height. Inside an unbounded width context (e.g. a
-//! `Length::Shrink` parent with no max), `Length::Fill` resolves to the
-//! widget's intrinsic width — which for aspect_ratio is zero. Wrap in a
-//! container with a width or max width to give it something to scale from.
+//! Use `.max_width(N)` to cap the width — this mirrors shadcn's
+//! `max-w-sm` / `max-w-[10rem]` parent-width idioms without needing a
+//! wrapping `container(...).max_width(...)`. Wrapping aspect_ratio in a
+//! `Shrink`-width container is actively wrong: iced's `Limits::width(Shrink)`
+//! sets `compression.width = true`, which collapses our `Length::Fill`
+//! request to the (zero) intrinsic width — leaving the child invisible.
+//! `.max_width()` here is the right knob for the "needs a known width
+//! upstream" rule.
+//!
+//! `.width(Length)` is also available for explicit `Length::Fixed(n)` /
+//! `Length::FillPortion(n)` cases.
 
 use iced_core::layout;
 use iced_core::mouse;
 use iced_core::overlay;
 use iced_core::renderer;
 use iced_core::widget::Tree;
-use iced_core::{Element, Event, Layout, Length, Rectangle, Shell, Size, Vector, Widget};
+use iced_core::{Element, Event, Layout, Length, Pixels, Rectangle, Shell, Size, Vector, Widget};
 use iced_widget::Renderer;
 
 use icedxdy_core::Theme;
@@ -43,14 +48,18 @@ use crate::component::Component;
 ///
 /// `ratio` follows the shadcn / CSS convention: it's `width / height` (so
 /// `16.0 / 9.0` is widescreen, `9.0 / 16.0` is portrait). The widget
-/// claims the available width (`Length::Fill`) and reports `width / ratio`
-/// for its height.
+/// claims the available width (`Length::Fill`) by default and reports
+/// `width / ratio` for its height. Use [`AspectRatio::max_width`] or
+/// [`AspectRatio::width`] to control the width directly — wrapping in a
+/// `Shrink`-width container collapses the layout to zero (see module docs).
 pub struct AspectRatio<'a, Message, Renderer = iced_widget::Renderer>
 where
     Renderer: iced_core::Renderer,
 {
     content: Element<'a, Message, Theme, Renderer>,
     ratio: f32,
+    width: Length,
+    max_width: f32,
 }
 
 impl<'a, Message, Renderer> AspectRatio<'a, Message, Renderer>
@@ -62,7 +71,25 @@ where
         Self {
             content: content.into(),
             ratio,
+            width: Length::Fill,
+            max_width: f32::INFINITY,
         }
+    }
+
+    /// Set the width policy for this aspect_ratio box. Defaults to
+    /// `Length::Fill`. Use `Length::Fixed(n)` for an explicit pixel width.
+    pub fn width(mut self, width: impl Into<Length>) -> Self {
+        self.width = width.into();
+        self
+    }
+
+    /// Cap the resolved width at `max_width` pixels. Mirrors shadcn's
+    /// `max-w-sm` / `max-w-[10rem]` parent-width idioms — the equivalent
+    /// of wrapping in `container(...).max_width(N)` but without the
+    /// width-compression footgun (see module docs).
+    pub fn max_width(mut self, max_width: impl Into<Pixels>) -> Self {
+        self.max_width = max_width.into().0;
+        self
     }
 }
 
@@ -90,12 +117,13 @@ where
     }
 
     fn size(&self) -> Size<Length> {
-        // Fill the available width; height is derived in `layout` from the
-        // resolved width and the ratio. `Shrink` here lets parents that
-        // measure us in a height-Shrink context (the common case — Column,
-        // card preview) accept whatever height we report.
+        // Report the configured width (Fill by default); height is derived
+        // in `layout` from the resolved width and the ratio. `Shrink` here
+        // lets parents that measure us in a height-Shrink context (the
+        // common case — Column, card preview) accept whatever height we
+        // report.
         Size {
-            width: Length::Fill,
+            width: self.width,
             height: Length::Shrink,
         }
     }
@@ -106,13 +134,15 @@ where
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
-        // Resolve the available width first. The parent decides this — we
-        // ask for `Fill`, which collapses to the maximum allowed by the
-        // limits unless we're inside a Shrink context (in which case the
-        // intrinsic width is zero and the widget effectively disappears,
-        // matching CSS aspect-ratio's "needs a known width" rule).
-        let resolved = limits.resolve(Length::Fill, Length::Shrink, Size::ZERO);
-        let width = resolved.width.max(0.0);
+        // Compute the width directly from the limits + the configured
+        // width / max_width. We deliberately bypass `Limits::resolve` —
+        // when the parent is a `Shrink`-width container (the common
+        // wrapping idiom), the parent's `Limits::width(Shrink)` flips
+        // `compression.width = true`, and a `Length::Fill` request would
+        // then collapse to the (zero) intrinsic width. Aspect-ratio's
+        // whole job is to *project* a width into a height; an empty
+        // intrinsic width breaks that contract. So we read `limits.max`
+        // directly and cap at `max_width`.
         let safe_ratio = if self.ratio.is_finite() && self.ratio > 0.0 {
             self.ratio
         } else {
@@ -121,7 +151,32 @@ where
             // the layout tree.
             1.0
         };
+
+        let width = match self.width {
+            Length::Fixed(n) => n,
+            // Fill / FillPortion / Shrink: use the available max, capped
+            // at the user-supplied `max_width` (defaults to INFINITY).
+            _ => limits.max().width,
+        };
+        let width = width.min(self.max_width).max(0.0);
+        // Be defensive against an unbounded parent (no `max_width` and
+        // `limits.max.width = INFINITY`). Without a known width we cannot
+        // produce a sensible height; report a zero box and let the empty
+        // child render — matches CSS `aspect-ratio` in the same edge case.
+        let width = if width.is_finite() { width } else { 0.0 };
         let height = (width / safe_ratio).max(0.0);
+
+        // If the height would exceed the available height, scale down both
+        // axes proportionally so the box fits — same behavior CSS
+        // aspect-ratio gets in a doubly-constrained flex item. Without
+        // this, portrait ratios overflow card-shaped previews.
+        let max_height = limits.max().height;
+        let (width, height) = if max_height.is_finite() && height > max_height {
+            let scaled = max_height * safe_ratio;
+            (scaled.max(0.0), max_height.max(0.0))
+        } else {
+            (width, height)
+        };
 
         let child_size = Size::new(width, height);
 

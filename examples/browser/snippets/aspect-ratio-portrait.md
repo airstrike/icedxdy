@@ -1,8 +1,5 @@
 ```rust
-use icedxdy::widget::{aspect_ratio, container};
+use icedxdy::widget::aspect_ratio;
 
-container(
-    aspect_ratio(image_placeholder(), 9.0 / 16.0)
-)
-.max_width(160)
+aspect_ratio(image_placeholder(), 9.0 / 16.0).max_width(160)
 ```

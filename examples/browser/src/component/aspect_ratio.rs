@@ -17,6 +17,7 @@ use icedxdy::{Theme, radius};
 use crate::Message;
 use crate::page;
 
+
 pub static META: page::Meta = page::Meta {
     title: "Aspect Ratio",
     description: "Displays content within a desired ratio.",
@@ -123,20 +124,24 @@ impl page::Page for AspectRatioPage {
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
         match id {
             // Demo (16:9). shadcn `aspect-ratio-demo.tsx`: max-w-sm
-            // (`24rem` = 384px) wrapper around `<AspectRatio ratio={16/9}>`.
-            "demo" => container(aspect_ratio(image_placeholder(), 16.0 / 9.0))
+            // (`24rem` = 384px) cap on the AspectRatio's parent. We apply
+            // it directly via `aspect_ratio.max_width(...)` — see the
+            // widget docs for why a wrapping `container(...).max_width(...)`
+            // is the wrong shape (Shrink-width parent triggers
+            // width-compression and collapses the child).
+            "demo" => aspect_ratio(image_placeholder(), 16.0 / 9.0)
                 .max_width(384.0)
                 .into(),
 
             // Portrait (9:16). shadcn `aspect-ratio-portrait.tsx`:
-            // max-w-[10rem] = 160px wrapper around `<AspectRatio ratio={9/16}>`.
-            "portrait" => container(aspect_ratio(image_placeholder(), 9.0 / 16.0))
+            // max-w-[10rem] = 160px.
+            "portrait" => aspect_ratio(image_placeholder(), 9.0 / 16.0)
                 .max_width(160.0)
                 .into(),
 
             // Square (1:1). shadcn `aspect-ratio-square.tsx`:
-            // max-w-[12rem] = 192px wrapper around `<AspectRatio ratio={1/1}>`.
-            "square" => container(aspect_ratio(image_placeholder(), 1.0 / 1.0))
+            // max-w-[12rem] = 192px.
+            "square" => aspect_ratio(image_placeholder(), 1.0 / 1.0)
                 .max_width(192.0)
                 .into(),
 
