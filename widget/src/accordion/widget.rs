@@ -13,9 +13,16 @@
 //!
 //! # Animation contract
 //!
-//! - **Body open/close**: 150 ms over `cubic-bezier(0.4, 0, 0.2, 1)` —
-//!   matches the project's `transition-all` standard (button hover,
-//!   progress value-eased transitions). See `crate::animation::cubic_bezier`.
+//! - **Body open/close**: 200 ms over CSS `ease-out` =
+//!   `cubic-bezier(0, 0, 0.58, 1)` — sourced verbatim from
+//!   `tw-animate-css`'s `--animate-accordion-down/up` tokens
+//!   (`accordion-down|up var(--tw-duration, 200ms) var(--tw-ease, ease-out) ...`).
+//!   See `crate::animation::ease_out`. This is intentionally *different*
+//!   from the project's button-hover / progress easing
+//!   (`cubic-bezier(0.4, 0, 0.2, 1)` over 150ms — shadcn's generic
+//!   `transition-all` default): shadcn's accordion ships its own
+//!   directional ease via the `tw-animate-css` keyframes, and matching
+//!   it requires this curve, not the generic one.
 //! - **Chevron swap**: the wrapper builds the chevron icon into the
 //!   trigger Row at view time based on `is_open` for the item. No
 //!   widget-level rotation animation (shadcn nova ships two icons that
@@ -59,10 +66,13 @@ use iced_core::Renderer as _;
 use icedxdy_core::Theme;
 use icedxdy_core::theme::accordion::{self, Status};
 
-/// Animation duration. Matches the project standard
-/// (`crate::animation::cubic_bezier` over 150 ms — same as button hover and
-/// progress value transitions).
-const TRANSITION_DURATION: Duration = Duration::from_millis(150);
+/// Animation duration. Matches `tw-animate-css`'s
+/// `--animate-accordion-down/up` token, which defaults to
+/// `var(--tw-duration, 200ms)` — this is shadcn's accordion at runtime.
+/// Intentionally not the project's 150ms button-hover standard: shadcn's
+/// accordion uses its own dedicated keyframe pair, and pixel/ms-faithful
+/// parity requires the matching duration.
+const TRANSITION_DURATION: Duration = Duration::from_millis(200);
 
 /// Vertical padding around each trigger row (`py-2.5` = 10 px).
 const TRIGGER_PADDING_Y: f32 = 10.0;
@@ -148,9 +158,7 @@ impl ItemState {
             last_is_open: is_open,
             animation: Animation::new(is_open)
                 .duration(TRANSITION_DURATION)
-                .easing(Easing::Custom(|t| {
-                    crate::animation::cubic_bezier(0.4, 0.0, 0.2, 1.0, t)
-                })),
+                .easing(Easing::Custom(crate::animation::ease_out)),
             natural_height: 0.0,
             hovered: false,
         }
