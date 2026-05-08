@@ -468,26 +468,45 @@ impl App {
         let title = text::h1(meta.title);
         let description = text::p(meta.description).style(theme::text::Muted);
 
-        // Prev/next page navigation. Always fires; the SelectPage handler
-        // is idempotent for same-index, so saturating arithmetic at edges
-        // turns the click into a no-op without a separate disabled state.
-        // TODO: Copy Page button (deferred — needs clipboard write affordance).
+        // Prev/next page nav, mirrors the docs page-header at
+        // `apps/v4/app/(app)/docs/[[...slug]]/page.tsx` (the title row's
+        // `<div className="docs-nav flex items-center gap-2">`):
+        //   <Button variant="secondary" size="icon"
+        //           className="extend-touch-target size-8 shadow-none md:size-7" …>
+        //     <IconArrowLeft /> | <IconArrowRight />
+        //
+        // Variant is `secondary` (subtle gray fill, no border, no shadow) at
+        // `Size::Sm` (28px square — matches `md:size-7`). Always fires; the
+        // SelectPage handler is idempotent for same-index, so saturating
+        // arithmetic at edges turns clicks into no-ops without a disabled
+        // state. Icons are arrows (not chevrons) per shadcn source.
+        // TODO: Copy Page + dropdown caret block (deferred — needs
+        // clipboard-write affordance and a DropdownMenu primitive).
         let total = self.pages.len();
         let curr = self.current_page;
-        let prev_btn = button::ghost(icon::arrow_left())
+        let prev_btn = button::secondary(icon::arrow_left())
+            .size(Size::Sm)
             .square()
             .on_press(Message::SelectPage(curr.saturating_sub(1)));
-        let next_btn = button::ghost(icon::arrow_right())
+        let next_btn = button::secondary(icon::arrow_right())
+            .size(Size::Sm)
             .square()
             .on_press(Message::SelectPage((curr + 1).min(total.saturating_sub(1))));
 
-        let page_header = row![
-            column![title, description].spacing(4).width(Fill),
-            prev_btn,
-            next_btn,
+        // Shadcn shape: `flex flex-col gap-2` outer, with the title row as
+        // `flex items-center justify-between md:items-start` (title on the
+        // left, nav controls top-right; description below the title row).
+        // The horizontal spacer reproduces `justify-between` — title hugs
+        // the left, button cluster hugs the right; the spacer absorbs the
+        // gap and grows with the content area.
+        let title_row = row![
+            title,
+            space::horizontal(),
+            row![prev_btn, next_btn].spacing(8),
         ]
         .spacing(8)
-        .align_y(iced::Alignment::Center);
+        .align_y(iced::Alignment::Start);
+        let page_header = column![title_row, description].spacing(8);
 
         let (page_body, page_nav) = page::view(current, &self.snippet_viewer);
 
