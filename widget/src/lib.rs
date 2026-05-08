@@ -6,6 +6,7 @@ pub mod aspect_ratio;
 pub mod badge;
 pub mod breadcrumb;
 pub mod button;
+pub mod button_group;
 pub mod checkbox;
 pub mod column;
 pub mod component;
@@ -42,6 +43,7 @@ pub use aspect_ratio::AspectRatio;
 pub use badge::Badge;
 pub use breadcrumb::Breadcrumb;
 pub use button::Button;
+pub use button_group::ButtonGroup;
 pub use checkbox::Checkbox;
 pub use column::Column;
 pub use component::{Component, IntoElement};
@@ -60,6 +62,13 @@ pub fn button<'a, Message: Clone + 'a>(
     content: impl Into<Component<'a, Message>>,
 ) -> Button<'a, Message> {
     button::button(content)
+}
+
+/// Create a [`ButtonGroup`] from an ordered sequence of items.
+pub fn button_group<'a, Message: Clone + 'a>(
+    items: impl IntoIterator<Item = button_group::Item<'a, Message>>,
+) -> ButtonGroup<'a, Message> {
+    button_group::button_group(items)
 }
 
 /// Create a [`Text`] widget at small size — matches shadcn's default body

@@ -135,6 +135,26 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
         self
     }
 
+    /// Wrap the existing style fn with a post-processor that gets to mutate
+    /// the resolved [`iced_widget::button::Style`] before the bridge to our
+    /// vendored widget. Used by [`button_group`] to selectively zero out
+    /// edge-button corner radii at iteration time, after the user's style
+    /// closure has run — matches shadcn's `[&>*:not(:first-child)]:rounded-l-none`
+    /// child-position cascade, which can only be applied once the parent
+    /// knows the child's position in the group.
+    ///
+    /// [`button_group`]: crate::button_group
+    pub fn map_style<F>(mut self, transform: F) -> Self
+    where
+        F: Fn(iced_widget::button::Style) -> iced_widget::button::Style + 'a,
+    {
+        use iced_widget::button;
+        let prev =
+            std::mem::replace(&mut self.style, Box::new(|_, _| button::Style::default()));
+        self.style = Box::new(move |t, s| transform(prev(t, s)));
+        self
+    }
+
     /// Set the on_press message
     pub fn on_press(mut self, message: Message) -> Self {
         self.on_press = Some(message);

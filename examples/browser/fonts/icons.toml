@@ -1,6 +1,7 @@
 module = "icon"
 
 [icons]
+arrow_left        = "arrow-left"
 arrow_up          = "arrow-up"
 arrow_up_right    = "arrow-up-right"
 badge_check       = "badge-check"
@@ -13,6 +14,9 @@ circle_alert      = "circle-alert"
 copy              = "copy"
 git_branch        = "git-branch"
 info              = "info"
+minus             = "minus"
 moon              = "moon"
+ellipsis          = "ellipsis"
+plus              = "plus"
 sun               = "sun"
 terminal          = "terminal"
