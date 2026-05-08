@@ -1,4 +1,5 @@
 use iced::Fill;
+use iced::Shrink;
 use iced::Task;
 
 use icedxdy::Theme;
@@ -6,15 +7,15 @@ use icedxdy::rich_text;
 use icedxdy::theme;
 use icedxdy::theme::tweak::Token;
 use icedxdy::widget::rich_text::span;
-use icedxdy::widget::{button, field, input, row, text, Component};
+use icedxdy::widget::{badge, button, field, input, row, space, text, Component};
 
 use crate::Message;
 use crate::page;
 
 // Intentional skips per CLAUDE.md: input-rtl (RTL). Field Group, File,
-// Grid, Badge, Input Group, Button Group, and Form examples are also
-// skipped — they rely on widgets (Field, FieldGroup, InputGroup,
-// ButtonGroup, Select) that have not yet been ported.
+// Grid, Input Group, Button Group, and Form examples are also skipped —
+// they rely on widgets (FieldGroup, InputGroup, ButtonGroup, Select)
+// that have not yet been ported.
 pub static META: page::Meta = page::Meta {
     title: "Input",
     description: "A text input component for forms and user data entry with built-in styling and accessibility features.",
@@ -71,6 +72,14 @@ pub static BLOCKS: &[page::Block] = &[
                 ),
                 snippet: "examples/browser/snippets/input-required.md",
             },
+            page::Block::Example {
+                id: "badge",
+                title: "Badge",
+                description: Some(
+                    "A field label with a trailing badge to flag the input's status.",
+                ),
+                snippet: "examples/browser/snippets/input-badge.md",
+            },
         ],
     },
     page::Block::Md("examples/browser/snippets/input-api-reference.md"),
@@ -84,6 +93,7 @@ const F_FIELD: usize = 2;
 const F_INLINE: usize = 3;
 const F_INVALID: usize = 4;
 const F_REQUIRED: usize = 5;
+const F_BADGE: usize = 6;
 
 pub struct InputPage {
     state: page::State,
@@ -93,6 +103,7 @@ pub struct InputPage {
     inline_value: String,
     invalid_value: String,
     required_value: String,
+    badge_value: String,
 }
 
 impl InputPage {
@@ -105,6 +116,7 @@ impl InputPage {
             inline_value: String::new(),
             invalid_value: String::new(),
             required_value: String::new(),
+            badge_value: String::new(),
         })
     }
 }
@@ -143,6 +155,7 @@ impl page::Page for InputPage {
                     F_INLINE => self.inline_value = value,
                     F_INVALID => self.invalid_value = value,
                     F_REQUIRED => self.required_value = value,
+                    F_BADGE => self.badge_value = value,
                     _ => {}
                 }
                 Task::none()
@@ -239,6 +252,26 @@ impl page::Page for InputPage {
                 span("*").size(text::size::SM).color(Token::Destructive),
             ]))
             .description("This field must be filled out.")
+            .width(320)
+            .into(),
+
+            // Badge: a label with a trailing `Beta` badge pushed flush right
+            // (shadcn `ml-auto`). Verbatim shadcn `input-badge.tsx`.
+            "badge" => field(
+                input("https://api.example.com/webhook", &self.badge_value)
+                    .on_input(move |v| {
+                        Message::Page(pi, page::Message::InputChanged(F_BADGE, v))
+                    })
+                    .width(Fill),
+            )
+            .label(Component::from(
+                row![
+                    text::label("Webhook URL").width(Shrink),
+                    space::horizontal(),
+                    badge::secondary("Beta"),
+                ]
+                .width(Fill),
+            ))
             .width(320)
             .into(),
 
