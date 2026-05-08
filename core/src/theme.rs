@@ -4,6 +4,7 @@
 //! for various iced widgets with shadcn-inspired styling.
 
 pub mod alert;
+pub mod avatar;
 pub mod badge;
 pub mod button;
 pub mod checkbox;

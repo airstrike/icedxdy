@@ -1,5 +1,6 @@
 pub mod alert;
 pub mod aspect_ratio;
+pub mod avatar;
 pub mod badge;
 pub mod breadcrumb;
 pub mod button;

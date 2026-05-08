@@ -3,6 +3,7 @@ use iced_core as core;
 pub mod alert;
 pub mod animation;
 pub mod aspect_ratio;
+pub mod avatar;
 pub mod badge;
 pub mod breadcrumb;
 pub mod button;
@@ -40,6 +41,7 @@ pub use iced_widget::space;
 
 pub use alert::Alert;
 pub use aspect_ratio::AspectRatio;
+pub use avatar::Avatar;
 pub use badge::Badge;
 pub use breadcrumb::Breadcrumb;
 pub use button::Button;
@@ -134,6 +136,17 @@ pub fn aspect_ratio<'a, Message: 'a>(
     ratio: f32,
 ) -> AspectRatio<'a, Message> {
     aspect_ratio::aspect_ratio(content, ratio)
+}
+
+/// Create an [`Avatar`] from an optional image handle.
+///
+/// Pass `None` to always render the fallback content; pass `Some(handle)`
+/// to render the image clipped to a circle. See the `avatar` module for
+/// the runtime image-load deviation note.
+pub fn avatar<'a, Message: 'a>(
+    image: Option<iced_widget::image::Handle>,
+) -> Avatar<'a, Message> {
+    avatar::avatar(image)
 }
 
 /// Create an [`Input`].
