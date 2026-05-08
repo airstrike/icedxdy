@@ -124,10 +124,11 @@ where
 struct State {
     /// The interpolated value being rendered right now.
     animated: Animation<f32>,
-    /// Whether the previous frame's animation was active. Used to detect
-    /// the animating → idle transition so `on_idle` fires exactly once
-    /// when the bar settles.
-    was_animating: bool,
+    /// Value `on_idle` was last fired for, or `None` while a transition
+    /// is awaiting its acknowledging fire. Compared against `self.value`
+    /// at idle each frame so the fire survives a missed frame between
+    /// `diff` and the next `RedrawRequested`.
+    settled_at: Option<f32>,
 }
 
 impl State {
@@ -143,7 +144,7 @@ impl State {
                     |t| crate::animation::cubic_bezier(0.4, 0.0, 0.2, 1.0, t),
                 ))
                 .duration(TRANSITION_DURATION),
-            was_animating: false,
+            settled_at: Some(value),
         }
     }
 }
@@ -186,6 +187,7 @@ where
             // the at-rest value when this widget first mounted, so we never
             // get here with a stale `0.0` baseline.
             state.animated.go_mut(self.value, Instant::now());
+            state.settled_at = None;
         }
     }
 
@@ -202,14 +204,12 @@ where
         if let Event::Window(window::Event::RedrawRequested(now)) = event {
             let state = tree.state.downcast_mut::<State>();
             let now_animating = state.animated.is_animating(*now);
-            // Animation just settled — fire on_idle exactly once at the
-            // animating → idle transition.
-            if state.was_animating && !now_animating {
+            if !now_animating && state.settled_at != Some(self.value) {
                 if let Some(on_idle) = &self.on_idle {
                     shell.publish(on_idle(self.value));
                 }
+                state.settled_at = Some(self.value);
             }
-            state.was_animating = now_animating;
             if now_animating {
                 shell.request_redraw();
             }
