@@ -5,6 +5,7 @@ use iced_widget::button::StyleFn;
 use iced::{Fill, Font, Pixels, Subscription, Task};
 use icedxdy::theme::tweak::Bg;
 use icedxdy::theme::tweak::token::Token;
+use icedxdy::widget::column::Column;
 use icedxdy::widget::container;
 use icedxdy::widget::markdown::highlighter::Map;
 
@@ -345,30 +346,37 @@ impl App {
 
         // Per-item: 30px height + 13px text + Medium when active, Normal
         // otherwise. Our button defaults to Medium, so the inactive drop
-        // is explicit. Items are wrapped in `sidebar::menu` (gap-1, full
-        // width) so the suite's column geometry is the one in play; the
-        // raw `Button` underneath preserves the docs-faithful 30px/13px/
-        // `inset([1, 0])` continuous-hover affordance landed in earlier
-        // phases — the suite's own `menu_button` builder targets the base
-        // shadcn registry sizes (h-8/text-sm), which the docs site
-        // overrides. See the comment block above for the divergence list.
-        let sidebar_items = sidebar::menu(self.pages.iter().enumerate().map(|(i, page)| {
-            let is_active = i == self.current_page;
-            let (style, weight): (StyleFn<'_, Theme>, Weight) = if is_active {
-                (theme::button::SidebarActive.into(), Weight::Medium)
-            } else {
-                (theme::button::Sidebar.into(), Weight::Normal)
-            };
-            button(page.meta().title)
-                .translate(false)
-                .size(13.0)
-                .weight(weight)
-                .style(style)
-                .inset([1, 0])
-                .interaction(Interaction::Pointer)
-                .on_press(Message::SelectPage(i))
-                .into()
-        }));
+        // is explicit. The raw `Button` carries the docs-faithful 30px/
+        // 13px/`inset([1, 0])` continuous-hover affordance landed in
+        // earlier phases.
+        //
+        // We stack the items in a bare `Column` (no `.spacing(...)`).
+        // `inset([1, 0])` already injects 1px of transparent padding at
+        // the top and bottom of each button — adjacent fills sit 2px
+        // apart, matching shadcn's docs sidebar `gap-0.5` (2px). Wrapping
+        // these in `sidebar::menu` (which carries a built-in `spacing(4)`
+        // for the registry-default `gap-1` look) double-counts the gap
+        // and pushes the items apart.
+        let sidebar_items = Column::with_children(self.pages.iter().enumerate().map(
+            |(i, page)| {
+                let is_active = i == self.current_page;
+                let (style, weight): (StyleFn<'_, Theme>, Weight) = if is_active {
+                    (theme::button::SidebarActive.into(), Weight::Medium)
+                } else {
+                    (theme::button::Sidebar.into(), Weight::Normal)
+                };
+                button(page.meta().title)
+                    .translate(false)
+                    .size(13.0)
+                    .weight(weight)
+                    .style(style)
+                    .inset([1, 0])
+                    .interaction(Interaction::Pointer)
+                    .on_press(Message::SelectPage(i))
+                    .into()
+            },
+        ))
+        .width(Fill);
 
         // Atom-system demonstration on the sidebar root: `sidebar::Default`
         // (the flush variant) with `Bg(Token::Background)` overriding the
@@ -401,20 +409,26 @@ impl App {
         )
         .height(Fill);
 
-        // Vertical fade-to-bg overlay at the top and bottom edges, mirroring
+        // Vertical fade-to-bg overlay pinned to the TOP edge, mirroring
         // shadcn's docs sidebar (`apps/v4/components/docs-sidebar.tsx`):
-        //   top:    h-8  bg-linear-to-b from-background via-background/80 to-background/50
-        //   bottom: h-16 bg-linear-to-t from-background via-background/80 to-background/50
+        //   top: h-8 bg-linear-to-b from-background via-background/80 to-background/50
         //
-        // We can't pixel-anchor a single 4-stop gradient over the full
+        // Items fade into the page bg as they scroll up past the top edge
+        // of the sidebar — masking the items behind the page header and
+        // hand-shaking the scrollable into "there's more above" affordance.
+        // The bottom edge gets no fade: scroll already bottoms out at the
+        // end of the list, and the bg-aligned sidebar continues flush into
+        // the page bg below.
+        //
+        // We can't pixel-anchor a single multi-stop gradient over the full
         // sidebar height (gradient stops are normalized 0..1 fractions and
-        // sidebar height is dynamic), so we paint two fixed-height
-        // gradient containers and pin them to the top/bottom edges via a
-        // column with `space::vertical()` between. The column is laid over
-        // the sidebar via a `stack!` (the iced widget). The overlay is
-        // event-passive (Container with no on_press → no mouse_interaction
-        // → Stack levitates the cursor through to the scrollable
-        // underneath).
+        // sidebar height is dynamic), so we paint a fixed-height (32px)
+        // gradient container and pin it to the top edge via a column with
+        // `space::vertical()` filling the rest. The column is laid over
+        // the sidebar via a `stack!` (the iced widget) at base layer 0
+        // (the scrollable) so wheel events flow to the scrollable when
+        // the overlay returns `Interaction::None` (no on_press → default
+        // mouse_interaction).
         let top_fade = container(space::vertical())
             .width(Fill)
             .height(32)
@@ -436,28 +450,7 @@ impl App {
                     ..Style::default()
                 }
             });
-        let bottom_fade = container(space::vertical())
-            .width(Fill)
-            .height(64)
-            .style(|t: &Theme| {
-                use iced::gradient::Linear;
-                use theme::container::Style;
-                let bg: iced::Color = t.palette().background.into();
-                Style {
-                    // Linear::new(0.0) = bottom → top (start at offset 0 is
-                    // the bottom edge for angle=0).
-                    // 0.0 (bottom edge): opaque bg; 1.0 (top of band): 50%.
-                    background: Some(
-                        Linear::new(0.0_f32)
-                            .add_stop(0.0, bg)
-                            .add_stop(0.5, iced::Color { a: 0.8, ..bg })
-                            .add_stop(1.0, iced::Color { a: 0.5, ..bg })
-                            .into(),
-                    ),
-                    ..Style::default()
-                }
-            });
-        let fade_overlay = column![top_fade, space::vertical(), bottom_fade]
+        let fade_overlay = column![top_fade, space::vertical()]
             .width(Fill)
             .height(Fill);
 
