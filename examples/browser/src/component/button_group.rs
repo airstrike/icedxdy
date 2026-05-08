@@ -13,7 +13,7 @@
 //!   to demonstrate.
 //! - `button-group-input` — needs an `Input` integrated into the group
 //!   so the field shares the cluster's seam radius. Out of scope until
-//!   button_group integrates non-button items.
+//!   `button::group` integrates non-button items.
 //! - `button-group-input-group` — needs `InputGroup` (not yet ported).
 //! - `button-group-dropdown` — needs `DropdownMenu` (not yet ported).
 //! - `button-group-select` — needs `Select` (not yet ported).
@@ -50,7 +50,8 @@
 
 use iced::Task;
 
-use icedxdy::widget::{button, button_group, column, row};
+use icedxdy::widget::button::group;
+use icedxdy::widget::{button, column, container, row};
 use icedxdy::{Component, Theme};
 
 use crate::Message;
@@ -157,12 +158,18 @@ impl page::Page for ButtonGroupPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
-        view(id).into_iced()
+        view(id, self.state.page_index).into_iced()
     }
 }
 
-fn view(id: &str) -> Component<'static, Message> {
+fn view(id: &str, pi: usize) -> Component<'static, Message> {
+    use iced::Fill;
     use icedxdy::Size::{Lg, Sm};
+
+    // Stub on_press target — every button in the page wires `.on_press(noop())`
+    // so they aren't styled as disabled. Cloning is fine because `Message::Page`
+    // is a thin enum variant.
+    let noop = || Message::Page(pi, page::Message::Noop);
 
     match id {
         // Demo (hero). shadcn `button-group-demo.tsx` nests three child
@@ -173,15 +180,15 @@ fn view(id: &str) -> Component<'static, Message> {
         // isn't ported yet (see module docstring for the deferred-examples
         // list).
         "demo" => row![
-            button_group([button::icon![arrow_left].into()]),
-            button_group([
-                button::outline("Archive").into(),
-                button::outline("Report").into(),
-            ]),
-            button_group([
-                button::outline("Snooze").into(),
-                button::icon![ellipsis].into(),
-            ]),
+            button::group![button::icon![arrow_left].on_press(noop())],
+            button::group![
+                button::outline("Archive").on_press(noop()),
+                button::outline("Report").on_press(noop()),
+            ],
+            button::group![
+                button::outline("Snooze").on_press(noop()),
+                button::icon![ellipsis].on_press(noop()),
+            ],
         ]
         .spacing(8)
         .align_y(iced::Alignment::Center)
@@ -189,11 +196,11 @@ fn view(id: &str) -> Component<'static, Message> {
 
         // Orientation. shadcn `button-group-orientation.tsx`: vertical
         // group of two icon buttons (`<PlusIcon>`, `<MinusIcon>`).
-        "orientation" => button_group([
-            button::icon![plus].into(),
-            button::icon![minus].into(),
-        ])
-        .orientation(button_group::Vertical)
+        "orientation" => button::group![
+            button::icon![plus].on_press(noop()),
+            button::icon![minus].on_press(noop()),
+        ]
+        .orientation(group::Vertical)
         .into(),
 
         // Size. shadcn `button-group-size.tsx`: three groups stacked
@@ -201,31 +208,37 @@ fn view(id: &str) -> Component<'static, Message> {
         // Sizes: sm / default / lg respectively. icon-sm/icon/icon-lg map
         // to a `square()` icon button at the matching text size, since our
         // Size enum drives both the height and the icon-cell width.
+        //
+        // Each row is wrapped in a center-x container so the size-varying
+        // clusters align on a center line rather than a left edge — gives
+        // the column a balanced, calibrated look in the preview card.
         "size" => column([
-            button_group([
-                button::outline("Small").size(Sm).into(),
-                button::outline("Button").size(Sm).into(),
-                button::outline("Group").size(Sm).into(),
-                button::icon![plus].size(Sm).into(),
+            container(button::group![
+                button::outline("Small").size(Sm).on_press(noop()),
+                button::outline("Button").size(Sm).on_press(noop()),
+                button::outline("Group").size(Sm).on_press(noop()),
+                button::icon![plus].size(Sm).on_press(noop()),
             ])
+            .center_x(Fill)
             .into(),
-            button_group([
-                button::outline("Default").into(),
-                button::outline("Button").into(),
-                button::outline("Group").into(),
-                button::icon![plus].into(),
+            container(button::group![
+                button::outline("Default").on_press(noop()),
+                button::outline("Button").on_press(noop()),
+                button::outline("Group").on_press(noop()),
+                button::icon![plus].on_press(noop()),
             ])
+            .center_x(Fill)
             .into(),
-            button_group([
-                button::outline("Large").size(Lg).into(),
-                button::outline("Button").size(Lg).into(),
-                button::outline("Group").size(Lg).into(),
-                button::icon![plus].size(Lg).into(),
+            container(button::group![
+                button::outline("Large").size(Lg).on_press(noop()),
+                button::outline("Button").size(Lg).on_press(noop()),
+                button::outline("Group").size(Lg).on_press(noop()),
+                button::icon![plus].size(Lg).on_press(noop()),
             ])
+            .center_x(Fill)
             .into(),
         ])
         .spacing(32)
-        .align_x(iced::Alignment::Start)
         .into(),
 
         // Nested. shadcn `button-group-nested.tsx`: an outer `<ButtonGroup>`
@@ -236,11 +249,11 @@ fn view(id: &str) -> Component<'static, Message> {
         // docstring for the `<InputGroup>` degradation in the second
         // sub-group.
         "nested" => row![
-            button_group([button::icon![plus].into()]),
-            button_group([
-                button::outline("Add").into(),
-                button::outline("Remove").into(),
-            ]),
+            button::group![button::icon![plus].on_press(noop())],
+            button::group![
+                button::outline("Add").on_press(noop()),
+                button::outline("Remove").on_press(noop()),
+            ],
         ]
         .spacing(8)
         .align_y(iced::Alignment::Center)
@@ -248,11 +261,11 @@ fn view(id: &str) -> Component<'static, Message> {
 
         // Separator. shadcn `button-group-separator.tsx`: two secondary
         // buttons with a `<ButtonGroupSeparator>` between them.
-        "separator" => button_group([
-            button::secondary("Copy").size(Sm).into(),
-            button_group::separator(),
-            button::secondary("Paste").size(Sm).into(),
-        ])
+        "separator" => button::group![
+            button::secondary("Copy").size(Sm).on_press(noop()),
+            group::separator(),
+            button::secondary("Paste").size(Sm).on_press(noop()),
+        ]
         .into(),
 
         _ => unreachable!("unknown button_group preview id: {id}"),

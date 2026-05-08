@@ -6,32 +6,31 @@
 //!
 //! # Children are typed
 //!
-//! Children must arrive as [`Item`] values, NOT as `iced::Element`. The
-//! group needs to mutate each button's resolved style (corner-radius
-//! collapse) AT iteration time — once a child is converted to an
-//! `iced::Element`, its style is locked behind the catalog boundary and
-//! cannot be touched.
+//! Children arrive as [`Item`] values, NOT as `iced::Element`. The group
+//! needs to mutate each button's resolved style (corner-radius collapse) AT
+//! iteration time — once a child is converted to an `iced::Element`, its
+//! style is locked behind the catalog boundary and cannot be touched.
 //!
-//! Two constructors produce items:
+//! Three input shapes flow into the items vec:
 //!
-//! - [`button`] — wraps any [`Button`] (or any value that converts into
-//!   `Item` via [`From`]) and yields an [`Item::Button`].
+//! - Any [`Button`] — converts to [`Item::Button`] via [`From`].
 //! - [`separator()`] — yields an [`Item::Separator`] that the group renders
 //!   as a 1px divider perpendicular to its orientation.
+//! - The [`button::group!`] macro accepts mixed children and calls `.into()`
+//!   on each (matching `row!` / `column!` ergonomics).
 //!
-//! Mixed sequences are free: callers interleave separators between buttons
-//! however they need (matches shadcn's `<ButtonGroup><Button/><ButtonGroupSeparator/><Button/></ButtonGroup>`).
+//! [`button::group!`]: crate::button_group
 //!
 //! # Example
 //!
 //! ```ignore
-//! use icedxdy::widget::{button, button_group};
+//! use icedxdy::widget::button;
 //!
-//! button_group([
-//!     button::outline("Copy").into(),
-//!     button_group::separator(),
-//!     button::outline("Paste").into(),
-//! ])
+//! button::group![
+//!     button::outline("Copy"),
+//!     button::group::separator(),
+//!     button::outline("Paste"),
+//! ]
 //! ```
 //!
 //! # Edge-radius collapse
@@ -47,10 +46,10 @@
 //!
 //! # Orientation
 //!
-//! Defaults to [`Orientation::Horizontal`]. Override with
-//! [`ButtonGroup::orientation`]. The orientation is also passed down to
-//! every [`Item::Separator`] so the divider draws perpendicular to the
-//! group axis without the caller spelling it.
+//! Defaults to [`Horizontal`]. Override with [`ButtonGroup::orientation`].
+//! The orientation is also passed down to every [`Item::Separator`] so the
+//! divider draws perpendicular to the group axis without the caller spelling
+//! it.
 
 use iced_core::Length;
 use iced_widget::Renderer;
@@ -68,10 +67,6 @@ pub use separator::Separator;
 ///
 /// Mirrors shadcn's `<ButtonGroup orientation="horizontal" | "vertical">`
 /// prop. Horizontal is the default per the live docs page.
-///
-/// Defined locally rather than reusing [`crate::field::Orientation`] —
-/// modules stay independent so a change to one doesn't ripple to the other.
-/// Same precedent: see commit `037c1c8` (`field::Orientation` re-exports).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Orientation {
     /// Buttons in a row (default).
@@ -81,8 +76,8 @@ pub enum Orientation {
     Vertical,
 }
 
-// Variants reachable at module scope: `button_group::Horizontal` rather than
-// `button_group::Orientation::Horizontal`. Mirrors `field`'s pattern.
+// Variants reachable at module scope: `button::group::Horizontal` rather
+// than `button::group::Orientation::Horizontal`. Mirrors `field`'s pattern.
 pub use Orientation::*;
 
 /// Position of a [`Button`] within the group's child sequence — drives
@@ -108,11 +103,13 @@ enum Position {
 
 /// One slot in a [`ButtonGroup`]'s child sequence.
 ///
-/// Constructed via [`button()`] and [`separator()`] (or a plain
-/// `From<Button>` conversion via `.into()`). Domain-enum shape per the
-/// minimap M2 critique: re-styling children means calling [`Button::map_style`]
-/// BEFORE the conversion to `iced::Element`, which only the typed enum
-/// permits.
+/// Constructed via the [`button::group!`] macro (which calls `.into()` on
+/// each child) or directly via [`From`] from a [`Button`] / [`Separator`].
+/// Domain-enum shape per the minimap M2 critique: re-styling children means
+/// calling [`Button::map_style`] BEFORE the conversion to `iced::Element`,
+/// which only the typed enum permits.
+///
+/// [`button::group!`]: crate::button_group
 pub enum Item<'a, Message> {
     /// A button that participates in the cluster — its corners get
     /// collapsed based on neighbors at iteration time.
@@ -129,24 +126,25 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>> for Item<'a, Message> {
     }
 }
 
-/// Wrap a [`Button`] (or any value convertible into one) into an [`Item`].
-/// Sugar for `Item::Button(b)` — keeps `button_group([...])` calls free of
-/// `Item::` ceremony.
-pub fn button<'a, Message: Clone + 'a>(b: impl Into<Button<'a, Message>>) -> Item<'a, Message> {
-    Item::Button(b.into())
+impl<'a, Message> From<Separator> for Item<'a, Message> {
+    fn from(s: Separator) -> Self {
+        Item::Separator(s)
+    }
 }
 
 /// Construct a [`Separator`] item. The group's orientation is patched into
 /// the separator at iteration time, so the caller doesn't pass an axis.
-pub fn separator<'a, Message>() -> Item<'a, Message> {
-    Item::Separator(Separator::new())
+pub fn separator() -> Separator {
+    Separator::new()
 }
 
 /// A horizontally- or vertically-fused cluster of [`Button`]s with optional
 /// [`Separator`] dividers.
 ///
-/// Built via [`button_group()`]. Configures via [`ButtonGroup::orientation`]
-/// and [`ButtonGroup::width`].
+/// Built via [`group()`] or the [`button::group!`] macro. Configures via
+/// [`ButtonGroup::orientation`] and [`ButtonGroup::width`].
+///
+/// [`button::group!`]: crate::button_group
 pub struct ButtonGroup<'a, Message> {
     items: Vec<Item<'a, Message>>,
     orientation: Orientation,
@@ -155,17 +153,22 @@ pub struct ButtonGroup<'a, Message> {
 
 /// Build a [`ButtonGroup`] from an ordered sequence of items.
 ///
-/// ```ignore
-/// use icedxdy::widget::{button, button_group};
+/// Prefer the [`button::group!`] macro — it calls `.into()` on each child
+/// so callers don't spell `.into()` per item. This function exists for the
+/// macro to delegate to, and for callers building the items vec dynamically.
 ///
-/// // Three outline buttons fused into a single horizontal pill.
-/// button_group([
-///     button::outline("Archive").into(),
-///     button::outline("Report").into(),
-///     button::outline("Snooze").into(),
-/// ])
+/// [`button::group!`]: crate::button_group
+///
+/// ```ignore
+/// use icedxdy::widget::button;
+///
+/// button::group![
+///     button::outline("Archive"),
+///     button::outline("Report"),
+///     button::outline("Snooze"),
+/// ]
 /// ```
-pub fn button_group<'a, Message: Clone + 'a>(
+pub fn group<'a, Message: Clone + 'a>(
     items: impl IntoIterator<Item = Item<'a, Message>>,
 ) -> ButtonGroup<'a, Message> {
     ButtonGroup {
@@ -176,7 +179,7 @@ pub fn button_group<'a, Message: Clone + 'a>(
 }
 
 impl<'a, Message: Clone + 'a> ButtonGroup<'a, Message> {
-    /// Set the layout axis. Defaults to [`Orientation::Horizontal`].
+    /// Set the layout axis. Defaults to [`Horizontal`].
     ///
     /// Horizontal: buttons sit in a row; corners collapse on the inside
     /// (right edge of the first button, both sides of middle buttons, left
@@ -185,8 +188,8 @@ impl<'a, Message: Clone + 'a> ButtonGroup<'a, Message> {
     /// Vertical: buttons stack in a column; corners collapse on the inside
     /// (bottom of the first button, top + bottom of middle buttons, top of
     /// the last button).
-    pub fn orientation(mut self, orientation: Orientation) -> Self {
-        self.orientation = orientation;
+    pub fn orientation(mut self, orientation: impl Into<Orientation>) -> Self {
+        self.orientation = orientation.into();
         self
     }
 
@@ -233,6 +236,22 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for ButtonGroup<'a, Messa
             })
             .collect();
 
+        // Compute the max button height in this group so separators can
+        // size their perpendicular axis to a concrete pixel value rather
+        // than `Length::Fill`. With Fill, the separator inherits the
+        // surrounding container's available cross-axis size and stretches
+        // far past the buttons (288px in the browser preview card). With
+        // a fixed pixel value matching the tallest button, the separator
+        // shrinks to the cluster's natural height — like shadcn's
+        // `flex items-stretch` resolves to the tallest sibling.
+        let cross_axis_size = items
+            .iter()
+            .filter_map(|item| match item {
+                Item::Button(b) => Some(b.size_height()),
+                Item::Separator(_) => None,
+            })
+            .fold(0.0_f32, f32::max);
+
         // Convert each item to an iced::Element. Buttons get their style
         // wrapped via `map_style` so the resolved Style has the appropriate
         // corners zeroed; separators get their group_orientation patched.
@@ -250,6 +269,7 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for ButtonGroup<'a, Messa
                     }
                     Item::Separator(mut sep) => {
                         sep.group_orientation = orientation;
+                        sep.cross_axis = cross_axis_size;
                         iced_core::Element::new(sep)
                     }
                 }
@@ -345,6 +365,45 @@ fn collapse_corners(
         }
     }
     style
+}
+
+/// Default-variant button-group macro. Children are passed as a comma-list
+/// and each child is `Into::<Item<'_, _>>::into`'d before being collected
+/// into the items vec. Mirrors `row!` / `column!` ergonomics so callers
+/// don't spell `.into()` per child.
+///
+/// ```ignore
+/// use icedxdy::widget::button;
+///
+/// button::group![
+///     button::outline("Archive"),
+///     button::outline("Report"),
+///     button::outline("Snooze"),
+/// ]
+///
+/// // With a separator in the middle — the separator value is `Into<Item>`.
+/// button::group![
+///     button::secondary("Copy"),
+///     button::group::separator(),
+///     button::secondary("Paste"),
+/// ]
+/// ```
+///
+/// `#[macro_export]` is crate-root-scoped (Rust limitation on macros), so
+/// the macro name at the consuming crate is `button_group!` — re-aliased
+/// to `button::group!` via `pub use crate::button_group as group;` in
+/// `widget/src/button.rs` (file-based exemption in the pre-commit hook,
+/// matching the same trick `button::secondary!` / `button::outline!` use).
+#[macro_export]
+macro_rules! button_group {
+    () => (
+        $crate::button::group::group(::core::iter::empty())
+    );
+    ($($child:expr),+ $(,)?) => (
+        $crate::button::group::group([
+            $(Into::<$crate::button::group::Item<'_, _>>::into($child)),+
+        ])
+    );
 }
 
 #[cfg(test)]

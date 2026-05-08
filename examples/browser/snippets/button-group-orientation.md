@@ -1,9 +1,9 @@
 ```rust
-use icedxdy::widget::{button, button_group};
+use icedxdy::widget::button;
 
-button_group([
-    button::icon![plus].into(),
-    button::icon![minus].into(),
-])
-.orientation(button_group::Vertical)
+button::group![
+    button::icon![plus].on_press(Message::Increase),
+    button::icon![minus].on_press(Message::Decrease),
+]
+.orientation(button::group::Vertical)
 ```

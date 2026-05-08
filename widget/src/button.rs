@@ -14,10 +14,12 @@
 //! ```
 
 mod element;
+pub mod group;
 mod helpers;
 pub mod widget;
 
 pub use element::{Button, Link, button};
+pub use group::ButtonGroup;
 pub use helpers::*;
 
 /// Create a button with one or more children using the default variant.
@@ -265,6 +267,8 @@ macro_rules! button_icon {
 pub use crate::button_destructive as destructive;
 #[doc(inline)]
 pub use crate::button_ghost as ghost;
+#[doc(inline)]
+pub use crate::button_group as group;
 #[doc(inline)]
 pub use crate::button_icon as icon;
 #[doc(inline)]

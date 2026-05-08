@@ -1,17 +1,14 @@
 ```rust
-use icedxdy::widget::{button, button_group, row};
+use icedxdy::widget::{button, row};
 
-// Nest inner ButtonGroups inside an outer one to introduce 8px spacing
-// between sub-clusters (matches shadcn's `gap-2` cascade triggered by a
-// `[data-slot=button-group]` child selector).
 row![
-    button_group([
-        button::icon![plus].into(),
-    ]),
-    button_group([
-        button::outline("Add").into(),
-        button::outline("Remove").into(),
-    ]),
+    button::group![
+        button::icon![plus].on_press(Message::Add),
+    ],
+    button::group![
+        button::outline("Add").on_press(Message::Add),
+        button::outline("Remove").on_press(Message::Remove),
+    ],
 ]
 .spacing(8)
 ```

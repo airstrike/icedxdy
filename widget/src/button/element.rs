@@ -137,15 +137,27 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
         self
     }
 
+    /// The button's size-driven height in pixels. Read by [`button::group`]
+    /// to compute the cluster's tallest button so separators size their
+    /// perpendicular axis to a concrete pixel value rather than `Length::Fill`.
+    ///
+    /// Mirrors the height the button will actually render at — same source
+    /// as [`Size::height`] used inside the `From<Button> for Element` impl.
+    ///
+    /// [`button::group`]: crate::button::group
+    pub fn size_height(&self) -> f32 {
+        self.size.height()
+    }
+
     /// Wrap the existing style fn with a post-processor that gets to mutate
     /// the resolved [`iced_widget::button::Style`] before the bridge to our
-    /// vendored widget. Used by [`button_group`] to selectively zero out
+    /// vendored widget. Used by [`button::group`] to selectively zero out
     /// edge-button corner radii at iteration time, after the user's style
     /// closure has run — matches shadcn's `[&>*:not(:first-child)]:rounded-l-none`
     /// child-position cascade, which can only be applied once the parent
     /// knows the child's position in the group.
     ///
-    /// [`button_group`]: crate::button_group
+    /// [`button::group`]: crate::button::group
     pub fn map_style<F>(mut self, transform: F) -> Self
     where
         F: Fn(iced_widget::button::Style) -> iced_widget::button::Style + 'a,
