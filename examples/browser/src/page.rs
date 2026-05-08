@@ -502,18 +502,27 @@ fn render_example<'a>(
 /// the currently-viewed section. No backgrounds at any state — text color
 /// only.
 ///
-/// **Design choice (legibility):** an earlier iteration applied a
-/// viewport-driven rank-alpha gradient — items at the center of the
-/// visible set rendered at full opacity, edges faded to ~0.5, and
-/// off-screen items dropped to 0.25. Stacked on top of `muted_foreground`
-/// (already a low-contrast color), the gradient pulled distant entries
-/// well below readable contrast. shadcn ships no such gradient — every
-/// inactive entry sits at full `muted_foreground` and only the active
-/// entry promotes to `foreground` + `font-medium`. We match that: the
-/// only state distinction is active vs. inactive. The "active" entry is
-/// still computed from the rank-center of the sensor-visible set so it
-/// tracks the reader's scroll position.
+/// **Design gloss on top of shadcn:** a viewport-driven rank-alpha
+/// gradient on INACTIVE entries. Items already in the visible set hold
+/// at full `muted_foreground` opacity at rank-center and fade linearly
+/// toward the edges of the visible set; items not visible at all sit at
+/// the floor alpha so they stay legible-but-recessive. The floor is
+/// generous (`TOC_ALPHA_FLOOR`) — earlier iterations dropped to 0.25
+/// which pulled distant entries below readable contrast against
+/// `muted_foreground` (already a low-contrast color).
+///
+/// The active entry is exempt from the gradient: it always paints at
+/// full `foreground` + `Weight::Medium`, mirroring shadcn's active-state
+/// promotion. "Active" is still computed from the rank-center of the
+/// sensor-visible set so it tracks the reader's scroll position.
 fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
+    /// Minimum alpha applied to off-screen / edge-of-visible entries.
+    /// Higher = more legible; lower = more visual emphasis on the
+    /// rank-center. shadcn ships no fade (1.0 floor); 0.6 keeps a clear
+    /// reading-position cue while staying above the contrast floor for
+    /// `muted_foreground` text.
+    const TOC_ALPHA_FLOOR: f32 = 0.6;
+
     let pi = page.page_index();
     let st = page.state();
 
@@ -534,10 +543,25 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
 
     let toc_count = visible_in_toc.len();
 
+    // Rank-distance fade. Center of visible set → 1.0, edges → floor.
+    // Off-visible entries → floor flat. Empty-visible → floor flat.
+    // Closure is `Fn` (read-only) so each map call below can re-invoke it.
+    let alpha_for = |i: usize| -> f32 {
+        if toc_count == 0 || !visible_in_toc.contains(&i) {
+            return TOC_ALPHA_FLOOR;
+        }
+        let Some(rank) = visible_in_toc.iter().position(|&v| v == i) else {
+            return TOC_ALPHA_FLOOR;
+        };
+        let center = (toc_count - 1) as f32 / 2.0;
+        let distance = (rank as f32 - center).abs() / center.max(1.0);
+        1.0 - (1.0 - TOC_ALPHA_FLOOR) * distance
+    };
+
     // The "active" TOC entry mirrors docs-toc: whichever entry currently
     // sits at rank-center of the sensor-visible set is the one the
     // reader is reading. Empty-visible-set pages have no active entry.
-    let active_index: Option<usize> = if visible_in_toc.is_empty() {
+    let active_index: Option<usize> = if toc_count == 0 {
         None
     } else {
         let center = (toc_count - 1) / 2;
@@ -549,14 +573,18 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let nav_items = entries.into_iter().map(|(i, depth, title)| {
         let indent = 8.0 + f32::from(depth) * 12.0;
         let is_active = Some(i) == active_index;
+        let alpha = alpha_for(i);
         let toc_style: StyleFn<'_, Theme> = Box::new(move |theme, status| {
             let p = theme.palette();
-            // Active entry promotes to `foreground`; everything else stays
-            // at `muted_foreground`. Hover/press also promote to `foreground`
-            // for affordance. No backgrounds at any state.
+            // Active entry promotes to `foreground` at full opacity (no
+            // alpha math). Inactive entries stay at `muted_foreground` and
+            // pick up the rank-distance alpha so they recede toward the
+            // edges of the reader's viewport but never drop below the
+            // legibility floor. Hover/press promote to `foreground` for
+            // affordance. No backgrounds at any state.
             let base = match status {
                 Status::Active if is_active => p.foreground,
-                Status::Active => p.muted.foreground,
+                Status::Active => p.muted.foreground.alpha(alpha),
                 Status::Hovered | Status::Pressed | Status::Disabled => p.foreground,
             };
             Style {
