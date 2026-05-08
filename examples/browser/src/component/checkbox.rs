@@ -199,13 +199,13 @@ impl page::Page for CheckboxPage {
 
             // Checked State preamble: interactive checkbox pre-checked to
             // show the primary-filled state. Width 224 matches `w-56`.
-            "checked-state" => field(
-                checkbox(self.checked_state).on_toggle(toggle(F_CHECKED_STATE)),
-            )
-            .orientation(field::Horizontal)
-            .label("Accept terms and conditions")
-            .width(224)
-            .into(),
+            "checked-state" => {
+                field(checkbox(self.checked_state).on_toggle(toggle(F_CHECKED_STATE)))
+                    .orientation(field::Horizontal)
+                    .label("Accept terms and conditions")
+                    .width(224)
+                    .into()
+            }
 
             // Invalid State preamble: destructive border via
             // `theme::checkbox::Invalid`; label tinted destructive to mirror
