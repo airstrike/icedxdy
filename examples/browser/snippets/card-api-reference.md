@@ -4,7 +4,7 @@ Card is a family of helper constructors, not a single component. Each helper ret
 
 ### `card()`
 
-Wraps any content with shadcn's card surface (`bg-card` + ring + rounded corners). Returns an `iced_widget::Container`, so all the standard container builders chain (`.padding(...)`, `.max_width(...)`, etc.).
+Wraps any content with shadcn's card surface (`bg-card` + ring + rounded corners). Returns an `iced_widget::Container`, so all the standard container builders chain (`.padding(...)`, `.width(...)`, `.max_width(...)`, etc.). Prefer a fixed `.width(384.0)` over `.max_width(384)` when the card sits inside a `Length::Shrink` ancestor — iced's compression-flag semantics collapse a Shrink + `max_width` chain to the intrinsic content width.
 
 ```rust
 card(column![
@@ -17,7 +17,7 @@ card(column![
         button::outline("Login with Google").into(),
     ]),
 ])
-.max_width(384)
+.width(384.0)
 ```
 
 ### `card::header()`

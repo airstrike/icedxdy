@@ -21,6 +21,6 @@ card(column![
 ]
 .spacing(spacing::GAP_4)
 .padding(iced::Padding::ZERO.bottom(spacing::GAP_4)))
-.max_width(384)
+.width(384.0)
 .clip(true)
 ```

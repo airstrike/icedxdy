@@ -1402,11 +1402,16 @@ name = "granita-build"
 version = "0.4.1-dev"
 dependencies = [
  "cargo_metadata",
+ "granita-common",
  "granita-hash",
  "proc-macro2",
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "granita-common"
+version = "0.4.1-dev"
 
 [[package]]
 name = "granita-hash"
@@ -1421,6 +1426,7 @@ dependencies = [
 name = "granita-macros"
 version = "0.4.1-dev"
 dependencies = [
+ "granita-common",
  "granita-hash",
  "proc-macro2",
  "quote",

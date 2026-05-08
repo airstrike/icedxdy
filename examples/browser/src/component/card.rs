@@ -242,7 +242,7 @@ impl page::Page for CardPage {
                         .top(spacing::GAP_4)
                         .bottom(spacing::GAP_4),
                 ))
-                .max_width(384)
+                .width(384.0)
                 .into()
             }
 
@@ -269,7 +269,7 @@ impl page::Page for CardPage {
                     .top(spacing::GAP_4)
                     .bottom(spacing::GAP_4),
             ))
-            .max_width(384)
+            .width(384.0)
             .into(),
 
             // Image: image (16:9) with a 35% black tint overlay above the
@@ -294,7 +294,7 @@ impl page::Page for CardPage {
                 ]
                 .spacing(spacing::GAP_4)
                 .padding(iced::Padding::ZERO.bottom(spacing::GAP_4)))
-                .max_width(384)
+                .width(384.0)
                 .clip(true)
                 .into()
             }

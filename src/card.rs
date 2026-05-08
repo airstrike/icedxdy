@@ -21,7 +21,7 @@
 //!         button::outline("Login with Google").into(),
 //!     ]),
 //! ])
-//! .max_width(384)
+//! .width(384.0)
 //! ```
 
 use iced_core::Length;

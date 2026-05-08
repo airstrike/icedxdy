@@ -53,5 +53,5 @@ card(column![
         .top(spacing::GAP_4)
         .bottom(spacing::GAP_4),
 ))
-.max_width(384)
+.width(384.0)
 ```
