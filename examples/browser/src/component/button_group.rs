@@ -125,6 +125,7 @@ impl ButtonGroupPage {
     }
 }
 
+#[granita::reloadable]
 impl page::Page for ButtonGroupPage {
     fn page_index(&self) -> usize {
         self.state.page_index

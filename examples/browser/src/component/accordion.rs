@@ -12,14 +12,14 @@ use std::collections::HashSet;
 
 use iced::Task;
 
-use icedxdy::Theme;
-use icedxdy::theme;
 use icedxdy::card;
+use icedxdy::theme;
 use icedxdy::widget::{accordion, container, text};
+use icedxdy::Theme;
 
-use crate::Message;
 use crate::icon;
 use crate::page;
+use crate::Message;
 
 pub static META: page::Meta = page::Meta {
     title: "Accordion",
@@ -183,12 +183,11 @@ fn build_accordion<'a>(
     accordion(items)
         .mode(mode)
         .open(open.iter().cloned())
-        .on_toggle(move |id| {
-            Message::Page(page_index, page::Message::InputChanged(field_id, id))
-        })
+        .on_toggle(move |id| Message::Page(page_index, page::Message::InputChanged(field_id, id)))
         .into()
 }
 
+#[granita::reloadable]
 impl page::Page for AccordionPage {
     fn page_index(&self) -> usize {
         self.state.page_index

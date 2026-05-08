@@ -189,6 +189,7 @@ fn view(id: &str) -> Component<'static, Message> {
     }
 }
 
+#[granita::reloadable]
 impl page::Page for BreadcrumbPage {
     fn page_index(&self) -> usize {
         self.state.page_index

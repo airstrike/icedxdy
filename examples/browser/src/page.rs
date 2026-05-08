@@ -203,6 +203,7 @@ pub enum Message {
 }
 
 /// Object-safe trait for a component page.
+#[granita::reloadable]
 pub trait Page: Send {
     fn meta(&self) -> &'static Meta;
     fn blocks(&self) -> &'static [Block];

@@ -44,6 +44,7 @@ impl LabelPage {
     }
 }
 
+#[granita::reloadable]
 impl page::Page for LabelPage {
     fn page_index(&self) -> usize {
         self.state.page_index

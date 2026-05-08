@@ -17,15 +17,15 @@ use iced::Fill;
 use iced::Shrink;
 use iced::Task;
 
-use icedxdy::Theme;
 use icedxdy::rich_text;
 use icedxdy::theme;
 use icedxdy::theme::tweak::Token;
 use icedxdy::widget::rich_text::span;
 use icedxdy::widget::{badge, button, field, input, row, space, text, Component};
+use icedxdy::Theme;
 
-use crate::Message;
 use crate::page;
+use crate::Message;
 
 pub static META: page::Meta = page::Meta {
     title: "Input",
@@ -132,6 +132,7 @@ impl InputPage {
     }
 }
 
+#[granita::reloadable]
 impl page::Page for InputPage {
     fn page_index(&self) -> usize {
         self.state.page_index
@@ -186,9 +187,7 @@ impl page::Page for InputPage {
             // form. Verbatim shadcn `input-demo.tsx`.
             "demo" => field(
                 input("sk-...", &self.demo_value)
-                    .on_input(move |v| {
-                        Message::Page(pi, page::Message::InputChanged(F_DEMO, v))
-                    })
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_DEMO, v)))
                     .width(Fill),
             )
             .label("API Key")
@@ -207,9 +206,7 @@ impl page::Page for InputPage {
             // Field: input with label "Username" and description.
             "field" => field(
                 input("Enter your username", &self.field_value)
-                    .on_input(move |v| {
-                        Message::Page(pi, page::Message::InputChanged(F_FIELD, v))
-                    })
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_FIELD, v)))
                     .width(Fill),
             )
             .label("Username")
@@ -228,9 +225,7 @@ impl page::Page for InputPage {
             // (aria-invalid). First-class `theme::text_input::Invalid`.
             "invalid" => field(
                 input("Error", &self.invalid_value)
-                    .on_input(move |v| {
-                        Message::Page(pi, page::Message::InputChanged(F_INVALID, v))
-                    })
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INVALID, v)))
                     .width(Fill)
                     .style(theme::text_input::Invalid),
             )
@@ -270,9 +265,7 @@ impl page::Page for InputPage {
             // (shadcn `ml-auto`). Verbatim shadcn `input-badge.tsx`.
             "badge" => field(
                 input("https://api.example.com/webhook", &self.badge_value)
-                    .on_input(move |v| {
-                        Message::Page(pi, page::Message::InputChanged(F_BADGE, v))
-                    })
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_BADGE, v)))
                     .width(Fill),
             )
             .label(Component::from(

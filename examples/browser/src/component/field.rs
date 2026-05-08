@@ -20,12 +20,12 @@
 use iced::Fill;
 use iced::Task;
 
-use icedxdy::Theme;
 use icedxdy::theme;
 use icedxdy::widget::{checkbox, container, field, input, switch};
+use icedxdy::Theme;
 
-use crate::Message;
 use crate::page;
+use crate::Message;
 
 pub static META: page::Meta = page::Meta {
     title: "Field",
@@ -101,6 +101,7 @@ impl FieldPage {
     }
 }
 
+#[granita::reloadable]
 impl page::Page for FieldPage {
     fn page_index(&self) -> usize {
         self.state.page_index

@@ -84,6 +84,7 @@ impl ProgressPage {
     }
 }
 
+#[granita::reloadable]
 impl page::Page for ProgressPage {
     fn page_index(&self) -> usize {
         self.state.page_index

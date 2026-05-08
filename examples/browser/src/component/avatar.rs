@@ -125,6 +125,7 @@ impl AvatarPage {
     }
 }
 
+#[granita::reloadable]
 impl page::Page for AvatarPage {
     fn page_index(&self) -> usize {
         self.state.page_index

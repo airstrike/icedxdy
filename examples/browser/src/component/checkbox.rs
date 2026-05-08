@@ -11,12 +11,12 @@
 
 use iced::Task;
 
-use icedxdy::Theme;
 use icedxdy::theme;
 use icedxdy::widget::{checkbox, column, field, text};
+use icedxdy::Theme;
 
-use crate::Message;
 use crate::page;
+use crate::Message;
 
 pub static META: page::Meta = page::Meta {
     title: "Checkbox",
@@ -111,6 +111,7 @@ impl CheckboxPage {
     }
 }
 
+#[granita::reloadable]
 impl page::Page for CheckboxPage {
     fn page_index(&self) -> usize {
         self.state.page_index
