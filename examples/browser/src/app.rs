@@ -289,7 +289,14 @@ impl App {
         } else {
             icon::moon().size(16)
         };
-        let theme_toggle = button::ghost(theme_icon).on_press(Message::ToggleTheme);
+        // Shadcn's ModeToggle is `<Button variant="ghost" size="icon">` —
+        // `size="icon"` maps to a 32x32 square. `.square()` wraps the icon in
+        // `iced_widget::center(...)` for true vertical centering; without it,
+        // `button::ghost(icon)` lays the icon out at the top of the padded box
+        // and the line-height-1.3 line box pushes the glyph ~1px below center.
+        let theme_toggle = button::ghost(theme_icon)
+            .square()
+            .on_press(Message::ToggleTheme);
 
         // Top-level docs-site nav, per `main-nav.tsx` — ghost buttons,
         // size=sm. No active-state highlighting yet; the navigation backend
