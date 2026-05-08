@@ -216,13 +216,14 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Alert<'a, Message> {
         };
 
         // Self-cap the outer width when the caller set `.max_width(...)`.
-        // `Fill` here is what makes the constraint bind — without it the
-        // shrink-to-content behavior would ignore the cap. Skipped when
-        // no cap is set so the alert keeps its natural shrink behavior.
+        // `Length::Fill.max(N)` produces a `Bounded` variant that fills
+        // available space up to `N` while clearing any inherited cross-axis
+        // compression from a Shrink ancestor — matters when this alert sits
+        // inside a Shrink-cross column (e.g. our `column!` default), where
+        // the iced flex pass-2 path would otherwise collapse it to width 0.
         if max_width.is_finite() {
             iced_widget::container(outer)
-                .width(Fill)
-                .max_width(max_width)
+                .width(Fill.max(max_width))
                 .into()
         } else {
             outer
