@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// ba42c3c3a6baa45dc2f9989a076b51d6bcf7fb8317951b9f94fb328d24e6bfdc
+// 0ebfab77affb5355bdd0414e3a32e373aa83ec5220a320b6c512c1b8ff166000
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -9,6 +9,7 @@ pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
 /// Use this to populate an icon-picker widget.
 #[allow(dead_code)]
 pub const ALL_ICONS: &[(&str, &str)] = &[
+    ("arrow_left", "\u{E048}"),
     ("arrow_up", "\u{E04A}"),
     ("arrow_up_right", "\u{E04D}"),
     ("badge_check", "\u{E241}"),
@@ -19,12 +20,22 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("circle_check", "\u{E226}"),
     ("circle_check_big", "\u{E07C}"),
     ("copy", "\u{E09E}"),
+    ("ellipsis", "\u{E0B6}"),
     ("git_branch", "\u{E0E2}"),
     ("info", "\u{E0F9}"),
+    ("minus", "\u{E11C}"),
     ("moon", "\u{E11E}"),
+    ("plus", "\u{E13D}"),
     ("sun", "\u{E178}"),
     ("terminal", "\u{E181}"),
 ];
+
+pub fn arrow_left<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E048}")
+}
 
 pub fn arrow_up<'a, Theme>() -> Text<'a, Theme>
 where
@@ -96,6 +107,13 @@ where
     icon("\u{E09E}")
 }
 
+pub fn ellipsis<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E0B6}")
+}
+
 pub fn git_branch<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -110,11 +128,25 @@ where
     icon("\u{E0F9}")
 }
 
+pub fn minus<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E11C}")
+}
+
 pub fn moon<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E11E}")
+}
+
+pub fn plus<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E13D}")
 }
 
 pub fn sun<'a, Theme>() -> Text<'a, Theme>
