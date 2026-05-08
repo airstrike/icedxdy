@@ -1,5 +1,5 @@
 use iced::mouse::Interaction;
-use iced::widget::{column, combo_box, row, scrollable, space, svg};
+use iced::widget::{column, combo_box, row, scrollable, space, stack, svg};
 use iced_widget::button::StyleFn;
 
 use iced::{Fill, Font, Pixels, Subscription, Task};
@@ -383,17 +383,88 @@ impl App {
         //   top=24px — matches shadcn docs sidebar; the "Components" label
         //             starts ~24px below the header rule, creating visible
         //             breathing room (image 5 reference).
-        //   left=24px — shifts content inset so it aligns with the "Docs"
-        //              text in the top nav (shadcn's sidebar content is
-        //              inset ~8px more than our old left=16 value).
+        //   left=48px — aligns sidebar items with the "Docs" link in the
+        //              top nav. Math:
+        //                header.padding-left = 16
+        //                + branding.width    = 24
+        //                + row.spacing       =  8
+        //                + button.padding-l  = 10  (Size::Sm)
+        //                = "Docs" text starts 58px from page left.
+        //              Our items are `button(...).size(13.0)` (Size::Custom),
+        //              whose left padding is 10px, so column left padding
+        //              must be 58 - 10 = 48px.
         //   right/bottom=8px — unchanged from prior padding.
+        let sidebar_scrollable = scrollable(
+            column![sidebar_header, sidebar_items]
+                .padding(iced::Padding::ZERO.top(24).right(8).bottom(8).left(48))
+                .width(272),
+        )
+        .height(Fill);
+
+        // Vertical fade-to-bg overlay at the top and bottom edges, mirroring
+        // shadcn's docs sidebar (`apps/v4/components/docs-sidebar.tsx`):
+        //   top:    h-8  bg-linear-to-b from-background via-background/80 to-background/50
+        //   bottom: h-16 bg-linear-to-t from-background via-background/80 to-background/50
+        //
+        // We can't pixel-anchor a single 4-stop gradient over the full
+        // sidebar height (gradient stops are normalized 0..1 fractions and
+        // sidebar height is dynamic), so we paint two fixed-height
+        // gradient containers and pin them to the top/bottom edges via a
+        // column with `space::vertical()` between. The column is laid over
+        // the sidebar via a `stack!` (the iced widget). The overlay is
+        // event-passive (Container with no on_press → no mouse_interaction
+        // → Stack levitates the cursor through to the scrollable
+        // underneath).
+        let top_fade = container(space::vertical())
+            .width(Fill)
+            .height(32)
+            .style(|t: &Theme| {
+                use iced::gradient::Linear;
+                use std::f32::consts::PI;
+                use theme::container::Style;
+                let bg: iced::Color = t.palette().background.into();
+                Style {
+                    // Linear::new(PI) = top → bottom.
+                    // 0.0 (top edge): opaque bg; 0.5: 80% alpha; 1.0: 50% alpha.
+                    background: Some(
+                        Linear::new(PI)
+                            .add_stop(0.0, bg)
+                            .add_stop(0.5, iced::Color { a: 0.8, ..bg })
+                            .add_stop(1.0, iced::Color { a: 0.5, ..bg })
+                            .into(),
+                    ),
+                    ..Style::default()
+                }
+            });
+        let bottom_fade = container(space::vertical())
+            .width(Fill)
+            .height(64)
+            .style(|t: &Theme| {
+                use iced::gradient::Linear;
+                use theme::container::Style;
+                let bg: iced::Color = t.palette().background.into();
+                Style {
+                    // Linear::new(0.0) = bottom → top (start at offset 0 is
+                    // the bottom edge for angle=0).
+                    // 0.0 (bottom edge): opaque bg; 1.0 (top of band): 50%.
+                    background: Some(
+                        Linear::new(0.0_f32)
+                            .add_stop(0.0, bg)
+                            .add_stop(0.5, iced::Color { a: 0.8, ..bg })
+                            .add_stop(1.0, iced::Color { a: 0.5, ..bg })
+                            .into(),
+                    ),
+                    ..Style::default()
+                }
+            });
+        let fade_overlay = column![top_fade, space::vertical(), bottom_fade]
+            .width(Fill)
+            .height(Fill);
+
         let sidebar = sidebar::fixed(
-            scrollable(
-                column![sidebar_header, sidebar_items]
-                    .padding(iced::Padding::ZERO.top(24).right(8).bottom(8).left(24))
-                    .width(224),
-            )
-            .height(Fill),
+            stack![sidebar_scrollable, fade_overlay]
+                .width(272)
+                .height(Fill),
         )
         .height(Fill)
         .class(theme::sidebar::Default + Bg(Token::Background));
