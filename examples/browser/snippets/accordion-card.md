@@ -1,6 +1,6 @@
 ```rust
 use icedxdy::card;
-use icedxdy::widget::{accordion, text};
+use icedxdy::widget::{accordion, column, text};
 
 let items = [
     (
@@ -28,7 +28,7 @@ let items = [
     ),
 ];
 
-let inner = accordion::accordion(items.into_iter().map(|(id, trigger, body)| {
+let inner = accordion(items.into_iter().map(|(id, trigger, body)| {
     accordion::item(id, text::small(trigger).medium())
         .content(text::small(body))
 }))
@@ -36,12 +36,9 @@ let inner = accordion::accordion(items.into_iter().map(|(id, trigger, body)| {
 .open(["plans"])
 .on_toggle(Message::Toggle);
 
-card::card(iced::widget::column![
-    iced::Element::from(card::header(
-        "Subscription & Billing",
-        "Common questions about your account, plans, payments and cancellations.",
-    )),
-    iced::Element::from(card::content(inner)),
-])
-.max_width(384)
+let header = card::header("Subscription & Billing")
+    .description("Common questions about your account, plans, payments and cancellations.");
+
+card(column![header, card::content(inner)])
+    .max_width(384)
 ```

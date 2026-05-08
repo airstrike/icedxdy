@@ -28,7 +28,7 @@ let items = [
     ),
 ];
 
-let inner = accordion::accordion(items.into_iter().map(|(id, trigger, body)| {
+let inner = accordion(items.into_iter().map(|(id, trigger, body)| {
     accordion::item(id, text::small(trigger).medium())
         .content(text::small(body))
 }))
@@ -38,6 +38,7 @@ let inner = accordion::accordion(items.into_iter().map(|(id, trigger, body)| {
 
 container(inner)
     .max_width(512)
+    .width(iced::Fill)
     .padding([0, 16])
     .style(|theme: &Theme| Style {
         border: Border {

@@ -23,7 +23,7 @@ let items = [
     ),
 ];
 
-accordion::accordion(items.into_iter().map(|(id, trigger, body)| {
+accordion(items.into_iter().map(|(id, trigger, body)| {
     accordion::item(id, text::small(trigger).medium())
         .content(text::small(body))
 }))

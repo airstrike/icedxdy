@@ -4,7 +4,7 @@ use icedxdy::widget::{accordion, text};
 let mut open = std::collections::HashSet::new();
 open.insert("shipping".to_string());
 
-accordion::accordion([
+accordion([
     accordion::item("shipping", text::small("What are your shipping options?").medium())
         .content(text::small(
             "We offer standard (5-7 days), express (2-3 days), and overnight \

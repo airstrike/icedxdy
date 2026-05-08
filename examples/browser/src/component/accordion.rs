@@ -64,7 +64,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "borders",
                 title: "Borders",
                 description: Some(
-                    "Add `border` to the `Accordion` and `border-b last:border-b-0` to the `AccordionItem` to add borders.",
+                    "Add `border` to the `Accordion` and `border-b last:border-b-0` to the `AccordionItem` to add borders to the items.",
                 ),
                 snippet: "examples/browser/snippets/accordion-borders.md",
             },
@@ -178,7 +178,7 @@ fn build_accordion<'a>(
         })
         .collect();
 
-    accordion::accordion(items)
+    accordion(items)
         .mode(mode)
         .open(open.iter().cloned())
         .on_toggle(move |id| {
@@ -445,7 +445,7 @@ impl page::Page for AccordionPage {
                 use icedxdy::widget::column;
                 let stack = column![header, body];
 
-                card::card(stack).max_width(384.0).width(iced::Fill).into()
+                card(stack).max_width(384.0).width(iced::Fill).into()
             }
 
             _ => unreachable!("unknown accordion preview id: {id}"),

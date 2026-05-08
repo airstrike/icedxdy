@@ -1,7 +1,7 @@
 ```rust
 use icedxdy::widget::{accordion, text};
 
-accordion::accordion([
+accordion([
     accordion::item("item-1", text::small("Can I access my account history?").medium())
         .content(text::small(
             "Yes, you can view your complete account history including all \
