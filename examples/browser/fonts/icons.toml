@@ -2,6 +2,7 @@ module = "icon"
 
 [icons]
 arrow_left        = "arrow-left"
+arrow_right       = "arrow-right"
 arrow_up          = "arrow-up"
 arrow_up_right    = "arrow-up-right"
 badge_check       = "badge-check"

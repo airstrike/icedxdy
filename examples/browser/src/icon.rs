@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 7dd198a538eed3d1cea142cd9b986027a739e0bd949e9fbb3d96b2dbe22bbe99
+// 84007cdb3638869b67d13b2a7a7a36592ff1729e16755c2160124ba3e2db4cfd
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -10,6 +10,7 @@ pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
 #[allow(dead_code)]
 pub const ALL_ICONS: &[(&str, &str)] = &[
     ("arrow_left", "\u{E048}"),
+    ("arrow_right", "\u{E049}"),
     ("arrow_up", "\u{E04A}"),
     ("arrow_up_right", "\u{E04D}"),
     ("badge_check", "\u{E241}"),
@@ -37,6 +38,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E048}")
+}
+
+pub fn arrow_right<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E049}")
 }
 
 pub fn arrow_up<'a, Theme>() -> Text<'a, Theme>

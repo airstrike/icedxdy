@@ -475,10 +475,31 @@ impl App {
         let title = text::h1(meta.title);
         let description = text::p(meta.description).style(theme::text::Muted);
 
+        // Prev/next page navigation. Always fires; the SelectPage handler
+        // is idempotent for same-index, so saturating arithmetic at edges
+        // turns the click into a no-op without a separate disabled state.
+        // TODO: Copy Page button (deferred — needs clipboard write affordance).
+        let total = self.pages.len();
+        let curr = self.current_page;
+        let prev_btn = button::ghost(icon::arrow_left())
+            .square()
+            .on_press(Message::SelectPage(curr.saturating_sub(1)));
+        let next_btn = button::ghost(icon::arrow_right())
+            .square()
+            .on_press(Message::SelectPage((curr + 1).min(total.saturating_sub(1))));
+
+        let page_header = row![
+            column![title, description].spacing(4).width(Fill),
+            prev_btn,
+            next_btn,
+        ]
+        .spacing(8)
+        .align_y(iced::Alignment::Center);
+
         let (page_body, page_nav) = page::view(current, &self.snippet_viewer);
 
         let content = container(
-            column![title, description, container(page_body).width(Fill)]
+            column![page_header, container(page_body).width(Fill)]
                 .spacing(24)
                 .padding(32)
                 .width(700),
