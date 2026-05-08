@@ -6,6 +6,12 @@
 pub mod card;
 pub mod separator;
 
+// Re-export `card::card` as `icedxdy::card` so `use icedxdy::card;` brings
+// both the module (for `card::title(...)`, `card::header(...)`, etc.) and
+// the convenience constructor (for `card(my_content)`) into scope. Same
+// pattern `widget/src/lib.rs` uses for `field` / `checkbox` / `text` / etc.
+pub use card::card;
+
 pub use icedxdy_core as core;
 pub use icedxdy_core::theme;
 pub use icedxdy_core::{Color, Design, FontFamily, Palette, Theme};

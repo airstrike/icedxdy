@@ -2,6 +2,7 @@ pub mod alert;
 pub mod aspect_ratio;
 pub mod badge;
 pub mod button;
+pub mod card;
 pub mod checkbox;
 pub mod field;
 pub mod input;
