@@ -29,6 +29,15 @@ pub mod radius {
 /// Spacing constants (in pixels)
 ///
 /// Based on Tailwind's 4px base unit.
+///
+/// # `GAP_N` aliases
+///
+/// `GAP_1..GAP_6` mirror Tailwind's `gap-N` scale verbatim (`gap-N = N × 4px`).
+/// Reach for these at `.spacing(...)` call sites that translate a shadcn
+/// classlist literally (`gap-2`, `gap-4`, …) — the names are scannable next
+/// to the source they're porting and need no translation table. The `XS / SM
+/// / MD / LG / …` aliases above are kept for callsites that read in semantic
+/// (rather than tailwind-numeric) terms.
 pub mod spacing {
     pub const UNIT: f32 = 4.0;
     /// 2px
@@ -49,6 +58,21 @@ pub mod spacing {
     pub const XL4: f32 = 24.0;
     /// 32px
     pub const XL5: f32 = 32.0;
+
+    // Tailwind-numeric aliases — see module docs.
+
+    /// `gap-1` — 4px (Tailwind `gap-1`).
+    pub const GAP_1: f32 = 4.0;
+    /// `gap-2` — 8px (Tailwind `gap-2`).
+    pub const GAP_2: f32 = 8.0;
+    /// `gap-3` — 12px (Tailwind `gap-3`).
+    pub const GAP_3: f32 = 12.0;
+    /// `gap-4` — 16px (Tailwind `gap-4`).
+    pub const GAP_4: f32 = 16.0;
+    /// `gap-5` — 20px (Tailwind `gap-5`).
+    pub const GAP_5: f32 = 20.0;
+    /// `gap-6` — 24px (Tailwind `gap-6`).
+    pub const GAP_6: f32 = 24.0;
 }
 
 /// Font size constants (in pixels)

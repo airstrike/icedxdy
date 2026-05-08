@@ -2,6 +2,7 @@
 use iced::Fill;
 
 use icedxdy::card;
+use icedxdy::spacing;
 use icedxdy::widget::{button, column, text};
 use icedxdy::Size;
 
@@ -18,7 +19,11 @@ card(column![
             .width(Fill)
     ),
 ]
-.spacing(16)
-.padding(iced::Padding::ZERO.top(16).bottom(16)))
+.spacing(spacing::GAP_4)
+.padding(
+    iced::Padding::ZERO
+        .top(spacing::GAP_4)
+        .bottom(spacing::GAP_4),
+))
 .max_width(384)
 ```

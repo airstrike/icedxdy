@@ -3,6 +3,7 @@ use iced::Fill;
 use iced::widget::stack;
 
 use icedxdy::card;
+use icedxdy::spacing;
 use icedxdy::widget::{aspect_ratio, badge, button, column};
 
 card(column![
@@ -18,8 +19,8 @@ card(column![
             .width(Fill)
     ),
 ]
-.spacing(16)
-.padding(iced::Padding::ZERO.bottom(16)))
+.spacing(spacing::GAP_4)
+.padding(iced::Padding::ZERO.bottom(spacing::GAP_4)))
 .max_width(384)
 .clip(true)
 ```

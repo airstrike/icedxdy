@@ -33,6 +33,7 @@ use iced_widget::container::Container;
 use iced_widget::text::LineHeight;
 
 use crate::Theme;
+use crate::spacing;
 use crate::theme;
 use crate::widget::Component;
 use crate::widget::space;
@@ -44,9 +45,6 @@ mod padding {
     /// footer wraps this with full `p-4`).
     pub const SECTION: f32 = 16.0;
 }
-
-/// `gap-1` between title / description in the CSS-grid header (4px in nova).
-const HEADER_GAP: f32 = 4.0;
 
 /// Card root — wraps content with shadcn's card surface (bg-card + ring +
 /// rounded corners).
@@ -155,7 +153,7 @@ impl<'a, Message: 'a> From<Header<'a, Message>>
 
         // Stack title above (optional) description in a column with gap-1.
         let mut text_col: Column<'a, Message, Theme, Renderer> =
-            Column::new().spacing(HEADER_GAP).width(Length::Fill);
+            Column::new().spacing(spacing::GAP_1).width(Length::Fill);
         text_col = text_col.push(title.into_iced());
         if let Some(d) = description {
             text_col = text_col.push(d.into_iced());
@@ -294,6 +292,6 @@ pub fn footer<'a, Message: 'a>(
 pub fn footer_row<'a, Message: 'a>(
     children: impl IntoIterator<Item = iced_core::Element<'a, Message, Theme, Renderer>>,
 ) -> Container<'a, Message, Theme, Renderer> {
-    let row = Row::with_children(children).spacing(8);
+    let row = Row::with_children(children).spacing(spacing::GAP_2);
     footer(row)
 }
