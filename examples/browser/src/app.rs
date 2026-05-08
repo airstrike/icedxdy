@@ -1,3 +1,4 @@
+use iced::mouse::Interaction;
 use iced::widget::{column, combo_box, row, scrollable, space, stack, svg};
 
 use iced::{Fill, Font, Pixels, Subscription, Task};
@@ -472,6 +473,16 @@ impl App {
         // SelectPage handler is idempotent for same-index, so saturating
         // arithmetic at edges turns clicks into no-ops without a disabled
         // state. Icons are arrows (not chevrons) per shadcn source.
+        //
+        // `.translate(false)` + `.interaction(Pointer)`: the canonical source
+        // wraps each control in a `<Link>` that navigates between docs pages —
+        // CSS hands a pointer cursor to anchors, and the `<Button>`'s
+        // `active:translate-y-px` press affordance is suppressed for anchor-
+        // style usage. We mirror that here: pointer cursor on hover, no 1px
+        // nudge on click. Same configuration the sidebar nav items use (and
+        // the TOC entries in `page.rs`). Action buttons (primary/destructive)
+        // keep the press-down — that distinction is the line between
+        // navigates-somewhere vs. acts-on-something.
         // TODO: Copy Page + dropdown caret block (deferred — needs
         // clipboard-write affordance and a DropdownMenu primitive).
         let total = self.pages.len();
@@ -479,10 +490,14 @@ impl App {
         let prev_btn = button::secondary(icon::arrow_left())
             .size(Size::Sm)
             .square()
+            .translate(false)
+            .interaction(Interaction::Pointer)
             .on_press(Message::SelectPage(curr.saturating_sub(1)));
         let next_btn = button::secondary(icon::arrow_right())
             .size(Size::Sm)
             .square()
+            .translate(false)
+            .interaction(Interaction::Pointer)
             .on_press(Message::SelectPage((curr + 1).min(total.saturating_sub(1))));
 
         // Shadcn shape: `flex flex-col gap-2` outer, with the title row as
