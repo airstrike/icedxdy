@@ -37,6 +37,12 @@
 //! the page content unstyled (default foreground). A real Catalog would
 //! make this automatic.
 //!
+//! Animation gap: shadcn's `<BreadcrumbLink>` carries
+//! `transition-colors hover:text-foreground`, so a link's color fades from
+//! muted to foreground on hover. Because color is caller-driven (no Catalog
+//! yet), our impl snaps — there is no hover-color animation. A future
+//! Catalog pass would surface link state and restore the fade.
+//!
 //! # Separator
 //!
 //! Default separator is a `›` glyph in muted text — the widget crate has no

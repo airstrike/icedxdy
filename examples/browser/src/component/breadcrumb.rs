@@ -1,3 +1,38 @@
+//! Breadcrumb component page — mirrors
+//! <https://ui.shadcn.com/docs/components/radix/breadcrumb>.
+//!
+//! # Intentional skips
+//!
+//! - `breadcrumb-rtl` — RTL is not applicable to iced (per CLAUDE.md).
+//! - `breadcrumb-dropdown` — requires DropdownMenu, not yet ported. Defer
+//!   until Dropdown lands. Note: shadcn's `breadcrumb-demo.tsx` (used as the
+//!   docs hero) wires the ellipsis as a `<DropdownMenu>` trigger with a
+//!   ghost `<Button>` containing `<MoreHorizontalIcon />`. Our hero renders
+//!   the same trail with a clickable `breadcrumb::ellipsis(Some(_))` — the
+//!   visual is identical, just no menu opens.
+//!
+//! # API Reference (deferred)
+//!
+//! The live docs API Reference table lists 7 components, each with the props
+//! shadcn exposes:
+//!
+//! - `Breadcrumb` — `className: string` (no default)
+//! - `BreadcrumbList` — `className: string` (no default)
+//! - `BreadcrumbItem` — `className: string` (no default)
+//! - `BreadcrumbLink` — `className: string` (no default)
+//! - `BreadcrumbPage` — `className: string` (no default)
+//! - `BreadcrumbSeparator` — `children: React.ReactNode`, `className: string`
+//!   (no defaults)
+//! - `BreadcrumbEllipsis` — `className: string` (no default)
+//!
+//! In our port, `className` collapses to widget-level styling (delegated to
+//! the (currently absent) breadcrumb Catalog), `children` for the separator
+//! is the `Breadcrumb::separator(factory)` builder, and the `Item` enum
+//! flattens the JSX nesting (no separate `BreadcrumbList`/`BreadcrumbItem`).
+
+// TODO: API Reference section once a table widget lands — see module doc
+// for the 7 props the live docs covers.
+
 use iced::Task;
 
 use icedxdy::theme;
@@ -7,8 +42,6 @@ use icedxdy::{Component, Theme};
 use crate::icon;
 use crate::page;
 
-// Intentional skips per CLAUDE.md: breadcrumb-rtl (RTL), breadcrumb-dropdown
-// (requires DropdownMenu, not yet ported — defer until Dropdown lands).
 pub static META: page::Meta = page::Meta {
     title: "Breadcrumb",
     description: "Displays the path to the current resource using a hierarchy of links.",
@@ -28,7 +61,9 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "basic",
                 title: "Basic",
-                description: Some("A simple breadcrumb with a home link and a components link."),
+                description: Some(
+                    "A basic breadcrumb with a home link and a components link.",
+                ),
                 snippet: "examples/browser/snippets/breadcrumb-basic.md",
             },
             page::Block::Example {
@@ -43,7 +78,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "ellipsis",
                 title: "Collapsed",
                 description: Some(
-                    "Use the `<BreadcrumbEllipsis />` component to show a collapsed state when the breadcrumb is too long.",
+                    "We provide a `<BreadcrumbEllipsis />` component to show a collapsed state when the breadcrumb is too long.",
                 ),
                 snippet: "examples/browser/snippets/breadcrumb-ellipsis.md",
             },
@@ -51,7 +86,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "link",
                 title: "Link component",
                 description: Some(
-                    "You can use a custom component for `<BreadcrumbLink />`. This is useful when you need to integrate with a routing library.",
+                    "To use a custom link component from your routing library, you can use the `asChild` prop on `<BreadcrumbLink />`.",
                 ),
                 snippet: "examples/browser/snippets/breadcrumb-link.md",
             },
