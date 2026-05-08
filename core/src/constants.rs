@@ -29,15 +29,6 @@ pub mod radius {
 /// Spacing constants (in pixels)
 ///
 /// Based on Tailwind's 4px base unit.
-///
-/// # `GAP_N` aliases
-///
-/// `GAP_1..GAP_6` mirror Tailwind's `gap-N` scale verbatim (`gap-N = N × 4px`).
-/// Reach for these at `.spacing(...)` call sites that translate a shadcn
-/// classlist literally (`gap-2`, `gap-4`, …) — the names are scannable next
-/// to the source they're porting and need no translation table. The `XS / SM
-/// / MD / LG / …` aliases above are kept for callsites that read in semantic
-/// (rather than tailwind-numeric) terms.
 pub mod spacing {
     pub const UNIT: f32 = 4.0;
     /// 2px
@@ -58,21 +49,61 @@ pub mod spacing {
     pub const XL4: f32 = 24.0;
     /// 32px
     pub const XL5: f32 = 32.0;
+}
 
-    // Tailwind-numeric aliases — see module docs.
+/// A spacing scalar — Tailwind `gap-N` mapped to pixels, surfaced as
+/// `Gap::G1 .. Gap::G8` so call sites that translate a shadcn classlist
+/// literally (`gap-2`, `gap-4`, …) read alongside the source they're
+/// porting with no translation table.
+///
+/// Wraps a raw `f32` so iced builders that take `impl Into<Pixels>`
+/// (`Column::spacing`, `Padding::top`, `Padding::ZERO.bottom`, …) accept
+/// `Gap::G2` directly via the `From<Gap> for iced_core::Pixels` impl
+/// below. Custom values escape via the public `f32` field
+/// (`Gap(13.0)`) or the `From<f32>` impl that mirrors `Pixels` itself.
+///
+/// Modeled as a struct with associated constants (rather than an enum)
+/// for parity with iced's own scalar wrappers (`Pixels`, `Em`) and to
+/// avoid a `Custom(f32)` arm cluttering pattern matches we don't need
+/// — every consumer just converts to `Pixels` and forgets the original.
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
+pub struct Gap(pub f32);
 
-    /// `gap-1` — 4px (Tailwind `gap-1`).
-    pub const GAP_1: f32 = 4.0;
-    /// `gap-2` — 8px (Tailwind `gap-2`).
-    pub const GAP_2: f32 = 8.0;
-    /// `gap-3` — 12px (Tailwind `gap-3`).
-    pub const GAP_3: f32 = 12.0;
-    /// `gap-4` — 16px (Tailwind `gap-4`).
-    pub const GAP_4: f32 = 16.0;
-    /// `gap-5` — 20px (Tailwind `gap-5`).
-    pub const GAP_5: f32 = 20.0;
-    /// `gap-6` — 24px (Tailwind `gap-6`).
-    pub const GAP_6: f32 = 24.0;
+impl Gap {
+    /// `gap-1` — 4px.
+    pub const G1: Gap = Gap(4.0);
+    /// `gap-2` — 8px.
+    pub const G2: Gap = Gap(8.0);
+    /// `gap-3` — 12px.
+    pub const G3: Gap = Gap(12.0);
+    /// `gap-4` — 16px.
+    pub const G4: Gap = Gap(16.0);
+    /// `gap-5` — 20px.
+    pub const G5: Gap = Gap(20.0);
+    /// `gap-6` — 24px.
+    pub const G6: Gap = Gap(24.0);
+    /// `gap-7` — 28px.
+    pub const G7: Gap = Gap(28.0);
+    /// `gap-8` — 32px.
+    pub const G8: Gap = Gap(32.0);
+}
+
+impl From<f32> for Gap {
+    fn from(amount: f32) -> Self {
+        Gap(amount)
+    }
+}
+
+impl From<Gap> for f32 {
+    fn from(gap: Gap) -> Self {
+        gap.0
+    }
+}
+
+impl From<Gap> for iced_core::Pixels {
+    fn from(gap: Gap) -> Self {
+        iced_core::Pixels(gap.0)
+    }
 }
 
 /// Font size constants (in pixels)

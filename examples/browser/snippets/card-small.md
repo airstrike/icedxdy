@@ -2,9 +2,8 @@
 use iced::Fill;
 
 use icedxdy::card;
-use icedxdy::spacing;
 use icedxdy::widget::{button, column, text};
-use icedxdy::Size;
+use icedxdy::{Gap, Size};
 
 card(column![
     card::header("Small Card")
@@ -19,11 +18,7 @@ card(column![
             .width(Fill)
     ),
 ]
-.spacing(spacing::GAP_4)
-.padding(
-    iced::Padding::ZERO
-        .top(spacing::GAP_4)
-        .bottom(spacing::GAP_4),
-))
+.spacing(Gap::G4)
+.padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4)))
 .width(384.0)
 ```

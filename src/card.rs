@@ -32,8 +32,8 @@ use iced_widget::Row;
 use iced_widget::container::Container;
 use iced_widget::text::LineHeight;
 
+use crate::Gap;
 use crate::Theme;
-use crate::spacing;
 use crate::theme;
 use crate::widget::Component;
 use crate::widget::space;
@@ -153,7 +153,7 @@ impl<'a, Message: 'a> From<Header<'a, Message>>
 
         // Stack title above (optional) description in a column with gap-1.
         let mut text_col: Column<'a, Message, Theme, Renderer> =
-            Column::new().spacing(spacing::GAP_1).width(Length::Fill);
+            Column::new().spacing(Gap::G1).width(Length::Fill);
         text_col = text_col.push(title.into_iced());
         if let Some(d) = description {
             text_col = text_col.push(d.into_iced());
@@ -292,6 +292,6 @@ pub fn footer<'a, Message: 'a>(
 pub fn footer_row<'a, Message: 'a>(
     children: impl IntoIterator<Item = iced_core::Element<'a, Message, Theme, Renderer>>,
 ) -> Container<'a, Message, Theme, Renderer> {
-    let row = Row::with_children(children).spacing(spacing::GAP_2);
+    let row = Row::with_children(children).spacing(Gap::G2);
     footer(row)
 }

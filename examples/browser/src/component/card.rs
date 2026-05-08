@@ -27,10 +27,9 @@ use iced::widget::stack;
 use icedxdy::card;
 use icedxdy::core::Border;
 use icedxdy::core::Color;
-use icedxdy::spacing;
 use icedxdy::theme::container::Style;
 use icedxdy::widget::{aspect_ratio, badge, button, column, container, field, input, row, space, text};
-use icedxdy::{Component, Size, Theme};
+use icedxdy::{Component, Gap, Size, Theme};
 
 use crate::Message;
 use crate::page;
@@ -220,7 +219,7 @@ impl page::Page for CardPage {
                                 .on_press(Message::Page(pi, page::Message::Noop))
                         )),
                     card::content(
-                        column![email_field, password_field].spacing(spacing::GAP_6),
+                        column![email_field, password_field].spacing(Gap::G6),
                     ),
                     // shadcn footer here uses `flex-col gap-2` with full-width
                     // buttons — column shape, not row.
@@ -233,15 +232,11 @@ impl page::Page for CardPage {
                                 .on_press(Message::Page(pi, page::Message::Noop))
                                 .width(Fill),
                         ]
-                        .spacing(spacing::GAP_2)
+                        .spacing(Gap::G2)
                     ),
                 ]
-                .spacing(spacing::GAP_4)
-                .padding(
-                    iced::Padding::ZERO
-                        .top(spacing::GAP_4)
-                        .bottom(spacing::GAP_4),
-                ))
+                .spacing(Gap::G4)
+                .padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4)))
                 .width(384.0)
                 .into()
             }
@@ -263,12 +258,8 @@ impl page::Page for CardPage {
                         .width(Fill)
                 ),
             ]
-            .spacing(spacing::GAP_4)
-            .padding(
-                iced::Padding::ZERO
-                    .top(spacing::GAP_4)
-                    .bottom(spacing::GAP_4),
-            ))
+            .spacing(Gap::G4)
+            .padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4)))
             .width(384.0)
             .into(),
 
@@ -292,8 +283,8 @@ impl page::Page for CardPage {
                             .width(Fill)
                     ),
                 ]
-                .spacing(spacing::GAP_4)
-                .padding(iced::Padding::ZERO.bottom(spacing::GAP_4)))
+                .spacing(Gap::G4)
+                .padding(iced::Padding::ZERO.bottom(Gap::G4)))
                 .width(384.0)
                 .clip(true)
                 .into()

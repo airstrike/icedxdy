@@ -3,8 +3,8 @@ use iced::Fill;
 use iced::widget::stack;
 
 use icedxdy::card;
-use icedxdy::spacing;
 use icedxdy::widget::{aspect_ratio, badge, button, column};
+use icedxdy::Gap;
 
 card(column![
     aspect_ratio(stack![image_placeholder(), image_overlay()], 16.0 / 9.0),
@@ -19,8 +19,8 @@ card(column![
             .width(Fill)
     ),
 ]
-.spacing(spacing::GAP_4)
-.padding(iced::Padding::ZERO.bottom(spacing::GAP_4)))
+.spacing(Gap::G4)
+.padding(iced::Padding::ZERO.bottom(Gap::G4)))
 .width(384.0)
 .clip(true)
 ```

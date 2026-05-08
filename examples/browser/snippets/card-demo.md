@@ -3,8 +3,8 @@ use iced::Alignment::Center;
 use iced::Fill;
 
 use icedxdy::card;
-use icedxdy::spacing;
 use icedxdy::widget::{button, column, field, input, row, space, text};
+use icedxdy::Gap;
 
 let password_label = row![
     text::label("Password"),
@@ -35,7 +35,7 @@ card(column![
             )
             .label(password_label),
         ]
-        .spacing(spacing::GAP_6)
+        .spacing(Gap::G6)
     ),
     card::footer(
         column![
@@ -44,14 +44,10 @@ card(column![
                 .on_press(Message::Google)
                 .width(Fill),
         ]
-        .spacing(spacing::GAP_2)
+        .spacing(Gap::G2)
     ),
 ]
-.spacing(spacing::GAP_4)
-.padding(
-    iced::Padding::ZERO
-        .top(spacing::GAP_4)
-        .bottom(spacing::GAP_4),
-))
+.spacing(Gap::G4)
+.padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4)))
 .width(384.0)
 ```
