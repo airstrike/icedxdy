@@ -572,6 +572,19 @@ where
             0.0
         };
 
+        // Caret height = the resolved font size (not the full line height).
+        // Sweetened iced upstream paints the caret at `text_bounds.height`
+        // (= `line_height.to_absolute(text_size)`), which for shadcn body
+        // text at 14px / 1.5 line-height gives a ~21px caret while the
+        // visible glyph is ~14px tall — too imposing against the field.
+        // Browser caret behavior is similar (it spans the line box) but
+        // shadcn's nova-faithful preview reads with the caret matched to
+        // the glyph cap — clamp the height and vertically center it
+        // within the line to land on the same visual cadence.
+        let text_size = self.size.unwrap_or_else(|| renderer.default_size()).0;
+        let caret_height = text_size.min(text_bounds.height);
+        let caret_y = text_bounds.y + (text_bounds.height - caret_height) * 0.5;
+
         let (cursor, is_selecting) = if let Some(focus) = state
             .is_focused
             .as_ref()
@@ -591,13 +604,13 @@ where
                             renderer::Quad {
                                 bounds: Rectangle {
                                     x: (text_bounds.x + text_value_width).floor(),
-                                    y: text_bounds.y,
+                                    y: caret_y,
                                     width: if renderer::CRISP {
                                         (1.0 / renderer.scale_factor().unwrap_or(1.0)).max(1.0)
                                     } else {
                                         1.0
                                     },
-                                    height: text_bounds.height,
+                                    height: caret_height,
                                 },
                                 ..renderer::Quad::default()
                             },
