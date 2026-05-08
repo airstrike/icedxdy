@@ -18,6 +18,7 @@
 
 use iced_core::Alignment;
 use iced_core::Length::Fill;
+use iced_core::Padding;
 use iced_core::mouse::Interaction;
 use iced_widget::Renderer;
 use iced_widget::button::Status;
@@ -33,15 +34,21 @@ use icedxdy_core::theme::button;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MenuButtonSize {
     #[default]
-    Default, // h-8 = 32px
-    Sm, // h-7 = 28px
-    Lg, // h-12 = 48px
+    Default, // h-8 = 32px, text-sm
+    Sm,      // h-7 = 28px, text-xs
+    Lg,      // h-12 = 48px, text-sm
+    /// Docs-sidebar override (`apps/v4/components/docs-sidebar.tsx`):
+    /// `h-[30px] text-[0.8rem] font-medium` with `border border-transparent`.
+    /// We render as h=32 + inset(1) elsewhere, so the painted fill lands
+    /// at 30 px while the 1px transparent halo around the fill mirrors the
+    /// `border border-transparent` on the canonical class.
+    Docs,
 }
 
 impl MenuButtonSize {
     pub fn height(&self) -> f32 {
         match self {
-            Self::Default => 32.0,
+            Self::Default | Self::Docs => 32.0,
             Self::Sm => 28.0,
             Self::Lg => 48.0,
         }
@@ -51,14 +58,17 @@ impl MenuButtonSize {
         match self {
             Self::Default | Self::Lg => 14.0, // text-sm
             Self::Sm => 12.0,                 // text-xs
+            Self::Docs => 13.0,               // text-[0.8rem] ≈ 12.8
         }
     }
 
-    pub fn padding(&self) -> iced_core::Padding {
+    pub fn padding(&self) -> Padding {
         match self {
-            Self::Default => iced_core::Padding::from([4.0, 8.0]),
-            Self::Sm => iced_core::Padding::from([2.0, 8.0]),
-            Self::Lg => iced_core::Padding::from([8.0, 8.0]),
+            Self::Default => Padding::from([4.0, 8.0]),
+            Self::Sm => Padding::from([2.0, 8.0]),
+            Self::Lg => Padding::from([8.0, 8.0]),
+            // Canonical docs-sidebar items use `p-2` (8 px on every side).
+            Self::Docs => Padding::from([8.0, 8.0]),
         }
     }
 }
@@ -72,6 +82,7 @@ pub struct SidebarMenuButton<'a, Message> {
     size: MenuButtonSize,
     active: bool,
     collapsed: bool,
+    inset: Padding,
     tooltip: Option<String>,
     on_press: Option<Message>,
 }
@@ -85,6 +96,7 @@ pub fn menu_button<'a, Message: Clone + 'a>(
         size: MenuButtonSize::Default,
         active: false,
         collapsed: false,
+        inset: Padding::ZERO,
         tooltip: None,
         on_press: None,
     }
@@ -106,6 +118,18 @@ impl<'a, Message: Clone + 'a> SidebarMenuButton<'a, Message> {
     /// Set whether the sidebar is collapsed (icon-only mode).
     pub fn collapsed(mut self, collapsed: bool) -> Self {
         self.collapsed = collapsed;
+        self
+    }
+
+    /// Transparent inset between the button's bounds (hit-test + hover
+    /// region) and the painted bg/border. Lets a parent column keep
+    /// `spacing(0)` so adjacent items share boundaries (continuous hover,
+    /// no dead-zone gap) while the visible fills sit apart by
+    /// `inset.top + inset.bottom`. The docs-sidebar override pairs
+    /// `inset(1)` with [`MenuButtonSize::Docs`] to mirror the canonical
+    /// `border border-transparent` 1px halo.
+    pub fn inset(mut self, inset: impl Into<Padding>) -> Self {
+        self.inset = inset.into();
         self
     }
 
@@ -152,7 +176,10 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             .padding(btn.size.padding())
         };
 
-        raw_btn = raw_btn.translate(false).interaction(Interaction::Pointer);
+        raw_btn = raw_btn
+            .translate(false)
+            .interaction(Interaction::Pointer)
+            .inset(btn.inset);
 
         // Dispatch into existing theme::button variants. `button::sidebar`
         // (inactive) hovers with `palette.sidebar.accent`; `button::sidebar_active`

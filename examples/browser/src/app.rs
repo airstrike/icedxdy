@@ -1,6 +1,4 @@
-use iced::mouse::Interaction;
 use iced::widget::{column, combo_box, row, scrollable, space, stack, svg};
-use iced_widget::button::StyleFn;
 
 use iced::{Fill, Font, Pixels, Subscription, Task};
 use icedxdy::theme::tweak::Bg;
@@ -8,6 +6,7 @@ use icedxdy::theme::tweak::token::Token;
 use icedxdy::widget::column::Column;
 use icedxdy::widget::container;
 use icedxdy::widget::markdown::highlighter::Map;
+use icedxdy::widget::sidebar::MenuButtonSize;
 
 use icedxdy::widget::{button, rule, separator, sidebar, text};
 use icedxdy::{Size, Theme, Weight, theme};
@@ -344,34 +343,26 @@ impl App {
         .padding([0, 8])
         .align_y(iced::Center);
 
-        // Per-item: 30px height + 13px text + Medium when active, Normal
-        // otherwise. Our button defaults to Medium, so the inactive drop
-        // is explicit. The raw `Button` carries the docs-faithful 30px/
-        // 13px/`inset([1, 0])` continuous-hover affordance landed in
-        // earlier phases.
+        // Per-item: docs-sidebar shape — h-[30px] painted fill + text-[0.8rem]
+        // (≈ 13 px) + `font-medium` (unconditional in the canonical override
+        // class). Active gets `bg-accent border-accent`; inactive gets the
+        // hover halo only. Both via the `sidebar` / `sidebar_active`
+        // theme fns dispatched inside `SidebarMenuButton`.
         //
-        // We stack the items in a bare `Column` (no `.spacing(...)`).
-        // `inset([1, 0])` already injects 1px of transparent padding at
-        // the top and bottom of each button — adjacent fills sit 2px
-        // apart, matching shadcn's docs sidebar `gap-0.5` (2px). Wrapping
-        // these in `sidebar::menu` (which carries a built-in `spacing(4)`
-        // for the registry-default `gap-1` look) double-counts the gap
-        // and pushes the items apart.
+        // `MenuButtonSize::Docs` ships h=32 + p-2 (8 px) and we add `inset(1)`
+        // — the 1px transparent halo is the layout twin of the canonical
+        // `border border-transparent`, and shrinks the painted fill from
+        // 32 → 30 to land on `h-[30px]`. Two adjacent items leave 2 px
+        // between fills, matching the components subnav's `gap-0.5`. The
+        // outer `Column` keeps `spacing(0)` (canonical top-level group is
+        // `gap-0`); the components subnav's `gap-0.5` is supplied entirely
+        // by the inset halo.
         let sidebar_items = Column::with_children(self.pages.iter().enumerate().map(
             |(i, page)| {
-                let is_active = i == self.current_page;
-                let (style, weight): (StyleFn<'_, Theme>, Weight) = if is_active {
-                    (theme::button::SidebarActive.into(), Weight::Medium)
-                } else {
-                    (theme::button::Sidebar.into(), Weight::Normal)
-                };
-                button(page.meta().title)
-                    .translate(false)
-                    .size(13.0)
-                    .weight(weight)
-                    .style(style)
-                    .inset([1, 0])
-                    .interaction(Interaction::Pointer)
+                sidebar::menu_button(page.meta().title)
+                    .size(MenuButtonSize::Docs)
+                    .inset(1)
+                    .active(i == self.current_page)
                     .on_press(Message::SelectPage(i))
                     .into()
             },
@@ -391,20 +382,21 @@ impl App {
         //   top=24px — matches shadcn docs sidebar; the "Components" label
         //             starts ~24px below the header rule, creating visible
         //             breathing room (image 5 reference).
-        //   left=48px — aligns sidebar items with the "Docs" link in the
+        //   left=49px — aligns sidebar item TEXT with the "Docs" link in the
         //              top nav. Math:
         //                header.padding-left = 16
         //                + branding.width    = 24
         //                + row.spacing       =  8
         //                + button.padding-l  = 10  (Size::Sm)
         //                = "Docs" text starts 58px from page left.
-        //              Our items are `button(...).size(13.0)` (Size::Custom),
-        //              whose left padding is 10px, so column left padding
-        //              must be 58 - 10 = 48px.
+        //              Our items are `MenuButtonSize::Docs` (8px padding) +
+        //              `inset(1)` (1px transparent halo on the left), so
+        //              text starts at `col-left + 1 + 8` from the page edge.
+        //              Column left padding must be 58 - 9 = 49px.
         //   right/bottom=8px — unchanged from prior padding.
         let sidebar_scrollable = scrollable(
             column![sidebar_header, sidebar_items]
-                .padding(iced::Padding::ZERO.top(24).right(8).bottom(8).left(48))
+                .padding(iced::Padding::ZERO.top(24).right(8).bottom(8).left(49))
                 .width(272),
         )
         .height(Fill);
