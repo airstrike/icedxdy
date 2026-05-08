@@ -166,10 +166,7 @@ where
     }
 
     /// Sets the text [`text::LineHeight`] of the [`Checkbox`].
-    pub fn line_height(
-        mut self,
-        line_height: impl Into<text::LineHeight>,
-    ) -> Self {
+    pub fn line_height(mut self, line_height: impl Into<text::LineHeight>) -> Self {
         self.line_height = line_height.into();
         self
     }
@@ -510,11 +507,9 @@ where
                     off.border
                 };
                 let border = Border {
-                    color: internal.animation.interpolate(
-                        off.border.color,
-                        on.border.color,
-                        now,
-                    ),
+                    color: internal
+                        .animation
+                        .interpolate(off.border.color, on.border.color, now),
                     ..target_border
                 };
 
@@ -836,12 +831,10 @@ impl Catalog for Theme {
 /// The default style of a stock-iced themed checkbox. Lifts through iced's
 /// own default checkbox resolver and converts to our `Style`.
 pub fn default(theme: &Theme, status: Status) -> Style {
-    let iced: iced_widget::checkbox::Style =
-        <Theme as iced_widget::checkbox::Catalog>::style(
-            theme,
-            &<Theme as iced_widget::checkbox::Catalog>::default(),
-            status,
-        );
+    let iced: iced_widget::checkbox::Style = <Theme as iced_widget::checkbox::Catalog>::style(
+        theme,
+        &<Theme as iced_widget::checkbox::Catalog>::default(),
+        status,
+    );
     iced.into()
 }
-

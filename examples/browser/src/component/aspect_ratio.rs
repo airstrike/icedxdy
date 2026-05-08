@@ -17,7 +17,6 @@ use icedxdy::{Theme, radius};
 use crate::Message;
 use crate::page;
 
-
 pub static META: page::Meta = page::Meta {
     title: "Aspect Ratio",
     description: "Displays content within a desired ratio.",

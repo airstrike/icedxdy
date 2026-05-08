@@ -259,9 +259,7 @@ impl<'a, Message: 'a> IntoDescription<'a, Message> for Component<'a, Message> {
 /// Equivalent to `card::header(title)` — both flow through the same
 /// rendering path. Kept as a named export so call sites that don't need
 /// the builder shape stay terse.
-pub fn header_simple<'a, Message: 'a>(
-    title: impl IntoTitle<'a, Message>,
-) -> Header<'a, Message> {
+pub fn header_simple<'a, Message: 'a>(title: impl IntoTitle<'a, Message>) -> Header<'a, Message> {
     header(title)
 }
 

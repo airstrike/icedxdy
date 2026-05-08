@@ -173,10 +173,7 @@ mod tests {
         // PILL_RADIUS but we only need to confirm it's the pill clamp,
         // not a fractional/rounded-rectangle radius.
         let r: f32 = s.border.radius.top_left;
-        assert!(
-            r >= PILL_RADIUS,
-            "expected pill-clamped radius, got {r}",
-        );
+        assert!(r >= PILL_RADIUS, "expected pill-clamped radius, got {r}",);
     }
 
     /// In-group avatars carry a 2px ring; stand-alone avatars do not.

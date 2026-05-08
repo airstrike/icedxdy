@@ -154,11 +154,7 @@ impl iced_widget::toggler::Catalog for Theme {
         Box::new(|t, s| default(t, s).into())
     }
 
-    fn style(
-        &self,
-        class: &Self::Class<'_>,
-        status: Status,
-    ) -> iced_widget::toggler::Style {
+    fn style(&self, class: &Self::Class<'_>, status: Status) -> iced_widget::toggler::Style {
         class(self, status)
     }
 }

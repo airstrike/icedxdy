@@ -20,12 +20,12 @@
 use iced::Fill;
 use iced::Task;
 
+use icedxdy::Theme;
 use icedxdy::theme;
 use icedxdy::widget::{checkbox, container, field, input, switch};
-use icedxdy::Theme;
 
-use crate::page;
 use crate::Message;
+use crate::page;
 
 pub static META: page::Meta = page::Meta {
     title: "Field",
@@ -53,17 +53,13 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "checkbox",
                 title: "Checkbox",
-                description: Some(
-                    "Wrap a checkbox in a Field to attach a label and description.",
-                ),
+                description: Some("Wrap a checkbox in a Field to attach a label and description."),
                 snippet: "examples/browser/snippets/field-checkbox.md",
             },
             page::Block::Example {
                 id: "switch",
                 title: "Switch",
-                description: Some(
-                    "Wrap a switch in a Field to attach a label and description.",
-                ),
+                description: Some("Wrap a switch in a Field to attach a label and description."),
                 snippet: "examples/browser/snippets/field-switch.md",
             },
         ],

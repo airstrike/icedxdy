@@ -137,9 +137,7 @@ pub fn aspect_ratio<'a, Message: 'a>(
 /// Pass `None` to always render the fallback content; pass `Some(handle)`
 /// to render the image clipped to a circle. See the `avatar` module for
 /// the runtime image-load deviation note.
-pub fn avatar<'a, Message: 'a>(
-    image: Option<iced_widget::image::Handle>,
-) -> Avatar<'a, Message> {
+pub fn avatar<'a, Message: 'a>(image: Option<iced_widget::image::Handle>) -> Avatar<'a, Message> {
     avatar::avatar(image)
 }
 
@@ -149,9 +147,7 @@ pub fn input<'a, Message: Clone + 'a>(placeholder: &'a str, value: &'a str) -> I
 }
 
 /// Create a [`Checkbox`] in the given state.
-pub fn checkbox<'a, Message: 'a>(
-    state: impl Into<checkbox::State>,
-) -> Checkbox<'a, Message> {
+pub fn checkbox<'a, Message: 'a>(state: impl Into<checkbox::State>) -> Checkbox<'a, Message> {
     checkbox::checkbox(state)
 }
 
@@ -161,9 +157,7 @@ pub fn progress<'a, Message: 'a>(value: f32) -> Progress<'a, Message> {
 }
 
 /// Create a [`Field`] wrapping the given input content.
-pub fn field<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Field<'a, Message> {
+pub fn field<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Field<'a, Message> {
     field::field(content)
 }
 

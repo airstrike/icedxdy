@@ -24,8 +24,8 @@
 use iced::Task;
 use iced::widget::image;
 
-use icedxdy::widget::{avatar, row};
 use icedxdy::Theme;
+use icedxdy::widget::{avatar, row};
 
 use crate::Message;
 use crate::icon;
@@ -170,10 +170,7 @@ impl page::Page for AvatarPage {
             // and a group with a +3 count.
             "demo" => row![
                 avatar(Some(airstrike_handle())).fallback("AT"),
-                avatar::badge(
-                    avatar(Some(hecrj_handle())).fallback("HR"),
-                    avatar::dot(),
-                ),
+                avatar::badge(avatar(Some(hecrj_handle())).fallback("HR"), avatar::dot(),),
                 avatar::group([
                     avatar(Some(airstrike_handle())).fallback("AT"),
                     avatar(Some(hecrj_handle())).fallback("HR"),
@@ -189,19 +186,15 @@ impl page::Page for AvatarPage {
             "basic" => avatar(Some(airstrike_handle())).fallback("AT").into(),
 
             // Badge (avatar-badge.tsx): avatar + corner status dot.
-            "badge" => avatar::badge(
-                avatar(Some(hecrj_handle())).fallback("HR"),
-                avatar::dot(),
-            )
-            .into(),
+            "badge" => {
+                avatar::badge(avatar(Some(hecrj_handle())).fallback("HR"), avatar::dot()).into()
+            }
 
             // Badge with Icon (avatar-badge-icon.tsx): avatar + corner badge
             // containing a `+` icon (lucide PlusIcon).
-            "badge-icon" => avatar::badge(
-                avatar(Some(iced_handle())).fallback("IC"),
-                icon::plus(),
-            )
-            .into(),
+            "badge-icon" => {
+                avatar::badge(avatar(Some(iced_handle())).fallback("IC"), icon::plus()).into()
+            }
 
             // Avatar Group (avatar-group.tsx): three overlapping avatars.
             "group" => avatar::group([

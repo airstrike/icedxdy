@@ -320,10 +320,16 @@ impl App {
         .spacing(0)
         .align_y(iced::Center);
 
-        let header = row![branding, nav, space::horizontal(), font_selector, theme_toggle]
-            .spacing(8)
-            .padding(16)
-            .align_y(iced::Center);
+        let header = row![
+            branding,
+            nav,
+            space::horizontal(),
+            font_selector,
+            theme_toggle
+        ]
+        .spacing(8)
+        .padding(16)
+        .align_y(iced::Center);
 
         // Sidebar — values lifted from `.nova/apps/v4/components/docs-sidebar.tsx`,
         // not the registry default. The docs site overrides several values:
@@ -358,17 +364,16 @@ impl App {
         // outer `Column` keeps `spacing(0)` (canonical top-level group is
         // `gap-0`); the components subnav's `gap-0.5` is supplied entirely
         // by the inset halo.
-        let sidebar_items = Column::with_children(self.pages.iter().enumerate().map(
-            |(i, page)| {
+        let sidebar_items =
+            Column::with_children(self.pages.iter().enumerate().map(|(i, page)| {
                 sidebar::menu_button(page.meta().title)
                     .size(MenuButtonSize::Docs)
                     .inset(1)
                     .active(i == self.current_page)
                     .on_press(Message::SelectPage(i))
                     .into()
-            },
-        ))
-        .width(Fill);
+            }))
+            .width(Fill);
 
         // Atom-system demonstration on the sidebar root: `sidebar::Default`
         // (the flush variant) with `Bg(Token::Background)` overriding the

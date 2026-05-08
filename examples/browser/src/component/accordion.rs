@@ -12,19 +12,18 @@ use std::collections::HashSet;
 
 use iced::Task;
 
+use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme;
 use icedxdy::widget::{accordion, container, text};
-use icedxdy::Theme;
 
+use crate::Message;
 use crate::icon;
 use crate::page;
-use crate::Message;
 
 pub static META: page::Meta = page::Meta {
     title: "Accordion",
-    description:
-        "A vertically stacked set of interactive headings that each reveal a section of content.",
+    description: "A vertically stacked set of interactive headings that each reveal a section of content.",
 };
 
 pub static BLOCKS: &[page::Block] = &[

@@ -38,9 +38,7 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "description",
                 title: "Description",
-                description: Some(
-                    "Pair a switch with a label and supporting description.",
-                ),
+                description: Some("Pair a switch with a label and supporting description."),
                 snippet: "examples/browser/snippets/switch-description.md",
             },
             page::Block::Example {
@@ -129,8 +127,9 @@ impl page::Page for SwitchPage {
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
         let pi = self.state.page_index;
-        let toggle =
-            move |field: usize| move |b: bool| Message::Page(pi, page::Message::BoolChanged(field, b));
+        let toggle = move |field: usize| {
+            move |b: bool| Message::Page(pi, page::Message::BoolChanged(field, b))
+        };
 
         // Each preview is wrapped in a center_x container so it renders
         // horizontally centered within the 288 px card, matching shadcn's
@@ -174,12 +173,9 @@ impl page::Page for SwitchPage {
             // Disabled label: nova cascades opacity-50 via data-disabled on Field.
             // text::muted approximates the dimming today; text::label (Phase 3)
             // + a proper opacity tweak (Phase 4) will land the exact spec.
-            "disabled" => row![
-                switch(false),
-                text::muted("Disabled").medium(),
-            ]
-            .spacing(8)
-            .into(),
+            "disabled" => row![switch(false), text::muted("Disabled").medium(),]
+                .spacing(8)
+                .into(),
 
             // Invalid: destructive border via the `theme::switch::Invalid`
             // variant, matching shadcn's `aria-invalid` styling. Layout
@@ -190,8 +186,7 @@ impl page::Page for SwitchPage {
             // Field. text::error (Phase 3) will consolidate this idiom.
             "invalid" => row![
                 column![
-                    text::label("Accept terms and conditions")
-                        .style(theme::text::Destructive),
+                    text::label("Accept terms and conditions").style(theme::text::Destructive),
                     text::muted("You must accept the terms and conditions to continue."),
                 ]
                 .spacing(2)

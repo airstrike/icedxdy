@@ -11,12 +11,12 @@
 
 use iced::Task;
 
+use icedxdy::Theme;
 use icedxdy::theme;
 use icedxdy::widget::{checkbox, column, field, text};
-use icedxdy::Theme;
 
-use crate::page;
 use crate::Message;
+use crate::page;
 
 pub static META: page::Meta = page::Meta {
     title: "Checkbox",

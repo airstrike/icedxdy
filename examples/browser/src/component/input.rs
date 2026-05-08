@@ -17,15 +17,15 @@ use iced::Fill;
 use iced::Shrink;
 use iced::Task;
 
+use icedxdy::Theme;
 use icedxdy::rich_text;
 use icedxdy::theme;
 use icedxdy::theme::tweak::Token;
 use icedxdy::widget::rich_text::span;
-use icedxdy::widget::{badge, button, field, input, row, space, text, Component};
-use icedxdy::Theme;
+use icedxdy::widget::{Component, badge, button, field, input, row, space, text};
 
-use crate::page;
 use crate::Message;
+use crate::page;
 
 pub static META: page::Meta = page::Meta {
     title: "Input",

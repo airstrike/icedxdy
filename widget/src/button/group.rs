@@ -253,22 +253,25 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for ButtonGroup<'a, Messa
         let elements: Vec<iced_core::Element<'a, Message, Theme, Renderer>> = items
             .into_iter()
             .zip(positions.into_iter())
-            .map(|(item, pos)| -> iced_core::Element<'a, Message, Theme, Renderer> {
-                match item {
-                    Item::Button(btn) => {
-                        // pos is always Some(_) for Item::Button per the
-                        // mapping above; expect makes the invariant explicit.
-                        let pos = pos.expect("Item::Button must carry a Position");
-                        let btn = btn.map_style(move |style| collapse_corners(style, pos, orientation));
-                        btn.into()
+            .map(
+                |(item, pos)| -> iced_core::Element<'a, Message, Theme, Renderer> {
+                    match item {
+                        Item::Button(btn) => {
+                            // pos is always Some(_) for Item::Button per the
+                            // mapping above; expect makes the invariant explicit.
+                            let pos = pos.expect("Item::Button must carry a Position");
+                            let btn = btn
+                                .map_style(move |style| collapse_corners(style, pos, orientation));
+                            btn.into()
+                        }
+                        Item::Separator(mut sep) => {
+                            sep.group_orientation = orientation;
+                            sep.cross_axis = cross_axis_size;
+                            iced_core::Element::new(sep)
+                        }
                     }
-                    Item::Separator(mut sep) => {
-                        sep.group_orientation = orientation;
-                        sep.cross_axis = cross_axis_size;
-                        iced_core::Element::new(sep)
-                    }
-                }
-            })
+                },
+            )
             .collect();
 
         // Lay them out along the chosen axis with NO inter-child spacing —

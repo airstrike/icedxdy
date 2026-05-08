@@ -49,9 +49,7 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "basic",
                 title: "Basic",
-                description: Some(
-                    "A basic breadcrumb with a home link and a components link.",
-                ),
+                description: Some("A basic breadcrumb with a home link and a components link."),
                 snippet: "examples/browser/snippets/breadcrumb-basic.md",
             },
             page::Block::Example {
@@ -154,11 +152,7 @@ fn view(id: &str) -> Component<'static, Message> {
             breadcrumb::link(text::muted("Components"), Message::Pressed),
             breadcrumb::page("Breadcrumb"),
         ])
-        .separator(|| {
-            text::small("\u{2022}")
-                .style(theme::text::Muted)
-                .into()
-        })
+        .separator(|| text::small("\u{2022}").style(theme::text::Muted).into())
         .into(),
 
         // Collapsed — `breadcrumb-ellipsis.tsx`. Static ellipsis between

@@ -163,8 +163,7 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
         F: Fn(iced_widget::button::Style) -> iced_widget::button::Style + 'a,
     {
         use iced_widget::button;
-        let prev =
-            std::mem::replace(&mut self.style, Box::new(|_, _| button::Style::default()));
+        let prev = std::mem::replace(&mut self.style, Box::new(|_, _| button::Style::default()));
         self.style = Box::new(move |t, s| transform(prev(t, s)));
         self
     }
@@ -214,9 +213,7 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
                 } else {
                     content
                 };
-            widget::Button::new(inner)
-                .height(h)
-                .padding(size.padding())
+            widget::Button::new(inner).height(h).padding(size.padding())
         };
 
         iced_btn = iced_btn.translate(btn.translate).inset(btn.inset);

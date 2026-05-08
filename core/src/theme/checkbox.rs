@@ -115,11 +115,7 @@ impl iced_widget::checkbox::Catalog for Theme {
         Box::new(|t, s| default(t, s).into())
     }
 
-    fn style(
-        &self,
-        class: &Self::Class<'_>,
-        status: Status,
-    ) -> iced_widget::checkbox::Style {
+    fn style(&self, class: &Self::Class<'_>, status: Status) -> iced_widget::checkbox::Style {
         class(self, status)
     }
 }

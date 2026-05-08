@@ -42,6 +42,7 @@
 
 use std::time::Duration;
 
+use iced_core::Length::{Fill, Shrink};
 use iced_core::animation::Easing;
 use iced_core::border::Border;
 use iced_core::layout;
@@ -50,10 +51,9 @@ use iced_core::overlay;
 use iced_core::renderer;
 use iced_core::time::Instant;
 use iced_core::touch;
-use iced_core::widget::tree::{self, Tree};
 use iced_core::widget::Operation;
+use iced_core::widget::tree::{self, Tree};
 use iced_core::window;
-use iced_core::Length::{Fill, Shrink};
 use iced_core::{
     Animation, Background, Color, Element, Event, Layout, Length, Padding, Rectangle, Shell, Size,
     Vector, Widget,
@@ -304,11 +304,8 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // ----- trigger label ---------------------------------------
             // Trigger label takes whatever's left after the chevron + gap.
             let trigger_max_w = (inner_max.width - chevron_w - TRIGGER_GAP).max(0.0);
-            let trigger_limits = layout::Limits::new(
-                Size::ZERO,
-                Size::new(trigger_max_w, inner_max.height),
-            )
-            .loose();
+            let trigger_limits =
+                layout::Limits::new(Size::ZERO, Size::new(trigger_max_w, inner_max.height)).loose();
             let mut trigger_node = item.trigger.as_widget_mut().layout(
                 &mut tree.children[trigger_tree_idx],
                 renderer,
@@ -321,12 +318,11 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             let trigger_w = inner_max.width;
 
             // Center label and chevron vertically inside the trigger row.
-            let label_y = TRIGGER_PADDING_Y
-                + (trigger_inner_h - trigger_label_h) / 2.0;
-            let chevron_closed_y = TRIGGER_PADDING_Y
-                + (trigger_inner_h - chevron_closed_node.size().height) / 2.0;
-            let chevron_open_y = TRIGGER_PADDING_Y
-                + (trigger_inner_h - chevron_open_node.size().height) / 2.0;
+            let label_y = TRIGGER_PADDING_Y + (trigger_inner_h - trigger_label_h) / 2.0;
+            let chevron_closed_y =
+                TRIGGER_PADDING_Y + (trigger_inner_h - chevron_closed_node.size().height) / 2.0;
+            let chevron_open_y =
+                TRIGGER_PADDING_Y + (trigger_inner_h - chevron_open_node.size().height) / 2.0;
             // Anchor chevrons to the right edge of the trigger row.
             let chevron_closed_x = trigger_w - chevron_closed_node.size().width;
             let chevron_open_x = trigger_w - chevron_open_node.size().width;
@@ -334,18 +330,15 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             trigger_node = trigger_node.move_to(iced_core::Point::new(0.0, label_y));
             let chevron_closed_node = chevron_closed_node
                 .move_to(iced_core::Point::new(chevron_closed_x, chevron_closed_y));
-            let chevron_open_node = chevron_open_node
-                .move_to(iced_core::Point::new(chevron_open_x, chevron_open_y));
+            let chevron_open_node =
+                chevron_open_node.move_to(iced_core::Point::new(chevron_open_x, chevron_open_y));
 
             // ----- body --------------------------------------------------
             // Always lay out the body to capture its natural height. Width is
             // the same as the trigger row so child reflow stays consistent
             // across open/close transitions.
-            let body_limits = layout::Limits::new(
-                Size::ZERO,
-                Size::new(trigger_w, f32::INFINITY),
-            )
-            .loose();
+            let body_limits =
+                layout::Limits::new(Size::ZERO, Size::new(trigger_w, f32::INFINITY)).loose();
             let body_natural_node = item.body.as_widget_mut().layout(
                 &mut tree.children[body_idx],
                 renderer,
@@ -388,8 +381,7 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // body in draw to the same band.
             let body_y = trigger_h;
             // Position content with no top padding — `pt-0` per nova spec.
-            let body_inner_node = body_natural_node
-                .move_to(iced_core::Point::new(0.0, body_y));
+            let body_inner_node = body_natural_node.move_to(iced_core::Point::new(0.0, body_y));
 
             let item_outer_h = trigger_h + displayed_body_h;
             let item_outer_w = trigger_w;
@@ -449,18 +441,12 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             let trigger_tree = &mut head[trigger_tree_idx];
             let body_tree = &mut tail[0];
 
-            item.trigger.as_widget_mut().operate(
-                trigger_tree,
-                trigger_layout,
-                renderer,
-                operation,
-            );
-            item.body.as_widget_mut().operate(
-                body_tree,
-                body_layout,
-                renderer,
-                operation,
-            );
+            item.trigger
+                .as_widget_mut()
+                .operate(trigger_tree, trigger_layout, renderer, operation);
+            item.body
+                .as_widget_mut()
+                .operate(body_tree, body_layout, renderer, operation);
         }
     }
 
@@ -526,15 +512,13 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // the right edge (over the chevron) to miss because the
             // chevron is laid out separately.
             let trigger_row_bounds = item_layout.bounds();
-            let trigger_row_height = trigger_layout.bounds().height
-                + TRIGGER_PADDING_Y * 2.0;
+            let trigger_row_height = trigger_layout.bounds().height + TRIGGER_PADDING_Y * 2.0;
             let trigger_hit = Rectangle {
                 x: trigger_row_bounds.x,
                 y: trigger_row_bounds.y,
                 width: trigger_row_bounds.width,
-                height: trigger_row_height.max(
-                    chevron_closed_layout.bounds().height + TRIGGER_PADDING_Y * 2.0,
-                ),
+                height: trigger_row_height
+                    .max(chevron_closed_layout.bounds().height + TRIGGER_PADDING_Y * 2.0),
             };
 
             let s = state
@@ -551,10 +535,11 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
 
             // Click → on_toggle dispatch (skipped for disabled items).
             if !item.disabled {
-                let pressed = matches!(
-                    event,
-                    Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-                ) || matches!(event, Event::Touch(touch::Event::FingerPressed { .. }));
+                let pressed =
+                    matches!(
+                        event,
+                        Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
+                    ) || matches!(event, Event::Touch(touch::Event::FingerPressed { .. }));
                 if pressed && cursor.is_over(trigger_hit) {
                     if let Some(on_toggle) = self.on_toggle.as_ref() {
                         // Mode-aware refusal: Single { collapsible: false }
@@ -651,14 +636,15 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
                 .iter()
                 .find(|s| s.id == item.id)
             {
-                trigger_row_bounds.height - s.animation.interpolate(
-                    0.0,
-                    s.natural_height,
-                    tree.state
-                        .downcast_ref::<State>()
-                        .now
-                        .unwrap_or_else(Instant::now),
-                )
+                trigger_row_bounds.height
+                    - s.animation.interpolate(
+                        0.0,
+                        s.natural_height,
+                        tree.state
+                            .downcast_ref::<State>()
+                            .now
+                            .unwrap_or_else(Instant::now),
+                    )
             } else {
                 trigger_row_bounds.height
             };
@@ -756,11 +742,17 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // pure widget-side state — left as a seam for the future.
             let is_open_now = self.is_externally_open(&item.id);
             let status = if item.disabled {
-                Status::Disabled { is_open: is_open_now }
+                Status::Disabled {
+                    is_open: is_open_now,
+                }
             } else if item_state.hovered {
-                Status::Hovered { is_open: is_open_now }
+                Status::Hovered {
+                    is_open: is_open_now,
+                }
             } else {
-                Status::Active { is_open: is_open_now }
+                Status::Active {
+                    is_open: is_open_now,
+                }
             };
             let style = resolve_style(status);
 
@@ -931,8 +923,14 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             let _chevron_open_layout = child_layouts.next();
             let body_layout = child_layouts.next().expect("body layout");
 
-            let Some([trigger_tree, _chevron_closed_tree, _chevron_open_tree, body_tree]) =
-                tree_chunks.next()
+            let Some(
+                [
+                    trigger_tree,
+                    _chevron_closed_tree,
+                    _chevron_open_tree,
+                    body_tree,
+                ],
+            ) = tree_chunks.next()
             else {
                 break;
             };

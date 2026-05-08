@@ -183,10 +183,7 @@ impl<'a, Message: 'a> Accordion<'a, Message> {
 
     /// Override the accordion's style. Accepts our OKLCH-native variants
     /// (`Default`, `Card`) or any `Spec`.
-    pub fn style(
-        mut self,
-        style: impl Into<theme::accordion::StyleFn<'a, Theme>>,
-    ) -> Self {
+    pub fn style(mut self, style: impl Into<theme::accordion::StyleFn<'a, Theme>>) -> Self {
         self.style = Some(style.into());
         self
     }
@@ -222,10 +219,7 @@ impl<'a, Message: 'a> From<Accordion<'a, Message>>
                     .chevron_open
                     .unwrap_or_else(|| Component::from(text::Text::new("v")))
                     .into_iced(),
-                body: it
-                    .body
-                    .unwrap_or_else(|| Component::from(""))
-                    .into_iced(),
+                body: it.body.unwrap_or_else(|| Component::from("")).into_iced(),
                 disabled: it.disabled,
             })
             .collect();
@@ -257,9 +251,7 @@ impl<'a, Message: 'a> From<Accordion<'a, Message>> for Component<'a, Message> {
 }
 
 impl<'a, Message: 'a> crate::component::IntoElement<'a, Message> for Accordion<'a, Message> {
-    fn into_element(
-        self: Box<Self>,
-    ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         (*self).into()
     }
 }
@@ -273,19 +265,18 @@ mod tests {
     /// extracted so it can be unit-tested without spinning up a render
     /// loop. Returns `Some(new_set)` when the click is allowed; `None`
     /// when the mode-rules refuse it (Single+!collapsible+already_open).
-    fn apply_toggle(
-        mode: Mode,
-        open: &[String],
-        clicked: &str,
-    ) -> Option<Vec<String>> {
+    fn apply_toggle(mode: Mode, open: &[String], clicked: &str) -> Option<Vec<String>> {
         let is_open_now = open.iter().any(|s| s == clicked);
         match (mode, is_open_now) {
             (Mode::Single { collapsible: false }, true) => None,
             (Mode::Single { .. }, true) => Some(Vec::new()),
             (Mode::Single { .. }, false) => Some(vec![clicked.to_owned()]),
-            (Mode::Multiple, true) => {
-                Some(open.iter().filter(|s| s.as_str() != clicked).cloned().collect())
-            }
+            (Mode::Multiple, true) => Some(
+                open.iter()
+                    .filter(|s| s.as_str() != clicked)
+                    .cloned()
+                    .collect(),
+            ),
             (Mode::Multiple, false) => {
                 let mut out = open.to_vec();
                 out.push(clicked.to_owned());

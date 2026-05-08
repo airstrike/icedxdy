@@ -76,9 +76,7 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "orientation",
                 title: "Orientation",
-                description: Some(
-                    "Set the orientation prop to change the button group layout.",
-                ),
+                description: Some("Set the orientation prop to change the button group layout."),
                 snippet: "examples/browser/snippets/button-group-orientation.md",
             },
             page::Block::Example {

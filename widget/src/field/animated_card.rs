@@ -128,10 +128,10 @@ where
         limits: &layout::Limits,
     ) -> layout::Node {
         let limits = limits.shrink(self.padding);
-        let content_node = self
-            .content
-            .as_widget_mut()
-            .layout(&mut tree.children[0], renderer, &limits);
+        let content_node =
+            self.content
+                .as_widget_mut()
+                .layout(&mut tree.children[0], renderer, &limits);
         let size = content_node.size();
         let padded_size = Size::new(
             size.width + self.padding.x(),
@@ -261,11 +261,9 @@ where
                     off.border
                 };
                 let border = Border {
-                    color: state.animation.interpolate(
-                        off.border.color,
-                        on.border.color,
-                        now,
-                    ),
+                    color: state
+                        .animation
+                        .interpolate(off.border.color, on.border.color, now),
                     ..target_border
                 };
 

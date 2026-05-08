@@ -36,11 +36,7 @@ impl widget::Catalog for Theme {
         Box::new(default_style)
     }
 
-    fn style(
-        &self,
-        class: &Self::Class<'_>,
-        status: accordion::Status,
-    ) -> accordion::Style {
+    fn style(&self, class: &Self::Class<'_>, status: accordion::Status) -> accordion::Style {
         class(self, status)
     }
 }

@@ -40,12 +40,8 @@ mod text_helpers {
 }
 
 /// A toggler (switch) widget.
-pub struct Toggler<
-    'a,
-    Message,
-    Theme = iced_widget::Theme,
-    Renderer = iced_widget::Renderer,
-> where
+pub struct Toggler<'a, Message, Theme = iced_widget::Theme, Renderer = iced_widget::Renderer>
+where
     Theme: Catalog,
     Renderer: text::Renderer,
 {
@@ -130,10 +126,7 @@ where
     /// the [`Toggler`], if `Some`.
     ///
     /// If `None`, the [`Toggler`] will be disabled.
-    pub fn on_toggle_maybe(
-        mut self,
-        on_toggle: Option<impl Fn(bool) -> Message + 'a>,
-    ) -> Self {
+    pub fn on_toggle_maybe(mut self, on_toggle: Option<impl Fn(bool) -> Message + 'a>) -> Self {
         self.on_toggle = on_toggle.map(|on_toggle| Box::new(on_toggle) as _);
         self
     }
@@ -742,11 +735,10 @@ impl Catalog for Theme {
 /// The default style of a stock-iced themed toggler. Lifts through iced's
 /// own default toggler resolver and converts to our `Style`.
 pub fn default(theme: &Theme, status: Status) -> Style {
-    let iced: iced_widget::toggler::Style =
-        <Theme as iced_widget::toggler::Catalog>::style(
-            theme,
-            &<Theme as iced_widget::toggler::Catalog>::default(),
-            status,
-        );
+    let iced: iced_widget::toggler::Style = <Theme as iced_widget::toggler::Catalog>::style(
+        theme,
+        &<Theme as iced_widget::toggler::Catalog>::default(),
+        status,
+    );
     iced.into()
 }

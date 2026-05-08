@@ -213,9 +213,7 @@ fn render_link<'a, Message: Clone + 'a>(
 /// `flex size-5 items-center justify-center` box. Using Unicode `…`
 /// (U+2026) keeps the widget crate font-free while reading as "more" at
 /// body sizes.
-fn render_ellipsis<'a, Message: Clone + 'a>(
-    on_press: Option<Message>,
-) -> Component<'a, Message> {
+fn render_ellipsis<'a, Message: Clone + 'a>(on_press: Option<Message>) -> Component<'a, Message> {
     let glyph: Component<'a, Message> = Text::new("\u{2026}")
         .size(text::size::SM)
         .style(theme::text::Muted)

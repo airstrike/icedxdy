@@ -88,9 +88,7 @@ impl page::Page for LabelPage {
             // `label-demo.tsx`: a Label + Input pair at fixed width.
             "demo" => field(
                 input("m@example.com", &self.demo_value)
-                    .on_input(move |v| {
-                        Message::Page(pi, page::Message::InputChanged(F_DEMO, v))
-                    })
+                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_DEMO, v)))
                     .width(iced::Fill),
             )
             .label("Your email")

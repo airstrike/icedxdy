@@ -28,7 +28,9 @@ use icedxdy::card;
 use icedxdy::core::Border;
 use icedxdy::core::Color;
 use icedxdy::theme::container::Style;
-use icedxdy::widget::{aspect_ratio, badge, button, column, container, field, input, row, space, text};
+use icedxdy::widget::{
+    aspect_ratio, badge, button, column, container, field, input, row, space, text,
+};
 use icedxdy::{Component, Gap, Size, Theme};
 
 use crate::Message;

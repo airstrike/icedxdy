@@ -35,8 +35,8 @@ use icedxdy_core::theme::button;
 pub enum MenuButtonSize {
     #[default]
     Default, // h-8 = 32px, text-sm
-    Sm,      // h-7 = 28px, text-xs
-    Lg,      // h-12 = 48px, text-sm
+    Sm, // h-7 = 28px, text-xs
+    Lg, // h-12 = 48px, text-sm
     /// Docs-sidebar override (`apps/v4/components/docs-sidebar.tsx`):
     /// `h-[30px] text-[0.8rem] font-medium` with `border border-transparent`.
     /// We render as h=32 + inset(1) elsewhere, so the painted fill lands

@@ -590,7 +590,11 @@ mod tests {
     #[test]
     fn card_inactive_is_set() {
         let f: field::Field<'_, Msg> = field::field("content").card(false);
-        assert_eq!(f.card, Some(false), "card(false) must set card = Some(false)");
+        assert_eq!(
+            f.card,
+            Some(false),
+            "card(false) must set card = Some(false)"
+        );
         assert!(f.on_press.is_none());
     }
 

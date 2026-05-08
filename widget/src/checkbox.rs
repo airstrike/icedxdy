@@ -93,8 +93,8 @@ impl<'a, Message: 'a> From<Checkbox<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(c: Checkbox<'a, Message>) -> Self {
-        let mut cb: widget::Checkbox<'a, Message, Theme, Renderer> = widget::Checkbox::new(c.state)
-            .width(c.width);
+        let mut cb: widget::Checkbox<'a, Message, Theme, Renderer> =
+            widget::Checkbox::new(c.state).width(c.width);
 
         if let Some(label) = c.label {
             cb = cb.label(label);
