@@ -182,9 +182,19 @@ pub fn default(theme: &Theme, status: Status) -> Style {
     let dark = is_dark(theme);
 
     let bg = if dark {
-        // Tailwind `/30` modifier sets alpha to 0.3 (it does NOT multiply
-        // with the source's existing alpha). Spec: `dark:bg-input/30`.
-        p.input.alpha(0.3)
+        // FIXME(renderer): nova ships `dark:bg-input/30` — i.e.
+        // `oklch(1 0 0 / 4.5%)` (input is `oklch(1 0 0 / 15%)`, alpha
+        // overridden to 0.3 → effective 0.045 against the dark page).
+        // Composited over `--background` (`oklch(0.145 0 0)`) in a faithful
+        // renderer that yields a barely-lifted dark surface. iced's current
+        // alpha-compositing path renders that translucent white close to a
+        // bright gray, making the field bg read as too light against the
+        // dark page bg. Workaround: substitute `muted.base` at 0.5 alpha,
+        // which composites to a perceptually-similar quietly-lifted dark
+        // surface in the dark palette. When iced's compositor is fixed
+        // upstream, restore `p.input.alpha(0.3)` here. Same shape as the
+        // switch fix in `core/src/theme/switch.rs::default`.
+        p.muted.base.alpha(0.5)
     } else {
         p.background
     };
@@ -493,19 +503,23 @@ mod tests {
         (a.l - b.l).abs() < 1e-4 && (a.c - b.c).abs() < 1e-4 && (a.a - b.a).abs() < 1e-4
     }
 
-    /// Dark theme rest bg = `palette.input` with alpha *set* to 0.3.
-    /// Regression guard for the `dark:bg-input/30` class — Tailwind's `/N`
-    /// modifier overrides the source alpha; it does NOT multiply.
+    /// Dark theme rest bg uses the `muted.base` workaround for the
+    /// renderer alpha-compositing issue (see FIXME in [`default`]). Nova's
+    /// CSS source is `dark:bg-input/30` (`oklch(1 0 0 / 4.5%)`); the
+    /// faithful render is a barely-lifted dark surface that iced's current
+    /// compositor renders as a bright gray. Workaround substitutes
+    /// `muted.base` at 0.5 alpha, which composites to a perceptually-
+    /// similar quiet lift. Restore the alpha-multiplied assertion when
+    /// the compositor is fixed.
     #[test]
-    fn default_dark_bg_uses_input_alpha_0_3() {
+    fn default_dark_bg_is_muted_base_workaround() {
         let theme = Theme::dark();
         let resolved = default(&theme, Status::Active);
         let bg = bg_color(&resolved);
-        let p = theme.palette();
-        let expected = p.input.alpha(0.3);
+        let expected = theme.palette().muted.base.alpha(0.5);
         assert!(
             close(bg, expected),
-            "expected bg ≈ {expected:?}, got {bg:?}",
+            "expected bg ≈ muted.base.alpha(0.5) ({expected:?}), got {bg:?}",
         );
     }
 
