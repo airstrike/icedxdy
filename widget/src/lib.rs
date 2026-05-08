@@ -1,5 +1,6 @@
 use iced_core as core;
 
+pub mod accordion;
 pub mod alert;
 pub mod animation;
 pub mod aspect_ratio;
@@ -39,6 +40,7 @@ pub mod weight;
 pub use iced_widget::slider;
 pub use iced_widget::space;
 
+pub use accordion::Accordion;
 pub use alert::Alert;
 pub use aspect_ratio::AspectRatio;
 pub use avatar::Avatar;
@@ -182,4 +184,13 @@ pub fn switch<'a, Message: 'a>(is_toggled: bool) -> Switch<'a, Message> {
 #[cfg(feature = "spinner")]
 pub fn spinner<'a>() -> spinner::Spinner<'a> {
     spinner::Spinner::new()
+}
+
+/// Create an [`Accordion`] from an iterable of items.
+pub fn accordion<'a, Message, I>(items: I) -> Accordion<'a, Message>
+where
+    Message: 'a,
+    I: IntoIterator<Item = accordion::Item<'a, Message>>,
+{
+    accordion::accordion(items)
 }
