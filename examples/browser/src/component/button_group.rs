@@ -24,6 +24,20 @@
 //! but doesn't open a menu — the visual cluster still demonstrates a
 //! shadcn-faithful 5-button group composed of 3 nested sub-clusters.
 //!
+//! The `Nested` example's second sub-group wraps an `<InputGroup>` in
+//! the original; since `InputGroup` isn't ported yet, the second
+//! sub-group is two outline buttons instead — keeps the visual
+//! demonstration of "outer group separates sub-clusters with 8px gap"
+//! intact.
+//!
+//! # Animation note
+//!
+//! shadcn's `button.tsx` carries `transition-all`, but the edge-radius
+//! collapse the group performs is static layout (driven by sibling
+//! position, not state) — there is no transition into adjacent slots
+//! on hover/focus, matching shadcn's behavior. Hover/focus animation
+//! still happens at the per-button level via the button widget itself.
+//!
 //! # API Reference
 //!
 //! TODO: API Reference once a table widget lands. Live docs covers:
@@ -46,7 +60,7 @@ use crate::page;
 
 pub static META: page::Meta = page::Meta {
     title: "Button Group",
-    description: "Group multiple buttons together to create a cohesive unit.",
+    description: "A container that groups related buttons together with consistent styling.",
 };
 
 pub static BLOCKS: &[page::Block] = &[
@@ -87,7 +101,10 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "separator",
                 title: "Separator",
                 description: Some(
-                    "The ButtonGroupSeparator component visually divides buttons within a group.",
+                    "The ButtonGroupSeparator component visually divides buttons \
+                     within a group. Buttons with variant outline do not need a \
+                     separator since they have a border. For other variants, a \
+                     separator is recommended to improve the visual hierarchy.",
                 ),
                 snippet: "examples/browser/snippets/button-group-separator.md",
             },
@@ -215,11 +232,9 @@ fn view(id: &str) -> Component<'static, Message> {
         // containing two `<ButtonGroup>` children, demonstrating the 8px
         // gap shadcn applies via `has-[>[data-slot=button-group]]:gap-2`.
         // We approximate the cascade with an explicit `row![...].spacing(8)`
-        // since iced has no parent-keyed sibling selector. The original
-        // also wraps an `<InputGroup>` in the second sub-group; since
-        // InputGroup isn't ported yet, the second sub-group is two outline
-        // buttons instead — keeps the visual demonstration of "outer group
-        // separates sub-clusters with 8px gap" intact.
+        // since iced has no parent-keyed sibling selector. See module
+        // docstring for the `<InputGroup>` degradation in the second
+        // sub-group.
         "nested" => row![
             button_group([button::icon![plus].into()]),
             button_group([
