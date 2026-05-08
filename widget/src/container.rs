@@ -21,10 +21,6 @@ pub struct Container<'a, Message> {
     id: Option<Id>,
     width: Length,
     height: Length,
-    max_width: f32,
-    max_height: f32,
-    min_width: f32,
-    min_height: f32,
     padding: Padding,
     align_x: Horizontal,
     align_y: Vertical,
@@ -39,10 +35,6 @@ impl<'a, Message: 'a> Container<'a, Message> {
             id: None,
             width: Length::Shrink,
             height: Length::Shrink,
-            max_width: f32::INFINITY,
-            max_height: f32::INFINITY,
-            min_width: 0.0,
-            min_height: 0.0,
             padding: Padding::ZERO,
             align_x: Horizontal::Left,
             align_y: Vertical::Top,
@@ -68,23 +60,35 @@ impl<'a, Message: 'a> Container<'a, Message> {
         self
     }
 
+    /// Caps the [`Container`] width. Folded into `width` as a
+    /// [`Length::Bounded`] variant — when chained after `.width(Fill)` or
+    /// `.width(Shrink)`, the cap propagates through `Limits` cleanly and
+    /// overrides any inherited cross-axis compression from a `Shrink`
+    /// ancestor (the iced flex pass-2 collapse-to-zero pathology).
     pub fn max_width(mut self, max_width: impl Into<Pixels>) -> Self {
-        self.max_width = max_width.into().0;
+        self.width = self.width.max(max_width);
         self
     }
 
+    /// Caps the [`Container`] height. See [`max_width`] for the folding semantics.
+    ///
+    /// [`max_width`]: Self::max_width
     pub fn max_height(mut self, max_height: impl Into<Pixels>) -> Self {
-        self.max_height = max_height.into().0;
+        self.height = self.height.max(max_height);
         self
     }
 
+    /// Sets a minimum width on the [`Container`]. Folded into `width` as a
+    /// [`Length::Bounded`] variant.
     pub fn min_width(mut self, min_width: impl Into<Pixels>) -> Self {
-        self.min_width = min_width.into().0;
+        self.width = self.width.min(min_width);
         self
     }
 
+    /// Sets a minimum height on the [`Container`]. Folded into `height` as a
+    /// [`Length::Bounded`] variant.
     pub fn min_height(mut self, min_height: impl Into<Pixels>) -> Self {
-        self.min_height = min_height.into().0;
+        self.height = self.height.min(min_height);
         self
     }
 
@@ -180,10 +184,6 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Container<'a, Message> {
         let mut c = widget::Container::new(self.content.into_iced())
             .width(self.width)
             .height(self.height)
-            .max_width(self.max_width)
-            .max_height(self.max_height)
-            .min_width(self.min_width)
-            .min_height(self.min_height)
             .padding(self.padding)
             .align_x(self.align_x)
             .align_y(self.align_y)
