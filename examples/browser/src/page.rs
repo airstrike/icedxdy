@@ -502,12 +502,17 @@ fn render_example<'a>(
 /// the currently-viewed section. No backgrounds at any state — text color
 /// only.
 ///
-/// The browser's gloss on top of that spec is a viewport-driven alpha
-/// gradient: items already in the visible set fade down toward the edges
-/// of the visible set; items not visible at all get a baseline 0.25 alpha
-/// so they stay legible-but-recessive. The rank-center item (alpha == 1.0)
-/// is the closest analogue to the docs-toc "active" entry, so it gets the
-/// `Weight::Medium` bump.
+/// **Design choice (legibility):** an earlier iteration applied a
+/// viewport-driven rank-alpha gradient — items at the center of the
+/// visible set rendered at full opacity, edges faded to ~0.5, and
+/// off-screen items dropped to 0.25. Stacked on top of `muted_foreground`
+/// (already a low-contrast color), the gradient pulled distant entries
+/// well below readable contrast. shadcn ships no such gradient — every
+/// inactive entry sits at full `muted_foreground` and only the active
+/// entry promotes to `foreground` + `font-medium`. We match that: the
+/// only state distinction is active vs. inactive. The "active" entry is
+/// still computed from the rank-center of the sensor-visible set so it
+/// tracks the reader's scroll position.
 fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     let pi = page.page_index();
     let st = page.state();
@@ -528,21 +533,10 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         .collect();
 
     let toc_count = visible_in_toc.len();
-    let alpha_for = |i: usize| -> f32 {
-        if toc_count == 0 || !visible_in_toc.contains(&i) {
-            return 0.25;
-        }
-        let Some(rank) = visible_in_toc.iter().position(|&v| v == i) else {
-            return 0.25;
-        };
-        let center = (toc_count - 1) as f32 / 2.0;
-        let distance = (rank as f32 - center).abs() / center.max(1.0);
-        1.0 - 0.5 * distance
-    };
 
     // The "active" TOC entry mirrors docs-toc: whichever entry currently
-    // sits at rank-center of the visible set (alpha == 1.0) is the one
-    // the reader is reading. Empty-visible-set pages have no active entry.
+    // sits at rank-center of the sensor-visible set is the one the
+    // reader is reading. Empty-visible-set pages have no active entry.
     let active_index: Option<usize> = if visible_in_toc.is_empty() {
         None
     } else {
@@ -553,21 +547,16 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     use iced_widget::button::StyleFn;
     use theme::button::{Status, Style};
     let nav_items = entries.into_iter().map(|(i, depth, title)| {
-        // Sub-items render slightly desaturated (0.85x) on top of the
-        // existing rank-based alpha gradient. Indent grows 12px per level.
-        let level_mul = if depth == 0 { 1.0 } else { 0.85 };
-        let alpha = alpha_for(i) * level_mul;
         let indent = 8.0 + f32::from(depth) * 12.0;
         let is_active = Some(i) == active_index;
         let toc_style: StyleFn<'_, Theme> = Box::new(move |theme, status| {
             let p = theme.palette();
-            // Inactive base = `muted_foreground` per docs-toc spec; the
-            // rank-based alpha then fades distant entries further. The
-            // active entry and any hovered/pressed entry promote to the
-            // brighter `foreground`. No backgrounds at any state.
+            // Active entry promotes to `foreground`; everything else stays
+            // at `muted_foreground`. Hover/press also promote to `foreground`
+            // for affordance. No backgrounds at any state.
             let base = match status {
-                Status::Active if is_active => p.foreground.alpha(alpha),
-                Status::Active => p.muted.foreground.alpha(alpha),
+                Status::Active if is_active => p.foreground,
+                Status::Active => p.muted.foreground,
                 Status::Hovered | Status::Pressed | Status::Disabled => p.foreground,
             };
             Style {
@@ -598,11 +587,16 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
 
     let header = container(text::muted("On This Page")).padding([0, 8]);
 
+    // Outer spacing(16) = gap between header and item list. Inner items
+    // stack with their natural Sm-button height (28px) — shadcn's TOC
+    // entries hit ~28-30px line height with `text-sm` + `gap-2`, so the
+    // raw button stack already lands in the right ballpark without an
+    // extra inter-item spacing nudge.
     column![header]
-        .push(column(nav_items))
+        .push(column(nav_items).spacing(2))
         .spacing(16)
         .padding([24, 8])
-        .width(200)
+        .width(220)
         .into()
 }
 
