@@ -1,10 +1,11 @@
-// TODO: API Reference section once a table widget lands.
-//
-// Live docs API Reference covers: `Avatar.size` (`"default" | "sm" | "lg"`,
-// default `"default"`), `Avatar.className`, `AvatarImage.src/alt/className`,
-// `AvatarFallback.className`, `AvatarBadge.className`, `AvatarGroup.className`,
-// `AvatarGroupCount.className`. Captured here so the gap is auditable when
-// the table widget lands.
+// API Reference is rendered via the `avatar-api-reference.md` snippet at
+// the bottom of BLOCKS. Live docs API Reference covers `Avatar.size`
+// (`"default" | "sm" | "lg"`, default `"default"`), `Avatar.className`,
+// `AvatarImage.src/alt/className`, `AvatarFallback.className`,
+// `AvatarBadge.className`, `AvatarGroup.className`,
+// `AvatarGroupCount.className` — the snippet captures the icedxdy-shaped
+// builder API for `avatar(...)`, `avatar::badge(...)`, `avatar::group(...)`,
+// plus the image-load-failure caveat.
 //
 // Intentional skips:
 // - Composition preamble (live-docs section between Usage and Examples) —
@@ -93,6 +94,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/avatar-api-reference.md"),
 ];
 
 pub struct AvatarPage {

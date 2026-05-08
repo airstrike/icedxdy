@@ -1,18 +1,15 @@
-// TODO: API Reference section once a table widget lands.
-//
-// Live docs API Reference covers the suite:
+// API Reference is rendered via the `sidebar-api-reference.md` snippet at
+// the bottom of BLOCKS. Live docs API Reference covers the full suite —
 // `SidebarProvider.{defaultOpen, open, onOpenChange}`,
-// `Sidebar.{side ("left" | "right"), variant ("sidebar" | "floating" | "inset"),
-// collapsible ("offcanvas" | "icon" | "none")}`, plus a structural enumeration
-// (without prop tables) of `SidebarHeader`, `SidebarFooter`, `SidebarContent`,
-// `SidebarGroup`, `SidebarGroupLabel`, `SidebarGroupAction`,
-// `SidebarGroupContent`, `SidebarMenu`, `SidebarMenuItem`,
-// `SidebarMenuButton`, `SidebarMenuAction`, `SidebarMenuBadge`,
-// `SidebarMenuSub`, `SidebarMenuSubItem`, `SidebarMenuSkeleton`,
-// `SidebarTrigger`, `SidebarRail`, `SidebarInset`. The `useSidebar` hook
-// exposes `{state, open, setOpen, openMobile, setOpenMobile, isMobile,
-// toggleSidebar}`. Captured here so the gap is auditable when the table
-// widget lands.
+// `Sidebar.{side, variant, collapsible}`, plus a structural enumeration of
+// `SidebarHeader`/`SidebarFooter`/`SidebarContent`/`SidebarGroup`/
+// `SidebarMenu`/`SidebarMenuItem`/`SidebarMenuButton`/`SidebarMenuAction`/
+// `SidebarMenuBadge`/`SidebarMenuSub*`/`SidebarTrigger`/`SidebarRail`/
+// `SidebarInset` and the `useSidebar()` hook — and the snippet captures
+// the icedxdy-shaped helpers (`sidebar::fixed`/`floating`/`inset`,
+// section helpers, `menu_button` builder, `State`/`Side`/`Collapsible`
+// constants) plus the caller-owns-state model that replaces the React
+// hook.
 //
 // Intentional skips: sidebar-rtl (RTL).
 // Examples shipped: sidebar-menu (demo), sidebar-group, sidebar-header.
@@ -58,6 +55,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/sidebar-api-reference.md"),
 ];
 
 #[derive(Debug, Clone)]

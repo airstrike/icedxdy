@@ -1,8 +1,9 @@
-// TODO: API Reference section once a table widget lands. Live shadcn docs
-// page lists the Radix primitives (Accordion / AccordionItem /
-// AccordionTrigger / AccordionContent) but defers the prop matrix to
-// Radix's own docs — once we ship a table widget we can mirror Radix's
-// table here.
+// API Reference is rendered via the `accordion-api-reference.md` snippet
+// at the bottom of BLOCKS. The live shadcn docs page lists the Radix
+// primitives (Accordion / AccordionItem / AccordionTrigger /
+// AccordionContent) but defers the prop matrix to Radix's own docs —
+// the snippet captures the icedxdy-shaped builder API for `accordion(...)`
+// and `accordion::item(...)` plus the parent-owned-state model.
 //
 // Intentional skips per CLAUDE.md: accordion-rtl (RTL not applicable to
 // iced).
@@ -76,6 +77,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/accordion-api-reference.md"),
 ];
 
 /// Stable per-example open-set state. Each block has its own open-set so

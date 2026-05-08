@@ -1,7 +1,10 @@
-// TODO: API Reference section once a table widget lands. The live docs API
-// Reference table covers `Card.size: "default" | "sm"` plus `className` on
-// every part (`Card`, `CardHeader`, `CardTitle`, `CardDescription`,
-// `CardAction`, `CardContent`, `CardFooter`).
+// API Reference is rendered via the `card-api-reference.md` snippet at the
+// bottom of BLOCKS. The live docs API Reference table covers `Card.size:
+// "default" | "sm"` plus `className` on every part (`Card`, `CardHeader`,
+// `CardTitle`, `CardDescription`, `CardAction`, `CardContent`,
+// `CardFooter`); the snippet captures the icedxdy-shaped helper API
+// (`card(...)`, `card::header(...).description(...).action(...)`, plus
+// the section helpers).
 //
 // Intentional skips per CLAUDE.md: card-rtl (RTL).
 //
@@ -64,6 +67,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/card-api-reference.md"),
 ];
 
 // Stable input field ids (independent of block position so reordering blocks

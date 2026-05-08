@@ -1,15 +1,11 @@
-// TODO: API Reference section once a table widget lands.
-//
-// Live docs API Reference covers: `FieldSet.className`,
-// `FieldLegend.variant` (`"legend" | "label"`, default `"legend"`) +
-// `className`, `FieldGroup.className` (supports `@container/field-group`
-// queries), `Field.orientation` (`"vertical" | "horizontal" | "responsive"`,
-// default `"vertical"`) + `className` + `data-invalid` (`boolean`),
-// `FieldContent.className`, `FieldLabel.className` + `asChild` (`boolean`,
-// default `false`), `FieldTitle.className`, `FieldDescription.className`,
-// `FieldSeparator.className`, `FieldError.errors`
-// (`Array<{ message?: string } | undefined>`) + `className`. Captured here
-// so the gap is auditable when the table widget lands.
+// API Reference is rendered via the `field-api-reference.md` snippet at
+// the bottom of BLOCKS. Live docs API Reference covers `FieldSet`,
+// `FieldLegend`, `FieldGroup`, `Field.orientation`, `FieldContent`,
+// `FieldLabel.asChild`, `FieldTitle`, `FieldDescription`,
+// `FieldSeparator`, and `FieldError.errors[]`; the snippet captures the
+// icedxdy-shaped builder API for `field(...)` plus the Vertical /
+// Horizontal orientation alignment switch and the click-anywhere
+// `on_press` semantic.
 //
 // Intentional skips per the forms minimap §"Out of scope": field-textarea
 // (Textarea not yet ported), field-radio (RadioGroup not yet ported),
@@ -72,6 +68,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/field-api-reference.md"),
 ];
 
 // Stable field ids for value-routing — independent of block position so

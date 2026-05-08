@@ -11,27 +11,15 @@
 //!   the same trail with a clickable `breadcrumb::ellipsis(Some(_))` — the
 //!   visual is identical, just no menu opens.
 //!
-//! # API Reference (deferred)
+//! # API Reference
 //!
-//! The live docs API Reference table lists 7 components, each with the props
-//! shadcn exposes:
-//!
-//! - `Breadcrumb` — `className: string` (no default)
-//! - `BreadcrumbList` — `className: string` (no default)
-//! - `BreadcrumbItem` — `className: string` (no default)
-//! - `BreadcrumbLink` — `className: string` (no default)
-//! - `BreadcrumbPage` — `className: string` (no default)
-//! - `BreadcrumbSeparator` — `children: React.ReactNode`, `className: string`
-//!   (no defaults)
-//! - `BreadcrumbEllipsis` — `className: string` (no default)
-//!
-//! In our port, `className` collapses to widget-level styling (delegated to
-//! the (currently absent) breadcrumb Catalog), `children` for the separator
-//! is the `Breadcrumb::separator(factory)` builder, and the `Item` enum
-//! flattens the JSX nesting (no separate `BreadcrumbList`/`BreadcrumbItem`).
-
-// TODO: API Reference section once a table widget lands — see module doc
-// for the 7 props the live docs covers.
+//! Rendered via the `breadcrumb-api-reference.md` snippet at the bottom of
+//! BLOCKS. The live docs API Reference table lists 7 components (each with
+//! a `className: string` prop, plus `children: React.ReactNode` on
+//! `BreadcrumbSeparator`); the snippet captures the icedxdy-shaped builder
+//! API for `breadcrumb(...)` plus the item constructors (`link`, `page`,
+//! `ellipsis`), the auto-interspersed separator, and the
+//! caller-driven-color cascade caveat.
 
 use iced::Task;
 
@@ -92,6 +80,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/breadcrumb-api-reference.md"),
 ];
 
 /// Per-page message — each link / ellipsis emits a no-op variant the page

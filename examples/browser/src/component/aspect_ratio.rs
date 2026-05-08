@@ -1,8 +1,8 @@
-// TODO: API Reference section once a table widget lands.
-//
-// Live docs API Reference covers `AspectRatio`: `ratio` (`number`, required)
-// and `className` (`string`). Captured here so the gap is auditable when
-// the table widget lands.
+// API Reference is rendered via the `aspect-ratio-api-reference.md` snippet
+// at the bottom of BLOCKS. The live docs API Reference covers
+// `AspectRatio.ratio` (`number`, required) and `className` (`string`); our
+// snippet captures the icedxdy-shaped builder API (`.width(...)`,
+// `.max_width(...)`, ratio fallback semantics).
 //
 // Intentional skips:
 // - aspect-ratio-rtl — RTL is not in scope (per CLAUDE.md).
@@ -53,6 +53,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/aspect-ratio-api-reference.md"),
 ];
 
 pub struct AspectRatioPage {

@@ -1,11 +1,9 @@
-// TODO: API Reference section once a table widget lands.
-//
-// Live docs defers the prop matrix to Radix's own docs; the page itself only
-// hints at common props through usage. Captured rows: `Checkbox.checked`
-// (`boolean | "indeterminate"`), `Checkbox.defaultChecked` (`boolean`),
-// `Checkbox.onCheckedChange` (`(checked) => void`), `Checkbox.disabled`
-// (`boolean`, default `false`), `Checkbox.aria-invalid` (`boolean`).
-// Captured here so the gap is auditable when the table widget lands.
+// API Reference is rendered via the `checkbox-api-reference.md` snippet at
+// the bottom of BLOCKS. The live docs page defers the prop matrix to
+// Radix's own docs (`Checkbox.checked: boolean | "indeterminate"`,
+// `defaultChecked`, `onCheckedChange`, `disabled`, `aria-invalid`); the
+// snippet captures the icedxdy-shaped builder API and the `State`
+// triplet promotion (`Checked` / `Unchecked` / `Indeterminate`).
 //
 // Intentional skips per CLAUDE.md: checkbox-rtl (RTL), checkbox-group
 // (requires FieldGroup with multiple horizontally-labelled fields — deferred),
@@ -71,6 +69,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/checkbox-api-reference.md"),
 ];
 
 // Stable field ids for `BoolChanged` dispatch — independent of block

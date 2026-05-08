@@ -1,10 +1,9 @@
-// TODO: API Reference section once a table widget lands.
-//
-// The live docs page defers the prop matrix to Radix's own docs; the page
-// itself only demonstrates `<Label htmlFor="...">`. Captured rows:
-// `Label.htmlFor` (`string` — id of the associated input for click-to-focus
-// semantics), `Label.className` (`string`). Captured here so the gap is
-// auditable when the table widget lands.
+// API Reference is rendered via the `label-api-reference.md` snippet at
+// the bottom of BLOCKS. The live docs page defers the prop matrix to
+// Radix's own docs (`Label.htmlFor`, `Label.className`); the snippet
+// captures `text::label(...)` (the icedxdy typography helper) plus the
+// rationale for folding `htmlFor` into `field(...).label(...)` rather
+// than shipping a standalone `Label` widget.
 
 use iced::Task;
 
@@ -26,6 +25,7 @@ pub static BLOCKS: &[page::Block] = &[
         description: None,
         snippet: "examples/browser/snippets/label-demo.md",
     },
+    page::Block::Md("examples/browser/snippets/label-api-reference.md"),
 ];
 
 const F_DEMO: usize = 0;

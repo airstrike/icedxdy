@@ -1,22 +1,15 @@
-// TODO: API Reference section once a table widget lands.
-//
-// The live docs page defers the prop matrix to Radix's own docs; the page
-// itself only hints at common props through usage. Captured rows:
-// `Switch.checked` (`boolean`), `Switch.defaultChecked` (`boolean`),
-// `Switch.onCheckedChange` (`(checked) => void`), `Switch.disabled`
-// (`boolean`, default `false`), `Switch.aria-invalid` (`boolean`),
-// `Switch.size` (`"default" | "sm"`, default `"default"`). Captured here
-// so the gap is auditable when the table widget lands.
+// API Reference is rendered via the `switch-api-reference.md` snippet at
+// the bottom of BLOCKS. The live docs page defers the prop matrix to
+// Radix's own docs (`Switch.checked`, `defaultChecked`, `onCheckedChange`,
+// `disabled`, `aria-invalid`, `size`); the snippet captures the
+// icedxdy-shaped builder API plus the `field(...)`-driven `htmlFor`
+// reproduction and the size-matrix-out-of-scope note.
 //
 // Intentional skips per CLAUDE.md: switch-rtl (RTL),
 // switch-choice-card (composite of switch + container; defer to a later
 // minimap), switch-sizes (size variants are out-of-scope for the MVP —
 // shadcn ships `sm` and `default`; vendoring the full size matrix is its
 // own design surface).
-//
-// TODO Phase 4: htmlFor label-click-toggle association — shadcn's Field
-// provides `htmlFor` semantics so clicking the label toggles the switch.
-// iced has no equivalent; will wire once Field MVP lands.
 
 use iced::Task;
 
@@ -66,6 +59,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/switch-api-reference.md"),
 ];
 
 // Stable field ids for `BoolChanged` dispatch — independent of block

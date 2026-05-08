@@ -40,14 +40,13 @@
 //!
 //! # API Reference
 //!
-//! TODO: API Reference once a table widget lands. Live docs covers:
-//! - `ButtonGroup`: `orientation` ("horizontal" | "vertical", default
-//!   "horizontal").
-//! - `ButtonGroupSeparator`: `orientation` ("horizontal" | "vertical",
-//!   default "vertical"). In our port the separator's axis is auto-derived
-//!   from the surrounding group, so the prop has no analog.
-//! - `ButtonGroupText`: `asChild` (boolean) — not ported yet (no examples
-//!   in the 5-example slice depend on it).
+//! Rendered via the `button-group-api-reference.md` snippet at the bottom
+//! of BLOCKS. Live docs covers `ButtonGroup.orientation`,
+//! `ButtonGroupSeparator.orientation` (auto-derived from the surrounding
+//! group in our port), and `ButtonGroupText.asChild` (not yet ported — no
+//! examples in the 5-example slice depend on it). The snippet captures
+//! the icedxdy-shaped builder API and the typed-children rationale
+//! (style mutation requires the typed `Item` enum, not erased elements).
 
 use iced::Task;
 
@@ -110,6 +109,7 @@ pub static BLOCKS: &[page::Block] = &[
             },
         ],
     },
+    page::Block::Md("examples/browser/snippets/button-group-api-reference.md"),
 ];
 
 pub struct ButtonGroupPage {
