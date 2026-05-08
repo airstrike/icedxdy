@@ -1,3 +1,18 @@
+// TODO: API Reference section once a table widget lands.
+//
+// The live docs page does not surface a structured API Reference table;
+// it defers prop documentation to Radix and the source. Captured rows
+// (from usage examples on the page): `Input.type` (`string`, default
+// `"text"` — accepts any HTML input type), `Input.disabled` (`boolean`,
+// default `false`), `Input.required` (`boolean`, default `false`),
+// `Input.aria-invalid` (`boolean`), `Input.className` (`string`).
+// Captured here so the gap is auditable when the table widget lands.
+//
+// Intentional skips per CLAUDE.md: input-rtl (RTL). Field Group, File,
+// Grid, Input Group, Button Group, and Form examples are also skipped —
+// they rely on widgets (FieldGroup, InputGroup, ButtonGroup, Select)
+// that have not yet been ported.
+
 use iced::Fill;
 use iced::Shrink;
 use iced::Task;
@@ -12,10 +27,6 @@ use icedxdy::widget::{badge, button, field, input, row, space, text, Component};
 use crate::Message;
 use crate::page;
 
-// Intentional skips per CLAUDE.md: input-rtl (RTL). Field Group, File,
-// Grid, Input Group, Button Group, and Form examples are also skipped —
-// they rely on widgets (FieldGroup, InputGroup, ButtonGroup, Select)
-// that have not yet been ported.
 pub static META: page::Meta = page::Meta {
     title: "Input",
     description: "A text input component for forms and user data entry with built-in styling and accessibility features.",

@@ -1,3 +1,11 @@
+// TODO: API Reference section once a table widget lands.
+//
+// The live docs page defers the prop matrix to Radix's own docs; the page
+// itself only demonstrates `<Label htmlFor="...">`. Captured rows:
+// `Label.htmlFor` (`string` — id of the associated input for click-to-focus
+// semantics), `Label.className` (`string`). Captured here so the gap is
+// auditable when the table widget lands.
+
 use iced::Task;
 
 use icedxdy::Theme;

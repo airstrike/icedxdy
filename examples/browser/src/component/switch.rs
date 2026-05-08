@@ -1,12 +1,13 @@
-use iced::Task;
-
-use icedxdy::Theme;
-use icedxdy::theme;
-use icedxdy::widget::{column, container, row, switch, text};
-
-use crate::Message;
-use crate::page;
-
+// TODO: API Reference section once a table widget lands.
+//
+// The live docs page defers the prop matrix to Radix's own docs; the page
+// itself only hints at common props through usage. Captured rows:
+// `Switch.checked` (`boolean`), `Switch.defaultChecked` (`boolean`),
+// `Switch.onCheckedChange` (`(checked) => void`), `Switch.disabled`
+// (`boolean`, default `false`), `Switch.aria-invalid` (`boolean`),
+// `Switch.size` (`"default" | "sm"`, default `"default"`). Captured here
+// so the gap is auditable when the table widget lands.
+//
 // Intentional skips per CLAUDE.md: switch-rtl (RTL),
 // switch-choice-card (composite of switch + container; defer to a later
 // minimap), switch-sizes (size variants are out-of-scope for the MVP —
@@ -16,6 +17,16 @@ use crate::page;
 // TODO Phase 4: htmlFor label-click-toggle association — shadcn's Field
 // provides `htmlFor` semantics so clicking the label toggles the switch.
 // iced has no equivalent; will wire once Field MVP lands.
+
+use iced::Task;
+
+use icedxdy::Theme;
+use icedxdy::theme;
+use icedxdy::widget::{column, container, row, switch, text};
+
+use crate::Message;
+use crate::page;
+
 pub static META: page::Meta = page::Meta {
     title: "Switch",
     description: "A control that allows the user to toggle between checked and not checked.",

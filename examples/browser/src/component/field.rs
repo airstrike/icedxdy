@@ -1,3 +1,26 @@
+// TODO: API Reference section once a table widget lands.
+//
+// Live docs API Reference covers: `FieldSet.className`,
+// `FieldLegend.variant` (`"legend" | "label"`, default `"legend"`) +
+// `className`, `FieldGroup.className` (supports `@container/field-group`
+// queries), `Field.orientation` (`"vertical" | "horizontal" | "responsive"`,
+// default `"vertical"`) + `className` + `data-invalid` (`boolean`),
+// `FieldContent.className`, `FieldLabel.className` + `asChild` (`boolean`,
+// default `false`), `FieldTitle.className`, `FieldDescription.className`,
+// `FieldSeparator.className`, `FieldError.errors`
+// (`Array<{ message?: string } | undefined>`) + `className`. Captured here
+// so the gap is auditable when the table widget lands.
+//
+// Intentional skips per the forms minimap §"Out of scope": field-textarea
+// (Textarea not yet ported), field-radio (RadioGroup not yet ported),
+// field-fieldset / field-group / field-choice-card (FieldSet, FieldGroup,
+// and FieldContent not yet ported), field-rtl (RTL).
+//
+// The shadcn `field-checkbox.tsx` and `field-switch.tsx` source examples
+// use `orientation="horizontal"` — Field's MVP ships vertical-only, so the
+// previews below render the checkbox/switch + label + description stacked
+// vertically. Horizontal orientation is a follow-up minimap.
+
 use iced::Fill;
 use iced::Task;
 
@@ -8,15 +31,6 @@ use icedxdy::widget::{checkbox, container, field, input, switch};
 use crate::Message;
 use crate::page;
 
-// Intentional skips per the forms minimap §"Out of scope": field-textarea
-// (Textarea not yet ported), field-radio (RadioGroup not yet ported),
-// field-fieldset / field-group / field-choice-card (FieldSet, FieldGroup,
-// and FieldContent not yet ported), field-rtl (RTL).
-//
-// The shadcn `field-checkbox.tsx` and `field-switch.tsx` source examples
-// use `orientation="horizontal"` — Field's MVP ships vertical-only, so the
-// previews below render the checkbox/switch + label + description stacked
-// vertically. Horizontal orientation is a follow-up minimap.
 pub static META: page::Meta = page::Meta {
     title: "Field",
     description: "A vertical wrapper that pairs an input with a label, helper description, and error message — the form-input building block.",

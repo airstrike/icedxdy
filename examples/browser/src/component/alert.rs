@@ -1,3 +1,14 @@
+// TODO: API Reference section once a table widget lands.
+//
+// Live docs API Reference covers: `Alert.variant` (`"default" | "destructive"`,
+// default `"default"`), `Alert.className`, `AlertTitle.className`,
+// `AlertDescription.className`, `AlertAction.className` (top-right corner
+// action slot). Captured here so the gap is auditable when the table widget
+// lands.
+//
+// Intentional skips per CLAUDE.md: alert-colors (Custom Colors)
+// and alert-rtl (RTL).
+
 mod action;
 mod default;
 mod destructive;
@@ -10,8 +21,6 @@ use icedxdy::{Component, Theme};
 use crate::icon;
 use crate::page;
 
-// Intentional skips per CLAUDE.md: alert-colors (Custom Colors)
-// and alert-rtl (RTL).
 pub static META: page::Meta = page::Meta {
     title: "Alert",
     description: "Displays a callout for user attention.",

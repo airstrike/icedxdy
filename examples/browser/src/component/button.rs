@@ -1,3 +1,17 @@
+// TODO: API Reference section once a table widget lands.
+//
+// Live docs API Reference covers `Button`: `variant`
+// (`"default" | "outline" | "ghost" | "destructive" | "secondary" | "link"`,
+// default `"default"`), `size`
+// (`"default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg"`,
+// default `"default"`), and `asChild` (`boolean`, default `false`). Captured
+// here so the gap is auditable when the table widget lands.
+//
+// Intentional skips per CLAUDE.md: button-rtl (RTL). Button Group and
+// As Child examples are also skipped — Button Group is a separate
+// widget we have not yet ported, and As Child relies on Tailwind's
+// `data-slot` cascade that we don't reproduce.
+
 mod default;
 mod destructive;
 mod ghost;
@@ -17,10 +31,6 @@ use icedxdy::{Component, Theme};
 
 use crate::page;
 
-// Intentional skips per CLAUDE.md: button-rtl (RTL). Button Group and
-// As Child examples are also skipped — Button Group is a separate
-// widget we have not yet ported, and As Child relies on Tailwind's
-// `data-slot` cascade that we don't reproduce.
 pub static META: page::Meta = page::Meta {
     title: "Button",
     description: "Displays a button or a component that looks like a button.",

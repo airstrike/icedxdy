@@ -1,3 +1,14 @@
+// TODO: API Reference section once a table widget lands.
+//
+// The live docs page defers the prop matrix to Radix's own docs; the page
+// itself only demonstrates `<Progress value={33} />`. Captured rows:
+// `Progress.value` (`number | null` — current progress 0–100; `null` for
+// indeterminate), `Progress.max` (`number`, default `100`),
+// `Progress.className` (`string`). Captured here so the gap is auditable
+// when the table widget lands.
+//
+// Intentional skips per CLAUDE.md: progress-rtl (RTL).
+
 use std::time::Duration;
 
 use iced::{Fill, Task};
@@ -7,7 +18,6 @@ use icedxdy::widget::{column, container, progress, row, slider, space, text};
 use crate::Message;
 use crate::page;
 
-// Intentional skips per CLAUDE.md: progress-rtl (RTL).
 pub static META: page::Meta = page::Meta {
     title: "Progress",
     description: "Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.",

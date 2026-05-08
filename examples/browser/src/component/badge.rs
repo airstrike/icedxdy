@@ -1,3 +1,13 @@
+// TODO: API Reference section once a table widget lands.
+//
+// Live docs API Reference covers `Badge`: `variant`
+// (`"default" | "secondary" | "destructive" | "outline" | "ghost" | "link"`,
+// default `"default"`) and `className` (`string`). Captured here so the gap
+// is auditable when the table widget lands.
+//
+// Intentional skips per CLAUDE.md: badge-colors (Custom Colors) and
+// badge-rtl (RTL).
+
 use iced::Task;
 
 use icedxdy::widget::{badge, row, spinner};
@@ -6,8 +16,6 @@ use icedxdy::{Component, Theme};
 use crate::icon;
 use crate::page;
 
-// Intentional skips per CLAUDE.md: badge-colors (Custom Colors) and
-// badge-rtl (RTL).
 pub static META: page::Meta = page::Meta {
     title: "Badge",
     description: "Displays a badge or a component that looks like a badge.",

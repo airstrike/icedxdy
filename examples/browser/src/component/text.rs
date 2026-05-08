@@ -1,3 +1,15 @@
+// TODO: API Reference section once a table widget lands.
+//
+// The live Typography page is a styling guide rather than a component-with-
+// props page — it does not surface a structured API Reference table.
+// Captured shapes: `h1`, `h2`, `h3`, `h4`, `p`, `blockquote`, `ul`/`li`,
+// `code` (semantic HTML elements with Tailwind utility classes), plus
+// `Lead`, `Large`, `Small`, `Muted` (utility helpers). All take
+// `className` (`string`) and `children`; no other configurable props.
+// Captured here so the gap is auditable when the table widget lands.
+//
+// Intentional skips per CLAUDE.md: typography-rtl (RTL).
+
 use iced::widget::column;
 use iced::{Fill, Task};
 use icedxdy::Size::Sm;
@@ -8,7 +20,6 @@ use icedxdy::{Theme, radius, theme};
 use crate::Message;
 use crate::page;
 
-// Intentional skips per CLAUDE.md: typography-rtl (RTL).
 pub static META: page::Meta = page::Meta {
     title: "Typography",
     description: "Styles for headings, paragraphs, lists...etc.",

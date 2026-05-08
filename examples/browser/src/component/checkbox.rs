@@ -1,3 +1,16 @@
+// TODO: API Reference section once a table widget lands.
+//
+// Live docs defers the prop matrix to Radix's own docs; the page itself only
+// hints at common props through usage. Captured rows: `Checkbox.checked`
+// (`boolean | "indeterminate"`), `Checkbox.defaultChecked` (`boolean`),
+// `Checkbox.onCheckedChange` (`(checked) => void`), `Checkbox.disabled`
+// (`boolean`, default `false`), `Checkbox.aria-invalid` (`boolean`).
+// Captured here so the gap is auditable when the table widget lands.
+//
+// Intentional skips per CLAUDE.md: checkbox-rtl (RTL), checkbox-group
+// (requires FieldGroup with multiple horizontally-labelled fields — deferred),
+// checkbox-table (out of scope).
+
 use iced::Task;
 
 use icedxdy::Theme;
@@ -7,9 +20,6 @@ use icedxdy::widget::{checkbox, column, field, text};
 use crate::Message;
 use crate::page;
 
-// Intentional skips per CLAUDE.md: checkbox-rtl (RTL), checkbox-group
-// (requires FieldGroup with multiple horizontally-labelled fields — deferred),
-// checkbox-table (out of scope).
 pub static META: page::Meta = page::Meta {
     title: "Checkbox",
     description: "A control that allows the user to toggle between checked and not checked.",
