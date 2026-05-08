@@ -1,3 +1,12 @@
+// TODO: API Reference section once a table widget lands.
+//
+// Live docs API Reference covers `AspectRatio`: `ratio` (`number`, required)
+// and `className` (`string`). Captured here so the gap is auditable when
+// the table widget lands.
+//
+// Intentional skips:
+// - aspect-ratio-rtl — RTL is not in scope (per CLAUDE.md).
+
 use iced::Task;
 
 use icedxdy::core::{Border, Color};
@@ -24,16 +33,22 @@ pub static BLOCKS: &[page::Block] = &[
         title: "Examples",
         children: &[
             page::Block::Example {
-                id: "portrait",
-                title: "Portrait",
-                description: Some("Use the ratio prop to set the aspect ratio of the content."),
-                snippet: "examples/browser/snippets/aspect-ratio-portrait.md",
-            },
-            page::Block::Example {
                 id: "square",
                 title: "Square",
-                description: Some("Use the ratio prop to set the aspect ratio of the content."),
+                description: Some(
+                    "A square aspect ratio component using the `ratio={1 / 1}` prop. \
+                     This is useful for displaying images in a square format.",
+                ),
                 snippet: "examples/browser/snippets/aspect-ratio-square.md",
+            },
+            page::Block::Example {
+                id: "portrait",
+                title: "Portrait",
+                description: Some(
+                    "A portrait aspect ratio component using the `ratio={9 / 16}` prop. \
+                     This is useful for displaying images in a portrait format.",
+                ),
+                snippet: "examples/browser/snippets/aspect-ratio-portrait.md",
             },
         ],
     },
