@@ -555,8 +555,16 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
                         // self.items is borrowed mut by the surrounding loop.
                         let is_open_now = self.open.iter().any(|s| s == &item.id);
                         let allow = match (self.mode, is_open_now) {
+                            // The one refusal case: single + non-collapsible
+                            // forbids closing the currently-open item
+                            // because there must always be one open.
                             (Mode::Single { collapsible: false }, true) => false,
-                            _ => true,
+                            // All three remaining (Mode, is_open) shapes
+                            // accept the click; the parent state mutation
+                            // and re-render will reflect the new open-set.
+                            (Mode::Single { collapsible: false }, false)
+                            | (Mode::Single { collapsible: true }, _)
+                            | (Mode::Multiple, _) => true,
                         };
                         if allow {
                             shell.publish(on_toggle(item.id.clone()));
