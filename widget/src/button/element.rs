@@ -1,6 +1,8 @@
 use iced_core::Font;
 use iced_core::Length;
+use iced_core::Length::Fill;
 use iced_core::Padding;
+use iced_core::alignment;
 use iced_core::text::Span;
 use iced_widget::text::Rich;
 
@@ -179,7 +181,28 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
                 .height(h)
                 .padding(0)
         } else {
-            super::widget::Button::new(content)
+            // shadcn buttons are `flex items-center justify-center` — content
+            // is centered both axes. iced's `Button` doesn't itself center
+            // children; padded layout puts content at the start. When the
+            // user calls `.width(Fill)` (Card "Login" / "Login with Google"
+            // etc.), wrap content in a `Fill`-width container with
+            // `align_x(Center)` so the slack between the button's inner
+            // bounds and the content centers the latter — matches shadcn.
+            //
+            // Intrinsic-sized buttons (no `.width()` call) are left alone:
+            // there's no slack, centering would be a no-op, and any wrapper
+            // would change the size_hint that the vendored Button uses for
+            // its `fluid()` width seeding.
+            let inner: iced_core::Element<'a, Message, Theme, iced_widget::Renderer> =
+                if matches!(btn.width, Some(Fill)) {
+                    iced_widget::container(content)
+                        .width(Fill)
+                        .align_x(alignment::Horizontal::Center)
+                        .into()
+                } else {
+                    content
+                };
+            widget::Button::new(inner)
                 .height(h)
                 .padding(size.padding())
         };
