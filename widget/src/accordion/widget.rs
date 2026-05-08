@@ -908,10 +908,10 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         let mut overlays: Vec<overlay::Element<'b, Message, Theme, iced_widget::Renderer>> =
             Vec::new();
 
-        // Walk children and layouts in lockstep. We need to take mut
-        // borrows of disjoint slices of `tree.children`, so chunk by 4.
-        let mut tree_chunks: Vec<&'b mut Tree> = tree.children.iter_mut().collect();
-        let mut tree_iter = tree_chunks.drain(..);
+        // Walk children and layouts in lockstep. Each item owns 4 trees
+        // (trigger / chevron-closed / chevron-open / body), so chunk by 4
+        // for disjoint mut borrows without an intermediate Vec.
+        let mut tree_chunks = tree.children.chunks_mut(4);
 
         for item in &mut self.items {
             let Some(item_layout) = item_layouts.next() else {
@@ -923,10 +923,11 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             let _chevron_open_layout = child_layouts.next();
             let body_layout = child_layouts.next().expect("body layout");
 
-            let trigger_tree = tree_iter.next().expect("trigger tree");
-            let _chevron_closed_tree = tree_iter.next();
-            let _chevron_open_tree = tree_iter.next();
-            let body_tree = tree_iter.next().expect("body tree");
+            let Some([trigger_tree, _chevron_closed_tree, _chevron_open_tree, body_tree]) =
+                tree_chunks.next()
+            else {
+                break;
+            };
 
             if let Some(o) = item.trigger.as_widget_mut().overlay(
                 trigger_tree,

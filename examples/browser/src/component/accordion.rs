@@ -438,15 +438,12 @@ impl page::Page for AccordionPage {
                     ],
                 );
 
-                let header: iced::Element<'_, Message, Theme> = card::header(
-                    "Subscription & Billing",
+                let header = card::header("Subscription & Billing").description(
                     "Common questions about your account, plans, payments and cancellations.",
-                )
-                .into();
-                let body: iced::Element<'_, Message, Theme> = card::content(inner).into();
-
-                use iced::widget::column;
-                let stack: iced::Element<'_, Message, Theme> = column![header, body].into();
+                );
+                let body = card::content(inner);
+                use icedxdy::widget::column;
+                let stack = column![header, body];
 
                 card::card(stack).max_width(384.0).width(iced::Fill).into()
             }

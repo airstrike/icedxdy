@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 0ebfab77affb5355bdd0414e3a32e373aa83ec5220a320b6c512c1b8ff166000
+// 7dd198a538eed3d1cea142cd9b986027a739e0bd949e9fbb3d96b2dbe22bbe99
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -15,7 +15,9 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("badge_check", "\u{E241}"),
     ("bookmark", "\u{E060}"),
     ("check", "\u{E06C}"),
+    ("chevron_down", "\u{E06D}"),
     ("chevron_right", "\u{E06F}"),
+    ("chevron_up", "\u{E070}"),
     ("circle_alert", "\u{E077}"),
     ("circle_check", "\u{E226}"),
     ("circle_check_big", "\u{E07C}"),
@@ -72,11 +74,25 @@ where
     icon("\u{E06C}")
 }
 
+pub fn chevron_down<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E06D}")
+}
+
 pub fn chevron_right<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E06F}")
+}
+
+pub fn chevron_up<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E070}")
 }
 
 pub fn circle_alert<'a, Theme>() -> Text<'a, Theme>
