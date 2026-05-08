@@ -2,7 +2,7 @@
 use icedxdy::widget::avatar;
 
 avatar::badge(
-    avatar(Some(pranathip_handle())).fallback("PP"),
+    avatar(Some(iced_handle())).fallback("IC"),
     icon::plus(),
 )
 ```

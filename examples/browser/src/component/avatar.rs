@@ -16,15 +16,13 @@
 // - avatar-dropdown — needs a dropdown-menu primitive (not yet ported).
 // - avatar-rtl — RTL is not in scope (per CLAUDE.md).
 //
-// Snippet-vs-page asymmetry:
-// - Snippets reference aspirational `shadcn_handle()` / `evilrabbit_handle()`
-//   / `maxleiter_handle()` / `pranathip_handle()` helpers (mirroring the
-//   shadcn .tsx imports) so the snippet reads as the canonical shape a user
-//   would copy-paste. The rendered page passes `None` to `avatar(...)` and
-//   relies on the fallback — see the `preview()` docstring and the avatar
-//   widget docstring for the image-load-failure deviation that motivates it.
+// Avatars are bundled as static PNGs under `examples/browser/assets/avatars/`
+// and surfaced through small `*_handle()` helpers below. Snippets reference
+// these same helpers verbatim so users can copy-paste the rendered example
+// directly. iced has no URL fetcher; `include_bytes!` is the canonical path.
 
 use iced::Task;
+use iced::widget::image;
 
 use icedxdy::widget::{avatar, row};
 use icedxdy::Theme;
@@ -32,6 +30,24 @@ use icedxdy::Theme;
 use crate::Message;
 use crate::icon;
 use crate::page;
+
+/// Andy Terra's GitHub avatar (the icedxdy author).
+fn airstrike_handle() -> image::Handle {
+    static BYTES: &[u8] = include_bytes!("../../assets/avatars/airstrike.png");
+    image::Handle::from_bytes(BYTES)
+}
+
+/// Héctor Ramón's GitHub avatar (iced's creator).
+fn hecrj_handle() -> image::Handle {
+    static BYTES: &[u8] = include_bytes!("../../assets/avatars/hecrj.png");
+    image::Handle::from_bytes(BYTES)
+}
+
+/// The iced framework's snowflake mark (iced-rs org avatar).
+fn iced_handle() -> image::Handle {
+    static BYTES: &[u8] = include_bytes!("../../assets/avatars/iced.png");
+    image::Handle::from_bytes(BYTES)
+}
 
 pub static META: page::Meta = page::Meta {
     title: "Avatar",
@@ -141,24 +157,26 @@ impl page::Page for AvatarPage {
         self.state.reset_volatile();
     }
 
-    /// Per the avatar module docstring: iced has no URL fetcher and the
-    /// project ships no checked-in raster asset, so every example here passes
-    /// `None` to [`avatar`] and lets the fallback (initials) render. This
-    /// faithfully demonstrates the fallback path; the image-rendering path
-    /// itself remains exercised by callers who hand in their own
-    /// `image::Handle`.
+    /// Each example wires a real `image::Handle` (PNGs bundled under
+    /// `examples/browser/assets/avatars/` via `include_bytes!`). The
+    /// fallback initials still match each persona — they only render if
+    /// decoding fails, which mirrors the image-load-failure deviation
+    /// documented on the avatar widget itself.
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
         match id {
             // Hero (avatar-demo.tsx): three avatars in a row at gap-6 (24px),
             // demonstrating the basic avatar, an avatar with a status badge,
             // and a group with a +3 count.
             "demo" => row![
-                avatar(None).fallback("CN"),
-                avatar::badge(avatar(None).fallback("ER"), avatar::dot()),
+                avatar(Some(airstrike_handle())).fallback("AT"),
+                avatar::badge(
+                    avatar(Some(hecrj_handle())).fallback("HR"),
+                    avatar::dot(),
+                ),
                 avatar::group([
-                    avatar(None).fallback("CN"),
-                    avatar(None).fallback("LR"),
-                    avatar(None).fallback("ER"),
+                    avatar(Some(airstrike_handle())).fallback("AT"),
+                    avatar(Some(hecrj_handle())).fallback("HR"),
+                    avatar(Some(iced_handle())).fallback("IC"),
                 ])
                 .count("+3"),
             ]
@@ -167,33 +185,37 @@ impl page::Page for AvatarPage {
             .into(),
 
             // Basic (avatar-basic.tsx): single avatar — image + fallback.
-            // Image source is `None` per the page's image-asset deviation;
-            // the fallback "CN" carries the example.
-            "basic" => avatar(None).fallback("CN").into(),
+            "basic" => avatar(Some(airstrike_handle())).fallback("AT").into(),
 
             // Badge (avatar-badge.tsx): avatar + corner status dot.
-            "badge" => avatar::badge(avatar(None).fallback("CN"), avatar::dot()).into(),
+            "badge" => avatar::badge(
+                avatar(Some(hecrj_handle())).fallback("HR"),
+                avatar::dot(),
+            )
+            .into(),
 
             // Badge with Icon (avatar-badge-icon.tsx): avatar + corner badge
             // containing a `+` icon (lucide PlusIcon).
-            "badge-icon" => {
-                avatar::badge(avatar(None).fallback("PP"), icon::plus()).into()
-            }
+            "badge-icon" => avatar::badge(
+                avatar(Some(iced_handle())).fallback("IC"),
+                icon::plus(),
+            )
+            .into(),
 
             // Avatar Group (avatar-group.tsx): three overlapping avatars.
             "group" => avatar::group([
-                avatar(None).fallback("CN"),
-                avatar(None).fallback("LR"),
-                avatar(None).fallback("ER"),
+                avatar(Some(airstrike_handle())).fallback("AT"),
+                avatar(Some(hecrj_handle())).fallback("HR"),
+                avatar(Some(iced_handle())).fallback("IC"),
             ])
             .into(),
 
             // Avatar Group Count (avatar-group-count.tsx): three avatars +
             // a `+3` text count chip on the right.
             "group-count" => avatar::group([
-                avatar(None).fallback("CN"),
-                avatar(None).fallback("LR"),
-                avatar(None).fallback("ER"),
+                avatar(Some(airstrike_handle())).fallback("AT"),
+                avatar(Some(hecrj_handle())).fallback("HR"),
+                avatar(Some(iced_handle())).fallback("IC"),
             ])
             .count("+3")
             .into(),
@@ -201,19 +223,24 @@ impl page::Page for AvatarPage {
             // Avatar Group with Icon (avatar-group-count-icon.tsx): three
             // avatars + a `+` icon count chip on the right.
             "group-count-icon" => avatar::group([
-                avatar(None).fallback("CN"),
-                avatar(None).fallback("LR"),
-                avatar(None).fallback("ER"),
+                avatar(Some(airstrike_handle())).fallback("AT"),
+                avatar(Some(hecrj_handle())).fallback("HR"),
+                avatar(Some(iced_handle())).fallback("IC"),
             ])
             .count(icon::plus())
             .into(),
 
             // Sizes (avatar-size.tsx): three avatars at sm / default / lg in
-            // a row at gap-2 (8px).
+            // a row at gap-2 (8px). Same persona at three sizes mirrors the
+            // shadcn example (which uses the same avatar three times).
             "size" => row![
-                avatar(None).fallback("CN").size(avatar::Sm),
-                avatar(None).fallback("CN"),
-                avatar(None).fallback("CN").size(avatar::Lg),
+                avatar(Some(airstrike_handle()))
+                    .fallback("AT")
+                    .size(avatar::Sm),
+                avatar(Some(airstrike_handle())).fallback("AT"),
+                avatar(Some(airstrike_handle()))
+                    .fallback("AT")
+                    .size(avatar::Lg),
             ]
             .spacing(8)
             .align_y(iced::Center)
