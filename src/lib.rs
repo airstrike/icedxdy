@@ -17,6 +17,13 @@ pub use icedxdy_core::theme;
 pub use icedxdy_core::{Color, Design, FontFamily, Palette, Theme};
 pub use icedxdy_core::{font_size, height, icon_size, radius, spacing};
 
+// Layout-axis primitive shared across widgets (Field, ButtonGroup, ...).
+// Re-exported at the crate root with the bare variants so callers reach
+// for `use icedxdy::{Vertical, Horizontal};` and pass them directly into
+// any `.orientation()` builder, no FQN dance per-widget.
+pub use icedxdy_core::Orientation;
+pub use icedxdy_core::Orientation::{Horizontal, Vertical};
+
 #[allow(hidden_glob_reexports)]
 pub mod widget {
     pub use icedxdy_widget::*;

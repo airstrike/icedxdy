@@ -63,22 +63,14 @@ pub mod separator;
 
 pub use separator::Separator;
 
-/// Layout orientation for a [`ButtonGroup`].
-///
-/// Mirrors shadcn's `<ButtonGroup orientation="horizontal" | "vertical">`
-/// prop. Horizontal is the default per the live docs page.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum Orientation {
-    /// Buttons in a row (default).
-    #[default]
-    Horizontal,
-    /// Buttons in a column.
-    Vertical,
-}
-
-// Variants reachable at module scope: `button::group::Horizontal` rather
-// than `button::group::Orientation::Horizontal`. Mirrors `field`'s pattern.
-pub use Orientation::*;
+// Re-export the crate-root [`icedxdy::Orientation`] (and its bare variants)
+// at this module path. The underlying type is shared across widgets — a
+// `field::Orientation` value and a `button::group::Orientation` value are
+// the SAME enum, so callers can build `use icedxdy::{Vertical, Horizontal};`
+// once and feed into every `.orientation()` builder via `impl Into`.
+pub use icedxdy_core::Horizontal;
+pub use icedxdy_core::Orientation;
+pub use icedxdy_core::Vertical;
 
 /// Position of a [`Button`] within the group's child sequence — drives
 /// which corners get collapsed at radius-stripping time.
@@ -173,7 +165,10 @@ pub fn group<'a, Message: Clone + 'a>(
 ) -> ButtonGroup<'a, Message> {
     ButtonGroup {
         items: items.into_iter().collect(),
-        orientation: Orientation::default(),
+        // Horizontal is the default per shadcn's live docs page — the
+        // `<ButtonGroup orientation="horizontal" | "vertical">` prop
+        // defaults to "horizontal" in `apps/v4/styles/radix-nova/ui/button-group.tsx`.
+        orientation: Orientation::Horizontal,
         width: None,
     }
 }

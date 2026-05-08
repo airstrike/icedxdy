@@ -67,24 +67,19 @@ use icedxdy_core::theme::field::CardActive;
 use crate::component::{Component, IntoElement};
 use animated_card::AnimatedCard;
 
-/// Layout orientation for a [`Field`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum Orientation {
-    /// Label → content → description → error, stacked vertically (default).
-    /// Matches shadcn's default vertical field shape used by Input, Textarea,
-    /// etc. — `<Field><FieldLabel>...</FieldLabel><Input/></Field>`.
-    #[default]
-    Vertical,
-    /// Content on the left, FieldContent column (label / description / error)
-    /// on the right, in a row. Matches shadcn's `orientation="horizontal"`
-    /// — used by Checkbox, Switch, and other compact controls where the
-    /// label sits inline with the control.
-    Horizontal,
-}
-
-// Allow callers to reach the variants at module scope: `field::Horizontal`
-// rather than `field::Orientation::Horizontal`.
-pub use Orientation::*;
+// Re-export the crate-root [`icedxdy::Orientation`] (and its bare variants)
+// at this module path. The underlying type is shared across widgets — a
+// `field::Orientation` value and a `button::group::Orientation` value are
+// the SAME enum, so callers can build `use icedxdy::{Vertical, Horizontal};`
+// once and feed into every `.orientation()` builder via `impl Into`.
+//
+// Field's default is Vertical (shadcn's default field shape used by Input,
+// Textarea, etc. — `<Field><FieldLabel>...</FieldLabel><Input/></Field>`).
+// Horizontal is for compact controls where the label sits inline with the
+// control (Checkbox, Switch — `field-checkbox.tsx`, `field-switch.tsx`).
+pub use icedxdy_core::Horizontal;
+pub use icedxdy_core::Orientation;
+pub use icedxdy_core::Vertical;
 
 /// A labeled-input wrapper with optional card chrome and click-anywhere handling.
 ///
@@ -158,8 +153,8 @@ impl<'a, Message: 'a> Field<'a, Message> {
     /// [`Orientation::Horizontal`]: content on the left, FieldContent column
     /// (label / description / error at 2px gap) on the right, in a Row with
     /// 8px gap. Matches shadcn's `orientation="horizontal"` on `Field`.
-    pub fn orientation(mut self, orientation: Orientation) -> Self {
-        self.orientation = orientation;
+    pub fn orientation(mut self, orientation: impl Into<Orientation>) -> Self {
+        self.orientation = orientation.into();
         self
     }
 
