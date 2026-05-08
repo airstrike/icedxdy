@@ -2,6 +2,7 @@ use iced_core as core;
 
 pub mod alert;
 pub mod animation;
+pub mod aspect_ratio;
 pub mod badge;
 pub mod button;
 pub mod checkbox;
@@ -36,6 +37,7 @@ pub use iced_widget::slider;
 pub use iced_widget::space;
 
 pub use alert::Alert;
+pub use aspect_ratio::AspectRatio;
 pub use badge::Badge;
 pub use button::Button;
 pub use checkbox::Checkbox;
@@ -101,6 +103,15 @@ pub fn badge<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Bad
 /// Create an [`Alert`].
 pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
     alert::alert()
+}
+
+/// Create an [`AspectRatio`] wrapper that constrains `content` to a
+/// `width / height` ratio. Mirrors shadcn's `<AspectRatio ratio={...}>`.
+pub fn aspect_ratio<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+    ratio: f32,
+) -> AspectRatio<'a, Message> {
+    aspect_ratio::aspect_ratio(content, ratio)
 }
 
 /// Create an [`Input`].

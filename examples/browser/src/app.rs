@@ -97,11 +97,13 @@ impl App {
         let mut tasks: Vec<Task<Message>> = Vec::new();
 
         use component::{
-            alert, badge, button, checkbox, field, input, label, progress, sidebar, switch, text,
+            alert, aspect_ratio, badge, button, checkbox, field, input, label, progress, sidebar,
+            switch, text,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
             alert::AlertPage::new,
+            aspect_ratio::AspectRatioPage::new,
             badge::BadgePage::new,
             button::ButtonPage::new,
             checkbox::CheckboxPage::new,
