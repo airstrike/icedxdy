@@ -267,11 +267,13 @@ pub fn header_simple<'a, Message: 'a>(title: impl IntoTitle<'a, Message>) -> Hea
 pub fn content<'a, Message: 'a>(
     child: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
 ) -> Container<'a, Message, Theme, Renderer> {
-    Container::new(child).padding(
-        iced_core::Padding::ZERO
-            .left(padding::SECTION)
-            .right(padding::SECTION),
-    )
+    Container::new(child)
+        .padding(
+            iced_core::Padding::ZERO
+                .left(padding::SECTION)
+                .right(padding::SECTION),
+        )
+        .width(Length::Fill)
 }
 
 /// Card footer section. Caller composes the inner shape (row of buttons,
@@ -279,11 +281,13 @@ pub fn content<'a, Message: 'a>(
 pub fn footer<'a, Message: 'a>(
     child: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
 ) -> Container<'a, Message, Theme, Renderer> {
-    Container::new(child).padding(
-        iced_core::Padding::ZERO
-            .left(padding::SECTION)
-            .right(padding::SECTION),
-    )
+    Container::new(child)
+        .padding(
+            iced_core::Padding::ZERO
+                .left(padding::SECTION)
+                .right(padding::SECTION),
+        )
+        .width(Length::Fill)
 }
 
 /// Card footer as a row of children with 8px (`gap-2`) spacing.

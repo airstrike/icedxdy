@@ -222,7 +222,9 @@ impl page::Page for CardPage {
                                 .on_press(Message::Page(pi, page::Message::Noop))
                         )),
                     card::content(
-                        column![email_field, password_field].spacing(Gap::G6),
+                        column![email_field, password_field]
+                            .spacing(Gap::G6)
+                            .width(Fill),
                     ),
                     // shadcn footer here uses `flex-col gap-2` with full-width
                     // buttons — column shape, not row.
@@ -236,10 +238,12 @@ impl page::Page for CardPage {
                                 .width(Fill),
                         ]
                         .spacing(Gap::G2)
+                        .width(Fill)
                     ),
                 ]
                 .spacing(Gap::G4)
-                .padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4)))
+                .padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4))
+                .width(Fill))
                 .width(384.0)
                 .into()
             }
@@ -262,7 +266,8 @@ impl page::Page for CardPage {
                 ),
             ]
             .spacing(Gap::G4)
-            .padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4)))
+            .padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4))
+            .width(Fill))
             .width(384.0)
             .into(),
 
@@ -287,7 +292,8 @@ impl page::Page for CardPage {
                     ),
                 ]
                 .spacing(Gap::G4)
-                .padding(iced::Padding::ZERO.bottom(Gap::G4)))
+                .padding(iced::Padding::ZERO.bottom(Gap::G4))
+                .width(Fill))
                 .width(384.0)
                 .clip(true)
                 .into()

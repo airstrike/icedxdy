@@ -36,6 +36,7 @@ card(column![
             .label(password_label),
         ]
         .spacing(Gap::G6)
+        .width(Fill)
     ),
     card::footer(
         column![
@@ -45,9 +46,11 @@ card(column![
                 .width(Fill),
         ]
         .spacing(Gap::G2)
+        .width(Fill)
     ),
 ]
 .spacing(Gap::G4)
-.padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4)))
+.padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4))
+.width(Fill))
 .width(384.0)
 ```

@@ -20,7 +20,8 @@ card(column![
     ),
 ]
 .spacing(Gap::G4)
-.padding(iced::Padding::ZERO.bottom(Gap::G4)))
+.padding(iced::Padding::ZERO.bottom(Gap::G4))
+.width(Fill))
 .width(384.0)
 .clip(true)
 ```
