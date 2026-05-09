@@ -513,7 +513,9 @@ where
                 if state.is_scrollbar_visible == is_scrollbar_visible {
                     status_quo
                 } else {
-                    log::trace!("Scrollbar status quo has changed");
+                    // Upstream emits a `log::trace!` here; dropped in
+                    // the icedxdy fork to avoid pulling in the optional
+                    // `log` crate as a hard dep just for one diagnostic.
                     state.is_scrollbar_visible = is_scrollbar_visible;
 
                     layout(
