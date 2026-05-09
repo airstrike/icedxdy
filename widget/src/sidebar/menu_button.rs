@@ -16,7 +16,7 @@
 //!     .on_press(Message::Settings)
 //! ```
 
-use iced_core::Length::Shrink;
+use iced_core::Length::{Fill, Shrink};
 use iced_core::Padding;
 use iced_core::mouse::Interaction;
 use iced_widget::Renderer;
@@ -169,10 +169,25 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             // button — shadcn's docs-sidebar items use `w-fit`, so the
             // active-state bg paint hugs the text + padding rather than
             // stretching the full sidebar column. Hit area follows.
-            widget::Button::new(iced_widget::container(content_iced).width(Shrink))
-                .width(Shrink)
-                .height(height)
-                .padding(btn.size.padding())
+            //
+            // `center_y(Fill)` on the inner container is load-bearing:
+            // Docs items are 32px tall with 8/8 vertical padding, so the
+            // content area is 16px. text-13 with default line-height 1.3
+            // is a 17px line-box; iced's `padded` layout puts the line-box
+            // at the TOP of the content area, leaving the glyph ~1px
+            // below the visible center. Vertically centering the
+            // container inside the Fill area (= the post-padding 16px
+            // band) re-centers the glyph against the button's geometric
+            // midpoint — same fix as `iced_widget::center` does for
+            // square (icon) buttons via translate-y math.
+            widget::Button::new(
+                iced_widget::container(content_iced)
+                    .width(Shrink)
+                    .center_y(Fill),
+            )
+            .width(Shrink)
+            .height(height)
+            .padding(btn.size.padding())
         };
 
         raw_btn = raw_btn
