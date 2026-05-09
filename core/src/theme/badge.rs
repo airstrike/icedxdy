@@ -44,15 +44,17 @@ pub fn secondary(theme: &Theme) -> Style {
     }
 }
 
-/// Destructive: `bg-destructive/10` text-`destructive`.
+/// Destructive: `bg-destructive/10 dark:bg-destructive/20` text-`destructive`.
 ///
-/// Nova spec: `bg-destructive/10 text-destructive` — the fill is the
-/// destructive hue at 10% alpha; text is the destructive hue at full
-/// opacity (not `destructive-foreground`).
+/// Nova spec: `bg-destructive/10 text-destructive dark:bg-destructive/20` — fill
+/// is the destructive hue at 10% alpha (light) / 20% (dark); text is the
+/// destructive hue at full opacity (not `destructive-foreground`).
 pub fn destructive(theme: &Theme) -> Style {
     let p = theme.palette();
+    let is_dark = p.background.l < 0.5;
+    let alpha = if is_dark { 0.20 } else { 0.10 };
     Style {
-        background: Some(p.destructive.base.scale_alpha(0.10).into()),
+        background: Some(p.destructive.base.scale_alpha(alpha).into()),
         text_color: Some(p.destructive.base),
         border: Border {
             radius: PILL_RADIUS.into(),
