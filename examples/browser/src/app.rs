@@ -1,5 +1,6 @@
 use iced::mouse::Interaction;
-use iced::widget::{column, combo_box, row, scrollable, space, stack, svg};
+use iced::widget::{column, combo_box, row, space, stack, svg};
+use icedxdy::widget::scrollable;
 
 use iced::{Fill, Font, Pixels, Subscription, Task};
 use icedxdy::theme::tweak::Bg;
@@ -400,7 +401,7 @@ impl App {
         //              text starts at `col-left + 1 + 8` from the page edge.
         //              Column left padding must be 58 - 9 = 49px.
         //   right/bottom=8px — unchanged from prior padding.
-        let sidebar_scrollable = scrollable(
+        let sidebar_scrollable = scrollable::scrollable(
             column![sidebar_header, sidebar_items]
                 .padding(iced::Padding::ZERO.top(24).right(8).bottom(8).left(49))
                 .width(272),
@@ -530,10 +531,11 @@ impl App {
         )
         .center_x(Fill);
 
-        let thin_scrollbar = scrollable::Scrollbar::default().width(1).scroller_width(2);
-
-        let main = scrollable(content)
-            .direction(scrollable::Direction::Vertical(thin_scrollbar))
+        // The icedxdy `scrollable` helper defaults to the project-wide
+        // thin invisible-rail spec (1px rail, 2px scroller; faint
+        // `palette.muted.foreground`). No direction override needed —
+        // vertical with the thin Scrollbar shape is the constructor default.
+        let main = scrollable::scrollable(content)
             .height(Fill)
             .id(current.scrollable_id());
 

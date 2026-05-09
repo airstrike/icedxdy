@@ -743,7 +743,8 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
         _code: &'a str,
         lines: &'a [markdown::Text],
     ) -> iced::Element<'a, markdown::Uri, Theme, iced::Renderer> {
-        use iced::widget::{rich_text, scrollable};
+        use iced::widget::rich_text;
+        use icedxdy::widget::scrollable;
 
         let body = column(lines.iter().map(|line| {
             rich_text(line.spans(settings.style, Some(&self.map)))
@@ -753,7 +754,12 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
                 .into()
         }));
 
-        let scroll = scrollable(body)
+        // Code-size-relative horizontal scrollbar — explicitly chunkier
+        // than the project-wide thin default (1px/2px). The bigger bar
+        // reads as a deliberate "scroll right for more code" affordance
+        // for long single lines, where the thin invisible default would
+        // be hard to spot.
+        let scroll = scrollable::scrollable(body)
             .direction(scrollable::Direction::Horizontal(
                 scrollable::Scrollbar::default()
                     .width(settings.code_size / 2)
