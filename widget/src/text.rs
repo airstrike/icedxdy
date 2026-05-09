@@ -106,10 +106,9 @@ impl<'a> Text<'a> {
         self
     }
 
-    /// Override the text widget's layout width. Paragraph helpers
-    /// (`p`, `lead`, `muted`, `small`) default to `Fill` so they wrap
-    /// inside their parent; headings and inline-styled fragments
-    /// default to `Shrink`.
+    /// Override the text widget's layout width. Defaults to `Shrink`,
+    /// matching `Text::new()`. Add `.width(Fill)` at the call site for
+    /// paragraph copy that should occupy the parent's full width.
     pub fn width(mut self, width: impl Into<Length>) -> Self {
         self.width = Some(width.into());
         self
@@ -256,14 +255,12 @@ pub fn p<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::BASE)
         .style(theme::text::Foreground)
-        .width(Fill)
 }
 
 pub fn lead<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::XL)
         .style(theme::text::Muted)
-        .width(Fill)
 }
 
 pub fn large<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
@@ -277,11 +274,9 @@ pub fn small<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
         .style(theme::text::Foreground)
-        .width(Fill)
 }
 
 /// Field-style label typography (Tailwind `text-sm font-medium leading-none`).
-/// Use for inline form labels (`<FieldLabel>` in shadcn parlance).
 /// `leading-none` (`line_height(1.0)`) strips the invisible line-height
 /// padding that otherwise throws off vertical alignment math in horizontal
 /// Field layouts — mirroring shadcn's `<Label>` cascade exactly.
@@ -291,27 +286,23 @@ pub fn label<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
         .medium()
         .style(theme::text::Foreground)
         .line_height(LineHeight::Relative(1.0))
-        .width(Fill)
 }
 
 pub fn muted<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
         .style(theme::text::Muted)
-        .width(Fill)
 }
 
 /// Field-style error message typography
-/// (Tailwind `text-sm text-destructive leading-none`). Use for inline
-/// validation feedback (`<FieldError>` in shadcn parlance).
-/// `leading-none` matches shadcn's `<FieldError>` typography and keeps
-/// the vertical rhythm consistent with the label above it.
+/// (Tailwind `text-sm text-destructive leading-none`). `leading-none`
+/// matches shadcn's `<FieldError>` typography and keeps the vertical
+/// rhythm consistent with the label above it.
 pub fn error<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
     Text::new(content)
         .size(size::SM)
         .style(theme::text::Destructive)
         .line_height(LineHeight::Relative(1.0))
-        .width(Fill)
 }
 
 pub fn xs<'a>(content: impl IntoFragment<'a>) -> Text<'a> {

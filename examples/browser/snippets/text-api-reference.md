@@ -13,11 +13,11 @@ etc. on.
 | `text::h2(content)` | `Text<'a>` | `text-xl` (20px), medium, `-0.025em` letter-spacing, foreground. |
 | `text::h3(content)` | `Text<'a>` | `text-lg` (18px), medium, `-0.025em` letter-spacing, foreground. |
 | `text::h4(content)` | `Text<'a>` | `text-base` (16px), medium, `-0.025em` letter-spacing, foreground. |
-| `text::p(content)` | `Text<'a>` | Body paragraph: `text-base` (16px), foreground, `Fill` width. |
-| `text::lead(content)` | `Text<'a>` | Lead paragraph: `text-xl` (20px), muted, `Fill` width. |
+| `text::p(content)` | `Text<'a>` | Body paragraph: `text-base` (16px), foreground. |
+| `text::lead(content)` | `Text<'a>` | Lead paragraph: `text-xl` (20px), muted. |
 | `text::large(content)` | `Text<'a>` | `text-lg` (18px), semibold, foreground. |
-| `text::small(content)` | `Text<'a>` | `text-sm` (14px), foreground, `Fill` width. |
-| `text::muted(content)` | `Text<'a>` | `text-sm` (14px), muted, `Fill` width. |
+| `text::small(content)` | `Text<'a>` | `text-sm` (14px), foreground. |
+| `text::muted(content)` | `Text<'a>` | `text-sm` (14px), muted. |
 | `text::xs(content)` | `Text<'a>` | `text-xs` (12px), foreground. |
 | `text::inline_code(content)` | `Text<'a>` | `text-sm` (14px), semibold, foreground. Wrap in a `bg-muted` container at the call site for the full `<code>` chrome. |
 | `text::blockquote(content)` | `Blockquote<'a>` | 2px left rule + 24px gap + italic body. |
@@ -38,7 +38,7 @@ so all constructors accept owned or borrowed strings.
 | `.bold()` | — | Shorthand for `.weight(Weight::Bold)`. |
 | `.italic()` | — | Render the text in italic (folded into the active font). |
 | `.letter_spacing(spacing)` | `impl Into<iced_core::Em>` | Adjust letter spacing in `em` units. |
-| `.width(width)` | `impl Into<Length>` | Override the layout width. Paragraph helpers default to `Fill`; headings and `xs`/`large`/`inline_code` default to `Shrink`. |
+| `.width(width)` | `impl Into<Length>` | Override the layout width. Defaults to `Shrink`, matching `Text::new()`; add `.width(Fill)` for paragraph copy that should occupy the parent's full width. |
 | `.style(style)` | `impl Into<text::StyleFn>` | Override the text style — variant unit structs (`theme::text::Foreground`, `Muted`, `Link`, `Destructive`), a `Spec` (`Foreground + Alpha(0.5)`), or a hand-rolled closure. |
 
 ### `Blockquote<'a>`

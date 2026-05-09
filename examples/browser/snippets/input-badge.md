@@ -8,7 +8,7 @@ field(
 )
 .label(Component::from(
     row![
-        text::label("Webhook URL").width(Shrink),
+        text::label("Webhook URL"),
         space::horizontal(),
         badge::secondary("Beta"),
     ]

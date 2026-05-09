@@ -278,9 +278,6 @@ impl App {
             .square()
             .on_press(Message::ToggleTheme);
 
-        // `&str` not `text::small(...)`: `small` sets `width(Fill)` which
-        // propagates up through Button's `size_hint` and forces every button
-        // to share a row's worth of space, running labels together.
         let nav = row(NavSection::ALL.iter().copied().map(|section| {
             button::ghost(section.label())
                 .size(Size::Sm)

@@ -128,7 +128,7 @@ fn splash<'a>(message: &str, progress_value: f32) -> Element<'a, Message, Theme>
     center(
         column![
             text::h1("icedxdy"),
-            text::muted(message.to_owned()).width(iced::Shrink),
+            text::muted(message.to_owned()),
             progress(progress_value)
                 .width(140)
                 .on_idle(Message::SplashIdle),

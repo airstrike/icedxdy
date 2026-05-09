@@ -14,7 +14,6 @@
 // that have not yet been ported.
 
 use iced::Fill;
-use iced::Shrink;
 use iced::Task;
 
 use icedxdy::Theme;
@@ -270,7 +269,7 @@ impl page::Page for InputPage {
             )
             .label(Component::from(
                 row![
-                    text::label("Webhook URL").width(Shrink),
+                    text::label("Webhook URL"),
                     space::horizontal(),
                     badge::secondary("Beta"),
                 ]
