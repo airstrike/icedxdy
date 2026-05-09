@@ -16,8 +16,7 @@
 //!     .on_press(Message::Settings)
 //! ```
 
-use iced_core::Alignment;
-use iced_core::Length::Fill;
+use iced_core::Length::Shrink;
 use iced_core::Padding;
 use iced_core::mouse::Interaction;
 use iced_widget::Renderer;
@@ -166,14 +165,14 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
                 .height(height)
                 .padding(0)
         } else {
-            widget::Button::new(
-                iced_widget::container(content_iced)
-                    .align_x(Alignment::Start)
-                    .width(Fill),
-            )
-            .width(Fill)
-            .height(height)
-            .padding(btn.size.padding())
+            // Width(Shrink) for both the inner container and the outer
+            // button — shadcn's docs-sidebar items use `w-fit`, so the
+            // active-state bg paint hugs the text + padding rather than
+            // stretching the full sidebar column. Hit area follows.
+            widget::Button::new(iced_widget::container(content_iced).width(Shrink))
+                .width(Shrink)
+                .height(height)
+                .padding(btn.size.padding())
         };
 
         raw_btn = raw_btn
