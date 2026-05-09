@@ -13,8 +13,6 @@ use icedxdy::widget::sidebar::MenuButtonSize;
 use icedxdy::widget::{button, rule, separator, sidebar, text};
 use icedxdy::{Size, Theme, Weight, theme};
 
-/// Logo SVG, embedded at compile time so the binary is self-contained
-/// (no runtime file lookup, no working-directory dependence).
 const LOGO_BYTES: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../assets/logo.svg"
@@ -25,16 +23,12 @@ use crate::fonts;
 use crate::icon;
 use crate::page::{self, SnippetViewer};
 
-/// Fonts to pin at the top of the font list.
 const PINNED_FONTS: &[&str] = &["Geist", "Inter"];
 
 pub struct App {
     dark_mode: bool,
     current_page: usize,
     pages: Vec<Box<dyn page::Page>>,
-    /// Both code-syntax theme maps are parsed once at startup (in `main.rs`)
-    /// and handed in here. `ToggleTheme` rebuilds the viewer from the
-    /// already-parsed map; no re-parse on toggle.
     gh_light: Map,
     gh_dark: Map,
     snippet_viewer: SnippetViewer,
@@ -43,12 +37,8 @@ pub struct App {
     current_font: String,
 }
 
-/// Top-level docs-site nav sections, mirroring shadcn's main-nav.
-///
-/// Replicates `apps/v4/components/main-nav.tsx` minus `Directory` (deferred
-/// per current scope). No real routing wired yet — the buttons emit
-/// [`Message::NavSelect`] which `update` ignores; this preserves the visual
-/// affordance while the navigation backend lands later.
+/// No real routing yet — `Message::NavSelect` is a no-op sink in `update`,
+/// preserving the visual affordance until the navigation backend lands.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NavSection {
     Docs,
@@ -86,10 +76,8 @@ pub enum Message {
     Page(usize, page::Message),
     Font(fonts::Message),
     NavSelect(NavSection),
-    /// Emitted by the splash-screen progress bar each time its easing
-    /// animation settles. `App` ignores it; `Browser` intercepts and uses
-    /// the `value == 100` case to dismiss the splash so it stays up until
-    /// the bar visibly reaches the right edge.
+    /// `App` ignores; `Browser` intercepts the `value == 100` case to dismiss
+    /// the splash so it stays up until the bar visibly reaches the right edge.
     SplashIdle(f32),
 }
 
@@ -166,9 +154,6 @@ impl App {
         self.dark_mode
     }
 
-    /// Wire the active page's subscription. Inactive pages don't tick — the
-    /// user only ever sees one at a time, and animation work for hidden
-    /// pages would just heat the CPU.
     pub fn subscription(&self) -> Subscription<Message> {
         let i = self.current_page;
         match self.pages.get(i) {
@@ -261,7 +246,7 @@ impl App {
     fn rebuild_font_list(&mut self) {
         let mut names = self.fount.families();
 
-        // Move pinned fonts to the top (in reverse so first pinned ends up first)
+        // Reverse iteration so the first pinned font ends up first.
         for &pinned in PINNED_FONTS.iter().rev() {
             if let Some(pos) = names.iter().position(|n| n == pinned) {
                 let name = names.remove(pos);
@@ -291,27 +276,13 @@ impl App {
         } else {
             icon::moon().size(16)
         };
-        // Shadcn's ModeToggle is `<Button variant="ghost" size="icon">` —
-        // `size="icon"` maps to a 32x32 square. `.square()` wraps the icon in
-        // `iced_widget::center(...)` for true vertical centering; without it,
-        // `button::ghost(icon)` lays the icon out at the top of the padded box
-        // and the line-height-1.3 line box pushes the glyph ~1px below center.
         let theme_toggle = button::ghost(theme_icon)
             .square()
             .on_press(Message::ToggleTheme);
 
-        // Top-level docs-site nav, per `main-nav.tsx` — ghost buttons,
-        // size=sm. No active-state highlighting yet; the navigation backend
-        // isn't wired (`Message::NavSelect` is a no-op sink in `update`).
-        //
-        // We pass the label as `&str` rather than `text::small(...)` because
-        // `text::small` sets `width(Fill)` (intended for paragraph-style
-        // body text), which propagates up through Button's `size_hint`
-        // resolution and forces every button to Fill width — adjacent
-        // buttons end up sharing a single row's worth of space and the
-        // labels run together. `&str` flows through `Component::from(&str)`
-        // → `Text::new(s)` (no width set, default Shrink) so each button
-        // sizes to its content.
+        // `&str` not `text::small(...)`: `small` sets `width(Fill)` which
+        // propagates up through Button's `size_hint` and forces every button
+        // to share a row's worth of space, running labels together.
         let nav = row(NavSection::ALL.iter().copied().map(|section| {
             button::ghost(section.label())
                 .size(Size::Sm)
@@ -332,16 +303,6 @@ impl App {
         .padding(16)
         .align_y(iced::Center);
 
-        // Sidebar — values lifted from `.nova/apps/v4/components/docs-sidebar.tsx`,
-        // not the registry default. The docs site overrides several values:
-        //   --sidebar-menu-width: spacing(56) = 14rem = 224px (not 256)
-        //   item height = h-[30px] (not h-8 = 32)
-        //   item font = text-[0.8rem] ≈ 13px (not text-sm = 14)
-        //   inter-item gap = gap-0.5 = 2px (not gap-0)
-        //   active bg = bg-accent (palette.accent, NOT sidebar.accent)
-        //   active border = border-accent 1px
-        //   hover bg = hover:bg-sidebar-accent (registry default)
-        // Both nova radix and docs override agree: data-[active=true]:font-medium.
         let sidebar_header = container(
             text::xs("Components")
                 .weight(Weight::Medium)
@@ -351,20 +312,6 @@ impl App {
         .padding([0, 8])
         .align_y(iced::Center);
 
-        // Per-item: docs-sidebar shape — h-[30px] painted fill + text-[0.8rem]
-        // (≈ 13 px) + `font-medium` (unconditional in the canonical override
-        // class). Active gets `bg-accent border-accent`; inactive gets the
-        // hover halo only. Both via the `sidebar` / `sidebar_active`
-        // theme fns dispatched inside `SidebarMenuButton`.
-        //
-        // `MenuButtonSize::Docs` ships h=32 + p-2 (8 px) and we add `inset(1)`
-        // — the 1px transparent halo is the layout twin of the canonical
-        // `border border-transparent`, and shrinks the painted fill from
-        // 32 → 30 to land on `h-[30px]`. Two adjacent items leave 2 px
-        // between fills, matching the components subnav's `gap-0.5`. The
-        // outer `Column` keeps `spacing(0)` (canonical top-level group is
-        // `gap-0`); the components subnav's `gap-0.5` is supplied entirely
-        // by the inset halo.
         let sidebar_items =
             Column::with_children(self.pages.iter().enumerate().map(|(i, page)| {
                 sidebar::menu_button(page.meta().title)
@@ -376,31 +323,9 @@ impl App {
             }))
             .width(Fill);
 
-        // Atom-system demonstration on the sidebar root: `sidebar::Default`
-        // (the flush variant) with `Bg(Token::Background)` overriding the
-        // variant's default sidebar bg with the page bg. Mirrors the
-        // docs-site `<Sidebar className="bg-transparent ...">` override
-        // (`apps/v4/components/docs-sidebar.tsx`) — the docs site renders
-        // its sidebar flush with the page rather than as a distinct surface,
-        // so we override `palette.sidebar.background` with `palette.background`
-        // to match. Cross-widget atom system is exercised on the third
-        // catalog (after button + container).
-        // padding([top, right, bottom, left]):
-        //   top=24px — matches shadcn docs sidebar; the "Components" label
-        //             starts ~24px below the header rule, creating visible
-        //             breathing room (image 5 reference).
-        //   left=49px — aligns sidebar item TEXT with the "Docs" link in the
-        //              top nav. Math:
-        //                header.padding-left = 16
-        //                + branding.width    = 24
-        //                + row.spacing       =  8
-        //                + button.padding-l  = 10  (Size::Sm)
-        //                = "Docs" text starts 58px from page left.
-        //              Our items are `MenuButtonSize::Docs` (8px padding) +
-        //              `inset(1)` (1px transparent halo on the left), so
-        //              text starts at `col-left + 1 + 8` from the page edge.
-        //              Column left padding must be 58 - 9 = 49px.
-        //   right/bottom=8px — unchanged from prior padding.
+        // padding-left=49px aligns item text with "Docs" in the navbar:
+        // header(16) + branding(24) + row_spacing(8) + button_pad_l(10)
+        //   - inset(1) - item_pad_l(8) = 49.
         let sidebar_scrollable = scrollable::scrollable(
             column![sidebar_header, sidebar_items]
                 .padding(iced::Padding::ZERO.top(24).right(8).bottom(8).left(49))
@@ -408,26 +333,11 @@ impl App {
         )
         .height(Fill);
 
-        // Vertical fade-to-bg overlay pinned to the TOP edge, mirroring
-        // shadcn's docs sidebar (`apps/v4/components/docs-sidebar.tsx`):
-        //   top: h-8 bg-linear-to-b from-background via-background/80 to-background/50
-        //
-        // Items fade into the page bg as they scroll up past the top edge
-        // of the sidebar — masking the items behind the page header and
-        // hand-shaking the scrollable into "there's more above" affordance.
-        // The bottom edge gets no fade: scroll already bottoms out at the
-        // end of the list, and the bg-aligned sidebar continues flush into
-        // the page bg below.
-        //
-        // We can't pixel-anchor a single multi-stop gradient over the full
-        // sidebar height (gradient stops are normalized 0..1 fractions and
-        // sidebar height is dynamic), so we paint a fixed-height (32px)
-        // gradient container and pin it to the top edge via a column with
-        // `space::vertical()` filling the rest. The column is laid over
-        // the sidebar via a `stack!` (the iced widget) at base layer 0
-        // (the scrollable) so wheel events flow to the scrollable when
-        // the overlay returns `Interaction::None` (no on_press → default
-        // mouse_interaction).
+        // Top fade-to-bg overlay (`apps/v4/components/docs-sidebar.tsx`):
+        // `h-8 from-bg via-bg/80 to-bg/50`. Pinned to top via column+space.
+        // Layered over the scrollable so wheel events pass through — the
+        // container has no on_press, so its `mouse_interaction` returns
+        // None and `stack!` levitates the cursor through.
         let top_fade = container(space::vertical())
             .width(Fill)
             .height(32)
@@ -437,8 +347,6 @@ impl App {
                 use theme::container::Style;
                 let bg: iced::Color = t.palette().background.into();
                 Style {
-                    // Linear::new(PI) = top → bottom.
-                    // 0.0 (top edge): opaque bg; 0.5: 80% alpha; 1.0: 50% alpha.
                     background: Some(
                         Linear::new(PI)
                             .add_stop(0.0, bg)
@@ -461,36 +369,17 @@ impl App {
         .height(Fill)
         .class(theme::sidebar::Default + Bg(Token::Background));
 
-        // Main content
         let current = &*self.pages[self.current_page];
         let meta = current.meta();
         let title = text::h1(meta.title);
         let description = text::p(meta.description).style(theme::text::Muted);
 
-        // Prev/next page nav, mirrors the docs page-header at
-        // `apps/v4/app/(app)/docs/[[...slug]]/page.tsx` (the title row's
-        // `<div className="docs-nav flex items-center gap-2">`):
-        //   <Button variant="secondary" size="icon"
-        //           className="extend-touch-target size-8 shadow-none md:size-7" …>
-        //     <IconArrowLeft /> | <IconArrowRight />
-        //
-        // Variant is `secondary` (subtle gray fill, no border, no shadow) at
-        // `Size::Sm` (28px square — matches `md:size-7`). Always fires; the
-        // SelectPage handler is idempotent for same-index, so saturating
-        // arithmetic at edges turns clicks into no-ops without a disabled
-        // state. Icons are arrows (not chevrons) per shadcn source.
-        //
-        // `.translate(false)` + `.interaction(Pointer)`: the canonical source
-        // wraps each control in a `<Link>` that navigates between docs pages —
-        // CSS hands a pointer cursor to anchors, and the `<Button>`'s
-        // `active:translate-y-px` press affordance is suppressed for anchor-
-        // style usage. We mirror that here: pointer cursor on hover, no 1px
-        // nudge on click. Same configuration the sidebar nav items use (and
-        // the TOC entries in `page.rs`). Action buttons (primary/destructive)
-        // keep the press-down — that distinction is the line between
-        // navigates-somewhere vs. acts-on-something.
-        // TODO: Copy Page + dropdown caret block (deferred — needs
-        // clipboard-write affordance and a DropdownMenu primitive).
+        // Anchor-style controls: pointer cursor + no press translate (matches
+        // shadcn's `<Link>`-wrapped `<Button variant="secondary" size="icon">`
+        // at `apps/v4/app/(app)/docs/[[...slug]]/page.tsx`). SelectPage with
+        // a same-index target is a no-op, so saturating arithmetic at the
+        // edges replaces a separate disabled state.
+        // TODO: Copy Page button (needs DropdownMenu + clipboard write).
         let total = self.pages.len();
         let curr = self.current_page;
         let prev_btn = button::secondary(icon::arrow_left())
@@ -506,12 +395,6 @@ impl App {
             .interaction(Interaction::Pointer)
             .on_press(Message::SelectPage((curr + 1).min(total.saturating_sub(1))));
 
-        // Shadcn shape: `flex flex-col gap-2` outer, with the title row as
-        // `flex items-center justify-between md:items-start` (title on the
-        // left, nav controls top-right; description below the title row).
-        // The horizontal spacer reproduces `justify-between` — title hugs
-        // the left, button cluster hugs the right; the spacer absorbs the
-        // gap and grows with the content area.
         let title_row = row![
             title,
             space::horizontal(),
@@ -531,16 +414,6 @@ impl App {
         )
         .center_x(Fill);
 
-        // The icedxdy `scrollable` helper defaults to the project-wide
-        // thin invisible-rail spec (1px rail, 2px scroller; faint
-        // `palette.muted.foreground`). No direction override needed —
-        // vertical with the thin Scrollbar shape is the constructor default.
-        //
-        // `width(Fill)` is load-bearing: the row layout is
-        // `[sidebar(272), divider(1), main, nav(220)]`. With main at the
-        // Scrollable default of Shrink, total intrinsic ~1193px and nav
-        // gets clipped off-screen on any window narrower than that.
-        // Filling main absorbs slack and pins nav to the right edge.
         let main = scrollable::scrollable(content)
             .width(Fill)
             .height(Fill)
