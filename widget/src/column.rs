@@ -126,10 +126,6 @@ impl<'a, Message: 'a> From<Column<'a, Message>> for crate::Component<'a, Message
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for Column<'a, Message> {
     fn size(&mut self, size: Size) {
-        // Set gap from size if user didn't set explicit spacing
-        if self.spacing.is_none() {
-            self.spacing = Some(size.gap());
-        }
         for child in &mut self.children {
             child.size(size);
         }
@@ -155,7 +151,7 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Column<'a, Message> {
             .collect();
 
         let widget = ColumnWidget {
-            spacing: self.spacing.unwrap_or(8.0),
+            spacing: self.spacing.unwrap_or(0.0),
             max_width: self.max_width,
             width: self.width,
             height: self.height,

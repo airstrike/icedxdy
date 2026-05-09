@@ -93,10 +93,6 @@ impl<'a, Message: 'a> From<Row<'a, Message>> for crate::Component<'a, Message> {
 
 impl<'a, Message: 'a> IntoElement<'a, Message> for Row<'a, Message> {
     fn size(&mut self, size: Size) {
-        // Set gap from size if user didn't set explicit spacing
-        if self.spacing.is_none() {
-            self.spacing = Some(size.gap());
-        }
         for child in &mut self.children {
             child.size(size);
         }
@@ -116,7 +112,7 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Row<'a, Message> {
 
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         let mut row = iced_widget::Row::new()
-            .spacing(self.spacing.unwrap_or(8.0))
+            .spacing(self.spacing.unwrap_or(0.0))
             .width(self.width)
             .height(self.height)
             .align_y(self.align_y);
