@@ -29,28 +29,27 @@
 //!
 //! # Color cascade
 //!
-//! shadcn's `<BreadcrumbList>` applies `text-muted-foreground` once and
-//! `<BreadcrumbPage>` overrides with `text-foreground`. We don't yet have a
-//! breadcrumb [`Catalog`](icedxdy_core::theme) so the muted/foreground
-//! distinction is the **caller's** responsibility — wrap link content in
-//! [`text::muted`](crate::text::muted) for the canonical visual, and pass
-//! the page content unstyled (default foreground). A real Catalog would
-//! make this automatic.
+//! Mirrors shadcn: `<BreadcrumbList>` applies `text-muted-foreground` and
+//! `<BreadcrumbPage>` overrides back to `text-foreground`. Internally we
+//! wrap the row in a Container with the muted text-color cascade and wrap
+//! page items in an inner Container with foreground — so unstyled children
+//! (separator icons, raw-string links) inherit muted at draw time without
+//! callers threading colors manually.
 //!
 //! Animation gap: shadcn's `<BreadcrumbLink>` carries
-//! `transition-colors hover:text-foreground`, so a link's color fades from
-//! muted to foreground on hover. Because color is caller-driven (no Catalog
-//! yet), our impl snaps — there is no hover-color animation. A future
-//! Catalog pass would surface link state and restore the fade.
+//! `transition-colors hover:text-foreground`. We don't yet have a
+//! breadcrumb [`Catalog`](icedxdy_core::theme) surfacing link state, so
+//! hover snaps rather than fades.
 //!
 //! # Separator
 //!
-//! Default separator is a `›` glyph in muted text — the widget crate has no
+//! Default separator is a `›` glyph at body size — the widget crate has no
 //! icon-font dependency, so callers pass `icon::chevron_right()` (or any
 //! widget) via [`Breadcrumb::separator`] for lucide-icon parity.
 
 use iced_core::mouse::Interaction;
-use iced_widget::{Renderer, mouse_area};
+use iced_widget::container::Style;
+use iced_widget::{Renderer, container, mouse_area};
 use icedxdy_core::Theme;
 use icedxdy_core::theme;
 
@@ -160,11 +159,6 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Breadcrumb<'a, Messag
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         let Breadcrumb { items, separator } = *self;
 
-        // Default separator: a 14px `›` glyph in muted-foreground text.
-        // Mirrors shadcn's `<ChevronRightIcon className="size-3.5" />`
-        // visual without requiring an icon font dependency in the widget
-        // crate. Callers (e.g. the browser example) override with
-        // `icon::chevron_right()` for true lucide-icon parity.
         let make_separator: SeparatorFn<'a, Message> =
             separator.unwrap_or_else(|| Box::new(default_separator));
 
@@ -180,7 +174,12 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Breadcrumb<'a, Messag
             }
         }
 
-        Box::new(row).into_element()
+        // shadcn `<BreadcrumbList>` cascades `text-muted-foreground` to
+        // unstyled descendants; Container's text_color is iced's only
+        // mechanism for the same. `<BreadcrumbPage>` overrides in `render_page`.
+        container(Box::new(row).into_element())
+            .style(|t: &Theme| Style::default().color(t.palette().muted.foreground))
+            .into()
     }
 }
 
@@ -189,9 +188,19 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Breadcrumb<'a, Messag
 fn render_item<'a, Message: Clone + 'a>(item: Item<'a, Message>) -> Component<'a, Message> {
     match item {
         Item::Link(content, on_press) => render_link(content, on_press),
-        Item::Page(content) => content,
+        Item::Page(content) => render_page(content),
         Item::Ellipsis(on_press) => render_ellipsis(on_press),
     }
+}
+
+/// Render the current-page crumb. shadcn's `<BreadcrumbPage>` wraps the
+/// label in `text-foreground` to override the list's muted cascade.
+fn render_page<'a, Message: Clone + 'a>(
+    content: Component<'a, Message>,
+) -> Component<'a, Message> {
+    container(content.into_iced())
+        .style(|t: &Theme| Style::default().color(t.palette().foreground))
+        .into()
 }
 
 /// Render a clickable link crumb. Wraps the content in `mouse_area` for
@@ -228,11 +237,9 @@ fn render_ellipsis<'a, Message: Clone + 'a>(on_press: Option<Message>) -> Compon
     }
 }
 
-/// Default separator factory: a muted `›` glyph at body size. Override with
+/// Default separator factory: a `›` glyph at body size. Override with
 /// [`Breadcrumb::separator`] for icon-based parity (e.g. `icon::chevron_right`).
+/// Color comes from the parent container's muted text_color cascade.
 fn default_separator<'a, Message: 'a>() -> Component<'a, Message> {
-    Text::new("\u{203A}")
-        .size(text::size::SM)
-        .style(theme::text::Muted)
-        .into()
+    Text::new("\u{203A}").size(text::size::SM).into()
 }

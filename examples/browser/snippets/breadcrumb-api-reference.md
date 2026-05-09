@@ -17,13 +17,13 @@ Constructor for a `Breadcrumb` from any `IntoIterator<Item = breadcrumb::Item>`.
 | `breadcrumb::ellipsis(Some(message))` | `Item::Ellipsis` | Clickable `…` indicator (e.g. to open a dropdown of elided crumbs). Mirrors `<BreadcrumbEllipsis>`. |
 | `breadcrumb::ellipsis(None)` | `Item::Ellipsis` | Static visual `…` placeholder. |
 
-### Color cascade — caller's responsibility
+### Color cascade
 
-Shadcn's `<BreadcrumbList>` applies `text-muted-foreground` once and `<BreadcrumbPage>` overrides with `text-foreground`. There's no breadcrumb `Catalog` yet, so the muted/foreground distinction is the **caller's** responsibility — wrap link content in `text::muted(...)` for the canonical visual, and pass the page content unstyled (default foreground).
+Mirrors shadcn: `<BreadcrumbList>` applies `text-muted-foreground` and `<BreadcrumbPage>` overrides back to `text-foreground`. Internally the row is wrapped in a Container with the muted text-color cascade and page items in an inner Container with foreground — so unstyled children (separator icons, raw-string links) inherit muted automatically.
 
 ### Animation gap
 
-Shadcn's `<BreadcrumbLink>` carries `transition-colors hover:text-foreground`, so a link's color fades from muted to foreground on hover. Because color is caller-driven (no Catalog yet), our impl snaps — there is no hover-color animation. A future Catalog pass would surface link state and restore the fade.
+Shadcn's `<BreadcrumbLink>` carries `transition-colors hover:text-foreground`. We don't yet surface link state via a `Catalog`, so hover snaps rather than fades.
 
 ### Mapping from shadcn
 
@@ -36,4 +36,4 @@ Shadcn's `<BreadcrumbLink>` carries `transition-colors hover:text-foreground`, s
 | `<BreadcrumbSeparator>` | `.separator(\|\| ...)` builder. |
 | `<BreadcrumbEllipsis>` | `breadcrumb::ellipsis(on_press)` |
 
-The TSX `className` prop is n/a in icedxdy — content is `Component`, so style at the call site (`text::muted(...)`, `.size(...)`).
+The TSX `className` prop is n/a in icedxdy — content is `Component`, so style at the call site (`.size(...)`, `.bold()`, etc.).

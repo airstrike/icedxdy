@@ -207,6 +207,14 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
         }
     }
 
+    fn foreground_color(&mut self, color: iced_core::Color) {
+        if self.style.is_none() {
+            self.style = Some(Box::new(move |_| iced_widget::text::Style {
+                color: Some(color),
+            }));
+        }
+    }
+
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
         self.build().into()
     }

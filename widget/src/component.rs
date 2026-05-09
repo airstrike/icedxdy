@@ -6,6 +6,7 @@
 
 use crate::Size;
 use crate::Weight;
+use iced_core::Color;
 use iced_widget::Renderer;
 use icedxdy_core::Theme;
 
@@ -27,6 +28,8 @@ pub trait IntoElement<'a, Message, T = Theme, R = Renderer>: 'a {
     /// down to its content so the rendered pill height matches shadcn.
     /// Implementors should respect explicit user overrides (no-op if already set).
     fn line_height(&mut self, _line_height: f32) {}
+
+    fn foreground_color(&mut self, _color: Color) {}
 
     /// Consume self and produce an iced Element.
     fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, T, R>;
@@ -84,6 +87,10 @@ impl<'a, Message: 'a, T: 'a, R: 'a> Component<'a, Message, T, R> {
     /// widget. See [`IntoElement::line_height`].
     pub fn line_height(&mut self, line_height: f32) {
         self.inner.line_height(line_height);
+    }
+
+    pub fn foreground_color(&mut self, color: impl Into<Color>) {
+        self.inner.foreground_color(color.into());
     }
 
     /// Convert into an `iced::Element`.
@@ -154,7 +161,6 @@ macro_rules! into_element {
     };
 }
 
-into_element!(iced_widget::Text<'a, Theme, Renderer>);
 into_element!(iced_widget::text::Rich<'a, Message, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Column<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Row<'a, Message, Theme, Renderer> where + Clone);
@@ -173,6 +179,27 @@ into_element!(iced_widget::Grid<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::ProgressBar<'a, Theme>);
 into_element!(iced_widget::Toggler<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Float<'a, Message, Theme, Renderer> where + Clone);
+
+// iced's Text gets a manual impl so `foreground_color` overrides its style
+// closure with the supplied color. The macro's blanket impl would no-op the
+// hint, which would silently ignore color pushes onto icon glyphs
+// (`iced_lucide` produces them as iced's Text, not icedxdy's wrapper).
+impl<'a, Message: 'a> IntoElement<'a, Message> for iced_widget::Text<'a, Theme, Renderer> {
+    fn foreground_color(&mut self, color: Color) {
+        let widget = std::mem::replace(self, iced_widget::text(""));
+        *self = widget.color(color);
+    }
+
+    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        iced_core::Element::new(*self)
+    }
+}
+
+impl<'a, Message: 'a> From<iced_widget::Text<'a, Theme, Renderer>> for Component<'a, Message> {
+    fn from(w: iced_widget::Text<'a, Theme, Renderer>) -> Self {
+        Component::new(w)
+    }
+}
 
 // &str → our Element (via our Text, so size propagation works)
 impl<'a, Message: 'a> From<&'a str> for Component<'a, Message> {

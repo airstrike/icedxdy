@@ -18,13 +18,11 @@
 //! a `className: string` prop, plus `children: React.ReactNode` on
 //! `BreadcrumbSeparator`); the snippet captures the icedxdy-shaped builder
 //! API for `breadcrumb(...)` plus the item constructors (`link`, `page`,
-//! `ellipsis`), the auto-interspersed separator, and the
-//! caller-driven-color cascade caveat.
+//! `ellipsis`) and the auto-interspersed separator.
 
 use iced::Task;
 
-use icedxdy::theme;
-use icedxdy::widget::{breadcrumb, text};
+use icedxdy::widget::breadcrumb;
 use icedxdy::{Component, Theme};
 
 use crate::icon;
@@ -102,20 +100,8 @@ impl BreadcrumbPage {
     }
 }
 
-/// Build the lucide-icon separator factory used by every example. Mirrors
-/// shadcn's default `<ChevronRightIcon className="size-3.5" />`. iced's
-/// `Text::style` takes a `Fn(&Theme) -> Style` closure (no `Into<StyleFn>`
-/// shorthand on the iced widget itself), so we explicitly thread the
-/// muted-foreground palette color through a closure here.
-fn chevron_separator<'a>() -> impl Fn() -> Component<'a, Message> + 'a {
-    || {
-        icon::chevron_right()
-            .size(14)
-            .style(|t: &Theme| iced_widget::text::Style {
-                color: Some(t.palette().muted.foreground.into()),
-            })
-            .into()
-    }
+fn chevron<'a>() -> Component<'a, Message> {
+    icon::chevron_right().size(14).into()
 }
 
 fn view(id: &str) -> Component<'static, Message> {
@@ -126,21 +112,21 @@ fn view(id: &str) -> Component<'static, Message> {
         // clickable ellipsis that dispatches `Message::Pressed` — the
         // visual is identical, just no menu opens.
         "demo" => breadcrumb([
-            breadcrumb::link(text::muted("Home"), Message::Pressed),
+            breadcrumb::link("Home", Message::Pressed),
             breadcrumb::ellipsis(Some(Message::Pressed)),
-            breadcrumb::link(text::muted("Components"), Message::Pressed),
+            breadcrumb::link("Components", Message::Pressed),
             breadcrumb::page("Breadcrumb"),
         ])
-        .separator(chevron_separator())
+        .separator(chevron)
         .into(),
 
         // Basic — `breadcrumb-basic.tsx`. Three crumbs, default chevron.
         "basic" => breadcrumb([
-            breadcrumb::link(text::muted("Home"), Message::Pressed),
-            breadcrumb::link(text::muted("Components"), Message::Pressed),
+            breadcrumb::link("Home", Message::Pressed),
+            breadcrumb::link("Components", Message::Pressed),
             breadcrumb::page("Breadcrumb"),
         ])
-        .separator(chevron_separator())
+        .separator(chevron)
         .into(),
 
         // Custom separator — `breadcrumb-separator.tsx`. Uses `<DotIcon />`
@@ -148,23 +134,23 @@ fn view(id: &str) -> Component<'static, Message> {
         // our generated set, render a centered Unicode bullet `•` (U+2022)
         // at body size — visually equivalent to lucide's `dot` glyph.
         "separator" => breadcrumb([
-            breadcrumb::link(text::muted("Home"), Message::Pressed),
-            breadcrumb::link(text::muted("Components"), Message::Pressed),
+            breadcrumb::link("Home", Message::Pressed),
+            breadcrumb::link("Components", Message::Pressed),
             breadcrumb::page("Breadcrumb"),
         ])
-        .separator(|| text::small("\u{2022}").style(theme::text::Muted).into())
+        .separator(|| "\u{2022}".into())
         .into(),
 
         // Collapsed — `breadcrumb-ellipsis.tsx`. Static ellipsis between
         // Home and Components (no dropdown wired — it's a visual indicator
         // that the trail has been collapsed).
         "ellipsis" => breadcrumb([
-            breadcrumb::link(text::muted("Home"), Message::Pressed),
+            breadcrumb::link("Home", Message::Pressed),
             breadcrumb::ellipsis(None),
-            breadcrumb::link(text::muted("Components"), Message::Pressed),
+            breadcrumb::link("Components", Message::Pressed),
             breadcrumb::page("Breadcrumb"),
         ])
-        .separator(chevron_separator())
+        .separator(chevron)
         .into(),
 
         // Link component — `breadcrumb-link.tsx`. shadcn's example uses
@@ -172,11 +158,11 @@ fn view(id: &str) -> Component<'static, Message> {
         // there's no DOM routing primitive, so the visual collapses to the
         // basic example — included separately to mirror the docs page TOC.
         "link" => breadcrumb([
-            breadcrumb::link(text::muted("Home"), Message::Pressed),
-            breadcrumb::link(text::muted("Components"), Message::Pressed),
+            breadcrumb::link("Home", Message::Pressed),
+            breadcrumb::link("Components", Message::Pressed),
             breadcrumb::page("Breadcrumb"),
         ])
-        .separator(chevron_separator())
+        .separator(chevron)
         .into(),
 
         _ => unreachable!("unknown breadcrumb preview id: {id}"),

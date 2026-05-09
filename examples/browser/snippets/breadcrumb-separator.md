@@ -1,10 +1,10 @@
 ```rust
-use icedxdy::widget::{breadcrumb, text};
+use icedxdy::widget::breadcrumb;
 
 breadcrumb([
-    breadcrumb::link(text::muted("Home"), Message::GoHome),
-    breadcrumb::link(text::muted("Components"), Message::GoComponents),
+    breadcrumb::link("Home", Message::GoHome),
+    breadcrumb::link("Components", Message::GoComponents),
     breadcrumb::page("Breadcrumb"),
 ])
-.separator(|| text::small("•").style(theme::text::Muted).into())
+.separator(|| "•".into())
 ```
