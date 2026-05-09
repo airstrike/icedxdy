@@ -2,10 +2,9 @@ use iced::mouse::Interaction;
 use iced::widget::{column, combo_box, row, space, stack, svg};
 use icedxdy::widget::scrollable;
 
-use iced::{Fill, Font, Pixels, Subscription, Task};
+use iced::{Center, Fill, Font, Pixels, Subscription, Task};
 use icedxdy::theme::tweak::Bg;
 use icedxdy::theme::tweak::token::Token;
-use icedxdy::widget::column::Column;
 use icedxdy::widget::container;
 use icedxdy::widget::markdown::highlighter::Map;
 use icedxdy::widget::sidebar::MenuButtonSize;
@@ -290,7 +289,7 @@ impl App {
                 .into()
         }))
         .spacing(0)
-        .align_y(iced::Center);
+        .align_y(Center);
 
         let header = row![
             branding,
@@ -301,7 +300,7 @@ impl App {
         ]
         .spacing(8)
         .padding(16)
-        .align_y(iced::Center);
+        .align_y(Center);
 
         let sidebar_header = container(
             text::xs("Components")
@@ -310,18 +309,17 @@ impl App {
         )
         .height(32)
         .padding([0, 8])
-        .align_y(iced::Center);
+        .align_y(Center);
 
-        let sidebar_items =
-            Column::with_children(self.pages.iter().enumerate().map(|(i, page)| {
-                sidebar::menu_button(page.meta().title)
-                    .size(MenuButtonSize::Docs)
-                    .inset(1)
-                    .active(i == self.current_page)
-                    .on_press(Message::SelectPage(i))
-                    .into()
-            }))
-            .width(Fill);
+        let sidebar_items = column(self.pages.iter().enumerate().map(|(i, page)| {
+            sidebar::menu_button(page.meta().title)
+                .size(MenuButtonSize::Docs)
+                .inset(1)
+                .active(i == self.current_page)
+                .on_press(Message::SelectPage(i))
+                .into()
+        }))
+        .width(Fill);
 
         // padding-left=49px aligns item text with "Docs" in the navbar:
         // header(16) + branding(24) + row_spacing(8) + button_pad_l(10)
