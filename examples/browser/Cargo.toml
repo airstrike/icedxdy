@@ -7,7 +7,7 @@ license.workspace = true
 
 [dependencies]
 icedxdy = { workspace = true, features = ["markdown", "spinner", "svg", "sweeten"] }
-iced = { workspace = true, features = ["markdown", "highlighter", "selector", "tokio", "svg"] }
+iced = { workspace = true, features = ["markdown", "highlighter", "selector", "tokio", "svg", "image"] }
 iced_widget.workspace = true
 fount = { git = "https://github.com/airstrike/fount" }
 tokio = { version = "1", features = ["fs"] }
