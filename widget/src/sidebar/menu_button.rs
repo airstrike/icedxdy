@@ -154,6 +154,14 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
         let text_size = btn.size.text_size();
         btn.content.size(Size::Custom(text_size));
         btn.content.weight(crate::Weight::Medium);
+        // Collapse the line-box to the Docs content area (16px = 32px -
+        // 8/8 padding). Default 1.3 leading on text-13 produces a ~17px
+        // box that overflows by 1px DOWN — iced's `padded` layout puts
+        // the line-box at the TOP of the content area, leaving the glyph
+        // ~1px below center. Pin to 16 so the baseline lands at the
+        // midpoint without spilling. Other sizes have ample content slack;
+        // `center_y(Fill)` below handles them.
+        btn.content.line_height(16.0);
 
         let content_iced = btn.content.into_iced();
         let height = btn.size.height();
@@ -170,16 +178,10 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             // active-state bg paint hugs the text + padding rather than
             // stretching the full sidebar column. Hit area follows.
             //
-            // `center_y(Fill)` on the inner container is load-bearing:
-            // Docs items are 32px tall with 8/8 vertical padding, so the
-            // content area is 16px. text-13 with default line-height 1.3
-            // is a 17px line-box; iced's `padded` layout puts the line-box
-            // at the TOP of the content area, leaving the glyph ~1px
-            // below the visible center. Vertically centering the
-            // container inside the Fill area (= the post-padding 16px
-            // band) re-centers the glyph against the button's geometric
-            // midpoint — same fix as `iced_widget::center` does for
-            // square (icon) buttons via translate-y math.
+            // `center_y(Fill)` centers the line-box within the post-padding
+            // content area for sizes whose content slack > line-box (Default,
+            // Sm, Lg). Docs (16px content / 16px line-box) doesn't need it
+            // but tolerates it — combination handles all sizes.
             widget::Button::new(
                 iced_widget::container(content_iced)
                     .width(Shrink)

@@ -425,7 +425,7 @@ fn render_example<'a>(
                 .unwrap_or_else(|| text("Loading...").into());
 
             let inner = container(body)
-                .padding([12, 16])
+                .padding(iced::Padding::default().top(12).bottom(12).left(16))
                 .width(Fill)
                 .style(code_block_panel);
 
@@ -765,7 +765,8 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
                     .width(settings.code_size / 2)
                     .scroller_width(settings.code_size / 2),
             ))
-            .spacing(2);
+            .spacing(2)
+            .class(theme::scrollable::Hidden);
 
         container(scroll)
             .padding([12, 16])
