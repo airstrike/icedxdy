@@ -535,7 +535,14 @@ impl App {
         // thin invisible-rail spec (1px rail, 2px scroller; faint
         // `palette.muted.foreground`). No direction override needed —
         // vertical with the thin Scrollbar shape is the constructor default.
+        //
+        // `width(Fill)` is load-bearing: the row layout is
+        // `[sidebar(272), divider(1), main, nav(220)]`. With main at the
+        // Scrollable default of Shrink, total intrinsic ~1193px and nav
+        // gets clipped off-screen on any window narrower than that.
+        // Filling main absorbs slack and pins nav to the right edge.
         let main = scrollable::scrollable(content)
+            .width(Fill)
             .height(Fill)
             .id(current.scrollable_id());
 
