@@ -19,7 +19,7 @@ etc. on.
 | `text::small(content)` | `Text<'a>` | `text-sm` (14px), foreground. |
 | `text::muted(content)` | `Text<'a>` | `text-sm` (14px), muted. |
 | `text::xs(content)` | `Text<'a>` | `text-xs` (12px), foreground. |
-| `text::inline_code(content)` | `Text<'a>` | `text-sm` (14px), semibold, foreground. Wrap in a `bg-muted` container at the call site for the full `<code>` chrome. |
+| `text::inline_code(content)` | `Text<'a>` | `text-sm` (14px), semibold, foreground. Wrap in a `bg-muted` container at the call site for the full inline-code chrome. |
 | `text::blockquote(content)` | `Blockquote<'a>` | 2px left rule + 24px gap + italic body. |
 | `text::list(items)` | `List<'a, Message>` | Bulleted list — 24px left indent, 8px row gap. |
 | `text(content)` | `Text<'a>` | Crate-root shorthand for `text::small`. |
@@ -56,9 +56,9 @@ drive it from the enclosing column's `.spacing(...)`.
 ### `List<'a, Message>`
 
 Composed widget: 24px left indent + 8px row gap + a `\u{2022}` bullet
-prefix per item. Mirrors shadcn nova's
-`<ul class="ml-6 list-disc [&>li]:mt-2">` cascade. Vertical spacing
-around the list (`my-6` in shadcn) is the caller's responsibility.
+prefix per item. Mirrors shadcn nova's `ml-6 list-disc [&>li]:mt-2`
+cascade. Vertical spacing around the list (`my-6` in shadcn) is the
+caller's responsibility.
 
 The `text::list(items)` constructor takes any
 `IntoIterator<Item = impl IntoFragment<'a>>`. Empty input produces an
@@ -85,8 +85,8 @@ for call sites that want a literal pixel size (e.g. `Span::size`).
 
 | Variant | `text_size()` (px) | Notes |
 | --- | --- | --- |
-| `Size::Xs` | 12 | Mirrors shadcn `size="xs"`. |
-| `Size::Sm` | 12.8 | Mirrors shadcn `size="sm"` (`text-[0.8rem]`). |
+| `Size::Xs` | 12 | Mirrors shadcn's `xs` size variant. |
+| `Size::Sm` | 12.8 | Mirrors shadcn's `sm` size variant (`text-[0.8rem]`). |
 | `Size::Default` | 14 | Default body size. |
 | `Size::Lg` | 14 | Same as `Default` — drives container height, not text size. |
 | `Size::Custom(v)` | `v` | Arbitrary pixel size. `From<f32>` / `From<u16>` / `From<i32>` blanket impls let you pass numerics directly. |
@@ -163,6 +163,4 @@ or `RichText`:
 | `theme::text::Destructive` | Destructive / error color. |
 
 Compose with tweak atoms via `+`: `Foreground + Alpha(0.5)`,
-`Default + Fg(Token::Primary)`, etc. The TSX `className` prop is n/a
-in icedxdy — restyle via `.style(...)` with a variant or a hand-rolled
-closure instead.
+`Default + Fg(Token::Primary)`, etc.

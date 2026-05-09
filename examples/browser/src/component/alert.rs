@@ -1,10 +1,9 @@
 // TODO: API Reference section once a table widget lands.
 //
-// Live docs API Reference covers: `Alert.variant` (`"default" | "destructive"`,
-// default `"default"`), `Alert.className`, `AlertTitle.className`,
-// `AlertDescription.className`, `AlertAction.className` (top-right corner
-// action slot). Captured here so the gap is auditable when the table widget
-// lands.
+// Live docs API Reference covers: `Alert.variant` (`Default` / `Destructive`,
+// default `Default`), and the `AlertTitle`, `AlertDescription`, and
+// `AlertAction` (top-right corner action slot) sub-components. Captured here
+// so the gap is auditable when the table widget lands.
 //
 // Intentional skips per CLAUDE.md: alert-colors (Custom Colors)
 // and alert-rtl (RTL).

@@ -35,4 +35,4 @@ Disabled state follows iced's convention: a switch with no `.on_toggle(...)` is 
 | `Switch.aria-invalid` | `.style(theme::switch::Invalid)`. |
 | `Switch.size` (`"default" \| "sm"`) | not yet exposed — out of scope for the MVP. Vendoring the full size matrix is its own design surface. |
 
-The TSX `id` and `className` props are n/a in icedxdy — `id` lives at the iced `Id` layer; `className` collapses into `.style(...)`. The TSX `Field`, `FieldLabel`, and `FieldDescription` sub-components compose with this widget via the `field(switch(...)).label(...).description(...)` builder; the field's `htmlFor` semantic is reproduced automatically via `toggle_target`.
+Identifier hooks live at the iced `Id` layer; restyling collapses into `.style(...)`. Shadcn's `Field`, `FieldLabel`, and `FieldDescription` sub-components compose with this widget via the `field(switch(...)).label(...).description(...)` builder; click-to-toggle on the label is reproduced automatically via `toggle_target`.

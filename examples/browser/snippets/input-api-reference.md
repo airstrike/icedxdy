@@ -26,4 +26,4 @@ Constructor for an `Input` builder. Takes a placeholder string and the current v
 
 Apply `theme::text_input::Invalid` via `.style(...)` to land the destructive border + destructive focus ring (mirrors `aria-invalid` in shadcn).
 
-The TSX `type`, `id`, `disabled`, `aria-invalid`, and `className` props are n/a in icedxdy: `type="password"` and `type="file"` are not yet exposed at this builder; `id` lives at the iced `Id` layer; `disabled` is implicit (no `.on_input(...)` ⇒ disabled); validation styling rides on the `.style(theme::text_input::Invalid)` call. The TSX `Field`, `FieldLabel`, and `FieldDescription` sub-components map to the `column![text::small(...).medium(), input(...), text::muted(...)]` idiom — there is no separate `Field` widget in icedxdy.
+Password and file inputs are not yet exposed at this builder. Identifier hooks live at the iced `Id` layer; disabled state is implicit (no `.on_input(...)` ⇒ disabled). Compose with `field(input(...))` to land the labeled-input shape — `field::field` handles label / description / error rendering.

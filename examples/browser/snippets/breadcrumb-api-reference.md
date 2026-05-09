@@ -12,28 +12,28 @@ Constructor for a `Breadcrumb` from any `IntoIterator<Item = breadcrumb::Item>`.
 
 | Constructor | Returns | Description |
 | --- | --- | --- |
-| `breadcrumb::link(content, on_press)` | `Item::Link` | Clickable crumb. Cursor changes to `Pointer`; emits `on_press` on left-button release. Mirrors `<BreadcrumbLink>`. |
-| `breadcrumb::page(content)` | `Item::Page` | Current page — renders content as-is, no click affordance. Mirrors `<BreadcrumbPage>`. |
-| `breadcrumb::ellipsis(Some(message))` | `Item::Ellipsis` | Clickable `…` indicator (e.g. to open a dropdown of elided crumbs). Mirrors `<BreadcrumbEllipsis>`. |
+| `breadcrumb::link(content, on_press)` | `Item::Link` | Clickable crumb. Cursor changes to `Pointer`; emits `on_press` on left-button release. Mirrors shadcn's `BreadcrumbLink`. |
+| `breadcrumb::page(content)` | `Item::Page` | Current page — renders content as-is, no click affordance. Mirrors shadcn's `BreadcrumbPage`. |
+| `breadcrumb::ellipsis(Some(message))` | `Item::Ellipsis` | Clickable `…` indicator (e.g. to open a dropdown of elided crumbs). Mirrors shadcn's `BreadcrumbEllipsis`. |
 | `breadcrumb::ellipsis(None)` | `Item::Ellipsis` | Static visual `…` placeholder. |
 
 ### Color cascade
 
-Mirrors shadcn: `<BreadcrumbList>` applies `text-muted-foreground` and `<BreadcrumbPage>` overrides back to `text-foreground`. Internally the row is wrapped in a Container with the muted text-color cascade and page items in an inner Container with foreground — so unstyled children (separator icons, raw-string links) inherit muted automatically.
+Mirrors shadcn: the breadcrumb list applies `text-muted-foreground` and the current-page slot overrides back to `text-foreground`. Internally the row is wrapped in a Container with the muted text-color cascade and page items in an inner Container with foreground — so unstyled children (separator icons, raw-string links) inherit muted automatically.
 
 ### Animation gap
 
-Shadcn's `<BreadcrumbLink>` carries `transition-colors hover:text-foreground`. We don't yet surface link state via a `Catalog`, so hover snaps rather than fades.
+Shadcn's link slot carries `transition-colors hover:text-foreground`. We don't yet surface link state via a `Catalog`, so hover snaps rather than fades.
 
 ### Mapping from shadcn
 
 | Shadcn primitive | icedxdy equivalent |
 | --- | --- |
-| `<Breadcrumb>` + `<BreadcrumbList>` | `breadcrumb([...])` (the JSX nesting collapses into a flat list of `Item` values). |
+| `<Breadcrumb>` + `<BreadcrumbList>` | `breadcrumb([...])` — the wrapper/list pair collapses into a flat list of `Item` values. |
 | `<BreadcrumbItem>` | implicit — each `Item` IS the slot. |
 | `<BreadcrumbLink>` | `breadcrumb::link(content, on_press)` |
 | `<BreadcrumbPage>` | `breadcrumb::page(content)` |
 | `<BreadcrumbSeparator>` | `.separator(\|\| ...)` builder. |
 | `<BreadcrumbEllipsis>` | `breadcrumb::ellipsis(on_press)` |
 
-The TSX `className` prop is n/a in icedxdy — content is `Component`, so style at the call site (`.size(...)`, `.bold()`, etc.).
+Item content is `Component`, so style at the call site (`.size(...)`, `.bold()`, etc.).

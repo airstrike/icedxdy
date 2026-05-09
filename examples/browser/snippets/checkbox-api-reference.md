@@ -6,7 +6,7 @@ Constructor for a `Checkbox` builder. Takes a `State` (`Checked` / `Unchecked` /
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.label(label)` | `impl IntoFragment` | `None` | Optional inline label rendered next to the box. Mirrors the `<Label htmlFor="...">` shadcn pairs `Checkbox` with — clicking the label toggles the checkbox via the embedded `toggle_target` semantic. |
+| `.label(label)` | `impl IntoFragment` | `None` | Optional inline label rendered next to the box. Mirrors the label shadcn pairs `Checkbox` with — clicking the label toggles the checkbox via the embedded `toggle_target` semantic. |
 | `.on_toggle(callback)` | `Fn(bool) -> Message` | `None` | Toggle callback. Without this call the checkbox is disabled (matches iced's no-callback-means-disabled convention). |
 | `.on_toggle_maybe(callback)` | `Option<Fn(bool) -> Message>` | `None` | Conditional callback — `None` disables, `Some(f)` enables. |
 | `.width(width)` | `impl Into<Length>` | `Length::Shrink` | Outer width. |
@@ -14,13 +14,13 @@ Constructor for a `Checkbox` builder. Takes a `State` (`Checked` / `Unchecked` /
 
 ### `checkbox::State`
 
-Domain enum modelling shadcn / radix's `data-state` triplet — promoted to a first-class type so `Indeterminate` lands without a sentinel-bool dance.
+Domain enum modelling the checked / unchecked / indeterminate triplet — promoted to a first-class type so `Indeterminate` lands without a sentinel-bool dance.
 
 | Variant | Description |
 | --- | --- |
 | `State::Checked` | Renders the check glyph. |
 | `State::Unchecked` | Renders an empty box. |
-| `State::Indeterminate` | Renders a horizontal stroke (the `MinusIcon` shape shadcn uses for `data-state="indeterminate"`). Styled identically to `Checked` (both show the primary surface). |
+| `State::Indeterminate` | Renders a horizontal stroke (the `MinusIcon` shape shadcn uses for indeterminate). Styled identically to `Checked` (both show the primary surface). |
 
 The `From<bool> for State` impl maps `true → Checked`, `false → Unchecked` so bool-shaped call sites flow through unchanged.
 
@@ -42,4 +42,4 @@ Disabled state follows iced's convention: a checkbox with no `.on_toggle(...)` i
 | `Checkbox.disabled` | omit `.on_toggle(...)`. |
 | `Checkbox.aria-invalid` | `.style(theme::checkbox::Invalid)`. |
 
-The TSX `id` and `className` props are n/a in icedxdy — `id` lives at the iced `Id` layer; `className` collapses into `.style(...)`. The TSX `Field`, `FieldLabel`, and `FieldDescription` sub-components compose with this widget via the `field(checkbox(...)).label(...).description(...)` builder.
+Identifier hooks live at the iced `Id` layer; restyling collapses into `.style(...)`. Shadcn's `Field`, `FieldLabel`, and `FieldDescription` sub-components compose with this widget via the `field(checkbox(...)).label(...).description(...)` builder.

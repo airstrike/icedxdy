@@ -1,11 +1,13 @@
 // TODO: API Reference section once a table widget lands.
 //
 // Live docs API Reference covers `Button`: `variant`
-// (`"default" | "outline" | "ghost" | "destructive" | "secondary" | "link"`,
-// default `"default"`), `size`
-// (`"default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg"`,
-// default `"default"`), and `asChild` (`boolean`, default `false`). Captured
-// here so the gap is auditable when the table widget lands.
+// (`Default` / `Outline` / `Ghost` / `Destructive` / `Secondary` / `Link`,
+// default `Default`) and `size`
+// (`Default` / `Xs` / `Sm` / `Lg` plus the icon-only forms, default
+// `Default`). Shadcn's `asChild` slot has no equivalent in icedxdy — wrap
+// the button in a `mouse_area` or compose your own surface for non-button
+// affordances. Captured here so the gap is auditable when the table widget
+// lands.
 //
 // Intentional skips per CLAUDE.md: button-rtl (RTL). Button Group and
 // As Child examples are also skipped — Button Group is a separate

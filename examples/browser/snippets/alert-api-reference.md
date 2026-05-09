@@ -29,4 +29,4 @@ Constructor that pre-applies the destructive variant.
 | `Default` | Neutral background, muted description. |
 | `Destructive` | Destructive border + foreground; description rendered at alpha 0.9. |
 
-The TSX `AlertTitle`, `AlertDescription`, and `AlertAction` sub-components map to the `.title(...)`, `.description(...)`, and `.action(...)` builders on the `Alert` itself — there are no separate widget types in icedxdy. The TSX `className` prop is n/a in icedxdy; use the `core::theme::alert::*` style functions (or compose your own) when full restyling is needed.
+Shadcn's `AlertTitle`, `AlertDescription`, and `AlertAction` sub-components map to the `.title(...)`, `.description(...)`, and `.action(...)` builders on the `Alert` itself — there are no separate widget types in icedxdy. Restyle via `core::theme::alert::*` style functions (or compose your own).

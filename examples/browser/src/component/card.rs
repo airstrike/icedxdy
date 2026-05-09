@@ -1,15 +1,15 @@
 // API Reference is rendered via the `card-api-reference.md` snippet at the
-// bottom of BLOCKS. The live docs API Reference table covers `Card.size:
-// "default" | "sm"` plus `className` on every part (`Card`, `CardHeader`,
-// `CardTitle`, `CardDescription`, `CardAction`, `CardContent`,
-// `CardFooter`); the snippet captures the icedxdy-shaped helper API
-// (`card(...)`, `card::header(...).description(...).action(...)`, plus
-// the section helpers).
+// bottom of BLOCKS. The live docs API Reference table covers `Card.size`
+// (`Default` / `Sm`) plus the `Card`, `CardHeader`, `CardTitle`,
+// `CardDescription`, `CardAction`, `CardContent`, `CardFooter` set; the
+// snippet captures the icedxdy-shaped helper API (`card(...)`,
+// `card::header(...).description(...).action(...)`, plus the section
+// helpers).
 //
 // Intentional skips per CLAUDE.md: card-rtl (RTL).
 //
 // Scope notes:
-// - The card-small example renders without a true `size="sm"` driver
+// - The card-small example renders without a true `Sm`-size driver
 //   (no `Card.size(Sm)` builder yet — out of scope this phase). Visual
 //   delta vs the default size is small (text-base → text-sm on the title,
 //   `gap-3 py-3 px-3` instead of `gap-4 py-4 px-4`); the example demonstrates

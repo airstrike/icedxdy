@@ -1,8 +1,8 @@
 // API Reference is rendered via the `aspect-ratio-api-reference.md` snippet
-// at the bottom of BLOCKS. The live docs API Reference covers
-// `AspectRatio.ratio` (`number`, required) and `className` (`string`); our
-// snippet captures the icedxdy-shaped builder API (`.width(...)`,
-// `.max_width(...)`, ratio fallback semantics).
+// at the bottom of BLOCKS. The live docs API Reference covers `ratio`
+// (`f32`, required) plus styling props that our snippet captures via the
+// icedxdy-shaped builder API (`.width(...)`, `.max_width(...)`, ratio
+// fallback semantics).
 //
 // Intentional skips:
 // - aspect-ratio-rtl — RTL is not in scope (per CLAUDE.md).
@@ -36,7 +36,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "square",
                 title: "Square",
                 description: Some(
-                    "A square aspect ratio component using the `ratio={1 / 1}` prop. \
+                    "A square aspect ratio component using a `1 / 1` ratio. \
                      This is useful for displaying images in a square format.",
                 ),
                 snippet: "examples/browser/snippets/aspect-ratio-square.md",
@@ -45,7 +45,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "portrait",
                 title: "Portrait",
                 description: Some(
-                    "A portrait aspect ratio component using the `ratio={9 / 16}` prop. \
+                    "A portrait aspect ratio component using a `9 / 16` ratio. \
                      This is useful for displaying images in a portrait format.",
                 ),
                 snippet: "examples/browser/snippets/aspect-ratio-portrait.md",
@@ -67,7 +67,7 @@ impl AspectRatioPage {
     }
 }
 
-/// Stand-in for the shadcn `<Image>` shown inside the AspectRatio. iced has
+/// Stand-in for the shadcn next/image shown inside the AspectRatio. iced has
 /// no built-in URL-fetcher and the project ships no checked-in raster
 /// asset, so the demo uses a `bg-muted` rounded fill — visually equivalent
 /// to shadcn's grayscale placeholder against the muted background card,

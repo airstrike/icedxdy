@@ -2,10 +2,9 @@
 //
 // The live docs page does not surface a structured API Reference table;
 // it defers prop documentation to Radix and the source. Captured rows
-// (from usage examples on the page): `Input.type` (`string`, default
-// `"text"` — accepts any HTML input type), `Input.disabled` (`boolean`,
-// default `false`), `Input.required` (`boolean`, default `false`),
-// `Input.aria-invalid` (`boolean`), `Input.className` (`string`).
+// (from usage examples on the page): the HTML `type` attribute (default
+// `text`; accepts any HTML input type), `disabled` (default `false`),
+// `required` (default `false`), and `aria-invalid` (validation styling).
 // Captured here so the gap is auditable when the table widget lands.
 //
 // Intentional skips per CLAUDE.md: input-rtl (RTL). Field Group, File,

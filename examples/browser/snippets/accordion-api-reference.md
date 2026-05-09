@@ -6,7 +6,7 @@ Constructor for an `Accordion` from any `IntoIterator<Item = accordion::Item>`.
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.mode(mode)` | `accordion::Mode` | `Single { collapsible: true }` | Disclosure mode — matches shadcn's `type="single"` (with optional `collapsible`) or `type="multiple"`. |
+| `.mode(mode)` | `accordion::Mode` | `Single { collapsible: true }` | Disclosure mode — single-open (with optional collapsible) or multiple-open. |
 | `.open(open)` | `IntoIterator<Item = impl Into<String>>` | `[]` | Pass the current open-set as ids. Items not in the set render closed; items in the set render open. |
 | `.open_one(open)` | `Option<impl Into<String>>` | `None` | Convenience for `Mode::Single`. `None` means no item is open (only valid with `collapsible: true`). |
 | `.open_set(set)` | `&HashSet<String>` | `&{}` | Sync the open-set against a `HashSet<String>`. |
@@ -29,11 +29,11 @@ Constructor for one disclosure item. Takes a stable `id` (matched against the op
 
 | Variant | Description |
 | --- | --- |
-| `Mode::Single { collapsible: bool }` | At most one item open at a time. `collapsible = true` allows zero open. Mirrors shadcn's `type="single" collapsible`. |
-| `Mode::Multiple` | Any subset open. Mirrors shadcn's `type="multiple"`. |
+| `Mode::Single { collapsible: bool }` | At most one item open at a time. `collapsible = true` allows zero open. |
+| `Mode::Multiple` | Any subset open. |
 
 ### State model
 
 Open-state lives in the parent app, mirroring `switch`. The widget's own tree state only tracks per-item animation transitions (`Animation<bool>`, `last_is_open`, cached natural body height). The parent passes the current open-set in via `.open(...)` and receives `on_toggle(id)` callbacks when the user clicks a trigger; the parent is responsible for mutating its open-set and re-rendering. This keeps the single-vs-multiple branching, persistence, and any custom rules (e.g. "keep first item open by default") at the layer that already has the message context.
 
-The TSX `<Accordion>`/`<AccordionItem>`/`<AccordionTrigger>`/`<AccordionContent>` quad folds into the `accordion(...)` + `accordion::item(id, trigger).content(...)` builders. The TSX `value`/`defaultValue` props map to the `.open(...)` builder. The TSX `className` prop is n/a in icedxdy — restyle via `.style(...)` with a `theme::accordion::*` variant or a hand-rolled `Spec`.
+Shadcn's `Accordion`/`AccordionItem`/`AccordionTrigger`/`AccordionContent` quad folds into the `accordion(...)` + `accordion::item(id, trigger).content(...)` builders. The current open-set is passed via `.open(...)`. Restyle via `.style(...)` with a `theme::accordion::*` variant or a hand-rolled `Spec`.

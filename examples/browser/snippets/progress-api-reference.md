@@ -13,4 +13,4 @@ Constructor for a `Progress` builder. Takes the current value (clamped to `0.0..
 
 The bar's height (`h-1` = 4px in nova) is fixed by the wrapper; restyle via `.style(...)` if you need a thicker bar.
 
-The TSX `value`, `className`, and `id` props map to the constructor arg, the `core::theme::progress_bar::*` style functions, and the iced `Id` layer respectively. There is no `Indicator` sub-component in icedxdy — the indicator is drawn internally by the vendored progress bar widget.
+The shadcn `value` prop maps to the constructor arg; restyle via the `core::theme::progress_bar::*` style functions; identifier hooks live at the iced `Id` layer. There is no `Indicator` sub-component in icedxdy — the indicator is drawn internally by the vendored progress bar widget.

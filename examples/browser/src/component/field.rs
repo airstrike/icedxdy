@@ -1,11 +1,10 @@
 // API Reference is rendered via the `field-api-reference.md` snippet at
 // the bottom of BLOCKS. Live docs API Reference covers `FieldSet`,
 // `FieldLegend`, `FieldGroup`, `Field.orientation`, `FieldContent`,
-// `FieldLabel.asChild`, `FieldTitle`, `FieldDescription`,
-// `FieldSeparator`, and `FieldError.errors[]`; the snippet captures the
-// icedxdy-shaped builder API for `field(...)` plus the Vertical /
-// Horizontal orientation alignment switch and the click-anywhere
-// `on_press` semantic.
+// `FieldLabel`, `FieldTitle`, `FieldDescription`, `FieldSeparator`, and
+// `FieldError`; the snippet captures the icedxdy-shaped builder API for
+// `field(...)` plus the Vertical / Horizontal orientation alignment
+// switch and the click-anywhere `on_press` semantic.
 //
 // Intentional skips per the forms minimap §"Out of scope": field-textarea
 // (Textarea not yet ported), field-radio (RadioGroup not yet ported),

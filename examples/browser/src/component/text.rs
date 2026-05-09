@@ -4,9 +4,9 @@
 // props page — it does not surface a structured API Reference table.
 // Captured shapes: `h1`, `h2`, `h3`, `h4`, `p`, `blockquote`, `ul`/`li`,
 // `code` (semantic HTML elements with Tailwind utility classes), plus
-// `Lead`, `Large`, `Small`, `Muted` (utility helpers). All take
-// `className` (`string`) and `children`; no other configurable props.
-// Captured here so the gap is auditable when the table widget lands.
+// `Lead`, `Large`, `Small`, `Muted` (utility helpers). Restyle via
+// `.style(...)` with a `theme::text::*` variant. Captured here so the gap
+// is auditable when the table widget lands.
 //
 // Intentional skips per CLAUDE.md: typography-rtl (RTL).
 

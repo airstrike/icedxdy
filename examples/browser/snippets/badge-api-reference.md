@@ -7,7 +7,7 @@ Constructor for a default-variant `Badge`. The single-arg constructor takes any 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
 | `.variant(variant)` | `badge::Variant` | `Default` | Switch between the five variants. Equivalent to calling the per-variant constructor (`badge::secondary(...)`, etc.). |
-| `.on_press(message)` | `Message` | `None` | Make the badge clickable (pointer cursor + click semantics). Mirrors shadcn's `asChild` + `<a href>` pattern. |
+| `.on_press(message)` | `Message` | `None` | Make the badge clickable (pointer cursor + click semantics) — the icedxdy equivalent of shadcn rendering the badge as a link. |
 
 ### Variant constructors
 
@@ -21,7 +21,7 @@ Constructor for a default-variant `Badge`. The single-arg constructor takes any 
 
 ### Variant macros
 
-Each variant has a matching macro that wraps multiple children in a `Row` with 4px spacing — the iced equivalent of the `data-icon="inline-start"` / `data-icon="inline-end"` slots in the shadcn TSX.
+Each variant has a matching macro that wraps multiple children in a `Row` with 4px spacing — the iced equivalent of shadcn's inline-start / inline-end icon slots.
 
 | Macro | Description |
 | --- | --- |
@@ -39,4 +39,4 @@ Each variant has a matching macro that wraps multiple children in a `Row` with 4
 | `Outline` | Border-only, transparent background. |
 | `Ghost` | No border, no background — text-only pill. |
 
-The TSX `className` prop is n/a in icedxdy; use the `core::theme::badge::*` style functions (or compose your own) when full restyling is needed.
+Restyle via the `core::theme::badge::*` style functions (or compose your own).

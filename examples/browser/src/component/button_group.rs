@@ -24,11 +24,10 @@
 //! but doesn't open a menu — the visual cluster still demonstrates a
 //! shadcn-faithful 5-button group composed of 3 nested sub-clusters.
 //!
-//! The `Nested` example's second sub-group wraps an `<InputGroup>` in
-//! the original; since `InputGroup` isn't ported yet, the second
-//! sub-group is two outline buttons instead — keeps the visual
-//! demonstration of "outer group separates sub-clusters with 8px gap"
-//! intact.
+//! The `Nested` example's second sub-group wraps an `InputGroup` in the
+//! original; since `InputGroup` isn't ported yet, the second sub-group is
+//! two outline buttons instead — keeps the visual demonstration of "outer
+//! group separates sub-clusters with 8px gap" intact.
 //!
 //! # Animation note
 //!
@@ -41,12 +40,12 @@
 //! # API Reference
 //!
 //! Rendered via the `button-group-api-reference.md` snippet at the bottom
-//! of BLOCKS. Live docs covers `ButtonGroup.orientation`,
+//! of BLOCKS. Live docs covers `ButtonGroup.orientation` and
 //! `ButtonGroupSeparator.orientation` (auto-derived from the surrounding
-//! group in our port), and `ButtonGroupText.asChild` (not yet ported — no
-//! examples in the 5-example slice depend on it). The snippet captures
-//! the icedxdy-shaped builder API and the typed-children rationale
-//! (style mutation requires the typed `Item` enum, not erased elements).
+//! group in our port). `ButtonGroupText` is not yet ported — no examples
+//! in the 5-example slice depend on it. The snippet captures the
+//! icedxdy-shaped builder API and the typed-children rationale (style
+//! mutation requires the typed `Item` enum, not erased elements).
 
 use iced::Task;
 
@@ -76,14 +75,14 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "orientation",
                 title: "Orientation",
-                description: Some("Set the orientation prop to change the button group layout."),
+                description: Some("Use `.orientation(...)` to change the button group layout."),
                 snippet: "examples/browser/snippets/button-group-orientation.md",
             },
             page::Block::Example {
                 id: "size",
                 title: "Size",
                 description: Some(
-                    "Control the size of buttons using the size prop on individual buttons.",
+                    "Control the size of buttons using `.size(...)` on individual buttons.",
                 ),
                 snippet: "examples/browser/snippets/button-group-size.md",
             },
@@ -91,7 +90,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "nested",
                 title: "Nested",
                 description: Some(
-                    "Nest ButtonGroup components to create button groups with spacing.",
+                    "Nest button groups to create button groups with spacing.",
                 ),
                 snippet: "examples/browser/snippets/button-group-nested.md",
             },
@@ -99,10 +98,10 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "separator",
                 title: "Separator",
                 description: Some(
-                    "The ButtonGroupSeparator component visually divides buttons \
-                     within a group. Buttons with variant outline do not need a \
-                     separator since they have a border. For other variants, a \
-                     separator is recommended to improve the visual hierarchy.",
+                    "Use `group::separator()` to visually divide buttons within a \
+                     group. Outline buttons do not need a separator since they \
+                     have a border. For other variants, a separator is recommended \
+                     to improve the visual hierarchy.",
                 ),
                 snippet: "examples/browser/snippets/button-group-separator.md",
             },
@@ -172,12 +171,11 @@ fn view(id: &str, pi: usize) -> Component<'static, Message> {
 
     match id {
         // Demo (hero). shadcn `button-group-demo.tsx` nests three child
-        // `<ButtonGroup>` elements inside an outer one to produce three
+        // `ButtonGroup` elements inside an outer one to produce three
         // visual clusters with 8px spacing between them. The third cluster
-        // ends with a `<DropdownMenu>` trigger styled as an icon button —
-        // we render the icon button without the menu since DropdownMenu
-        // isn't ported yet (see module docstring for the deferred-examples
-        // list).
+        // ends with a `DropdownMenu` trigger styled as an icon button — we
+        // render the icon button without the menu since DropdownMenu isn't
+        // ported yet (see module docstring for the deferred-examples list).
         "demo" => row![
             button::group![button::icon![arrow_left].on_press(noop())],
             button::group![
@@ -194,7 +192,7 @@ fn view(id: &str, pi: usize) -> Component<'static, Message> {
         .into(),
 
         // Orientation. shadcn `button-group-orientation.tsx`: vertical
-        // group of two icon buttons (`<PlusIcon>`, `<MinusIcon>`).
+        // group of two icon buttons (plus, minus).
         "orientation" => button::group![
             button::icon![plus].on_press(noop()),
             button::icon![minus].on_press(noop()),
@@ -240,13 +238,12 @@ fn view(id: &str, pi: usize) -> Component<'static, Message> {
         .spacing(32)
         .into(),
 
-        // Nested. shadcn `button-group-nested.tsx`: an outer `<ButtonGroup>`
-        // containing two `<ButtonGroup>` children, demonstrating the 8px
-        // gap shadcn applies via `has-[>[data-slot=button-group]]:gap-2`.
-        // We approximate the cascade with an explicit `row![...].spacing(8)`
-        // since iced has no parent-keyed sibling selector. See module
-        // docstring for the `<InputGroup>` degradation in the second
-        // sub-group.
+        // Nested. shadcn `button-group-nested.tsx`: an outer `ButtonGroup`
+        // containing two `ButtonGroup` children, demonstrating the 8px gap
+        // shadcn applies via the parent-keyed sibling cascade. We
+        // approximate it with an explicit `row![...].spacing(8)` since iced
+        // has no equivalent selector. See module docstring for the
+        // `InputGroup` degradation in the second sub-group.
         "nested" => row![
             button::group![button::icon![plus].on_press(noop())],
             button::group![
@@ -259,7 +256,7 @@ fn view(id: &str, pi: usize) -> Component<'static, Message> {
         .into(),
 
         // Separator. shadcn `button-group-separator.tsx`: two secondary
-        // buttons with a `<ButtonGroupSeparator>` between them.
+        // buttons with a `ButtonGroupSeparator` between them.
         "separator" => button::group![
             button::secondary("Copy").size(Sm).on_press(noop()),
             group::separator(),

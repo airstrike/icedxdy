@@ -1,11 +1,10 @@
 // TODO: API Reference section once a table widget lands.
 //
 // The live docs page defers the prop matrix to Radix's own docs; the page
-// itself only demonstrates `<Progress value={33} />`. Captured rows:
-// `Progress.value` (`number | null` — current progress 0–100; `null` for
-// indeterminate), `Progress.max` (`number`, default `100`),
-// `Progress.className` (`string`). Captured here so the gap is auditable
-// when the table widget lands.
+// itself only demonstrates a single `Progress` rendered at 33. Captured
+// rows: `Progress.value` (`Option<f32>` — current progress 0..=100; `None`
+// for indeterminate) and `Progress.max` (`f32`, default `100`). Captured
+// here so the gap is auditable when the table widget lands.
 //
 // Intentional skips per CLAUDE.md: progress-rtl (RTL).
 
@@ -37,7 +36,7 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "label",
                 title: "Label",
-                description: Some("Use a Field component to add a label to the progress bar."),
+                description: Some("Wrap the progress bar in a `field(...)` to add a label."),
                 snippet: "examples/browser/snippets/progress-label.md",
             },
             page::Block::Example {
@@ -51,15 +50,15 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/progress-api-reference.md"),
 ];
 
-/// Initial value while we wait for the delay-fire (matches React's
-/// `useState(13)`).
+/// Initial value before the delay fires (matches the 13 the shadcn demo
+/// starts at).
 const INITIAL_VALUE: f32 = 13.0;
 
-/// Target value after the 500ms delay (matches `setProgress(66)`).
+/// Target value after the 500ms delay (matches the demo's 66 target).
 const TARGET_VALUE: f32 = 66.0;
 
-/// Delay before the indicator jumps to the target — mirrors the
-/// `setTimeout(..., 500)` in `progress-demo.tsx`.
+/// Delay before the indicator jumps to the target — mirrors the 500ms
+/// timeout in `progress-demo.tsx`.
 const DELAY_MS: u64 = 500;
 
 /// Stable field ids for `ValueChanged` dispatch.
@@ -107,7 +106,7 @@ impl page::Page for ProgressPage {
     }
 
     fn on_visible(&mut self) -> Task<Message> {
-        // Schedule the hero's `setTimeout(setProgress(66), 500)` jump.
+        // Schedule the hero's 500ms delayed jump to 66.
         let pi = self.state.page_index;
         Task::perform(
             async {

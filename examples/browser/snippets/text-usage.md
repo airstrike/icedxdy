@@ -22,4 +22,4 @@ text::blockquote("Quote text")
 text::inline_code("@radix-ui/react-alert-dialog")
 ```
 
-Chain `.medium()`, `.semibold()`, `.bold()`, or `.italic()` to override the default weight/style. shadcn's `<h2 className="border-b pb-2 ...">` cascade composes with our primitives — wrap the heading in a `column![text::h2(...), rule::horizontal(1)].spacing(8)` to land the underline.
+Chain `.medium()`, `.semibold()`, `.bold()`, or `.italic()` to override the default weight/style. Shadcn's underlined-heading cascade (`border-b pb-2` on `h2`) composes with our primitives — wrap the heading in a `column![text::h2(...), rule::horizontal(1)].spacing(8)` to land the underline.

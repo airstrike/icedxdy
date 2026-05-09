@@ -1,11 +1,10 @@
 // API Reference is rendered via the `avatar-api-reference.md` snippet at
 // the bottom of BLOCKS. Live docs API Reference covers `Avatar.size`
-// (`"default" | "sm" | "lg"`, default `"default"`), `Avatar.className`,
-// `AvatarImage.src/alt/className`, `AvatarFallback.className`,
-// `AvatarBadge.className`, `AvatarGroup.className`,
-// `AvatarGroupCount.className` — the snippet captures the icedxdy-shaped
-// builder API for `avatar(...)`, `avatar::badge(...)`, `avatar::group(...)`,
-// plus the image-load-failure caveat.
+// (`Default` / `Sm` / `Lg`, default `Default`) plus the `AvatarImage`,
+// `AvatarFallback`, `AvatarBadge`, `AvatarGroup`, and `AvatarGroupCount`
+// sub-components. The snippet captures the icedxdy-shaped builder API for
+// `avatar(...)`, `avatar::badge(...)`, `avatar::group(...)`, plus the
+// image-load-failure caveat.
 //
 // Intentional skips:
 // - Composition preamble (live-docs section between Usage and Examples) —

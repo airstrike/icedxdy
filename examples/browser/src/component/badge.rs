@@ -1,9 +1,9 @@
 // TODO: API Reference section once a table widget lands.
 //
 // Live docs API Reference covers `Badge`: `variant`
-// (`"default" | "secondary" | "destructive" | "outline" | "ghost" | "link"`,
-// default `"default"`) and `className` (`string`). Captured here so the gap
-// is auditable when the table widget lands.
+// (`Default` / `Secondary` / `Destructive` / `Outline` / `Ghost` / `Link`,
+// default `Default`). Captured here so the gap is auditable when the table
+// widget lands.
 //
 // Intentional skips per CLAUDE.md: badge-colors (Custom Colors) and
 // badge-rtl (RTL).

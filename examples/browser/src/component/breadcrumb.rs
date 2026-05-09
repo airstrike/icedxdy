@@ -6,19 +6,18 @@
 //! - `breadcrumb-rtl` — RTL is not applicable to iced (per CLAUDE.md).
 //! - `breadcrumb-dropdown` — requires DropdownMenu, not yet ported. Defer
 //!   until Dropdown lands. Note: shadcn's `breadcrumb-demo.tsx` (used as the
-//!   docs hero) wires the ellipsis as a `<DropdownMenu>` trigger with a
-//!   ghost `<Button>` containing `<MoreHorizontalIcon />`. Our hero renders
-//!   the same trail with a clickable `breadcrumb::ellipsis(Some(_))` — the
-//!   visual is identical, just no menu opens.
+//!   docs hero) wires the ellipsis as a DropdownMenu trigger with a ghost
+//!   icon button. Our hero renders the same trail with a clickable
+//!   `breadcrumb::ellipsis(Some(_))` — the visual is identical, just no menu
+//!   opens.
 //!
 //! # API Reference
 //!
 //! Rendered via the `breadcrumb-api-reference.md` snippet at the bottom of
-//! BLOCKS. The live docs API Reference table lists 7 components (each with
-//! a `className: string` prop, plus `children: React.ReactNode` on
-//! `BreadcrumbSeparator`); the snippet captures the icedxdy-shaped builder
-//! API for `breadcrumb(...)` plus the item constructors (`link`, `page`,
-//! `ellipsis`) and the auto-interspersed separator.
+//! BLOCKS. The live docs API Reference table lists 7 components; the
+//! snippet captures the icedxdy-shaped builder API for `breadcrumb(...)`
+//! plus the item constructors (`link`, `page`, `ellipsis`) and the
+//! auto-interspersed separator.
 
 use iced::Task;
 
@@ -54,7 +53,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "separator",
                 title: "Custom separator",
                 description: Some(
-                    "Use a custom component as `children` for `<BreadcrumbSeparator />` to create a custom separator.",
+                    "Pass a custom component to `.separator(...)` to override the default chevron.",
                 ),
                 snippet: "examples/browser/snippets/breadcrumb-separator.md",
             },
@@ -62,7 +61,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "ellipsis",
                 title: "Collapsed",
                 description: Some(
-                    "We provide a `<BreadcrumbEllipsis />` component to show a collapsed state when the breadcrumb is too long.",
+                    "Use `breadcrumb::ellipsis(...)` to show a collapsed state when the breadcrumb is too long.",
                 ),
                 snippet: "examples/browser/snippets/breadcrumb-ellipsis.md",
             },
@@ -70,7 +69,7 @@ pub static BLOCKS: &[page::Block] = &[
                 id: "link",
                 title: "Link component",
                 description: Some(
-                    "To use a custom link component from your routing library, you can use the `asChild` prop on `<BreadcrumbLink />`.",
+                    "Pass a custom message to `breadcrumb::link(content, on_press)` to wire the crumb into your own routing layer.",
                 ),
                 snippet: "examples/browser/snippets/breadcrumb-link.md",
             },
@@ -129,7 +128,7 @@ fn view(id: &str) -> Component<'static, Message> {
         .separator(chevron)
         .into(),
 
-        // Custom separator — `breadcrumb-separator.tsx`. Uses `<DotIcon />`
+        // Custom separator — `breadcrumb-separator.tsx`. Uses lucide's `DotIcon`
         // in place of the default chevron. Without a `dot` lucide icon in
         // our generated set, render a centered Unicode bullet `•` (U+2022)
         // at body size — visually equivalent to lucide's `dot` glyph.
@@ -153,10 +152,10 @@ fn view(id: &str) -> Component<'static, Message> {
         .separator(chevron)
         .into(),
 
-        // Link component — `breadcrumb-link.tsx`. shadcn's example uses
-        // `asChild` + Next.js `<Link>` for routing integration. In iced
-        // there's no DOM routing primitive, so the visual collapses to the
-        // basic example — included separately to mirror the docs page TOC.
+        // Link component — `breadcrumb-link.tsx`. shadcn's example slots a
+        // Next.js link via `asChild` for routing integration. In iced there's
+        // no DOM routing primitive, so the visual collapses to the basic
+        // example — included separately to mirror the docs page TOC.
         "link" => breadcrumb([
             breadcrumb::link("Home", Message::Pressed),
             breadcrumb::link("Components", Message::Pressed),

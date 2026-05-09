@@ -6,11 +6,11 @@ Constructor for a `Field` builder. Wraps any `impl Into<Component>` (typically a
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.label(label)` | `impl IntoLabel` | `None` | Plain strings auto-style as `text::label` (`text-sm font-medium`); pre-styled `Text` / `Component` pass through. Wrapped in `mouse_area` when the inner content widget exposes a `toggle_target` (matches shadcn's `<FieldLabel htmlFor>` click-target semantic). |
+| `.label(label)` | `impl IntoLabel` | `None` | Plain strings auto-style as `text::label` (`text-sm font-medium`); pre-styled `Text` / `Component` pass through. Wrapped in `mouse_area` when the inner content widget exposes a `toggle_target` (matches shadcn's `FieldLabel` click-target semantic). |
 | `.description(description)` | `impl IntoDescription` | `None` | Plain strings auto-style as `text::muted` (`text-sm text-muted-foreground`); pre-styled values pass through. |
 | `.error(error)` | `impl IntoError` | `None` | Plain strings auto-style as `text::error` (`text-sm text-destructive`); pre-styled values pass through. Note: the error message does NOT auto-style the inner content widget as invalid — wire `input(...).style(theme::text_input::Invalid)` (or the equivalent) at the call site. |
 | `.orientation(orientation)` | `field::Orientation` | `Vertical` | Layout axis. Variants are reachable at module scope (`field::Vertical`, `field::Horizontal`). |
-| `.card(is_active)` | `bool` | `None` (no card) | Wrap the entire field in a bordered card container. `true` → primary-tinted border + bg (matches shadcn's `has-data-checked:border-primary/30 has-data-checked:bg-primary/5`); `false` → 1px `border-border`, transparent bg. Adds 10px padding (`p-2.5`) on all sides and `rounded-lg` corners. Caller drives the active/inactive choice. |
+| `.card(is_active)` | `bool` | `None` (no card) | Wrap the entire field in a bordered card container. `true` → primary-tinted border + bg (matches shadcn's `border-primary/30 bg-primary/5` checked cascade); `false` → 1px `border-border`, transparent bg. Adds 10px padding (`p-2.5`) on all sides and `rounded-lg` corners. Caller drives the active/inactive choice. |
 | `.on_press(message)` | `Message` | `None` | Click-anywhere handler. The inner content widget keeps its own `.on_toggle(...)`; iced's `mouse_area` propagates the press up without consuming it from children, so clicking the checkbox itself fires the toggle, clicking the surrounding card area fires `on_press`. Requires `Message: Clone`. Use idempotent state-set messages (set `true` / `false`) rather than flip-flop toggles when both handlers fire on the same click. |
 | `.width(width)` | `impl Into<Length>` | `Length::Shrink` | Outer width. Applied to the final rendered element so callers don't need to wrap a single Field in a `column![field].width(N)`. |
 
@@ -19,7 +19,7 @@ Constructor for a `Field` builder. Wraps any `impl Into<Component>` (typically a
 | Variant | Description |
 | --- | --- |
 | `Vertical` | Label → content → description → error stacked in a Column with 8px gap. Default — matches shadcn's vertical field shape used by Input, Textarea, etc. |
-| `Horizontal` | Content on the left, FieldContent column (label / description / error at 2px gap) on the right, in a Row with 8px gap. Matches shadcn's `orientation="horizontal"` — used by Checkbox, Switch, and other compact controls. Alignment is `Center` for label-only and `Start` when description or error is present (mirrors shadcn's `has-[>[data-slot=field-content]]:items-start`). |
+| `Horizontal` | Content on the left, FieldContent column (label / description / error at 2px gap) on the right, in a Row with 8px gap. Matches shadcn's horizontal field orientation — used by Checkbox, Switch, and other compact controls. Alignment is `Center` for label-only and `Start` when description or error is present (mirrors shadcn's items-start cascade when a content slot is present). |
 
 ### Conversion traits
 
@@ -45,4 +45,4 @@ Implemented via `field::IntoLabel`, `field::IntoDescription`, `field::IntoError`
 | `<FieldSeparator>` | n/a — use `rule::horizontal(1)`. |
 | `<FieldContent>` | implicit — the right-hand column in `Horizontal` mode is the FieldContent slot. |
 
-The TSX `className` prop is n/a in icedxdy — restyle via `.style(...)` on the inner widgets or compose your own surface helper. The TSX `data-checked` / `data-disabled` cascade is reproduced manually: pass the active-state bool to `.card(is_active)` and tint the label with `text::muted(...)` / `theme::text::Destructive` at the call site.
+Restyle via `.style(...)` on the inner widgets or compose your own surface helper. The active-state and disabled cascades that shadcn drives via `data-checked` / `data-disabled` are reproduced manually: pass the active-state bool to `.card(is_active)` and tint the label with `text::muted(...)` / `theme::text::Destructive` at the call site.

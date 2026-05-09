@@ -11,4 +11,4 @@ Constructor for an `AspectRatio` wrapper. Takes any `impl Into<Component>` plus 
 
 The `ratio` argument follows the shadcn / CSS convention: `width / height`. Non-finite or non-positive ratios fall back to `1.0` (square box) — no panic, no NaN propagation.
 
-The TSX `ratio` prop maps to the constructor arg. The TSX `className` prop is n/a in icedxdy — style the child (e.g. `bg-muted`, `rounded-lg`) at the call site, just as shadcn's examples do. There's no theme catalog: aspect-ratio is purely structural.
+The shadcn `ratio` prop maps to the constructor arg. Style the child (e.g. `bg-muted`, `rounded-lg`) at the call site, just as shadcn's examples do. There's no theme catalog: aspect-ratio is purely structural.

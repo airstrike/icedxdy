@@ -164,8 +164,8 @@ impl page::Page for CheckboxPage {
 
         let preview: iced::Element<'_, Message, Theme> = match id {
             // Demo (hero): 4 stacked horizontal Fields. Verbatim from
-            // `.nova/apps/v4/examples/radix/checkbox-demo.tsx` — every row is
-            // `<Field orientation="horizontal">` (row 4 wrapped in
+            // `.nova/apps/v4/examples/radix/checkbox-demo.tsx` — every row
+            // uses horizontal Field orientation (row 4 wrapped in
             // FieldLabel-as-card, expressed via `.card(...)`).
             "demo" => {
                 let notif_2 = self.demo_notif_2;

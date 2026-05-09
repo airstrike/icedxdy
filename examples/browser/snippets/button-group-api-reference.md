@@ -6,7 +6,7 @@ Constructor for a `ButtonGroup` from any `IntoIterator<Item = button_group::Item
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.orientation(orientation)` | `button_group::Orientation` | `Horizontal` | Layout axis. Mirrors shadcn's `<ButtonGroup orientation="horizontal" \| "vertical">`. Variants are reachable at module scope (`button_group::Horizontal`, `button_group::Vertical`). |
+| `.orientation(orientation)` | `button_group::Orientation` | `Horizontal` | Layout axis (horizontal or vertical). Variants are reachable at module scope (`button_group::Horizontal`, `button_group::Vertical`). |
 | `.width(width)` | `impl Into<Length>` | `Shrink` | Outer width of the rendered group. |
 
 ### Item constructors
@@ -30,4 +30,4 @@ Children are typed — they must arrive as `Item` values, NOT as `iced::Element`
 
 Shadcn does this via Tailwind's child-selector cascade (`[&>*:not(:first-child)]:rounded-l-none`). We reproduce it by walking the items vec, computing each button's `Position` (`First`, `Middle`, `Last`, `Only`), and calling `Button::map_style` to zero the appropriate corners on the resolved style. Position counts every child slot (buttons AND separators) — a button immediately after a separator is *not* a "first" button by shadcn's cascade rules.
 
-The TSX `<ButtonGroup>` / `<ButtonGroupSeparator>` pair folds into `button_group([...])` + `button_group::separator()`. The TSX `className` prop is n/a — restyle children via their own `.style(...)` builders before they enter the group.
+Shadcn's `ButtonGroup` / `ButtonGroupSeparator` pair folds into `button_group([...])` + `button_group::separator()`. Restyle children via their own `.style(...)` builders before they enter the group.

@@ -45,11 +45,11 @@ Each variant has a matching macro that wraps multiple children in a `Row` so lab
 
 | Variant | Height | Notes |
 | --- | --- | --- |
-| `Size::Xs` | 24px | Mirrors shadcn `size="xs"`. |
-| `Size::Sm` | 28px | Mirrors shadcn `size="sm"`. |
+| `Size::Xs` | 24px | Mirrors shadcn's `xs` size variant. |
+| `Size::Sm` | 28px | Mirrors shadcn's `sm` size variant. |
 | `Size::Default` | 32px | Default. Matches shadcn's `h-8`. |
-| `Size::Lg` | 36px | Mirrors shadcn `size="lg"`. |
+| `Size::Lg` | 36px | Mirrors shadcn's `lg` size variant. |
 
-Combine `.size(Sm)` + `.square()` to reproduce shadcn's `size="icon-sm"`, etc.
+Combine `.size(Sm)` + `.square()` to reproduce shadcn's `icon-sm` size, etc.
 
-The TSX `className` prop is n/a in icedxdy; `asChild` is also n/a (use `mouse_area` or chain through your own composition). The TSX `variant` prop maps to the variant constructors above.
+Restyle via the variant constructors above or the `core::theme::button::*` style functions. There is no equivalent of shadcn's `asChild` slot — wrap the button in a `mouse_area` or compose your own surface for non-button affordances.
