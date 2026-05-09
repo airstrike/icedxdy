@@ -10,7 +10,6 @@ pub mod card;
 pub mod checkbox;
 pub mod field;
 pub mod input;
-pub mod label;
 pub mod progress;
 pub mod sidebar;
 pub mod switch;
