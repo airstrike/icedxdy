@@ -465,10 +465,21 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         // Animation bookkeeping. Order matters: cache `now` BEFORE the
         // is_open-drift detection below so newly-kicked animations see a
         // valid `now` on the same frame they're started.
+        //
+        // Body height is animated, and the interpolation runs in `layout`
+        // (`displayed_body_h = animation.interpolate(0, natural, now)`).
+        // Iced caches layout across frames and only re-runs it when a
+        // shell explicitly invalidates — so EVERY frame an animation is
+        // in progress we must `invalidate_layout`, otherwise the cached
+        // `displayed_body_h` from the last layout pass freezes the body
+        // mid-tween. Unlike colour-animating widgets (`button`, `switch`,
+        // `progress`) which animate purely in `draw`, accordion's tween
+        // is a layout-affecting size, so request_redraw alone is not enough.
         if let Event::Window(window::Event::RedrawRequested(now)) = event {
             state.now = Some(*now);
             for s in &mut state.items {
                 if s.animation.is_animating(*now) {
+                    shell.invalidate_layout();
                     shell.request_redraw();
                 }
             }
@@ -483,11 +494,12 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
                 .find(|s| s.id == item.id)
                 .expect("ItemState exists by id (reconciled in diff)");
             if is_open != s.last_is_open {
-                s.last_is_open = is_open;
                 if let Some(now) = state.now {
                     s.animation.go_mut(is_open, now);
-                    shell.request_redraw();
+                    s.last_is_open = is_open;
                 }
+                shell.invalidate_layout();
+                shell.request_redraw();
             }
         }
 
