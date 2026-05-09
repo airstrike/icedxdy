@@ -21,6 +21,7 @@ pub mod progress;
 pub mod rich_text;
 pub mod row;
 pub mod rule;
+pub mod scrollable;
 pub mod separator;
 pub mod sidebar;
 pub mod size;
@@ -100,6 +101,17 @@ pub fn center<'a, Message: 'a>(
 /// Create a [`Row`].
 pub fn row<'a, Message: 'a>() -> Row<'a, Message> {
     Row::new()
+}
+
+/// Create a [`scrollable::Scrollable`] wrapping the given content. The
+/// project-wide default style is the thin invisible-rail spec from
+/// the `default` fn in core's theme/scrollable — 1px transparent rail,
+/// 2px scroller at faint `palette.muted.foreground` alpha. Variant
+/// overrides via `.class(theme::scrollable::Hidden)` and friends.
+pub fn scrollable<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> scrollable::Scrollable<'a, Message> {
+    scrollable::scrollable(content)
 }
 
 /// Create a [`Badge`] with the given content.
