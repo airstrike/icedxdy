@@ -21,6 +21,8 @@
 // these same helpers verbatim so users can copy-paste the rendered example
 // directly. iced has no URL fetcher; `include_bytes!` is the canonical path.
 
+use std::sync::OnceLock;
+
 use iced::Task;
 use iced::widget::image;
 
@@ -33,20 +35,23 @@ use crate::page;
 
 /// Andy Terra's GitHub avatar (the icedxdy author).
 fn airstrike_handle() -> image::Handle {
+    static H: OnceLock<image::Handle> = OnceLock::new();
     static BYTES: &[u8] = include_bytes!("../../assets/avatars/airstrike.png");
-    image::Handle::from_bytes(BYTES)
+    H.get_or_init(|| image::Handle::from_bytes(BYTES)).clone()
 }
 
 /// Héctor Ramón's GitHub avatar (iced's creator).
 fn hecrj_handle() -> image::Handle {
+    static H: OnceLock<image::Handle> = OnceLock::new();
     static BYTES: &[u8] = include_bytes!("../../assets/avatars/hecrj.png");
-    image::Handle::from_bytes(BYTES)
+    H.get_or_init(|| image::Handle::from_bytes(BYTES)).clone()
 }
 
 /// The iced framework's snowflake mark (iced-rs org avatar).
 fn iced_handle() -> image::Handle {
+    static H: OnceLock<image::Handle> = OnceLock::new();
     static BYTES: &[u8] = include_bytes!("../../assets/avatars/iced.png");
-    image::Handle::from_bytes(BYTES)
+    H.get_or_init(|| image::Handle::from_bytes(BYTES)).clone()
 }
 
 pub static META: page::Meta = page::Meta {
