@@ -985,11 +985,18 @@ where
     }
 }
 
-/// `.style(<tint>)` shorthand: a bare `Tint` lifts to an empty `StyleFn`
-/// and routes through the universal bridge above.
+/// `.style(<tint>)` shorthand: a bare `Tint` produces shadcn's
+/// `variant="default"` filled look in the chosen tint's palette. We
+/// route through `default_impl` (the same inner the `Default` tag uses)
+/// rather than an empty inner — the universal pipeline's intrinsic only
+/// supplies structural chrome (radius), so an empty inner would render
+/// invisible.
 impl From<style::Tint> for iced_widget::button::StyleFn<'static, Theme> {
     fn from(t: style::Tint) -> Self {
-        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = style::StyleFn {
+            inner: default_impl,
+            tint: t,
+        };
         sf.into()
     }
 }
