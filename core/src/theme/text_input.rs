@@ -409,7 +409,7 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme, status: Status) {
             style.border.width = *w;
         }
         Tweak::Radius(r) => {
-            style.border.radius = (*r).into();
+            style.border.radius = *r;
         }
         Tweak::Opaque => {
             // OKLCH alpha-composite the variant's bg over palette.background
@@ -494,7 +494,7 @@ impl From<Invalid> for style::StyleFn<fn(Palette, status::Status) -> style::Styl
 
 fn overlay_universal(univ: style::Style, base: Style) -> Style {
     Style {
-        background: univ.fill.map(Into::into).unwrap_or(base.background),
+        background: univ.fill.unwrap_or(base.background),
         border: Border {
             width: univ.border_width.unwrap_or(base.border.width),
             color: univ.border_color.unwrap_or(base.border.color),

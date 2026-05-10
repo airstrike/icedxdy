@@ -136,9 +136,12 @@ where
     F: Fn(Palette, status::Status) -> style::Style + 'static,
 {
     fn from(_sf: style::StyleFn<F>) -> Self {
-        // Universal Style atoms don't address rail/scroller; resolve to the
-        // default thin-rail look. Rail customization requires a hand-rolled
-        // `Fn(&Theme, Status) -> Style` passed to `.style(...)`.
+        // FOOTGUN: user-side overlays (bg/fg/border/radius atoms) are
+        // SILENTLY DROPPED here. Universal Style maps onto bg/text/border —
+        // the scrollable's iced Style maps rail/scroller (no analog).
+        // `.style(scrollable::Hidden + bg(red))` discards `bg(red)`. To
+        // customize the rail, pass a hand-rolled
+        // `Fn(&Theme, scrollable::Status) -> scrollable::Style` directly.
         Box::new(default)
     }
 }
