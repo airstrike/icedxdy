@@ -31,6 +31,7 @@ members = [
   "widget",
   "examples/browser",
   "examples/highlight",
+  "examples/palette",
 ]
 
 [workspace.package]
