@@ -1,12 +1,16 @@
 //! Style API — composable widget styling.
 //!
-//! Phase 1 lands the type scaffolding (`Tint`, `Status`, `Style`,
-//! `StyleFn`) plus `Add` impls. Variants, tint consts, atoms, and
-//! per-widget bridges arrive in Phases 2 and 3.
+//! Phase 2 brings the user-facing prelude: variant consts (`outline`,
+//! `ghost`, `link`, `filled`), tint consts (`destructive`, `secondary`,
+//! ...), and atom fns (`bg`, `fg`, `radius`, `border`, `ring`, plus the
+//! state combinators `hover`, `focus`, `active`, `disabled`). Per-widget
+//! bridges arrive in Phase 3.
 
+pub mod atoms;
 pub mod status;
 pub mod style_fn;
 pub mod tint;
+pub mod variant;
 
 use std::ops::Add;
 
@@ -14,9 +18,11 @@ use iced_core::Padding;
 
 use crate::{Background, Color, Radius, Shadow};
 
+pub use atoms::*;
 pub use status::Status;
 pub use style_fn::StyleFn;
-pub use tint::Tint;
+pub use tint::*;
+pub use variant::*;
 
 /// A partial widget style — every field is optional so "untouched"
 /// stays distinguishable from "explicitly set".
@@ -104,5 +110,51 @@ mod tests {
             other => panic!("expected white fill, got {other:?}"),
         }
         assert_eq!(merged.border_width, Some(1.0));
+    }
+
+    /// `outline + destructive` retains the outline inner and adopts the
+    /// destructive tint. Symmetric: `destructive + outline` lands at
+    /// the same place.
+    #[test]
+    fn variant_plus_tint_is_order_independent_on_tint() {
+        let a = outline + destructive;
+        let b = destructive + outline;
+        assert_eq!(a.tint, Tint::Destructive);
+        assert_eq!(b.tint, Tint::Destructive);
+    }
+
+    /// `outline + bg(c)` should let the RHS fill override outline's
+    /// transparent fill (Style + Style is RHS-wins per field).
+    #[test]
+    fn variant_plus_bg_atom_merges_with_rhs_winning() {
+        let theme = Theme::light();
+        let pink = Color::new(0.7, 0.15, 0.0);
+        let composed = outline + bg(Background::Color(pink));
+        let resolved = composed.resolve(&theme, Status::Active);
+
+        match resolved.fill {
+            Some(Background::Color(got)) => {
+                assert!((got.l - pink.l).abs() < 1e-6);
+                assert!((got.c - pink.c).abs() < 1e-6);
+                assert!((got.h - pink.h).abs() < 1e-6);
+            }
+            other => panic!("expected pink fill, got {other:?}"),
+        }
+        assert_eq!(resolved.border_width, Some(1.0));
+    }
+
+    /// `hover(bg(c))` should resolve to the inner style on `Hovered`
+    /// and to `Style::default()` otherwise.
+    #[test]
+    fn hover_combinator_gates_on_status() {
+        let theme = Theme::light();
+        let pink = Color::new(0.7, 0.15, 0.0);
+        let composed = hover(bg(Background::Color(pink)));
+
+        let active = composed.resolve(&theme, Status::Active);
+        assert!(active.fill.is_none());
+
+        let hovered = composed.resolve(&theme, Status::Hovered);
+        assert!(hovered.fill.is_some());
     }
 }
