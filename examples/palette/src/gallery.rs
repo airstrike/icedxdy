@@ -1,11 +1,8 @@
 use iced::Element;
 use icedxdy::Theme;
-use icedxdy::core::Palette;
 use icedxdy::core::style::{
-    Status, Style, StyleFn, Tint, accent, destructive, info, muted, neutral, outline, primary,
-    secondary, success, warning,
+    Tint, accent, destructive, info, muted, neutral, outline, primary, secondary, success, warning,
 };
-use icedxdy::theme;
 use icedxdy::widget::button::Button;
 use icedxdy::widget::{Column, button, row, text};
 
@@ -25,12 +22,13 @@ const TINTS: &[(&str, Tint)] = &[
     ("Neutral", neutral),
 ];
 
-pub fn view() -> Element<'static, Message, Theme> {
+pub fn view(flip: bool) -> Element<'static, Message, Theme> {
     let mut filled_row = row().spacing(8);
     let mut outlined_row = row().spacing(8);
-    for (label, tint) in TINTS {
-        filled_row = filled_row.push(filled_button(label, *tint).into());
-        outlined_row = outlined_row.push(outlined_button(label, *tint).into());
+    for (idx, (label, tint)) in TINTS.iter().enumerate() {
+        let enabled = (idx % 2 == 0) != flip;
+        filled_row = filled_row.push(filled_button(label, *tint, enabled).into());
+        outlined_row = outlined_row.push(outlined_button(label, *tint, enabled).into());
     }
 
     let body: Column<'static, Message> = Column::new()
@@ -42,18 +40,12 @@ pub fn view() -> Element<'static, Message, Theme> {
     body.into()
 }
 
-fn filled_button(label: &'static str, tint: Tint) -> Button<'static, Message> {
-    // `Default + tint` reuses button.rs's `default_impl` (which paints
-    // fill = `p.base`, text = `p.foreground`) and swaps the resolved
-    // palette to `tint`. `+ Tint` is RHS-wins on the tint slot.
-    let style: StyleFn<fn(Palette, Status) -> Style> = theme::button::Default.into();
-    button(label)
-        .width(BTN_WIDTH)
-        .style(style + tint)
+fn filled_button(label: &'static str, tint: Tint, enabled: bool) -> Button<'static, Message> {
+    let b = button(label).width(BTN_WIDTH).style(tint);
+    if enabled { b.on_press(Message::Flip) } else { b }
 }
 
-fn outlined_button(label: &'static str, tint: Tint) -> Button<'static, Message> {
-    button(label)
-        .width(BTN_WIDTH)
-        .style(outline + tint)
+fn outlined_button(label: &'static str, tint: Tint, enabled: bool) -> Button<'static, Message> {
+    let b = button(label).width(BTN_WIDTH).style(outline + tint);
+    if enabled { b.on_press(Message::Flip) } else { b }
 }

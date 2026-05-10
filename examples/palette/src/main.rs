@@ -1,7 +1,6 @@
 use iced::{Element, Fill, Task};
 use icedxdy::Theme;
-use icedxdy::core::Palette;
-use icedxdy::core::style::{Status, Style, StyleFn, outline, primary};
+use icedxdy::core::style::{outline, primary};
 use icedxdy::theme;
 use icedxdy::widget::{Column, button, container, row, text};
 
@@ -19,11 +18,13 @@ pub enum Mode {
 pub enum Message {
     SetMode(Mode),
     ToggleArmed,
+    Flip,
 }
 
 pub struct State {
     mode: Mode,
     armed: bool,
+    flip: bool,
 }
 
 impl State {
@@ -33,7 +34,14 @@ impl State {
         } else {
             Mode::Light
         };
-        (Self { mode, armed: false }, Task::none())
+        (
+            Self {
+                mode,
+                armed: false,
+                flip: false,
+            },
+            Task::none(),
+        )
     }
 
     fn update(&mut self, msg: Message) -> Task<Message> {
@@ -43,6 +51,9 @@ impl State {
             }
             Message::ToggleArmed => {
                 self.armed = !self.armed;
+            }
+            Message::Flip => {
+                self.flip = !self.flip;
             }
         }
         Task::none()
@@ -56,7 +67,11 @@ impl State {
             .push(text::h2("Palette swatches").into())
             .push(swatches::view(&theme).into())
             .push(text::h2("Button gallery").into())
-            .push(gallery::view().into())
+            .push(
+                text::muted("Click any button to flip which half is enabled.")
+                    .into(),
+            )
+            .push(gallery::view(self.flip).into())
             .push(text::h2("Armed delete").into())
             .push(armed::view(self.armed).into())
             .spacing(24)
@@ -75,11 +90,9 @@ impl State {
 }
 
 fn header(mode: Mode) -> Element<'static, Message, Theme> {
-    let style: StyleFn<fn(Palette, Status) -> Style> = theme::button::Default.into();
-
     let light_btn = if mode == Mode::Light {
         button("Light")
-            .style(style + primary)
+            .style(primary)
             .on_press(Message::SetMode(Mode::Light))
     } else {
         button("Light")
@@ -87,10 +100,9 @@ fn header(mode: Mode) -> Element<'static, Message, Theme> {
             .on_press(Message::SetMode(Mode::Light))
     };
 
-    let style2: StyleFn<fn(Palette, Status) -> Style> = theme::button::Default.into();
     let dark_btn = if mode == Mode::Dark {
         button("Dark")
-            .style(style2 + primary)
+            .style(primary)
             .on_press(Message::SetMode(Mode::Dark))
     } else {
         button("Dark")
