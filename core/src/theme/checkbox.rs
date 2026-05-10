@@ -148,7 +148,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 
     // Unchecked bg — light = transparent, dark = palette.input @ 0.3.
     let unchecked_bg = if dark {
-        p.neutral.border.alpha(0.3)
+        p.input.alpha(0.3)
     } else {
         Color::TRANSPARENT
     };
@@ -176,7 +176,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             border: Border {
                 radius: radius::XS.into(),
                 width: 1.0,
-                color: p.neutral.border,
+                color: p.input,
             },
             text_color: None,
             ring: None,
@@ -554,7 +554,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = default(&theme, Status::Active { is_checked: false });
         let bg = bg_color(&resolved);
-        let expected = theme.neutral.border.alpha(0.3);
+        let expected = theme.input.alpha(0.3);
         assert!(
             close(bg, expected),
             "expected bg ≈ {expected:?}, got {bg:?}",

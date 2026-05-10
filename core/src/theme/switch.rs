@@ -199,8 +199,8 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         // fixed upstream, restore `p.input.alpha(0.8)` here.
         p.muted.base
     } else {
-        // `data-unchecked:bg-input` (input merged into border per Phase 1).
-        p.neutral.border
+        // `data-unchecked:bg-input`.
+        p.input
     };
 
     let thumb = if dark {
@@ -553,8 +553,7 @@ mod tests {
         );
     }
 
-    /// Light unchecked track = `data-unchecked:bg-input` — Phase 1 merges
-    /// `input` into `border`, so the assertion checks `neutral.border`.
+    /// Light unchecked track = `data-unchecked:bg-input`.
     #[test]
     fn light_unchecked_track_is_input() {
         let theme = Theme::light();
@@ -562,9 +561,9 @@ mod tests {
         let track = bg_color(resolved.background);
         let p = theme;
         assert!(
-            close(track, p.neutral.border),
-            "expected track = neutral.border ({:?}), got {track:?}",
-            p.neutral.border,
+            close(track, p.input),
+            "expected track = input ({:?}), got {track:?}",
+            p.input,
         );
     }
 

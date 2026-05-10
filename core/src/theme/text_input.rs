@@ -192,8 +192,8 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         // dark page bg. Workaround: substitute `muted.base` at 0.5 alpha,
         // which composites to a perceptually-similar quietly-lifted dark
         // surface in the dark palette. When iced's compositor is fixed
-        // upstream, restore `p.neutral.border.alpha(0.3)` here. Same shape
-        // as the switch fix in `core/src/theme/switch.rs::default`.
+        // upstream, restore `p.input.alpha(0.3)` here. Same shape as the
+        // switch fix in `core/src/theme/switch.rs::default`.
         p.muted.base.alpha(0.5)
     } else {
         p.neutral.base
@@ -204,7 +204,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         border: Border {
             radius: radius::LG.into(),
             width: 1.0,
-            color: p.neutral.border,
+            color: p.input,
         },
         icon: p.neutral.foreground,
         placeholder: p.muted.foreground,
@@ -234,9 +234,9 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             // Tailwind `/N` overrides alpha; doesn't multiply with the
             // source. Spec: `disabled:bg-input/50` (light), `dark:disabled:bg-input/80`.
             let dis_bg = if dark {
-                p.neutral.border.alpha(0.8)
+                p.input.alpha(0.8)
             } else {
-                p.neutral.border.alpha(0.5)
+                p.input.alpha(0.5)
             };
             // The element-wide `disabled:opacity-50` on top multiplies every
             // pixel by 0.5 — we apply that to non-bg colors with `scale_alpha`
@@ -245,7 +245,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             Style {
                 background: dis_bg.scale_alpha(0.5).into(),
                 border: Border {
-                    color: p.neutral.border.scale_alpha(0.5),
+                    color: p.input.scale_alpha(0.5),
                     ..active.border
                 },
                 value: p.neutral.foreground.scale_alpha(0.5),

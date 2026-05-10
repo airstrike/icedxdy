@@ -61,6 +61,12 @@ pub struct Design {
     // Sidebar context — deferred reshape; stays as its own struct.
     pub sidebar: SidebarPalette,
 
+    /// Input-field border color. shadcn distinguishes `--input` from
+    /// `--border` in dark mode (15% vs 10% alpha), so input-shaped widgets
+    /// (text input, checkbox, switch track, button outline dark fade) read
+    /// from this slot instead of `neutral.border`.
+    pub input: Color,
+
     pub seed: Seed,
     pub theme: iced_core::Theme,
     pub font_sans: FontFamily,
@@ -148,9 +154,11 @@ impl Design {
             ring: oklch(0.708, 0.0, 0.0),
         };
 
+        let input = oklch(0.922, 0.0, 0.0);
+
         build(
             "Light", neutral, primary, secondary, muted, accent, destructive, info, success,
-            warning, card, popover, code, sidebar,
+            warning, card, popover, code, sidebar, input,
         )
     }
 
@@ -159,8 +167,6 @@ impl Design {
         let neutral_border = oklch_alpha(1.0, 0.0, 0.0, 0.1);
         let neutral_ring = oklch(0.556, 0.0, 0.0);
 
-        // Legacy `palette.input` (0.15-alpha) merges into `border` (0.10) per
-        // Phase 1; widgets that used `Token::Input` now resolve `border`.
         let neutral = Palette {
             base: oklch(0.145, 0.0, 0.0),
             foreground: oklch(0.985, 0.0, 0.0),
@@ -235,9 +241,11 @@ impl Design {
             ring: oklch(0.439, 0.0, 0.0),
         };
 
+        let input = oklch_alpha(1.0, 0.0, 0.0, 0.15);
+
         build(
             "Dark", neutral, primary, secondary, muted, accent, destructive, info, success, warning,
-            card, popover, code, sidebar,
+            card, popover, code, sidebar, input,
         )
     }
 
@@ -295,6 +303,7 @@ fn build(
     popover: Palette,
     code: Palette,
     sidebar: SidebarPalette,
+    input: Color,
 ) -> Design {
     let seed = Seed {
         background: neutral.base.into(),
@@ -321,6 +330,7 @@ fn build(
         popover,
         code,
         sidebar,
+        input,
         seed,
         theme,
         font_sans: FontFamily::default(),

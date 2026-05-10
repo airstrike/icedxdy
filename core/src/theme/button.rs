@@ -158,20 +158,19 @@ pub fn outline(theme: &Theme, status: Status) -> Style {
     let p = theme;
     let dark = is_dark(theme);
 
-    // Dark: input merged into neutral.border (Phase 1). Tailwind /30 and /50
-    // multiply the source alpha — previously 0.15 (input), now 0.10 (border).
-    let input_a = p.neutral.border.a;
+    // Dark: input is oklch(1 0 0 / 15%). Tailwind /30 and /50 MULTIPLY the alpha.
+    let input_a = p.input.a;
     let (bg, border_color, hover_bg) = if dark {
         (
-            p.neutral.border.alpha(input_a * 0.3),
-            p.neutral.border,
-            p.neutral.border.alpha(input_a * 0.5),
+            p.input.alpha(input_a * 0.3),
+            p.input,
+            p.input.alpha(input_a * 0.5),
         )
     } else {
         (
-            p.neutral.base, // white
-            p.neutral.border, // oklch(0.922 0 0)
-            p.muted.base,   // oklch(0.97 0 0)
+            p.neutral.base,
+            p.neutral.border,
+            p.muted.base,
         )
     };
 
@@ -195,7 +194,7 @@ pub fn outline(theme: &Theme, status: Status) -> Style {
         Status::Pressed => Style {
             background: Some(
                 if dark {
-                    p.neutral.border.alpha(input_a * 0.6)
+                    p.input.alpha(input_a * 0.6)
                 } else {
                     p.muted.base.alpha(0.9)
                 }
