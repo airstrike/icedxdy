@@ -14,12 +14,13 @@ use crate::style::status::Status;
 use crate::style::style_fn::StyleFn;
 use crate::style::tint::Tint;
 
-fn outline_impl(p: Palette, _s: Status) -> Style {
+fn outline_impl(p: Palette, s: Status) -> Style {
+    let alpha = if s == Status::Disabled { 0.5 } else { 1.0 };
     Style {
         fill: Some(Background::Color(Color::TRANSPARENT)),
         border_width: Some(1.0),
-        border_color: Some(p.border),
-        text_color: Some(p.tint_text),
+        border_color: Some(p.border.alpha(alpha)),
+        text_color: Some(p.tint_text.alpha(alpha)),
         ..Style::default()
     }
 }
@@ -28,9 +29,10 @@ fn ghost_impl(_p: Palette, _s: Status) -> Style {
     Style::default()
 }
 
-fn link_impl(p: Palette, _s: Status) -> Style {
+fn link_impl(p: Palette, s: Status) -> Style {
+    let alpha = if s == Status::Disabled { 0.5 } else { 1.0 };
     Style {
-        text_color: Some(p.tint_text),
+        text_color: Some(p.tint_text.alpha(alpha)),
         ..Style::default()
     }
 }
