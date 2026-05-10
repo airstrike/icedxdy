@@ -714,6 +714,13 @@ where
     }
 }
 
+impl From<style::Tint> for iced_widget::container::StyleFn<'static, Theme> {
+    fn from(t: style::Tint) -> Self {
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
+        sf.into()
+    }
+}
+
 pub fn bridge_with<F, D>(
     sf: style::StyleFn<F>,
     defaults: D,

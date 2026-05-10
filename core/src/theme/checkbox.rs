@@ -563,6 +563,13 @@ where
     }
 }
 
+impl From<style::Tint> for iced_widget::checkbox::StyleFn<'static, Theme> {
+    fn from(t: style::Tint) -> Self {
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
+        sf.into()
+    }
+}
+
 // --- Iced-side StyleFn conversions -------------------------------------------
 //
 // Stock iced widgets that compose a checkbox (markdown task-lists, etc.) call
@@ -603,6 +610,13 @@ where
 {
     fn from(sf: style::StyleFn<F>) -> Self {
         bridge_with(sf, default, std::convert::identity)
+    }
+}
+
+impl From<style::Tint> for StyleFn<'static, Theme> {
+    fn from(t: style::Tint) -> Self {
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
+        sf.into()
     }
 }
 

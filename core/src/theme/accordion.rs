@@ -425,6 +425,13 @@ where
     }
 }
 
+impl From<style::Tint> for StyleFn<'static, Theme> {
+    fn from(t: style::Tint) -> Self {
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
+        sf.into()
+    }
+}
+
 // --- StyleFn conversions -----------------------------------------------------
 //
 // Allow variants and Specs to be passed directly to wrapper `.style()` builders

@@ -146,6 +146,13 @@ where
     }
 }
 
+impl From<style::Tint> for StyleFn<'static, Theme> {
+    fn from(_: style::Tint) -> Self {
+        // Same silent-drop semantics as the universal bridge above.
+        Box::new(default)
+    }
+}
+
 /// The project-wide default scrollable style: thin scroller, invisible rail.
 pub fn default(theme: &Theme, status: Status) -> Style {
     let p = theme;

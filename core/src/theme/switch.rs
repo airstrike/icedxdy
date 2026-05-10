@@ -543,12 +543,26 @@ where
     }
 }
 
+impl From<style::Tint> for StyleFn<'static, Theme> {
+    fn from(t: style::Tint) -> Self {
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
+        sf.into()
+    }
+}
+
 impl<F> From<style::StyleFn<F>> for iced_widget::toggler::StyleFn<'static, Theme>
 where
     F: Fn(Palette, status::Status) -> style::Style + 'static,
 {
     fn from(sf: style::StyleFn<F>) -> Self {
         bridge_with(sf, default, Into::<iced_widget::toggler::Style>::into)
+    }
+}
+
+impl From<style::Tint> for iced_widget::toggler::StyleFn<'static, Theme> {
+    fn from(t: style::Tint) -> Self {
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
+        sf.into()
     }
 }
 

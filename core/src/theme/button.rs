@@ -985,6 +985,15 @@ where
     }
 }
 
+/// `.style(<tint>)` shorthand: a bare `Tint` lifts to an empty `StyleFn`
+/// and routes through the universal bridge above.
+impl From<style::Tint> for iced_widget::button::StyleFn<'static, Theme> {
+    fn from(t: style::Tint) -> Self {
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
+        sf.into()
+    }
+}
+
 /// Per-tag bridge for mixed-palette variants; same shape as the universal
 /// bridge above, just with a caller-supplied intrinsic.
 pub fn bridge_with<F, D>(

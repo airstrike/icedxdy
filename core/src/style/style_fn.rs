@@ -54,6 +54,27 @@ where
     }
 }
 
+/// `Style::default()` inner — used by `From<Tint>` to lift a bare Tint
+/// into a StyleFn with no user-side field overrides.
+fn empty_inner(_: Palette, _: Status) -> Style {
+    Style::default()
+}
+
+/// `.style(destructive)` shorthand — a bare `Tint` lifts into a `StyleFn`
+/// with empty inner. The widget's intrinsic default fills against the
+/// tinted palette, so `.style(destructive)` produces "this widget's
+/// natural look, but in destructive's palette" — shadcn's `variant`-only
+/// idiom. Per-widget `From<Tint> for iced_widget::*::StyleFn` impls
+/// close the chain so the bare Tint goes straight through `.style(...)`.
+impl From<Tint> for StyleFn<fn(Palette, Status) -> Style> {
+    fn from(tint: Tint) -> Self {
+        StyleFn {
+            inner: empty_inner,
+            tint,
+        }
+    }
+}
+
 // --- Add impls ---------------------------------------------------------------
 
 impl<F> Add<Tint> for StyleFn<F> {
