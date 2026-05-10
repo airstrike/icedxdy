@@ -10,6 +10,9 @@ use iced_core::Vector;
 
 use super::Theme;
 use super::tweak::{Token, Trigger, Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Background, Border, Color, Shadow, radius};
 
 /// OKLCH-native container style. Mirrors `iced_widget::container::Style`
@@ -495,53 +498,294 @@ impl<'a> From<Spec> for StyleFn<'a, Theme> {
     }
 }
 
+// Container is stateless — Status is synthesized as Active by the bridge,
+// and state atoms (hover/focus/etc.) no-op against that.
+
+type BoxedFn = Box<dyn Fn(Palette, status::Status) -> style::Style>;
+
+/// Container's bare default in the universal Style shape: empty (transparent).
+pub fn intrinsic_default(_theme: &Theme) -> style::Style {
+    style::Style::default()
+}
+
+/// Project a universal Style onto iced's container::Style.
+///
+/// Reads each universal slot and writes the matching iced field; widget-
+/// specific defaults (snap=false here) ride along.
+pub fn project_container(univ: style::Style) -> iced_widget::container::Style {
+    let border = match (univ.border_width, univ.border_color, univ.border_radius) {
+        (None, None, None) => iced_core::Border::default(),
+        (w, c, r) => Border {
+            width: w.unwrap_or(0.0),
+            color: c.unwrap_or(Color::TRANSPARENT),
+            radius: r.unwrap_or_else(|| 0.0.into()),
+        }
+        .into(),
+    };
+    iced_widget::container::Style {
+        text_color: univ.text_color.map(Into::into),
+        background: univ.fill.map(Into::into),
+        border,
+        shadow: univ.shadow.unwrap_or_default().into(),
+        snap: false,
+    }
+}
+
+fn lift(inner: fn(Palette) -> style::Style, tint: style::Tint) -> style::StyleFn<BoxedFn> {
+    style::StyleFn {
+        inner: Box::new(move |p, _s| inner(p)),
+        tint,
+    }
+}
+
+fn transparent_impl(_p: Palette) -> style::Style {
+    style::Style::default()
+}
+
+fn background_impl(p: Palette) -> style::Style {
+    style::Style {
+        fill: Some(p.base.into()),
+        ..style::Style::default()
+    }
+}
+
+fn card_preview_impl(p: Palette) -> style::Style {
+    style::Style {
+        fill: Some(p.base.into()),
+        border_radius: Some(crate::Radius {
+            top_left: radius::LG,
+            top_right: radius::LG,
+            bottom_right: 0.0,
+            bottom_left: 0.0,
+        }),
+        ..style::Style::default()
+    }
+}
+
+fn empty_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+// Surface- / mixed-palette tags need theme access the Tint mechanism can't
+// supply; each carries its own intrinsic that the bridge calls instead of
+// the widget-wide one.
+
+pub fn intrinsic_card(theme: &Theme) -> style::Style {
+    style::Style {
+        fill: Some(theme.card.base.into()),
+        border_width: Some(1.0),
+        border_color: Some(theme.neutral.border),
+        border_radius: Some(radius::LG.into()),
+        ..style::Style::default()
+    }
+}
+
+pub fn intrinsic_card_muted(theme: &Theme) -> style::Style {
+    style::Style {
+        fill: Some(theme.muted.base.into()),
+        border_width: Some(1.0),
+        border_color: Some(theme.neutral.border),
+        border_radius: Some(radius::LG.into()),
+        ..style::Style::default()
+    }
+}
+
+pub fn intrinsic_code_block(theme: &Theme) -> style::Style {
+    style::Style {
+        fill: Some(theme.code.base.into()),
+        border_radius: Some(radius::MD.into()),
+        ..style::Style::default()
+    }
+}
+
+pub fn intrinsic_sidebar_inset(theme: &Theme) -> style::Style {
+    style::Style {
+        fill: Some(theme.neutral.base.into()),
+        border_width: Some(1.0),
+        border_color: Some(theme.neutral.border),
+        border_radius: Some(radius::LG.into()),
+        shadow: Some(Shadow {
+            color: Color::BLACK.alpha(0.05),
+            offset: Vector::new(0.0, 1.0),
+            blur_radius: 2.0,
+        }),
+        ..style::Style::default()
+    }
+}
+
+pub fn intrinsic_code_fade_overlay(theme: &Theme) -> style::Style {
+    use iced_core::gradient::Linear;
+    use std::f32::consts::PI;
+
+    let code_bg: iced_core::Color = theme.code.base.into();
+    style::Style {
+        fill: Some(Background::Gradient(
+            Linear::new(PI)
+                .add_stop(0.0, iced_core::Color::TRANSPARENT)
+                .add_stop(0.5, iced_core::Color { a: 0.6, ..code_bg })
+                .add_stop(1.0, code_bg)
+                .into(),
+        )),
+        border_radius: Some(crate::Radius {
+            top_left: 0.0,
+            top_right: 0.0,
+            bottom_left: radius::LG,
+            bottom_right: radius::LG,
+        }),
+        ..style::Style::default()
+    }
+}
+
+impl From<Transparent> for style::StyleFn<BoxedFn> {
+    fn from(_: Transparent) -> Self {
+        lift(transparent_impl, style::Tint::Neutral)
+    }
+}
+
+impl From<PageBackground> for style::StyleFn<BoxedFn> {
+    fn from(_: PageBackground) -> Self {
+        lift(background_impl, style::Tint::Neutral)
+    }
+}
+
+impl From<Card> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Card) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<CardPreview> for style::StyleFn<BoxedFn> {
+    fn from(_: CardPreview) -> Self {
+        lift(card_preview_impl, style::Tint::Neutral)
+    }
+}
+
+impl From<CardMuted> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: CardMuted) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<CodeBlock> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: CodeBlock) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<SidebarInset> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: SidebarInset) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<CodeFadeOverlay> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: CodeFadeOverlay) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl<F> From<style::StyleFn<F>> for iced_widget::container::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        Box::new(move |theme| {
+            let palette = theme.tinted(sf.tint);
+            let user = (sf.inner)(palette, status::Status::Active);
+            let default = intrinsic_default(theme);
+            let merged = default + user;
+            project_container(merged)
+        })
+    }
+}
+
+pub fn bridge_with<F, D>(
+    sf: style::StyleFn<F>,
+    defaults: D,
+) -> iced_widget::container::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+    D: Fn(&Theme) -> style::Style + 'static,
+{
+    Box::new(move |theme| {
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, status::Status::Active);
+        let default = defaults(theme);
+        let merged = default + user;
+        project_container(merged)
+    })
+}
+
 // --- Bridge to iced::container::StyleFn --------------------------------------
 
 impl<'a> From<Transparent> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Transparent) -> Self {
-        Box::new(|t| transparent(t).into())
+    fn from(t: Transparent) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<PageBackground> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: PageBackground) -> Self {
-        Box::new(|t| background(t).into())
+    fn from(t: PageBackground) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Card> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Card) -> Self {
-        Box::new(|t| card(t).into())
+    fn from(t: Card) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, intrinsic_card)
     }
 }
 
 impl<'a> From<CardPreview> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: CardPreview) -> Self {
-        Box::new(|t| card_preview(t).into())
+    fn from(t: CardPreview) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<CardMuted> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: CardMuted) -> Self {
-        Box::new(|t| card_muted(t).into())
+    fn from(t: CardMuted) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, intrinsic_card_muted)
     }
 }
 
 impl<'a> From<CodeBlock> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: CodeBlock) -> Self {
-        Box::new(|t| code_block(t).into())
+    fn from(t: CodeBlock) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, intrinsic_code_block)
     }
 }
 
 impl<'a> From<SidebarInset> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: SidebarInset) -> Self {
-        Box::new(|t| sidebar_inset(t).into())
+    fn from(t: SidebarInset) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, intrinsic_sidebar_inset)
     }
 }
 
 impl<'a> From<CodeFadeOverlay> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: CodeFadeOverlay) -> Self {
-        Box::new(|t| code_fade_overlay(t).into())
+    fn from(t: CodeFadeOverlay) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, intrinsic_code_fade_overlay)
     }
 }
 
@@ -555,12 +799,53 @@ impl<'a> From<Spec> for iced_widget::container::StyleFn<'a, Theme> {
 mod tests {
     use super::super::tweak::Alpha;
     use super::*;
+    use crate::style::atoms::{bg, hover};
 
     fn bg_color(style: &Style) -> Color {
         match style.background {
             Some(Background::Color(c)) => c,
             other => panic!("expected solid Background::Color, got {other:?}"),
         }
+    }
+
+    /// `.style(bg(c))` on a container resolves to a container::Style whose
+    /// background is `c`. Covers the universal-pipeline → iced::container::Style
+    /// projection path.
+    #[test]
+    fn bg_atom_resolves_to_container_background() {
+        let theme = Theme::light();
+        let pink = Color::new(0.7, 0.15, 0.0);
+        let composed = bg(Background::Color(pink));
+        let iced_sf: iced_widget::container::StyleFn<'_, Theme> = composed.into();
+        let resolved = iced_sf(&theme);
+        match resolved.background {
+            Some(iced_core::Background::Color(c)) => {
+                let expected: iced_core::Color = pink.into();
+                assert!(
+                    (c.r - expected.r).abs() < 1e-3 && (c.g - expected.g).abs() < 1e-3,
+                    "expected pink, got {c:?}",
+                );
+            }
+            other => panic!("expected solid color background, got {other:?}"),
+        }
+    }
+
+    /// `.style(hover(bg(c)))` on a container resolves to bare default — the
+    /// hover combinator gates on Status::Hovered, but the container bridge
+    /// synthesizes Status::Active, so the hover atom no-ops.
+    #[test]
+    fn hover_combinator_noops_on_container() {
+        let theme = Theme::light();
+        let pink = Color::new(0.7, 0.15, 0.0);
+        let composed = hover(bg(Background::Color(pink)));
+        let iced_sf: iced_widget::container::StyleFn<'_, Theme> = composed.into();
+        let resolved = iced_sf(&theme);
+        // container's intrinsic_default is empty → no background.
+        assert!(
+            resolved.background.is_none(),
+            "expected no background (hover no-ops on stateless container), got {:?}",
+            resolved.background,
+        );
     }
 
     /// `Alpha(0.5)` on `Card` (which has an opaque card surface) must

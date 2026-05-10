@@ -56,6 +56,9 @@ impl From<iced_widget::text_input::Status> for Status {
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Background, Border, Color, radius};
 
 /// OKLCH-native text input style. Mirrors `iced_widget::text_input::Style`
@@ -463,20 +466,109 @@ fn triggered(trigger: Trigger, status: Status) -> bool {
     }
 }
 
-// --- StyleFn conversions -----------------------------------------------------
-//
-// Allow variants and Specs to be passed directly to wrapper `.style()` builders
-// that take `impl Into<StyleFn<'a, Theme>>`.
+// Text input carries widget-specific slots (placeholder, value, selection,
+// icon) the universal Style can't represent — per-tag intrinsics produce
+// the full widget Style; user overlay maps onto bg / border / radius / ring.
+
+fn empty_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Invalid> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Invalid) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Destructive,
+        }
+    }
+}
+
+fn overlay_universal(univ: style::Style, base: Style) -> Style {
+    Style {
+        background: univ.fill.map(Into::into).unwrap_or(base.background),
+        border: Border {
+            width: univ.border_width.unwrap_or(base.border.width),
+            color: univ.border_color.unwrap_or(base.border.color),
+            radius: univ.border_radius.unwrap_or(base.border.radius),
+        },
+        icon: base.icon,
+        placeholder: base.placeholder,
+        value: univ.text_color.unwrap_or(base.value),
+        selection: base.selection,
+        ring: match (univ.ring, univ.ring_width) {
+            (None, None) => base.ring,
+            (color, width) => Some(Ring {
+                color: color.unwrap_or_else(|| base.ring.map(|r| r.color).unwrap_or(Color::TRANSPARENT)),
+                width: width.unwrap_or_else(|| base.ring.map(|r| r.width).unwrap_or(0.0)),
+            }),
+        },
+    }
+}
+
+impl From<Status> for iced_widget::text_input::Status {
+    fn from(s: Status) -> Self {
+        match s {
+            Status::Active => Self::Active,
+            Status::Hovered => Self::Hovered,
+            Status::Focused { is_hovered } => Self::Focused { is_hovered },
+            Status::Disabled => Self::Disabled,
+        }
+    }
+}
+
+fn bridge_with<F, D, Out: 'static>(
+    sf: style::StyleFn<F>,
+    defaults: D,
+    convert: fn(Style) -> Out,
+) -> Box<dyn Fn(&Theme, iced_widget::text_input::Status) -> Out>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+    D: Fn(&Theme, Status) -> Style + 'static,
+{
+    Box::new(move |theme, iced_status| {
+        let s = status::from_text_input(iced_status);
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, s);
+        let base = defaults(theme, iced_status.into());
+        convert(overlay_universal(user, base))
+    })
+}
+
+impl<F> From<style::StyleFn<F>> for StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        // Vendored StyleFn returns our `Style`. bridge_with takes iced's
+        // Status; the vendored StyleFn takes ours — wrap with `to_iced`.
+        let inner = bridge_with(sf, default, std::convert::identity);
+        Box::new(move |theme, our_status| inner(theme, our_status.into()))
+    }
+}
+
+// --- StyleFn conversions (vendored widget) -----------------------------------
 
 impl<'a> From<Default> for StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(default)
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Invalid> for StyleFn<'a, Theme> {
-    fn from(_: Invalid) -> Self {
-        Box::new(invalid)
+    fn from(t: Invalid) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        let inner = bridge_with(sf, invalid, std::convert::identity);
+        Box::new(move |theme, our_status| inner(theme, our_status.into()))
     }
 }
 

@@ -8,6 +8,9 @@ use std::ops::Add;
 use super::Theme;
 use super::container::Style;
 use super::tweak::{Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Background, Border};
 
 /// Pill-shape radius — clamped to a huge value so the container renders as a
@@ -248,35 +251,151 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     }
 }
 
-// --- Bridge to iced::container::StyleFn --------------------------------------
+/// Badge intrinsic default in the universal Style shape: pill radius only.
+/// Tags overlay fill / text / border on top.
+pub fn intrinsic_default(_theme: &Theme) -> style::Style {
+    style::Style {
+        border_radius: Some(PILL_RADIUS.into()),
+        ..style::Style::default()
+    }
+}
+
+fn default_impl(p: Palette, _s: status::Status) -> style::Style {
+    style::Style {
+        fill: Some(p.base.into()),
+        text_color: Some(p.foreground),
+        border_radius: Some(PILL_RADIUS.into()),
+        ..style::Style::default()
+    }
+}
+
+fn secondary_impl(p: Palette, _s: status::Status) -> style::Style {
+    style::Style {
+        fill: Some(p.base.into()),
+        text_color: Some(p.foreground),
+        border_radius: Some(PILL_RADIUS.into()),
+        ..style::Style::default()
+    }
+}
+
+fn destructive_impl(p: Palette, _s: status::Status) -> style::Style {
+    let alpha = if p.is_dark { 0.20 } else { 0.10 };
+    style::Style {
+        fill: Some(p.base.scale_alpha(alpha).into()),
+        text_color: Some(p.base),
+        border_radius: Some(PILL_RADIUS.into()),
+        ..style::Style::default()
+    }
+}
+
+fn outline_impl(p: Palette, _s: status::Status) -> style::Style {
+    style::Style {
+        text_color: Some(p.tint_text),
+        border_width: Some(1.0),
+        border_color: Some(p.border),
+        border_radius: Some(PILL_RADIUS.into()),
+        ..style::Style::default()
+    }
+}
+
+fn ghost_impl(p: Palette, _s: status::Status) -> style::Style {
+    style::Style {
+        text_color: Some(p.tint_text),
+        border_radius: Some(PILL_RADIUS.into()),
+        ..style::Style::default()
+    }
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: default_impl,
+            tint: style::Tint::Primary,
+        }
+    }
+}
+
+impl From<Secondary> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Secondary) -> Self {
+        style::StyleFn {
+            inner: secondary_impl,
+            tint: style::Tint::Secondary,
+        }
+    }
+}
+
+impl From<Destructive> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Destructive) -> Self {
+        style::StyleFn {
+            inner: destructive_impl,
+            tint: style::Tint::Destructive,
+        }
+    }
+}
+
+impl From<Outline> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Outline) -> Self {
+        style::StyleFn {
+            inner: outline_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Ghost> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Ghost) -> Self {
+        style::StyleFn {
+            inner: ghost_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+fn bridge<F>(sf: style::StyleFn<F>) -> iced_widget::container::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    Box::new(move |theme| {
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, status::Status::Active);
+        let default = intrinsic_default(theme);
+        let merged = default + user;
+        super::container::project_container(merged)
+    })
+}
 
 impl<'a> From<Default> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(|t| default(t).into())
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf)
     }
 }
 
 impl<'a> From<Secondary> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Secondary) -> Self {
-        Box::new(|t| secondary(t).into())
+    fn from(t: Secondary) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf)
     }
 }
 
 impl<'a> From<Destructive> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Destructive) -> Self {
-        Box::new(|t| destructive(t).into())
+    fn from(t: Destructive) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf)
     }
 }
 
 impl<'a> From<Outline> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Outline) -> Self {
-        Box::new(|t| outline(t).into())
+    fn from(t: Outline) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf)
     }
 }
 
 impl<'a> From<Ghost> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Ghost) -> Self {
-        Box::new(|t| ghost(t).into())
+    fn from(t: Ghost) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf)
     }
 }
 

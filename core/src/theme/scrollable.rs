@@ -30,6 +30,9 @@ use iced_widget::container;
 use iced_widget::scrollable::{AutoScroll, Catalog, Rail, Scroller, Status, Style, StyleFn};
 
 use super::Theme;
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 
 impl Catalog for Theme {
     type Class<'a> = StyleFn<'a, Self>;
@@ -50,9 +53,23 @@ impl Catalog for Theme {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Default;
 
-impl From<Default> for StyleFn<'static, Theme> {
+fn empty_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
     fn from(_: Default) -> Self {
-        Box::new(default)
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Default> for StyleFn<'static, Theme> {
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, |t, s| default(t, scrollable_status_from_universal(s)))
     }
 }
 
@@ -60,9 +77,69 @@ impl From<Default> for StyleFn<'static, Theme> {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Hidden;
 
-impl From<Hidden> for StyleFn<'static, Theme> {
+impl From<Hidden> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
     fn from(_: Hidden) -> Self {
-        Box::new(hidden)
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Hidden> for StyleFn<'static, Theme> {
+    fn from(t: Hidden) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, |t, s| hidden(t, scrollable_status_from_universal(s)))
+    }
+}
+
+/// Iced's `scrollable::Status` carries axis-specific disabled / hovered
+/// flags the universal Status lacks. Re-synthesize a "both axes" iced
+/// status so the legacy variant fns keep their existing behaviour.
+fn scrollable_status_from_universal(s: status::Status) -> Status {
+    match s {
+        status::Status::Hovered => Status::Hovered {
+            is_horizontal_scrollbar_hovered: true,
+            is_vertical_scrollbar_hovered: true,
+            is_horizontal_scrollbar_disabled: false,
+            is_vertical_scrollbar_disabled: false,
+        },
+        status::Status::Pressed => Status::Dragged {
+            is_horizontal_scrollbar_dragged: false,
+            is_vertical_scrollbar_dragged: true,
+            is_horizontal_scrollbar_disabled: false,
+            is_vertical_scrollbar_disabled: false,
+        },
+        _ => Status::Active {
+            is_horizontal_scrollbar_disabled: false,
+            is_vertical_scrollbar_disabled: false,
+        },
+    }
+}
+
+/// Per-tag bridge for scrollable. Universal Style has no fields that map
+/// onto rail/scroller, so the user overlay is a no-op — the variant fn
+/// produces the full Style.
+fn bridge_with<F, D>(_sf: style::StyleFn<F>, defaults: D) -> StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+    D: Fn(&Theme, status::Status) -> Style + 'static,
+{
+    Box::new(move |theme, iced_status| {
+        let s = status::from_scrollable(iced_status);
+        defaults(theme, s)
+    })
+}
+
+impl<F> From<style::StyleFn<F>> for StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(_sf: style::StyleFn<F>) -> Self {
+        // Universal Style atoms don't address rail/scroller; resolve to the
+        // default thin-rail look. Rail customization requires a hand-rolled
+        // `Fn(&Theme, Status) -> Style` passed to `.style(...)`.
+        Box::new(default)
     }
 }
 

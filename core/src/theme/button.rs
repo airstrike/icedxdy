@@ -13,6 +13,9 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Background, Border, Color, Shadow, radius};
 
 /// OKLCH-native button style. Mirrors `iced_widget::button::Style`
@@ -705,57 +708,358 @@ impl<'a> From<Spec> for StyleFn<'a, Theme> {
     }
 }
 
+// Mixed-palette tags (Outline, Ghost, Sidebar) read theme.input / muted /
+// sidebar — Tint alone can't address them; they route through `bridge_with`
+// with per-tag intrinsics. Tint-eligible tags use the universal bridge.
+
+/// Button's universal-Style intrinsic default: MD radius — the structural
+/// chrome every button shares. Fill / text / border come from the tag.
+pub fn intrinsic_default(_theme: &Theme, _status: status::Status) -> style::Style {
+    style::Style {
+        border_radius: Some(radius::MD.into()),
+        ..style::Style::default()
+    }
+}
+
+/// Project a universal Style onto iced's button::Style.
+pub fn project_button(univ: style::Style) -> iced_widget::button::Style {
+    let border = Border {
+        width: univ.border_width.unwrap_or(0.0),
+        color: univ.border_color.unwrap_or(Color::TRANSPARENT),
+        radius: univ.border_radius.unwrap_or_else(|| 0.0.into()),
+    };
+    iced_widget::button::Style {
+        background: univ.fill.map(Into::into),
+        text_color: univ.text_color.unwrap_or(Color::BLACK).into(),
+        border: border.into(),
+        shadow: univ.shadow.unwrap_or_default().into(),
+        snap: false,
+    }
+}
+
+fn default_impl(p: Palette, status: status::Status) -> style::Style {
+    let (fill, text) = match status {
+        status::Status::Disabled => (p.base.alpha(0.5), p.foreground.alpha(0.5)),
+        _ => (p.base, p.foreground),
+    };
+    style::Style {
+        fill: Some(fill.into()),
+        text_color: Some(text),
+        border_radius: Some(radius::MD.into()),
+        ..style::Style::default()
+    }
+}
+
+fn secondary_impl(p: Palette, status: status::Status) -> style::Style {
+    let (fill_alpha, text_alpha) = match status {
+        status::Status::Hovered => (0.8, 1.0),
+        status::Status::Pressed => (0.7, 1.0),
+        status::Status::Disabled => (0.5, 0.5),
+        _ => (1.0, 1.0),
+    };
+    style::Style {
+        fill: Some(p.base.alpha(fill_alpha).into()),
+        text_color: Some(p.foreground.alpha(text_alpha)),
+        border_radius: Some(radius::MD.into()),
+        ..style::Style::default()
+    }
+}
+
+fn destructive_impl(p: Palette, status: status::Status) -> style::Style {
+    let (rest_alpha, hover_alpha) = if p.is_dark { (0.2, 0.3) } else { (0.1, 0.2) };
+    let alpha = match status {
+        status::Status::Hovered => hover_alpha,
+        status::Status::Pressed => hover_alpha + 0.05,
+        status::Status::Disabled => rest_alpha * 0.5,
+        _ => rest_alpha,
+    };
+    let text_alpha = match status {
+        status::Status::Disabled => 0.5,
+        _ => 1.0,
+    };
+    style::Style {
+        fill: Some(p.base.alpha(alpha).into()),
+        text_color: Some(p.base.alpha(text_alpha)),
+        border_radius: Some(radius::MD.into()),
+        ..style::Style::default()
+    }
+}
+
+fn link_impl(p: Palette, status: status::Status) -> style::Style {
+    let alpha = match status {
+        status::Status::Hovered => 0.8,
+        status::Status::Pressed => 0.7,
+        status::Status::Disabled => 0.5,
+        _ => 1.0,
+    };
+    style::Style {
+        text_color: Some(p.base.alpha(alpha)),
+        ..style::Style::default()
+    }
+}
+
+fn sidebar_active_impl(p: Palette, status: status::Status) -> style::Style {
+    let alpha = match status {
+        status::Status::Disabled => 0.5,
+        _ => 1.0,
+    };
+    style::Style {
+        fill: Some(p.base.alpha(alpha).into()),
+        text_color: Some(p.foreground.alpha(alpha)),
+        border_width: Some(1.0),
+        border_color: Some(p.base.alpha(alpha)),
+        border_radius: Some(radius::SM.into()),
+        ..style::Style::default()
+    }
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: default_impl,
+            tint: style::Tint::Primary,
+        }
+    }
+}
+
+impl From<Secondary> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Secondary) -> Self {
+        style::StyleFn {
+            inner: secondary_impl,
+            tint: style::Tint::Secondary,
+        }
+    }
+}
+
+impl From<Destructive> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Destructive) -> Self {
+        style::StyleFn {
+            inner: destructive_impl,
+            tint: style::Tint::Destructive,
+        }
+    }
+}
+
+impl From<Link> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Link) -> Self {
+        style::StyleFn {
+            inner: link_impl,
+            tint: style::Tint::Primary,
+        }
+    }
+}
+
+impl From<SidebarActive> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: SidebarActive) -> Self {
+        style::StyleFn {
+            inner: sidebar_active_impl,
+            tint: style::Tint::Accent,
+        }
+    }
+}
+
+/// Outline button intrinsic default. Reads multi-palette slots
+/// (neutral / muted / input) per shadcn's light/dark spec.
+pub fn intrinsic_outline(theme: &Theme, status: status::Status) -> style::Style {
+    let dark = theme.neutral.is_dark;
+    let input_a = theme.input.a;
+    let (bg, border_color, hover_bg) = if dark {
+        (
+            theme.input.alpha(input_a * 0.3),
+            theme.input,
+            theme.input.alpha(input_a * 0.5),
+        )
+    } else {
+        (theme.neutral.base, theme.neutral.border, theme.muted.base)
+    };
+    let pressed_bg = if dark {
+        theme.input.alpha(input_a * 0.6)
+    } else {
+        theme.muted.base.alpha(0.9)
+    };
+    let (fill, text, border) = match status {
+        status::Status::Hovered => (hover_bg, theme.neutral.foreground, border_color),
+        status::Status::Pressed => (pressed_bg, theme.neutral.foreground, border_color),
+        status::Status::Disabled => (
+            bg.alpha(0.5),
+            theme.neutral.foreground.alpha(0.5),
+            border_color.alpha(0.5),
+        ),
+        _ => (bg, theme.neutral.foreground, border_color),
+    };
+    style::Style {
+        fill: Some(fill.into()),
+        text_color: Some(text),
+        border_width: Some(1.0),
+        border_color: Some(border),
+        border_radius: Some(radius::MD.into()),
+        ..style::Style::default()
+    }
+}
+
+pub fn intrinsic_ghost(theme: &Theme, status: status::Status) -> style::Style {
+    let dark = theme.neutral.is_dark;
+    let hover_bg = if dark {
+        theme.muted.base.alpha(0.5)
+    } else {
+        theme.muted.base
+    };
+    let (fill, text): (Option<Background>, Color) = match status {
+        status::Status::Hovered => (Some(hover_bg.into()), theme.neutral.foreground),
+        status::Status::Pressed => (Some(hover_bg.alpha(0.9).into()), theme.neutral.foreground),
+        status::Status::Disabled => (None, theme.neutral.foreground.alpha(0.5)),
+        _ => (None, theme.neutral.foreground),
+    };
+    style::Style {
+        fill,
+        text_color: Some(text),
+        border_radius: Some(radius::MD.into()),
+        ..style::Style::default()
+    }
+}
+
+pub fn intrinsic_sidebar(theme: &Theme, status: status::Status) -> style::Style {
+    let sb = &theme.sidebar;
+    let (fill, text): (Option<Background>, Color) = match status {
+        status::Status::Hovered | status::Status::Pressed => {
+            (Some(sb.accent.base.into()), sb.accent.foreground)
+        }
+        status::Status::Disabled => (None, sb.foreground.alpha(0.5)),
+        _ => (None, sb.foreground),
+    };
+    style::Style {
+        fill,
+        text_color: Some(text),
+        border_radius: Some(radius::SM.into()),
+        ..style::Style::default()
+    }
+}
+
+fn empty_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+impl From<Outline> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Outline) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Ghost> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Ghost) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Sidebar> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Sidebar) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+/// Universal-pipeline bridge — used by Tint-eligible tags and user-supplied
+/// `style::StyleFn<F>`. Intrinsic supplies only MD radius; the inner adds
+/// the variant fields.
+impl<F> From<style::StyleFn<F>> for iced_widget::button::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        Box::new(move |theme, iced_status| {
+            let s = status::from_button(iced_status);
+            let palette = theme.tinted(sf.tint);
+            let user = (sf.inner)(palette, s);
+            let default = intrinsic_default(theme, s);
+            let merged = default + user;
+            project_button(merged)
+        })
+    }
+}
+
+/// Per-tag bridge for mixed-palette variants; same shape as the universal
+/// bridge above, just with a caller-supplied intrinsic.
+pub fn bridge_with<F, D>(
+    sf: style::StyleFn<F>,
+    defaults: D,
+) -> iced_widget::button::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+    D: Fn(&Theme, status::Status) -> style::Style + 'static,
+{
+    Box::new(move |theme, iced_status| {
+        let s = status::from_button(iced_status);
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, s);
+        let default = defaults(theme, s);
+        let merged = default + user;
+        project_button(merged)
+    })
+}
+
 // --- Bridge to iced::button::StyleFn -----------------------------------------
-//
-// These let variants/Spec be passed straight to widgets whose `.style()`
-// accepts `impl Into<iced_widget::button::StyleFn<...>>`. Each closure runs
-// our OKLCH-native pipeline and converts to iced's sRGB Style at the end.
 
 impl<'a> From<Default> for iced_widget::button::StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(|t, s| default(t, s).into())
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Secondary> for iced_widget::button::StyleFn<'a, Theme> {
-    fn from(_: Secondary) -> Self {
-        Box::new(|t, s| secondary(t, s).into())
+    fn from(t: Secondary) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Outline> for iced_widget::button::StyleFn<'a, Theme> {
-    fn from(_: Outline) -> Self {
-        Box::new(|t, s| outline(t, s).into())
+    fn from(t: Outline) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, intrinsic_outline)
     }
 }
 
 impl<'a> From<Ghost> for iced_widget::button::StyleFn<'a, Theme> {
-    fn from(_: Ghost) -> Self {
-        Box::new(|t, s| ghost(t, s).into())
+    fn from(t: Ghost) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, intrinsic_ghost)
     }
 }
 
 impl<'a> From<Destructive> for iced_widget::button::StyleFn<'a, Theme> {
-    fn from(_: Destructive) -> Self {
-        Box::new(|t, s| destructive(t, s).into())
+    fn from(t: Destructive) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Sidebar> for iced_widget::button::StyleFn<'a, Theme> {
-    fn from(_: Sidebar) -> Self {
-        Box::new(|t, s| sidebar(t, s).into())
+    fn from(t: Sidebar) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, intrinsic_sidebar)
     }
 }
 
 impl<'a> From<SidebarActive> for iced_widget::button::StyleFn<'a, Theme> {
-    fn from(_: SidebarActive) -> Self {
-        Box::new(|t, s| sidebar_active(t, s).into())
+    fn from(t: SidebarActive) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Link> for iced_widget::button::StyleFn<'a, Theme> {
-    fn from(_: Link) -> Self {
-        Box::new(|t, s| link(t, s).into())
+    fn from(t: Link) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
@@ -769,12 +1073,64 @@ impl<'a> From<Spec> for iced_widget::button::StyleFn<'a, Theme> {
 mod tests {
     use super::super::tweak::{Bg, Opaque, Token};
     use super::*;
+    use crate::style::variant;
 
     fn bg_color(style: &Style) -> Color {
         match style.background {
             Some(Background::Color(c)) => c,
             other => panic!("expected solid Background::Color, got {other:?}"),
         }
+    }
+
+    /// `.style(outline + destructive)` on a button — the holy-grail
+    /// composition. Resolves to a button::Style with transparent fill,
+    /// destructive border, destructive tint_text. Confirms the universal
+    /// pipeline routes through `style::StyleFn` end-to-end.
+    #[test]
+    fn outline_plus_destructive_via_universal_pipeline() {
+        let theme = Theme::light();
+        let composed = variant::outline + style::Tint::Destructive;
+        let iced_sf: iced_widget::button::StyleFn<'_, Theme> = composed.into();
+        let resolved = iced_sf(&theme, Status::Active);
+
+        match resolved.background {
+            Some(iced_core::Background::Color(c)) => {
+                // Transparent fill.
+                assert!(c.a < 1e-4, "expected transparent fill, got {c:?}");
+            }
+            other => panic!("expected solid color background, got {other:?}"),
+        }
+
+        let expected_border: iced_core::Color = theme.destructive.border.into();
+        let got_border = resolved.border.color;
+        assert!(
+            (got_border.r - expected_border.r).abs() < 1e-3
+                && (got_border.g - expected_border.g).abs() < 1e-3,
+            "expected destructive border, got {got_border:?}",
+        );
+
+        let expected_text: iced_core::Color = theme.destructive.tint_text.into();
+        assert!(
+            (resolved.text_color.r - expected_text.r).abs() < 1e-3
+                && (resolved.text_color.g - expected_text.g).abs() < 1e-3,
+            "expected destructive tint_text, got {:?}",
+            resolved.text_color,
+        );
+    }
+
+    /// Tag-type call site (`Outline.into()`) flows through the universal
+    /// pipeline now: the legacy `From<Outline> for iced::button::StyleFn`
+    /// trampolines via `style::StyleFn`. Output must match the legacy
+    /// `outline(theme, status)` byte-for-byte for parity.
+    #[test]
+    fn outline_tag_matches_legacy_via_universal_pipeline() {
+        let theme = Theme::light();
+        let iced_sf: iced_widget::button::StyleFn<'_, Theme> = Outline.into();
+        let resolved = iced_sf(&theme, Status::Active);
+        let legacy: iced_widget::button::Style = outline(&theme, Status::Active).into();
+        assert_eq!(resolved.background, legacy.background);
+        assert_eq!(resolved.text_color, legacy.text_color);
+        assert_eq!(resolved.border, legacy.border);
     }
 
     /// Outline + Opaque on dark, Active: bg must be opaque, near-but-slightly-

@@ -27,6 +27,9 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Background, Border, Color, radius};
 
 /// OKLCH-native checkbox style. Mirrors `iced_widget::checkbox::Style`
@@ -455,20 +458,23 @@ fn triggered(trigger: Trigger, status: Status) -> bool {
 // that take `impl Into<StyleFn<'a, Theme>>`.
 
 impl<'a> From<Default> for StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(default)
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, default, std::convert::identity)
     }
 }
 
 impl<'a> From<Invalid> for StyleFn<'a, Theme> {
-    fn from(_: Invalid) -> Self {
-        Box::new(invalid)
+    fn from(t: Invalid) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, invalid, std::convert::identity)
     }
 }
 
 impl<'a> From<Disabled> for StyleFn<'a, Theme> {
-    fn from(_: Disabled) -> Self {
-        Box::new(disabled)
+    fn from(t: Disabled) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, disabled, std::convert::identity)
     }
 }
 
@@ -478,27 +484,125 @@ impl<'a> From<Spec> for StyleFn<'a, Theme> {
     }
 }
 
+// Checkbox carries widget-specific slots (icon_color) the universal Style
+// can't represent — per-tag intrinsics produce the full widget Style and
+// the user overlay only touches bg / border / text_color / border_radius.
+
+fn empty_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Invalid> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Invalid) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Destructive,
+        }
+    }
+}
+
+impl From<Disabled> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Disabled) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+/// Project a universal Style overlay onto an existing checkbox `Style`.
+/// Universal-Style fields override the widget Style; widget-specific
+/// fields (icon_color) come from the intrinsic and are preserved.
+fn overlay_universal(univ: style::Style, base: Style) -> Style {
+    Style {
+        background: univ.fill.map(Into::into).unwrap_or(base.background),
+        icon_color: base.icon_color,
+        border: Border {
+            width: univ.border_width.unwrap_or(base.border.width),
+            color: univ.border_color.unwrap_or(base.border.color),
+            radius: univ.border_radius.unwrap_or(base.border.radius),
+        },
+        text_color: univ.text_color.or(base.text_color),
+        ring: base.ring,
+    }
+}
+
+fn bridge_with<F, D, Out: 'static>(
+    sf: style::StyleFn<F>,
+    defaults: D,
+    convert: fn(Style) -> Out,
+) -> Box<dyn Fn(&Theme, Status) -> Out>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+    D: Fn(&Theme, Status) -> Style + 'static,
+{
+    Box::new(move |theme, iced_status| {
+        let s = status::from_checkbox(iced_status);
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, s);
+        let base = defaults(theme, iced_status);
+        convert(overlay_universal(user, base))
+    })
+}
+
+impl<F> From<style::StyleFn<F>> for iced_widget::checkbox::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        bridge_with(sf, default, Into::<iced_widget::checkbox::Style>::into)
+    }
+}
+
 // --- Iced-side StyleFn conversions -------------------------------------------
 //
 // Stock iced widgets that compose a checkbox (markdown task-lists, etc.) call
-// `Theme::style` which returns iced's `checkbox::Style`. Allow our variants to
-// be passed to those compositors via `.class(Default.into())`.
+// `Theme::style` which returns iced's `checkbox::Style`. Per-tag intrinsics
+// supply the variant-specific defaults; the universal overlay is empty in
+// these pass-throughs since each tag's `From for style::StyleFn` returns an
+// empty inner.
 
 impl<'a> From<Default> for iced_widget::checkbox::StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(|t, s| default(t, s).into())
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, default, Into::<iced_widget::checkbox::Style>::into)
     }
 }
 
 impl<'a> From<Invalid> for iced_widget::checkbox::StyleFn<'a, Theme> {
-    fn from(_: Invalid) -> Self {
-        Box::new(|t, s| invalid(t, s).into())
+    fn from(t: Invalid) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, invalid, Into::<iced_widget::checkbox::Style>::into)
     }
 }
 
 impl<'a> From<Disabled> for iced_widget::checkbox::StyleFn<'a, Theme> {
-    fn from(_: Disabled) -> Self {
-        Box::new(|t, s| disabled(t, s).into())
+    fn from(t: Disabled) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, disabled, Into::<iced_widget::checkbox::Style>::into)
+    }
+}
+
+// --- Vendored-widget StyleFn bridges -----------------------------------------
+//
+// `theme::checkbox::StyleFn<'a, Theme>` is the type our widget builder
+// `.style()` accepts. Bridge from `style::StyleFn<F>` and from each tag.
+
+impl<F> From<style::StyleFn<F>> for StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        bridge_with(sf, default, std::convert::identity)
     }
 }
 

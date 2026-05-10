@@ -12,6 +12,9 @@ use std::ops::Add;
 use super::Theme;
 use super::tweak::{Tweak, TweakSet};
 use crate::Color;
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 
 /// OKLCH-native text style. Mirrors `iced_widget::text::Style` field-for-field
 /// using our `Color`.
@@ -270,35 +273,124 @@ impl<'a> From<Spec> for StyleFn<'a, Theme> {
     }
 }
 
+/// Universal-Style intrinsic default for text: no override (inherit parent).
+pub fn intrinsic_default(_theme: &Theme) -> style::Style {
+    style::Style::default()
+}
+
+/// Project a universal Style onto iced's text::Style.
+pub fn project_text(univ: style::Style) -> iced_widget::text::Style {
+    iced_widget::text::Style {
+        color: univ.text_color.map(Into::into),
+    }
+}
+
+impl From<Default> for style::StyleFn<Box<dyn Fn(Palette, status::Status) -> style::Style>> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: Box::new(|_p, _s| style::Style::default()),
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Foreground> for style::StyleFn<Box<dyn Fn(Palette, status::Status) -> style::Style>> {
+    fn from(_: Foreground) -> Self {
+        style::StyleFn {
+            inner: Box::new(|p, _s| style::Style {
+                text_color: Some(p.foreground),
+                ..style::Style::default()
+            }),
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Muted> for style::StyleFn<Box<dyn Fn(Palette, status::Status) -> style::Style>> {
+    fn from(_: Muted) -> Self {
+        style::StyleFn {
+            inner: Box::new(|p, _s| style::Style {
+                text_color: Some(p.foreground),
+                ..style::Style::default()
+            }),
+            tint: style::Tint::Muted,
+        }
+    }
+}
+
+impl From<Link> for style::StyleFn<Box<dyn Fn(Palette, status::Status) -> style::Style>> {
+    fn from(_: Link) -> Self {
+        style::StyleFn {
+            inner: Box::new(|p, _s| style::Style {
+                text_color: Some(p.base),
+                ..style::Style::default()
+            }),
+            tint: style::Tint::Primary,
+        }
+    }
+}
+
+impl From<Destructive> for style::StyleFn<Box<dyn Fn(Palette, status::Status) -> style::Style>> {
+    fn from(_: Destructive) -> Self {
+        style::StyleFn {
+            inner: Box::new(|p, _s| style::Style {
+                text_color: Some(p.base),
+                ..style::Style::default()
+            }),
+            tint: style::Tint::Destructive,
+        }
+    }
+}
+
+impl<F> From<style::StyleFn<F>> for iced_widget::text::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        Box::new(move |theme| {
+            let palette = theme.tinted(sf.tint);
+            let user = (sf.inner)(palette, status::Status::Active);
+            let default = intrinsic_default(theme);
+            let merged = default + user;
+            project_text(merged)
+        })
+    }
+}
+
 // --- Bridge to iced::text::StyleFn -------------------------------------------
 
 impl<'a> From<Default> for iced_widget::text::StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(|t| default(t).into())
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Foreground> for iced_widget::text::StyleFn<'a, Theme> {
-    fn from(_: Foreground) -> Self {
-        Box::new(|t| foreground(t).into())
+    fn from(t: Foreground) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Muted> for iced_widget::text::StyleFn<'a, Theme> {
-    fn from(_: Muted) -> Self {
-        Box::new(|t| muted(t).into())
+    fn from(t: Muted) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Link> for iced_widget::text::StyleFn<'a, Theme> {
-    fn from(_: Link) -> Self {
-        Box::new(|t| link(t).into())
+    fn from(t: Link) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 
 impl<'a> From<Destructive> for iced_widget::text::StyleFn<'a, Theme> {
-    fn from(_: Destructive) -> Self {
-        Box::new(|t| destructive(t).into())
+    fn from(t: Destructive) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        sf.into()
     }
 }
 

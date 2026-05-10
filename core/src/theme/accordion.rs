@@ -33,6 +33,9 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Border, Color};
 
 /// Status of a single accordion trigger row.
@@ -355,20 +358,89 @@ fn triggered(trigger: Trigger, status: Status) -> bool {
     }
 }
 
+// Accordion carries widget-specific slots (divider / trigger_text / chevron
+// / body_text / ring / disabled_alpha / trigger_radius). User overlay maps
+// border_color → divider, text_color → trigger_text + body_text,
+// border_radius → trigger_radius.
+
+fn empty_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Card> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Card) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+fn overlay_universal(univ: style::Style, base: Style) -> Style {
+    Style {
+        divider: univ.border_color.unwrap_or(base.divider),
+        trigger_text: univ.text_color.unwrap_or(base.trigger_text),
+        chevron: base.chevron,
+        body_text: univ.text_color.unwrap_or(base.body_text),
+        ring: base.ring,
+        disabled_alpha: base.disabled_alpha,
+        border: Border {
+            width: univ.border_width.unwrap_or(base.border.width),
+            color: univ.border_color.unwrap_or(base.border.color),
+            radius: univ.border_radius.unwrap_or(base.border.radius),
+        },
+        trigger_radius: univ.border_radius.unwrap_or(base.trigger_radius),
+    }
+}
+
+fn bridge_with<F, D>(sf: style::StyleFn<F>, defaults: D) -> StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+    D: Fn(&Theme, Status) -> Style + 'static,
+{
+    Box::new(move |theme, accordion_status| {
+        let s = status::from_accordion(accordion_status);
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, s);
+        let base = defaults(theme, accordion_status);
+        overlay_universal(user, base)
+    })
+}
+
+impl<F> From<style::StyleFn<F>> for StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        bridge_with(sf, default)
+    }
+}
+
 // --- StyleFn conversions -----------------------------------------------------
 //
 // Allow variants and Specs to be passed directly to wrapper `.style()` builders
 // that take `impl Into<StyleFn<'a, Theme>>`.
 
 impl<'a> From<Default> for StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(default)
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, default)
     }
 }
 
 impl<'a> From<Card> for StyleFn<'a, Theme> {
-    fn from(_: Card) -> Self {
-        Box::new(card)
+    fn from(t: Card) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, card)
     }
 }
 

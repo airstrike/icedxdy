@@ -37,6 +37,9 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Background, Color};
 
 /// OKLCH-native switch style. Mirrors `iced_widget::toggler::Style`
@@ -463,26 +466,112 @@ fn triggered(trigger: Trigger, status: Status) -> bool {
     }
 }
 
-// --- StyleFn conversions -----------------------------------------------------
-//
-// Allow variants and Specs to be passed directly to wrapper `.style()` builders
-// that take `impl Into<StyleFn<'a, Theme>>`.
+// Switch carries widget-specific slots (thumb, padding_ratio) the universal
+// Style can't represent — per-tag intrinsics produce the full widget Style;
+// user overlay maps onto track bg / border / radius only.
+
+fn empty_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Invalid> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Invalid) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Destructive,
+        }
+    }
+}
+
+impl From<Disabled> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Disabled) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+fn overlay_universal(univ: style::Style, base: Style) -> Style {
+    Style {
+        background: univ.fill.map(Into::into).unwrap_or(base.background),
+        background_border_width: univ.border_width.unwrap_or(base.background_border_width),
+        background_border_color: univ.border_color.unwrap_or(base.background_border_color),
+        foreground: base.foreground,
+        foreground_border_width: base.foreground_border_width,
+        foreground_border_color: base.foreground_border_color,
+        text_color: univ.text_color.or(base.text_color),
+        border_radius: univ.border_radius.or(base.border_radius),
+        padding_ratio: base.padding_ratio,
+        ring: base.ring,
+    }
+}
+
+fn bridge_with<F, D, Out: 'static>(
+    sf: style::StyleFn<F>,
+    defaults: D,
+    convert: fn(Style) -> Out,
+) -> Box<dyn Fn(&Theme, Status) -> Out>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+    D: Fn(&Theme, Status) -> Style + 'static,
+{
+    Box::new(move |theme, iced_status| {
+        let s = status::from_toggler(iced_status);
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, s);
+        let base = defaults(theme, iced_status);
+        convert(overlay_universal(user, base))
+    })
+}
+
+impl<F> From<style::StyleFn<F>> for StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        bridge_with(sf, default, std::convert::identity)
+    }
+}
+
+impl<F> From<style::StyleFn<F>> for iced_widget::toggler::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    fn from(sf: style::StyleFn<F>) -> Self {
+        bridge_with(sf, default, Into::<iced_widget::toggler::Style>::into)
+    }
+}
+
+// --- StyleFn conversions (vendored widget) -----------------------------------
 
 impl<'a> From<Default> for StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(default)
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, default, std::convert::identity)
     }
 }
 
 impl<'a> From<Invalid> for StyleFn<'a, Theme> {
-    fn from(_: Invalid) -> Self {
-        Box::new(invalid)
+    fn from(t: Invalid) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, invalid, std::convert::identity)
     }
 }
 
 impl<'a> From<Disabled> for StyleFn<'a, Theme> {
-    fn from(_: Disabled) -> Self {
-        Box::new(disabled)
+    fn from(t: Disabled) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, disabled, std::convert::identity)
     }
 }
 
@@ -495,24 +584,27 @@ impl<'a> From<Spec> for StyleFn<'a, Theme> {
 // --- Iced-side StyleFn conversions -------------------------------------------
 //
 // Stock iced widgets that compose a toggler call `Theme::style` which returns
-// iced's `toggler::Style`. Allow our variants to be passed to those
-// compositors via `.class(Default.into())`.
+// iced's `toggler::Style`. Same routing as above; convert maps to iced's
+// shape at the boundary (drops `ring`).
 
 impl<'a> From<Default> for iced_widget::toggler::StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(|t, s| default(t, s).into())
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, default, Into::<iced_widget::toggler::Style>::into)
     }
 }
 
 impl<'a> From<Invalid> for iced_widget::toggler::StyleFn<'a, Theme> {
-    fn from(_: Invalid) -> Self {
-        Box::new(|t, s| invalid(t, s).into())
+    fn from(t: Invalid) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, invalid, Into::<iced_widget::toggler::Style>::into)
     }
 }
 
 impl<'a> From<Disabled> for iced_widget::toggler::StyleFn<'a, Theme> {
-    fn from(_: Disabled) -> Self {
-        Box::new(|t, s| disabled(t, s).into())
+    fn from(t: Disabled) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge_with(sf, disabled, Into::<iced_widget::toggler::Style>::into)
     }
 }
 

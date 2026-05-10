@@ -14,6 +14,9 @@ use iced_core::Vector;
 use super::Theme;
 use super::container::Style;
 use super::tweak::{Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Background, Border, Color, Shadow, radius};
 
 // --- Variant fns -------------------------------------------------------------
@@ -195,23 +198,104 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     }
 }
 
+// Fill always comes from theme.sidebar (not Tint-eligible); per-variant
+// intrinsic_default fns supply each variant's chrome.
+
+pub fn intrinsic_default_flush(theme: &Theme) -> style::Style {
+    style::Style {
+        fill: Some(theme.sidebar.background.into()),
+        ..style::Style::default()
+    }
+}
+
+pub fn intrinsic_default_floating(theme: &Theme) -> style::Style {
+    let sb = &theme.sidebar;
+    style::Style {
+        fill: Some(sb.background.into()),
+        border_width: Some(1.0),
+        border_color: Some(sb.border),
+        border_radius: Some(radius::LG.into()),
+        shadow: Some(Shadow {
+            color: Color::BLACK.alpha(0.1),
+            offset: Vector::new(0.0, 2.0),
+            blur_radius: 8.0,
+        }),
+        ..style::Style::default()
+    }
+}
+
+pub fn intrinsic_default_inset(theme: &Theme) -> style::Style {
+    style::Style {
+        fill: Some(theme.sidebar.background.into()),
+        ..style::Style::default()
+    }
+}
+
+fn empty_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Floating> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Floating) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Inset> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Inset) -> Self {
+        style::StyleFn {
+            inner: empty_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+fn bridge<F, D>(sf: style::StyleFn<F>, defaults: D) -> iced_widget::container::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+    D: Fn(&Theme) -> style::Style + 'static,
+{
+    Box::new(move |theme| {
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, status::Status::Active);
+        let default = defaults(theme);
+        let merged = default + user;
+        super::container::project_container(merged)
+    })
+}
+
 // --- Bridge to iced::container::StyleFn --------------------------------------
 
 impl<'a> From<Default> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(|t| default(t).into())
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf, intrinsic_default_flush)
     }
 }
 
 impl<'a> From<Floating> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Floating) -> Self {
-        Box::new(|t| floating(t).into())
+    fn from(t: Floating) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf, intrinsic_default_floating)
     }
 }
 
 impl<'a> From<Inset> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Inset) -> Self {
-        Box::new(|t| inset(t).into())
+    fn from(t: Inset) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf, intrinsic_default_inset)
     }
 }
 

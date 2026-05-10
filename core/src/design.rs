@@ -86,39 +86,48 @@ impl Design {
             border: neutral_border,
             ring: neutral_ring,
             tint_text: oklch(0.145, 0.0, 0.0),
+            is_dark: false,
         };
 
         let primary = tinted_palette(
             oklch(0.205, 0.0, 0.0),
             oklch(0.985, 0.0, 0.0),
+            false,
         );
         let secondary = tinted_palette(
             oklch(0.97, 0.0, 0.0),
             oklch(0.205, 0.0, 0.0),
+            false,
         );
         let muted = tinted_palette(
             oklch(0.97, 0.0, 0.0),
             oklch(0.556, 0.0, 0.0),
+            false,
         );
         let accent = tinted_palette(
             oklch(0.97, 0.0, 0.0),
             oklch(0.205, 0.0, 0.0),
+            false,
         );
         let destructive = tinted_palette(
             oklch(0.577, 0.245, 27.325),
             oklch(0.97, 0.01, 17.0),
+            false,
         );
         let info = tinted_palette(
             oklch(0.55, 0.20, 245.0),
             oklch(0.985, 0.0, 0.0),
+            false,
         );
         let success = tinted_palette(
             oklch(0.58, 0.18, 150.0),
             oklch(0.985, 0.0, 0.0),
+            false,
         );
         let warning = tinted_palette(
             oklch(0.72, 0.16, 75.0),
             oklch(0.205, 0.0, 0.0),
+            false,
         );
 
         let card = surface_palette(
@@ -126,18 +135,21 @@ impl Design {
             oklch(0.145, 0.0, 0.0),
             neutral_border,
             neutral_ring,
+            false,
         );
         let popover = surface_palette(
             oklch(1.0, 0.0, 0.0),
             oklch(0.145, 0.0, 0.0),
             neutral_border,
             neutral_ring,
+            false,
         );
         let code = surface_palette(
             oklch(0.98, 0.0, 0.0),
             oklch(0.145, 0.0, 0.0),
             neutral_border,
             neutral_ring,
+            false,
         );
 
         let sidebar = SidebarPalette {
@@ -174,39 +186,48 @@ impl Design {
             border: neutral_border,
             ring: neutral_ring,
             tint_text: oklch(0.985, 0.0, 0.0),
+            is_dark: true,
         };
 
         let primary = tinted_palette(
             oklch(0.922, 0.0, 0.0),
             oklch(0.205, 0.0, 0.0),
+            true,
         );
         let secondary = tinted_palette(
             oklch(0.269, 0.0, 0.0),
             oklch(0.985, 0.0, 0.0),
+            true,
         );
         let muted = tinted_palette(
             oklch(0.269, 0.0, 0.0),
             oklch(0.708, 0.0, 0.0),
+            true,
         );
         let accent = tinted_palette(
             oklch(0.371, 0.0, 0.0),
             oklch(0.985, 0.0, 0.0),
+            true,
         );
         let destructive = tinted_palette(
             oklch(0.704, 0.191, 22.216),
             oklch(0.58, 0.22, 27.0),
+            true,
         );
         let info = tinted_palette(
             oklch(0.70, 0.16, 245.0),
             oklch(0.205, 0.0, 0.0),
+            true,
         );
         let success = tinted_palette(
             oklch(0.72, 0.16, 150.0),
             oklch(0.205, 0.0, 0.0),
+            true,
         );
         let warning = tinted_palette(
             oklch(0.80, 0.15, 80.0),
             oklch(0.205, 0.0, 0.0),
+            true,
         );
 
         let card = surface_palette(
@@ -214,18 +235,21 @@ impl Design {
             oklch(0.985, 0.0, 0.0),
             neutral_border,
             neutral_ring,
+            true,
         );
         let popover = surface_palette(
             oklch(0.205, 0.0, 0.0),
             oklch(0.985, 0.0, 0.0),
             neutral_border,
             neutral_ring,
+            true,
         );
         let code = surface_palette(
             oklch(0.2, 0.0, 0.0),
             oklch(0.708, 0.0, 0.0),
             neutral_border,
             neutral_ring,
+            true,
         );
 
         let sidebar = SidebarPalette {
@@ -273,26 +297,28 @@ impl Default for Design {
 // transparent-fill widget tints with this hue, text takes the role's
 // base color directly (e.g. outlined-destructive renders text in
 // destructive's red, not destructive.foreground white).
-fn tinted_palette(base: Color, foreground: Color) -> Palette {
+fn tinted_palette(base: Color, foreground: Color, is_dark: bool) -> Palette {
     Palette {
         base,
         foreground,
         border: base,
         ring: base.alpha(0.5),
         tint_text: base,
+        is_dark,
     }
 }
 
 // Surface palettes (card, popover, code) inherit neutral's border + ring.
 // `tint_text = foreground` — surfaces aren't role tints; the readable
 // text color over them is `foreground` (the page text).
-fn surface_palette(base: Color, foreground: Color, border: Color, ring: Color) -> Palette {
+fn surface_palette(base: Color, foreground: Color, border: Color, ring: Color, is_dark: bool) -> Palette {
     Palette {
         base,
         foreground,
         border,
         ring,
         tint_text: foreground,
+        is_dark,
     }
 }
 

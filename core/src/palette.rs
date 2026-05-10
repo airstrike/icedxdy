@@ -32,6 +32,11 @@ pub struct Palette {
     /// where neutral's "role color" is the page text but every other
     /// role's "role color" is the role's base.
     pub tint_text: Color,
+    /// True when this palette was constructed for a dark-theme `Design`.
+    /// StyleFn inner closures use this to gate light/dark alpha levels
+    /// (e.g. shadcn's `dark:bg-destructive/20` vs light's `/10`) without
+    /// needing to read another palette's luminance.
+    pub is_dark: bool,
 }
 
 /// Sidebar-specific color palette.

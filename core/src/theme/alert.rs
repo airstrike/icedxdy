@@ -8,6 +8,9 @@ use std::ops::Add;
 use super::Theme;
 use super::container::Style;
 use super::tweak::{Tweak, TweakSet};
+use crate::palette::Palette;
+use crate::style;
+use crate::style::status;
 use crate::{Background, Border, radius};
 
 // --- Variant fns -------------------------------------------------------------
@@ -175,17 +178,81 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     }
 }
 
+// Alert reuses iced's container widget; its intrinsic supplies the card
+// surface that Tint alone can't address. Tag inner closures only contribute
+// destructive text/border overlays.
+
+/// Alert intrinsic default in the universal Style shape — card surface,
+/// 1px neutral border, LG radius, card foreground text.
+pub fn intrinsic_default(theme: &Theme) -> style::Style {
+    style::Style {
+        fill: Some(theme.card.base.into()),
+        text_color: Some(theme.card.foreground),
+        border_width: Some(1.0),
+        border_color: Some(theme.neutral.border),
+        border_radius: Some(radius::LG.into()),
+        ..style::Style::default()
+    }
+}
+
+fn default_impl(_p: Palette, _s: status::Status) -> style::Style {
+    style::Style::default()
+}
+
+fn destructive_impl(p: Palette, _s: status::Status) -> style::Style {
+    // shadcn nova: light keeps destructive border at 0.5 alpha; dark uses full.
+    let border = if p.is_dark { p.base } else { p.base.alpha(0.5) };
+    style::Style {
+        text_color: Some(p.base),
+        border_color: Some(border),
+        ..style::Style::default()
+    }
+}
+
+impl From<Default> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Default) -> Self {
+        style::StyleFn {
+            inner: default_impl,
+            tint: style::Tint::Neutral,
+        }
+    }
+}
+
+impl From<Destructive> for style::StyleFn<fn(Palette, status::Status) -> style::Style> {
+    fn from(_: Destructive) -> Self {
+        style::StyleFn {
+            inner: destructive_impl,
+            tint: style::Tint::Destructive,
+        }
+    }
+}
+
+fn bridge<F>(sf: style::StyleFn<F>) -> iced_widget::container::StyleFn<'static, Theme>
+where
+    F: Fn(Palette, status::Status) -> style::Style + 'static,
+{
+    Box::new(move |theme| {
+        let palette = theme.tinted(sf.tint);
+        let user = (sf.inner)(palette, status::Status::Active);
+        let default = intrinsic_default(theme);
+        let merged = default + user;
+        super::container::project_container(merged)
+    })
+}
+
 // --- Bridge to iced::container::StyleFn --------------------------------------
 
 impl<'a> From<Default> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Default) -> Self {
-        Box::new(|t| default(t).into())
+    fn from(t: Default) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf)
     }
 }
 
 impl<'a> From<Destructive> for iced_widget::container::StyleFn<'a, Theme> {
-    fn from(_: Destructive) -> Self {
-        Box::new(|t| destructive(t).into())
+    fn from(t: Destructive) -> Self {
+        let sf: style::StyleFn<_> = t.into();
+        bridge(sf)
     }
 }
 
