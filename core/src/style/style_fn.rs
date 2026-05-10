@@ -1,5 +1,5 @@
-//! Composable style function — pairs a `Palette → Status → Style` inner
-//! closure with an active `Tint`.
+//! `StyleFn<F>` — a `Palette × Status → Style` closure paired with the
+//! `Tint` that selects which palette is active at resolve time.
 
 use std::ops::Add;
 
@@ -9,11 +9,10 @@ use crate::style::Style;
 use crate::style::status::Status;
 use crate::style::tint::Tint;
 
-/// A style function carrying its active tint.
-///
-/// `inner` runs at resolve time with the tinted palette and the
-/// widget's current status; the returned `Style` then merges onto the
-/// widget's intrinsic default at apply time.
+/// Composable style. `inner` produces a partial `Style`; `tint` selects which
+/// palette `resolve()` hands to `inner` at apply time. The `Add` impls below
+/// let users compose this against more `StyleFn`s, against `Tint` (which
+/// swaps the tint slot), and against other styling atoms.
 pub struct StyleFn<F> {
     pub inner: F,
     pub tint: Tint,
@@ -23,7 +22,7 @@ impl<F> StyleFn<F>
 where
     F: Fn(Palette, Status) -> Style + 'static,
 {
-    /// Resolve this style against the given theme + status.
+    /// Look up `tint`'s palette on `theme` and run `inner`.
     pub fn resolve(&self, theme: &Theme, status: Status) -> Style {
         let palette = theme.tinted(self.tint);
         (self.inner)(palette, status)
@@ -42,8 +41,8 @@ where
     }
 }
 
-/// Lift a stateless `Fn(Palette) -> Style` into a `StyleFn` that
-/// ignores `Status`.
+/// Lift a stateless `Fn(Palette) -> Style` into the universal status-aware
+/// shape. Stateless atoms (`bg`, `fg`, ...) use this to ignore `Status`.
 pub fn from_stateless<G>(g: G) -> StyleFn<Box<dyn Fn(Palette, Status) -> Style>>
 where
     G: Fn(Palette) -> Style + 'static,
@@ -54,18 +53,14 @@ where
     }
 }
 
-/// `Style::default()` inner — used by `From<Tint>` to lift a bare Tint
-/// into a StyleFn with no user-side field overrides.
 fn empty_inner(_: Palette, _: Status) -> Style {
     Style::default()
 }
 
-/// `.style(destructive)` shorthand — a bare `Tint` lifts into a `StyleFn`
-/// with empty inner. The widget's intrinsic default fills against the
-/// tinted palette, so `.style(destructive)` produces "this widget's
-/// natural look, but in destructive's palette" — shadcn's `variant`-only
-/// idiom. Per-widget `From<Tint> for iced_widget::*::StyleFn` impls
-/// close the chain so the bare Tint goes straight through `.style(...)`.
+/// `.style(<tint>)` shorthand. Produces a `StyleFn` with no field overrides
+/// — the widget's intrinsic default carries the look; the tint just swaps
+/// which palette resolves it. Per-widget `From<Tint> for iced_widget::*::
+/// StyleFn` impls close the chain so call sites can pass a bare `Tint`.
 impl From<Tint> for StyleFn<fn(Palette, Status) -> Style> {
     fn from(tint: Tint) -> Self {
         StyleFn {

@@ -16,6 +16,7 @@ use crate::style::style_fn::from_stateless;
 
 type BoxedStyleFn = StyleFn<Box<dyn Fn(Palette, Status) -> Style>>;
 
+/// Set `fill`.
 pub fn bg(c: impl Into<Background>) -> BoxedStyleFn {
     let bg = c.into();
     from_stateless(move |_p| Style {
@@ -24,6 +25,7 @@ pub fn bg(c: impl Into<Background>) -> BoxedStyleFn {
     })
 }
 
+/// Set `text_color`.
 pub fn fg(c: impl Into<Color>) -> BoxedStyleFn {
     let color = c.into();
     from_stateless(move |_p| Style {
@@ -32,6 +34,7 @@ pub fn fg(c: impl Into<Color>) -> BoxedStyleFn {
     })
 }
 
+/// Set `border_radius`.
 pub fn radius(r: impl Into<Radius>) -> BoxedStyleFn {
     let r = r.into();
     from_stateless(move |_p| Style {
@@ -40,6 +43,7 @@ pub fn radius(r: impl Into<Radius>) -> BoxedStyleFn {
     })
 }
 
+/// Set `border_color`. Width comes from the variant or another atom.
 pub fn border(c: impl Into<Color>) -> BoxedStyleFn {
     let color = c.into();
     from_stateless(move |_p| Style {
@@ -48,6 +52,7 @@ pub fn border(c: impl Into<Color>) -> BoxedStyleFn {
     })
 }
 
+/// Set `ring` color.
 pub fn ring(c: impl Into<Color>) -> BoxedStyleFn {
     let color = c.into();
     from_stateless(move |_p| Style {
@@ -71,18 +76,23 @@ fn gate(inner: BoxedStyleFn, gate_on: Status) -> BoxedStyleFn {
     }
 }
 
+/// Apply `s` only when the widget is hovered.
 pub fn hover(s: BoxedStyleFn) -> BoxedStyleFn {
     gate(s, Status::Hovered)
 }
 
+/// Apply `s` only when the widget is keyboard-focused.
 pub fn focus(s: BoxedStyleFn) -> BoxedStyleFn {
     gate(s, Status::Focused)
 }
 
+/// Apply `s` only when the widget is being pressed. Matches shadcn's
+/// `active:` Tailwind class — currently-pressed, NOT resting.
 pub fn active(s: BoxedStyleFn) -> BoxedStyleFn {
     gate(s, Status::Pressed)
 }
 
+/// Apply `s` only when the widget is disabled.
 pub fn disabled(s: BoxedStyleFn) -> BoxedStyleFn {
     gate(s, Status::Disabled)
 }

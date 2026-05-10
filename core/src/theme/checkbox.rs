@@ -563,6 +563,7 @@ where
     }
 }
 
+/// `.style(<tint>)` shorthand for stock iced::checkbox consumers.
 impl From<style::Tint> for iced_widget::checkbox::StyleFn<'static, Theme> {
     fn from(t: style::Tint) -> Self {
         let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();
@@ -613,6 +614,7 @@ where
     }
 }
 
+/// `.style(<tint>)` shorthand for the vendored checkbox widget.
 impl From<style::Tint> for StyleFn<'static, Theme> {
     fn from(t: style::Tint) -> Self {
         let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();

@@ -25,12 +25,9 @@ pub struct Palette {
     pub border: Color,
     /// Focus ring color.
     pub ring: Color,
-    /// Text color when this palette tints a transparent-fill shape
-    /// (outline, ghost, link). Tinted hues set `tint_text = base` (=
-    /// shadcn `text-{role}`); neutral and surfaces set `tint_text =
-    /// foreground` (= shadcn `text-foreground`). Resolves the asymmetry
-    /// where neutral's "role color" is the page text but every other
-    /// role's "role color" is the role's base.
+    /// Text color for transparent-fill shapes (outline / ghost / link).
+    /// Tinted hues set this to `base`; neutral and surfaces set it to
+    /// `foreground` (neutral's `base` is the page bg, not page text).
     pub tint_text: Color,
     /// True when this palette was constructed for a dark-theme `Design`.
     /// StyleFn inner closures use this to gate light/dark alpha levels

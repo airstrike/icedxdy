@@ -714,6 +714,8 @@ where
     }
 }
 
+/// `.style(<tint>)` shorthand — routes through `style::StyleFn` with an
+/// empty inner; container's intrinsic default carries the look.
 impl From<style::Tint> for iced_widget::container::StyleFn<'static, Theme> {
     fn from(t: style::Tint) -> Self {
         let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();

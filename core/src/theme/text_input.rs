@@ -555,6 +555,7 @@ where
     }
 }
 
+/// `.style(<tint>)` shorthand for the vendored text_input widget.
 impl From<style::Tint> for StyleFn<'static, Theme> {
     fn from(t: style::Tint) -> Self {
         let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();

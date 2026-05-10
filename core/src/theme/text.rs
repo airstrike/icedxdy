@@ -357,6 +357,8 @@ where
     }
 }
 
+/// `.style(<tint>)` shorthand — empty inner; text's intrinsic default
+/// (foreground color in the resolved palette) carries the look.
 impl From<style::Tint> for iced_widget::text::StyleFn<'static, Theme> {
     fn from(t: style::Tint) -> Self {
         let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = t.into();

@@ -985,14 +985,9 @@ where
     }
 }
 
-/// `.style(<tint>)` shorthand: bare `Tint` dispatches to the matching
-/// shadcn-nova variant recipe. `.style(destructive)` → `destructive_impl`
-/// (nova's `bg-destructive/10 text-destructive` — pale destructive tint,
-/// NOT the filled-solid recipe stock shadcn ships). `.style(secondary)`
-/// → `secondary_impl`. Tints without a documented shadcn-nova button
-/// variant (Primary, Info, Success, Warning, Accent, Muted, Neutral)
-/// fall through to `default_impl` — shadcn's `variant="default"` filled
-/// look, applied against the chosen tint's palette.
+// Bare `Tint` dispatches to the per-variant impl that matches shadcn-nova's
+// recipe for that role (destructive's alpha-tinted bg differs from the
+// filled-solid default). Tints without a dedicated impl fall through.
 impl From<style::Tint> for iced_widget::button::StyleFn<'static, Theme> {
     fn from(t: style::Tint) -> Self {
         let inner: fn(Palette, status::Status) -> style::Style = match t {

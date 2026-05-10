@@ -131,24 +131,20 @@ where
     })
 }
 
+/// Universal `Style` has no rail/scroller analog, so user overlays
+/// (bg / border / radius atoms) are dropped. Pass a hand-rolled
+/// `Fn(&Theme, Status) -> Style` to `.style(...)` for rail control.
 impl<F> From<style::StyleFn<F>> for StyleFn<'static, Theme>
 where
     F: Fn(Palette, status::Status) -> style::Style + 'static,
 {
     fn from(_sf: style::StyleFn<F>) -> Self {
-        // FOOTGUN: user-side overlays (bg/fg/border/radius atoms) are
-        // SILENTLY DROPPED here. Universal Style maps onto bg/text/border —
-        // the scrollable's iced Style maps rail/scroller (no analog).
-        // `.style(scrollable::Hidden + bg(red))` discards `bg(red)`. To
-        // customize the rail, pass a hand-rolled
-        // `Fn(&Theme, scrollable::Status) -> scrollable::Style` directly.
         Box::new(default)
     }
 }
 
 impl From<style::Tint> for StyleFn<'static, Theme> {
     fn from(_: style::Tint) -> Self {
-        // Same silent-drop semantics as the universal bridge above.
         Box::new(default)
     }
 }

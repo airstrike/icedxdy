@@ -61,10 +61,8 @@ pub struct Design {
     // Sidebar context — deferred reshape; stays as its own struct.
     pub sidebar: SidebarPalette,
 
-    /// Input-field border color. shadcn distinguishes `--input` from
-    /// `--border` in dark mode (15% vs 10% alpha), so input-shaped widgets
-    /// (text input, checkbox, switch track, button outline dark fade) read
-    /// from this slot instead of `neutral.border`.
+    /// Input-field border color. Distinct from `neutral.border` in dark
+    /// mode (15% vs 10% alpha) — input fields need higher contrast.
     pub input: Color,
 
     pub seed: Seed,

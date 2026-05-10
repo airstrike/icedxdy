@@ -41,21 +41,26 @@ fn filled_impl(_p: Palette, _s: Status) -> Style {
     Style::default()
 }
 
+/// Transparent fill + 1px border in the active tint. `text_color` and
+/// `border_color` fade to 50% on `Status::Disabled`.
 pub const outline: StyleFn<fn(Palette, Status) -> Style> = StyleFn {
     inner: outline_impl,
     tint: Tint::Neutral,
 };
 
+/// No fill at rest — widget defaults provide the hover/pressed look.
 pub const ghost: StyleFn<fn(Palette, Status) -> Style> = StyleFn {
     inner: ghost_impl,
     tint: Tint::Neutral,
 };
 
+/// Text-only, colored by the active tint. Fades to 50% on disabled.
 pub const link: StyleFn<fn(Palette, Status) -> Style> = StyleFn {
     inner: link_impl,
     tint: Tint::Primary,
 };
 
+/// No overrides — the widget's intrinsic default + tint do all the work.
 pub const filled: StyleFn<fn(Palette, Status) -> Style> = StyleFn {
     inner: filled_impl,
     tint: Tint::Primary,
