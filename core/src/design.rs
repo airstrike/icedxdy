@@ -85,6 +85,7 @@ impl Design {
             foreground: oklch(0.145, 0.0, 0.0),
             border: neutral_border,
             ring: neutral_ring,
+            tint_text: oklch(0.145, 0.0, 0.0),
         };
 
         let primary = tinted_palette(
@@ -172,6 +173,7 @@ impl Design {
             foreground: oklch(0.985, 0.0, 0.0),
             border: neutral_border,
             ring: neutral_ring,
+            tint_text: oklch(0.985, 0.0, 0.0),
         };
 
         let primary = tinted_palette(
@@ -267,23 +269,30 @@ impl Default for Design {
 }
 
 // Tinted-palette border/ring v0 derivation: border = base, ring = base @ 0.5.
-// Designer-specified overrides land later if pixel parity demands it.
+// `tint_text = base` matches shadcn `text-{role}` semantics — when a
+// transparent-fill widget tints with this hue, text takes the role's
+// base color directly (e.g. outlined-destructive renders text in
+// destructive's red, not destructive.foreground white).
 fn tinted_palette(base: Color, foreground: Color) -> Palette {
     Palette {
         base,
         foreground,
         border: base,
         ring: base.alpha(0.5),
+        tint_text: base,
     }
 }
 
 // Surface palettes (card, popover, code) inherit neutral's border + ring.
+// `tint_text = foreground` — surfaces aren't role tints; the readable
+// text color over them is `foreground` (the page text).
 fn surface_palette(base: Color, foreground: Color, border: Color, ring: Color) -> Palette {
     Palette {
         base,
         foreground,
         border,
         ring,
+        tint_text: foreground,
     }
 }
 

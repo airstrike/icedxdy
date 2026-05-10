@@ -19,7 +19,7 @@ fn outline_impl(p: Palette, _s: Status) -> Style {
         fill: Some(Background::Color(Color::TRANSPARENT)),
         border_width: Some(1.0),
         border_color: Some(p.border),
-        text_color: Some(p.base),
+        text_color: Some(p.tint_text),
         ..Style::default()
     }
 }
@@ -30,7 +30,7 @@ fn ghost_impl(_p: Palette, _s: Status) -> Style {
 
 fn link_impl(p: Palette, _s: Status) -> Style {
     Style {
-        text_color: Some(p.base),
+        text_color: Some(p.tint_text),
         ..Style::default()
     }
 }
