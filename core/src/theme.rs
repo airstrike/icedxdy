@@ -1,7 +1,9 @@
-//! Theme type with Catalog implementations for iced widgets
+//! Theme type with Catalog implementations for iced widgets.
 //!
-//! The Theme wraps a Design and implements the Catalog traits
-//! for various iced widgets with shadcn-inspired styling.
+//! Theme wraps a `Design` and exposes per-role palettes via `Deref` —
+//! `theme.muted.base` reads through to `Design::muted.base`. The
+//! `tinted(Tint)` accessor returns the palette for a given role by
+//! value (Palette is 64 bytes Copy).
 
 pub mod accordion;
 pub mod alert;
@@ -29,45 +31,61 @@ pub mod text;
 pub mod text_input;
 pub mod tweak;
 
-use crate::Design;
+use std::ops::Deref;
 
-/// Theme for icedxdy components
-///
-/// Wraps a Design and implements Catalog traits for iced widgets.
+use crate::Design;
+use crate::palette::Palette;
+use crate::style::Tint;
+
+/// Theme for icedxdy components.
 #[derive(Debug, Clone)]
 pub struct Theme {
     design: Design,
 }
 
 impl Theme {
-    /// Create a new theme from a design
     pub fn new(design: Design) -> Self {
         Self { design }
     }
 
-    /// Create a light theme
     pub fn light() -> Self {
         Self::new(Design::light())
     }
 
-    /// Create a dark theme
     pub fn dark() -> Self {
         Self::new(Design::dark())
     }
 
-    /// Get the underlying design
     pub fn design(&self) -> &Design {
         &self.design
     }
 
-    /// Get the palette
-    pub fn palette(&self) -> &crate::Palette {
-        &self.design.palette
+    /// Resolve a tint to its concrete `Palette`. Returned by value —
+    /// `Palette` is `Copy`.
+    pub fn tinted(&self, tint: Tint) -> Palette {
+        match tint {
+            Tint::Neutral => self.design.neutral,
+            Tint::Primary => self.design.primary,
+            Tint::Secondary => self.design.secondary,
+            Tint::Muted => self.design.muted,
+            Tint::Accent => self.design.accent,
+            Tint::Destructive => self.design.destructive,
+            Tint::Info => self.design.info,
+            Tint::Success => self.design.success,
+            Tint::Warning => self.design.warning,
+        }
     }
 
-    /// Get the iced theme
     pub fn iced_theme(&self) -> &iced_core::Theme {
         &self.design.theme
+    }
+}
+
+impl Deref for Theme {
+    type Target = Design;
+
+    fn deref(&self) -> &Design {
+        &self.design
     }
 }
 
@@ -86,7 +104,7 @@ impl iced_core::theme::Base for Theme {
     }
 
     fn mode(&self) -> iced_core::theme::Mode {
-        let bg = self.design.palette.background;
+        let bg = self.design.neutral.base;
         if bg.l < 0.5 {
             iced_core::theme::Mode::Dark
         } else {
@@ -100,8 +118,8 @@ impl iced_core::theme::Base for Theme {
 
     fn base(&self) -> iced_core::theme::Style {
         iced_core::theme::Style {
-            background_color: self.design.palette.background.into(),
-            text_color: self.design.palette.foreground.into(),
+            background_color: self.design.neutral.base.into(),
+            text_color: self.design.neutral.foreground.into(),
         }
     }
 
@@ -118,10 +136,10 @@ pub fn is_dark_mode() -> bool {
             .args(["read", "-g", "AppleInterfaceStyle"])
             .output()
             .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "Dark")
-            .unwrap_or(true) // default to dark
+            .unwrap_or(true)
     }
     #[cfg(not(target_os = "macos"))]
     {
-        true // default to dark on other platforms
+        true
     }
 }

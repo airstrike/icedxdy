@@ -178,7 +178,7 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Breadcrumb<'a, Messag
         // unstyled descendants; Container's text_color is iced's only
         // mechanism for the same. `<BreadcrumbPage>` overrides in `render_page`.
         container(Box::new(row).into_element())
-            .style(|t: &Theme| Style::default().color(t.palette().muted.foreground))
+            .style(|t: &Theme| Style::default().color(t.muted.foreground))
             .into()
     }
 }
@@ -199,7 +199,7 @@ fn render_page<'a, Message: Clone + 'a>(
     content: Component<'a, Message>,
 ) -> Component<'a, Message> {
     container(content.into_iced())
-        .style(|t: &Theme| Style::default().color(t.palette().foreground))
+        .style(|t: &Theme| Style::default().color(t.neutral.foreground))
         .into()
 }
 

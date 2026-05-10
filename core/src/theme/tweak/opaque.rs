@@ -1,12 +1,12 @@
 //! Opaque-background atom — replaces the variant's (possibly translucent)
-//! REST-state background with the page's `palette.background` color.
+//! REST-state background with the page's neutral base color.
 //! Hover/Pressed/Disabled keep the variant's natural transitions so the
 //! interactive feedback isn't lost.
 //!
 //! Matches the pre-refactor closure form (extended to preserve hover):
 //!
 //! ```ignore
-//! Style { background: Some(theme.palette().background.into()), ..base }
+//! Style { background: Some(theme.neutral.base.into()), ..base }
 //! ```
 //!
 //! Used on overlay buttons (like the View Code button) where the variant's

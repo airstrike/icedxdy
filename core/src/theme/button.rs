@@ -13,7 +13,7 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
-use crate::{Background, Border, Color, Palette, Shadow, radius};
+use crate::{Background, Border, Color, Shadow, radius};
 
 /// OKLCH-native button style. Mirrors `iced_widget::button::Style`
 /// field-for-field, but the color-bearing fields use our types so the
@@ -90,13 +90,13 @@ impl iced_widget::button::Catalog for Theme {
 }
 
 fn is_dark(theme: &Theme) -> bool {
-    theme.palette().background.l < 0.5
+    theme.neutral.base.l < 0.5
 }
 
 /// Default/primary: bg-primary text-primary-foreground
 /// Nova: NO hover fill change on buttons ([a]:hover only applies inside <a>)
 pub fn default(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
 
     let base = Style {
         background: Some(p.primary.base.into()),
@@ -120,7 +120,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 
 /// Secondary: bg-secondary text-secondary-foreground hover:bg-secondary/80
 pub fn secondary(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
 
     let base = Style {
         background: Some(p.secondary.base.into()),
@@ -155,28 +155,29 @@ pub fn secondary(theme: &Theme, status: Status) -> Style {
 /// Dark:  border-input  bg-input/30  hover:bg-input/50
 /// Nova: no shadow
 pub fn outline(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let dark = is_dark(theme);
 
-    // Dark: input is oklch(1 0 0 / 15%). Tailwind /30 and /50 MULTIPLY the alpha.
-    let input_a = p.input.a;
+    // Dark: input merged into neutral.border (Phase 1). Tailwind /30 and /50
+    // multiply the source alpha — previously 0.15 (input), now 0.10 (border).
+    let input_a = p.neutral.border.a;
     let (bg, border_color, hover_bg) = if dark {
         (
-            p.input.alpha(input_a * 0.3), // ~4.5% white
-            p.input,                      // oklch(1 0 0 / 15%)
-            p.input.alpha(input_a * 0.5), // ~7.5% white
+            p.neutral.border.alpha(input_a * 0.3),
+            p.neutral.border,
+            p.neutral.border.alpha(input_a * 0.5),
         )
     } else {
         (
-            p.background, // white
-            p.border,     // oklch(0.922 0 0)
-            p.muted.base, // oklch(0.97 0 0)
+            p.neutral.base, // white
+            p.neutral.border, // oklch(0.922 0 0)
+            p.muted.base,   // oklch(0.97 0 0)
         )
     };
 
     let base = Style {
         background: Some(bg.into()),
-        text_color: p.foreground,
+        text_color: p.neutral.foreground,
         border: Border {
             radius: radius::MD.into(),
             width: 1.0,
@@ -194,7 +195,7 @@ pub fn outline(theme: &Theme, status: Status) -> Style {
         Status::Pressed => Style {
             background: Some(
                 if dark {
-                    p.input.alpha(input_a * 0.6)
+                    p.neutral.border.alpha(input_a * 0.6)
                 } else {
                     p.muted.base.alpha(0.9)
                 }
@@ -204,7 +205,7 @@ pub fn outline(theme: &Theme, status: Status) -> Style {
         },
         Status::Disabled => Style {
             background: Some(bg.alpha(0.5).into()),
-            text_color: p.foreground.alpha(0.5),
+            text_color: p.neutral.foreground.alpha(0.5),
             border: Border {
                 color: border_color.alpha(0.5),
                 ..base.border
@@ -218,7 +219,7 @@ pub fn outline(theme: &Theme, status: Status) -> Style {
 /// hover:bg-muted hover:text-foreground
 /// dark:hover:bg-muted/50
 pub fn ghost(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let dark = is_dark(theme);
 
     let hover_bg = if dark {
@@ -229,7 +230,7 @@ pub fn ghost(theme: &Theme, status: Status) -> Style {
 
     let base = Style {
         background: None,
-        text_color: p.foreground,
+        text_color: p.neutral.foreground,
         border: Border {
             radius: radius::MD.into(),
             ..Border::default()
@@ -248,7 +249,7 @@ pub fn ghost(theme: &Theme, status: Status) -> Style {
             ..base
         },
         Status::Disabled => Style {
-            text_color: p.foreground.alpha(0.5),
+            text_color: p.neutral.foreground.alpha(0.5),
             ..base
         },
     }
@@ -258,7 +259,7 @@ pub fn ghost(theme: &Theme, status: Status) -> Style {
 /// Light: bg-destructive/10 hover:bg-destructive/20 text-destructive
 /// Dark:  bg-destructive/20 hover:bg-destructive/30 text-destructive
 pub fn destructive(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let dark = is_dark(theme);
 
     let (rest_alpha, hover_alpha) = if dark { (0.2, 0.3) } else { (0.1, 0.2) };
@@ -299,7 +300,7 @@ pub fn destructive(theme: &Theme, status: Status) -> Style {
 /// state stays clearly distinct from a hovered sibling without
 /// alpha-attenuating hover.
 pub fn sidebar(theme: &Theme, status: Status) -> Style {
-    let sb = &theme.palette().sidebar;
+    let sb = &theme.sidebar;
 
     let base = Style {
         background: None,
@@ -330,7 +331,7 @@ pub fn sidebar(theme: &Theme, status: Status) -> Style {
 /// data-active:text-sidebar-accent-foreground` — uses sidebar palette
 /// (subtler than main accent, especially in dark mode).
 pub fn sidebar_active(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
 
     // Docs-site override (`.nova/apps/v4/components/docs-sidebar.tsx`):
     // `data-[active=true]:border-accent data-[active=true]:bg-accent`. The
@@ -361,7 +362,7 @@ pub fn sidebar_active(theme: &Theme, status: Status) -> Style {
 /// Link: text-primary underline-offset-4 hover:underline
 /// No bg, no border. Opacity fallback since iced lacks underline.
 pub fn link(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
 
     let base = Style {
         background: None,
@@ -453,9 +454,8 @@ impl Spec {
     /// tweak is applied in order.
     pub fn resolve(&self, theme: &Theme, status: Status) -> Style {
         let mut style = (self.variant)(theme, status);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette, status);
+            apply(t, &mut style, theme, status);
         }
         style
     }
@@ -574,16 +574,16 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 
 // --- Resolver ----------------------------------------------------------------
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme, status: Status) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = Some(t.resolve(palette).into());
+            style.background = Some(t.resolve(theme).into());
         }
         Tweak::Fg(t) => {
-            style.text_color = t.resolve(palette);
+            style.text_color = t.resolve(theme);
         }
         Tweak::BorderColor(t) => {
-            style.border.color = t.resolve(palette);
+            style.border.color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border.width = *w;
@@ -605,7 +605,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             // (Active 0.045 → Hovered 0.075 → Pressed 0.09 → Disabled 0.022
             // alpha differences become visible luminance lifts).
             if let Some(Background::Color(src)) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Some(Background::Color(composed));
             }
@@ -619,7 +619,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
         Tweak::State(trigger, inner) => {
             if triggered(*trigger, status) {
                 for inner_tweak in &inner.0 {
-                    apply(inner_tweak, style, palette, status);
+                    apply(inner_tweak, style, theme, status);
                 }
             }
         }
@@ -795,7 +795,7 @@ mod tests {
 
         // Should be a small lift above palette.background luminance, NOT
         // near-white. palette.background.l = 0.145; expected ≈ 0.184.
-        let bg_l = theme.palette().background.l;
+        let bg_l = theme.neutral.base.l;
         assert!(
             bg.l > bg_l && bg.l < bg_l + 0.10,
             "expected small lift above bg.l={bg_l}, got l={}",
@@ -843,7 +843,7 @@ mod tests {
         let spec: Spec = (Outline + Bg(Token::Primary)).into();
         let resolved = spec.resolve(&theme, Status::Active);
 
-        let expected = theme.palette().primary.base;
+        let expected = theme.primary.base;
         let actual = bg_color(&resolved);
         assert!(
             (actual.l - expected.l).abs() < 1e-4
@@ -899,7 +899,7 @@ mod tests {
 
         let hovered = sidebar(&theme, Status::Hovered);
         let bg = bg_color(&hovered);
-        let expected = theme.palette().sidebar.accent.base;
+        let expected = theme.sidebar.accent.base;
         assert!(
             (bg.l - expected.l).abs() < 1e-4 && (bg.c - expected.c).abs() < 1e-4,
             "sidebar hover must use sidebar.accent.base ({expected:?}), got {bg:?}",
@@ -914,8 +914,8 @@ mod tests {
         let theme = Theme::dark();
         let active = sidebar_active(&theme, Status::Active);
         let bg = bg_color(&active);
-        let main_accent = theme.palette().accent.base;
-        let sb_accent = theme.palette().sidebar.accent.base;
+        let main_accent = theme.accent.base;
+        let sb_accent = theme.sidebar.accent.base;
 
         assert!(
             (bg.l - main_accent.l).abs() < 1e-4 && (bg.c - main_accent.c).abs() < 1e-4,

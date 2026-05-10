@@ -64,7 +64,7 @@ impl<'a, Message: Clone + 'a> From<SidebarRail<Message>>
             let status: Status = s.into();
             let mut core = button::ghost(t, status);
             if matches!(status, Status::Hovered | Status::Pressed) {
-                core.background = Some(t.palette().sidebar.border.into());
+                core.background = Some(t.sidebar.border.into());
             }
             let iced: iced_widget::button::Style = core.into();
             iced.into()

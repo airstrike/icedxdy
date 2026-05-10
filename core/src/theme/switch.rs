@@ -37,7 +37,7 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
-use crate::{Background, Color, Palette};
+use crate::{Background, Color};
 
 /// OKLCH-native switch style. Mirrors `iced_widget::toggler::Style`
 /// field-for-field, plus a `ring` field with no iced equivalent — rendered
@@ -160,7 +160,7 @@ impl iced_widget::toggler::Catalog for Theme {
 }
 
 fn is_dark(theme: &Theme) -> bool {
-    theme.palette().background.l < 0.5
+    theme.neutral.base.l < 0.5
 }
 
 fn is_toggled(status: Status) -> bool {
@@ -179,7 +179,7 @@ fn is_toggled(status: Status) -> bool {
 /// `bg-input/80`. Thumb light = `bg-background`; thumb dark when checked =
 /// `bg-primary-foreground`; thumb dark when unchecked = `bg-foreground`.
 pub fn default(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let dark = is_dark(theme);
     let toggled = is_toggled(status);
 
@@ -199,8 +199,8 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         // fixed upstream, restore `p.input.alpha(0.8)` here.
         p.muted.base
     } else {
-        // `data-unchecked:bg-input`.
-        p.input
+        // `data-unchecked:bg-input` (input merged into border per Phase 1).
+        p.neutral.border
     };
 
     let thumb = if dark {
@@ -209,11 +209,11 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             p.primary.foreground
         } else {
             // `dark:data-unchecked:bg-foreground`.
-            p.foreground
+            p.neutral.foreground
         }
     } else {
         // `bg-background` (default thumb in light mode for both states).
-        p.background
+        p.neutral.base
     };
 
     let active = Style {
@@ -242,7 +242,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 /// (`aria-invalid:ring-destructive/20`). In dark mode the destructive border
 /// drops to alpha 0.5 (`dark:aria-invalid:border-destructive/50`).
 pub fn invalid(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let dark = is_dark(theme);
     let base = default(theme, status);
 
@@ -324,9 +324,8 @@ impl Spec {
     /// is applied in order.
     pub fn resolve(&self, theme: &Theme, status: Status) -> Style {
         let mut style = (self.variant)(theme, status);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette, status);
+            apply(t, &mut style, theme, status);
         }
         style
     }
@@ -387,17 +386,17 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 // `Tweak::BorderColor` / `Tweak::BorderWidth` target the track border so
 // invalid-style overrides via atoms work.
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme, status: Status) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = t.resolve(palette).into();
+            style.background = t.resolve(theme).into();
         }
         Tweak::Fg(t) => {
             // For a switch the "foreground" region is the thumb.
-            style.foreground = t.resolve(palette).into();
+            style.foreground = t.resolve(theme).into();
         }
         Tweak::BorderColor(t) => {
-            style.background_border_color = t.resolve(palette);
+            style.background_border_color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.background_border_width = *w;
@@ -409,7 +408,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             // OKLCH alpha-composite the variant's track bg over palette.background
             // and force alpha=1.0. Same shape as button/container/checkbox.
             if let Background::Color(src) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Background::Color(composed);
             }
@@ -421,7 +420,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
         Tweak::State(trigger, inner) => {
             if triggered(*trigger, status) {
                 for inner_tweak in &inner.0 {
-                    apply(inner_tweak, style, palette, status);
+                    apply(inner_tweak, style, theme, status);
                 }
             }
         }
@@ -431,7 +430,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             offset: _,
         } => {
             style.ring = Some(Ring {
-                color: color.resolve(palette),
+                color: color.resolve(theme),
                 width: *width,
             });
         }
@@ -546,7 +545,7 @@ mod tests {
         let theme = Theme::light();
         let resolved = default(&theme, Status::Active { is_toggled: true });
         let track = bg_color(resolved.background);
-        let p = theme.palette();
+        let p = theme;
         assert!(
             close(track, p.primary.base),
             "expected track = primary ({:?}), got {track:?}",
@@ -554,17 +553,18 @@ mod tests {
         );
     }
 
-    /// Light unchecked track = `data-unchecked:bg-input`.
+    /// Light unchecked track = `data-unchecked:bg-input` — Phase 1 merges
+    /// `input` into `border`, so the assertion checks `neutral.border`.
     #[test]
     fn light_unchecked_track_is_input() {
         let theme = Theme::light();
         let resolved = default(&theme, Status::Active { is_toggled: false });
         let track = bg_color(resolved.background);
-        let p = theme.palette();
+        let p = theme;
         assert!(
-            close(track, p.input),
-            "expected track = input ({:?}), got {track:?}",
-            p.input,
+            close(track, p.neutral.border),
+            "expected track = neutral.border ({:?}), got {track:?}",
+            p.neutral.border,
         );
     }
 
@@ -580,7 +580,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = default(&theme, Status::Active { is_toggled: false });
         let track = bg_color(resolved.background);
-        let expected = theme.palette().muted.base;
+        let expected = theme.muted.base;
         assert!(
             close(track, expected),
             "expected track = muted.base ({expected:?}), got {track:?}",
@@ -593,7 +593,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = default(&theme, Status::Active { is_toggled: true });
         let thumb = bg_color(resolved.foreground);
-        let expected = theme.palette().primary.foreground;
+        let expected = theme.primary.foreground;
         assert!(
             close(thumb, expected),
             "expected thumb = primary.foreground ({expected:?}), got {thumb:?}",
@@ -604,14 +604,14 @@ mod tests {
     #[test]
     fn light_thumb_is_background_regardless_of_toggle() {
         let theme = Theme::light();
-        let p = theme.palette();
+        let p = &theme;
         for is_toggled in [false, true] {
             let resolved = default(&theme, Status::Active { is_toggled });
             let thumb = bg_color(resolved.foreground);
             assert!(
-                close(thumb, p.background),
+                close(thumb, p.neutral.base),
                 "is_toggled={is_toggled}: expected thumb = background ({:?}), got {thumb:?}",
-                p.background,
+                p.neutral.base,
             );
         }
     }
@@ -633,7 +633,7 @@ mod tests {
     fn invalid_unchecked_border_is_destructive() {
         let theme = Theme::light();
         let resolved = invalid(&theme, Status::Active { is_toggled: false });
-        let p = theme.palette();
+        let p = theme;
         assert!(
             close(resolved.background_border_color, p.destructive.base),
             "expected invalid border = destructive ({:?}), got {:?}",
@@ -652,7 +652,7 @@ mod tests {
         let spec: Spec = (Default + Bg(Token::Primary)).into();
         let resolved = spec.resolve(&theme, Status::Active { is_toggled: false });
         let track = bg_color(resolved.background);
-        let expected = theme.palette().primary.base;
+        let expected = theme.primary.base;
         assert!(
             close(track, expected),
             "expected track = primary ({expected:?}), got {track:?}",
@@ -668,7 +668,7 @@ mod tests {
         let spec: Spec = (Default + tweak::Fg(Token::Primary)).into();
         let resolved = spec.resolve(&theme, Status::Active { is_toggled: false });
         let thumb = bg_color(resolved.foreground);
-        let expected = theme.palette().primary.base;
+        let expected = theme.primary.base;
         assert!(
             close(thumb, expected),
             "expected thumb = primary ({expected:?}), got {thumb:?}",
@@ -690,6 +690,6 @@ mod tests {
         let resolved = spec.resolve(&theme, Status::Active { is_toggled: false });
         let ring = resolved.ring.expect("ring should be set");
         assert_eq!(ring.width, 3.0);
-        assert!(close(ring.color, theme.palette().ring));
+        assert!(close(ring.color, theme.neutral.ring));
     }
 }

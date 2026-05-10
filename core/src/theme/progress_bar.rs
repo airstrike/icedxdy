@@ -9,7 +9,7 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Tweak, TweakSet};
-use crate::{Background, Border, Color, Palette};
+use crate::{Background, Border, Color};
 
 /// Pill-shape radius — clamped to a huge value so the bar renders as a
 /// fully rounded capsule regardless of size. Mirrors `theme::badge`.
@@ -77,7 +77,7 @@ impl iced_widget::progress_bar::Catalog for Theme {
 
 /// Nova default — pill-shaped track with `bg-muted`, fill with `bg-primary`.
 pub fn default(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: p.muted.base.into(),
         bar: p.primary.base.into(),
@@ -121,9 +121,8 @@ impl Spec {
     /// Resolve this spec to a concrete `Style` for the given theme.
     pub fn resolve(&self, theme: &Theme) -> Style {
         let mut style = (self.variant)(theme);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette);
+            apply(t, &mut style, theme);
         }
         style
     }
@@ -158,16 +157,16 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 // targets the filled indicator color (semantically the bar is the
 // "foreground" of the progress widget).
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = t.resolve(palette).into();
+            style.background = t.resolve(theme).into();
         }
         Tweak::Fg(t) => {
-            style.bar = t.resolve(palette).into();
+            style.bar = t.resolve(theme).into();
         }
         Tweak::BorderColor(t) => {
-            style.border.color = t.resolve(palette);
+            style.border.color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border.width = *w;
@@ -180,7 +179,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
             // track bg into a solid color over palette.background. Track-only
             // to match container's bg-only Opaque policy.
             if let Background::Color(src) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Background::Color(composed);
             }
@@ -250,7 +249,7 @@ mod tests {
         let resolved = default(&theme);
         let track = solid(resolved.background);
         let bar = solid(resolved.bar);
-        let p = theme.palette();
+        let p = theme;
         assert!(
             (track.l - p.muted.base.l).abs() < 1e-4
                 && (track.c - p.muted.base.c).abs() < 1e-4

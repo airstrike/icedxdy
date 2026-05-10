@@ -11,6 +11,7 @@ mod design;
 mod orientation;
 mod palette;
 pub mod shadow;
+pub mod style;
 pub mod theme;
 
 pub use background::Background;
@@ -23,6 +24,6 @@ pub use orientation::Orientation;
 // `Horizontal` import from `icedxdy_core` (or, transitively, from `icedxdy`)
 // can be passed directly to any `.orientation()` builder via `impl Into`.
 pub use orientation::Orientation::{Horizontal, Vertical};
-pub use palette::{Palette, SemanticColor, SidebarPalette};
+pub use palette::{Palette, SidebarPalette};
 pub use shadow::Shadow;
 pub use theme::Theme;

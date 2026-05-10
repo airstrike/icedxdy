@@ -27,7 +27,7 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
-use crate::{Background, Border, Color, Palette, radius};
+use crate::{Background, Border, Color, radius};
 
 /// OKLCH-native checkbox style. Mirrors `iced_widget::checkbox::Style`
 /// field-for-field, plus a `ring` field with no iced equivalent — rendered
@@ -121,7 +121,7 @@ impl iced_widget::checkbox::Catalog for Theme {
 }
 
 fn is_dark(theme: &Theme) -> bool {
-    theme.palette().background.l < 0.5
+    theme.neutral.base.l < 0.5
 }
 
 fn is_checked(status: Status) -> bool {
@@ -142,13 +142,13 @@ fn is_checked(status: Status) -> bool {
 /// foreground; checked border = primary. Border at rest = `palette.input`
 /// (`border border-input`).
 pub fn default(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let dark = is_dark(theme);
     let checked = is_checked(status);
 
     // Unchecked bg — light = transparent, dark = palette.input @ 0.3.
     let unchecked_bg = if dark {
-        p.input.alpha(0.3)
+        p.neutral.border.alpha(0.3)
     } else {
         Color::TRANSPARENT
     };
@@ -176,7 +176,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             border: Border {
                 radius: radius::XS.into(),
                 width: 1.0,
-                color: p.input,
+                color: p.neutral.border,
             },
             text_color: None,
             ring: None,
@@ -212,7 +212,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 /// (`aria-invalid:aria-checked:border-primary`). In dark mode the
 /// destructive border drops to alpha 0.5 (`dark:aria-invalid:border-destructive/50`).
 pub fn invalid(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let dark = is_dark(theme);
     let checked = is_checked(status);
     let base = default(theme, status);
@@ -318,9 +318,8 @@ impl Spec {
     /// is applied in order.
     pub fn resolve(&self, theme: &Theme, status: Status) -> Style {
         let mut style = (self.variant)(theme, status);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette, status);
+            apply(t, &mut style, theme, status);
         }
         style
     }
@@ -374,17 +373,17 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 
 // --- Resolver ----------------------------------------------------------------
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme, status: Status) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = t.resolve(palette).into();
+            style.background = t.resolve(theme).into();
         }
         Tweak::Fg(t) => {
             // For a checkbox the semantic "foreground" is the icon color.
-            style.icon_color = t.resolve(palette);
+            style.icon_color = t.resolve(theme);
         }
         Tweak::BorderColor(t) => {
-            style.border.color = t.resolve(palette);
+            style.border.color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border.width = *w;
@@ -396,7 +395,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             // OKLCH alpha-composite the variant's bg over palette.background
             // and force alpha=1.0. Same shape as button/container.
             if let Background::Color(src) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Background::Color(composed);
             }
@@ -407,7 +406,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
         Tweak::State(trigger, inner) => {
             if triggered(*trigger, status) {
                 for inner_tweak in &inner.0 {
-                    apply(inner_tweak, style, palette, status);
+                    apply(inner_tweak, style, theme, status);
                 }
             }
         }
@@ -417,7 +416,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             offset: _,
         } => {
             style.ring = Some(Ring {
-                color: color.resolve(palette),
+                color: color.resolve(theme),
                 width: *width,
             });
         }
@@ -532,7 +531,7 @@ mod tests {
         let theme = Theme::light();
         let resolved = default(&theme, Status::Active { is_checked: true });
         let bg = bg_color(&resolved);
-        let p = theme.palette();
+        let p = theme;
         assert!(
             close(bg, p.primary.base),
             "expected bg = primary ({:?}), got {bg:?}",
@@ -555,7 +554,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = default(&theme, Status::Active { is_checked: false });
         let bg = bg_color(&resolved);
-        let expected = theme.palette().input.alpha(0.3);
+        let expected = theme.neutral.border.alpha(0.3);
         assert!(
             close(bg, expected),
             "expected bg ≈ {expected:?}, got {bg:?}",
@@ -580,7 +579,7 @@ mod tests {
     fn invalid_unchecked_border_is_destructive() {
         let theme = Theme::light();
         let resolved = invalid(&theme, Status::Active { is_checked: false });
-        let p = theme.palette();
+        let p = theme;
         assert!(
             close(resolved.border.color, p.destructive.base),
             "expected invalid border = destructive ({:?}), got {:?}",
@@ -595,7 +594,7 @@ mod tests {
     fn invalid_checked_border_returns_to_primary() {
         let theme = Theme::light();
         let resolved = invalid(&theme, Status::Active { is_checked: true });
-        let p = theme.palette();
+        let p = theme;
         assert!(
             close(resolved.border.color, p.primary.base),
             "expected invalid+checked border = primary ({:?}), got {:?}",
@@ -612,7 +611,7 @@ mod tests {
         let spec: Spec = (Default + Bg(Token::Primary)).into();
         let resolved = spec.resolve(&theme, Status::Active { is_checked: false });
         let bg = bg_color(&resolved);
-        let expected = theme.palette().primary.base;
+        let expected = theme.primary.base;
         assert!(
             close(bg, expected),
             "expected bg = primary ({expected:?}), got {bg:?}",
@@ -634,7 +633,7 @@ mod tests {
         let resolved = spec.resolve(&theme, Status::Active { is_checked: false });
         let ring = resolved.ring.expect("ring should be set");
         assert_eq!(ring.width, 3.0);
-        assert!(close(ring.color, theme.palette().ring));
+        assert!(close(ring.color, theme.neutral.ring));
     }
 
     /// shadcn `rounded-[4px]` — literal 4 (NOT a Tailwind preset). We expose
@@ -664,7 +663,7 @@ mod tests {
     fn invalid_emits_destructive_ring_3px_at_20_percent() {
         let theme = Theme::light();
         let resolved = invalid(&theme, Status::Active { is_checked: false });
-        let p = theme.palette();
+        let p = theme;
         let ring = resolved.ring.expect("invalid variant must emit a ring");
         assert!(
             (ring.width - 3.0).abs() < 1e-4,

@@ -225,7 +225,7 @@ impl Catalog for icedxdy_core::Theme {
 
     fn default<'a>() -> Self::Class<'a> {
         Box::new(|theme| Style {
-            background: theme.palette().border.into(),
+            background: theme.neutral.border.into(),
             ..Style::default()
         })
     }

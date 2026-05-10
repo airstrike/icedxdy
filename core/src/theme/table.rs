@@ -17,11 +17,11 @@ impl Catalog for Theme {
 }
 
 pub fn default(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
 
     Style {
-        separator_x: p.border.into(),
-        separator_y: p.border.into(),
+        separator_x: p.neutral.border.into(),
+        separator_y: p.neutral.border.into(),
     }
 }
 
@@ -49,14 +49,14 @@ pub mod sweeten_table {
     }
 
     pub fn default(theme: &Theme) -> Style {
-        let p = theme.palette();
-        let separator = p.border.into();
+        let p = theme;
+        let separator = p.neutral.border.into();
 
         Style {
             separator_x: separator,
             separator_y: separator,
             border: separator,
-            sticky_background: p.background.into(),
+            sticky_background: p.neutral.base.into(),
             header_underline: None,
         }
     }

@@ -18,7 +18,7 @@ use icedxdy::widget::container;
 use icedxdy::widget::markdown;
 use icedxdy::widget::markdown::widget::Highlight;
 use icedxdy::widget::{button, rule, text};
-use icedxdy::{Component, Palette, Theme, Weight, radius, theme};
+use icedxdy::{Component, Theme, Weight, radius, theme};
 
 use crate::font;
 use crate::icon;
@@ -576,7 +576,7 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         let is_active = Some(i) == active_index;
         let alpha = alpha_for(i);
         let toc_style: StyleFn<'_, Theme> = Box::new(move |theme, status| {
-            let p = theme.palette();
+            let p = theme;
             // Active entry promotes to `foreground` at full opacity (no
             // alpha math). Inactive entries stay at `muted_foreground` and
             // pick up the rank-distance alpha so they recede toward the
@@ -584,9 +584,9 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
             // legibility floor. Hover/press promote to `foreground` for
             // affordance. No backgrounds at any state.
             let base = match status {
-                Status::Active if is_active => p.foreground,
+                Status::Active if is_active => p.neutral.foreground,
                 Status::Active => p.muted.foreground.alpha(alpha),
-                Status::Hovered | Status::Pressed | Status::Disabled => p.foreground,
+                Status::Hovered | Status::Pressed | Status::Disabled => p.neutral.foreground,
             };
             Style {
                 background: None,
@@ -653,21 +653,19 @@ fn snippet<'a>(
 }
 
 /// Build a [`markdown::Style`] whose inline-code chip pulls from the
-/// active [`Palette`]. Mirrors shadcn's `--color-code` / `--color-code-foreground`
+/// active [`Theme`]. Mirrors shadcn's `--color-code` / `--color-code-foreground`
 /// pair: light-mode chip is a near-white bg with body fg; dark-mode chip
 /// is a dark gray bg with a desaturated fg. Both flavors hand off via the
-/// same field and stay in sync with the page's `code_block` container,
-/// since [`Palette::code`] is the same `SemanticColor` that drives that
-/// container's bg/fg.
-fn inline_style_from_palette(palette: &Palette) -> markdown::Style {
+/// same field and stay in sync with the page's `code_block` container.
+fn inline_style_from_theme(theme: &Theme) -> markdown::Style {
     markdown::Style {
         font: Font::default(),
         // shadcn's inline `<code>` uses `bg-muted` — there's no dedicated
         // `--color-code` token in nova; the muted surface is the canonical
         // inline-chip background, with foreground text inheriting body color.
-        inline_code_color: palette.foreground.into(),
+        inline_code_color: theme.neutral.foreground.into(),
         inline_code_highlight: Highlight {
-            background: Background::Color(palette.muted.base.into()),
+            background: Background::Color(theme.muted.base.into()),
             border: border::rounded(4),
         },
         // shadcn squeezes inline code with `px-[0.3rem] py-[0.2rem]`. iced
@@ -687,14 +685,14 @@ fn inline_style_from_palette(palette: &Palette) -> markdown::Style {
         // Snippet bodies rarely contain links, but when they do the
         // primary base reads as a "clickable" accent in either theme
         // (dark text on light, light text on dark).
-        link_color: palette.primary.base.into(),
+        link_color: theme.primary.base.into(),
     }
 }
 
 /// Markdown viewer for code-snippet rendering. Holds an owned
 /// [`markdown::highlighter::Map`] derived from the current app theme
 /// (or supplied directly by the app) plus a [`markdown::Style`] whose
-/// inline-code chip is tinted to the active [`Palette`]. Both fields
+/// inline-code chip is tinted to the active [`Theme`]. Both fields
 /// are baked at construction time and the App rebuilds the viewer
 /// whenever the theme toggles, so view-time rendering stays a pure
 /// read.
@@ -719,10 +717,10 @@ impl SnippetViewer {
     /// palette-derived [`markdown::Style`]. App-level construction site
     /// recomputes both whenever the user toggles light/dark, mirroring
     /// the existing `Map` rebuild path.
-    pub fn new(map: markdown::highlighter::Map, palette: &Palette) -> Self {
+    pub fn new(map: markdown::highlighter::Map, theme: &Theme) -> Self {
         Self {
             map,
-            style: inline_style_from_palette(palette),
+            style: inline_style_from_theme(theme),
         }
     }
 }

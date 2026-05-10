@@ -1,14 +1,14 @@
-//! Palette slot tokens — one variant per `Palette` field, plus a `Custom`
-//! escape hatch for arbitrary colors.
+//! Palette slot tokens — one variant per addressable color slot, plus a
+//! `Custom` escape hatch for arbitrary colors.
 //!
 //! Mirrors the `widget::Size` precedent: named variants + `Custom(_)` +
 //! `From<Color>` blanket. See `widget/src/size.rs`.
 
-use crate::{Color, Palette};
+use crate::{Color, Theme};
 
-/// A semantic color slot in the palette, or a literal color.
+/// A semantic color slot on the active theme, or a literal color.
 ///
-/// Resolves to the crate's `Color` (OKLCH) against a given `Palette` at
+/// Resolves to the crate's `Color` (OKLCH) against a given `Theme` at
 /// style computation time. Convert to iced types via the existing
 /// `From<Color>` impls at the apply site.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -58,44 +58,44 @@ impl From<Color> for Token {
 }
 
 impl Token {
-    /// Resolve this token to a concrete color against the given palette.
-    pub fn resolve(self, palette: &Palette) -> Color {
+    /// Resolve this token to a concrete color against the given theme.
+    pub fn resolve(self, theme: &Theme) -> Color {
         match self {
-            Token::Background => palette.background,
-            Token::Foreground => palette.foreground,
-            Token::Card => palette.card.base,
-            Token::CardForeground => palette.card.foreground,
-            Token::Popover => palette.popover.base,
-            Token::PopoverForeground => palette.popover.foreground,
-            Token::Primary => palette.primary.base,
-            Token::PrimaryForeground => palette.primary.foreground,
-            Token::Secondary => palette.secondary.base,
-            Token::SecondaryForeground => palette.secondary.foreground,
-            Token::Muted => palette.muted.base,
-            Token::MutedForeground => palette.muted.foreground,
-            Token::Accent => palette.accent.base,
-            Token::AccentForeground => palette.accent.foreground,
-            Token::Destructive => palette.destructive.base,
-            Token::DestructiveForeground => palette.destructive.foreground,
-            Token::Info => palette.info.base,
-            Token::InfoForeground => palette.info.foreground,
-            Token::Success => palette.success.base,
-            Token::SuccessForeground => palette.success.foreground,
-            Token::Warning => palette.warning.base,
-            Token::WarningForeground => palette.warning.foreground,
-            Token::Code => palette.code.base,
-            Token::CodeForeground => palette.code.foreground,
-            Token::Border => palette.border,
-            Token::Input => palette.input,
-            Token::Ring => palette.ring,
-            Token::Sidebar => palette.sidebar.background,
-            Token::SidebarForeground => palette.sidebar.foreground,
-            Token::SidebarPrimary => palette.sidebar.primary.base,
-            Token::SidebarPrimaryForeground => palette.sidebar.primary.foreground,
-            Token::SidebarAccent => palette.sidebar.accent.base,
-            Token::SidebarAccentForeground => palette.sidebar.accent.foreground,
-            Token::SidebarBorder => palette.sidebar.border,
-            Token::SidebarRing => palette.sidebar.ring,
+            Token::Background => theme.neutral.base,
+            Token::Foreground => theme.neutral.foreground,
+            Token::Card => theme.card.base,
+            Token::CardForeground => theme.card.foreground,
+            Token::Popover => theme.popover.base,
+            Token::PopoverForeground => theme.popover.foreground,
+            Token::Primary => theme.primary.base,
+            Token::PrimaryForeground => theme.primary.foreground,
+            Token::Secondary => theme.secondary.base,
+            Token::SecondaryForeground => theme.secondary.foreground,
+            Token::Muted => theme.muted.base,
+            Token::MutedForeground => theme.muted.foreground,
+            Token::Accent => theme.accent.base,
+            Token::AccentForeground => theme.accent.foreground,
+            Token::Destructive => theme.destructive.base,
+            Token::DestructiveForeground => theme.destructive.foreground,
+            Token::Info => theme.info.base,
+            Token::InfoForeground => theme.info.foreground,
+            Token::Success => theme.success.base,
+            Token::SuccessForeground => theme.success.foreground,
+            Token::Warning => theme.warning.base,
+            Token::WarningForeground => theme.warning.foreground,
+            Token::Code => theme.code.base,
+            Token::CodeForeground => theme.code.foreground,
+            // `input` merged into `border` per Phase 1.
+            Token::Border | Token::Input => theme.neutral.border,
+            Token::Ring => theme.neutral.ring,
+            Token::Sidebar => theme.sidebar.background,
+            Token::SidebarForeground => theme.sidebar.foreground,
+            Token::SidebarPrimary => theme.sidebar.primary.base,
+            Token::SidebarPrimaryForeground => theme.sidebar.primary.foreground,
+            Token::SidebarAccent => theme.sidebar.accent.base,
+            Token::SidebarAccentForeground => theme.sidebar.accent.foreground,
+            Token::SidebarBorder => theme.sidebar.border,
+            Token::SidebarRing => theme.sidebar.ring,
             Token::Custom(c) => c,
         }
     }

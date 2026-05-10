@@ -129,7 +129,7 @@ impl App {
             } else {
                 gh_light.clone()
             },
-            active_theme.palette(),
+            &active_theme,
         );
 
         (
@@ -177,7 +177,7 @@ impl App {
                 } else {
                     Theme::light()
                 };
-                self.snippet_viewer = SnippetViewer::new(map, active_theme.palette());
+                self.snippet_viewer = SnippetViewer::new(map, &active_theme);
                 Task::none()
             }
             Message::SelectPage(page) => {
@@ -339,7 +339,7 @@ impl App {
                 use iced::gradient::Linear;
                 use std::f32::consts::PI;
                 use theme::container::Style;
-                let bg: iced::Color = t.palette().background.into();
+                let bg: iced::Color = t.neutral.base.into();
                 Style {
                     background: Some(
                         Linear::new(PI)
@@ -416,7 +416,7 @@ impl App {
         let sidebar_divider = rule::vertical(1).style(Box::new(|theme: &Theme| {
             use iced::gradient::Linear;
             use std::f32::consts::PI;
-            let border = theme.palette().border;
+            let border = theme.neutral.border;
             rule::Style {
                 background: Linear::new(PI)
                     .add_stop(0.0, iced::Color::TRANSPARENT)

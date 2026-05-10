@@ -19,7 +19,7 @@ pub fn menu_skeleton<'a, Message: 'a>() -> Container<'a, Message> {
         .width(Fill)
         .height(32)
         .style(|theme: &Theme| Style {
-            background: Some(theme.palette().muted.base.into()),
+            background: Some(theme.muted.base.into()),
             border: Border {
                 radius: radius::MD.into(),
                 ..Border::default()

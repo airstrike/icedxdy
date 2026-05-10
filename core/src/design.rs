@@ -1,27 +1,25 @@
-//! Design configuration - the superset of Theme
+//! Design configuration — the superset of Theme.
 //!
-//! Design contains the palette, the derived iced Theme, and font families.
+//! Holds the full palette field set (per-role + surfaces + sidebar),
+//! the derived iced Theme, fonts, and identity.
 
 use iced_core::Font;
 use iced_core::font::Weight;
+use iced_core::theme::palette::Seed;
 
-use crate::palette::Palette;
+use crate::color::{Color, oklch, oklch_alpha};
+use crate::palette::{Palette, SidebarPair, SidebarPalette};
 
 /// Font family with weight variants
 #[derive(Debug, Clone)]
 pub struct FontFamily {
-    /// Regular weight
     pub regular: Font,
-    /// Medium weight
     pub medium: Font,
-    /// Semibold weight
     pub semibold: Font,
-    /// Bold weight
     pub bold: Font,
 }
 
 impl FontFamily {
-    /// Create a font family from a font name with all weight variants
     pub fn from_name(name: &'static str) -> Self {
         Self {
             regular: Font::new(name).weight(Weight::Normal),
@@ -34,72 +32,220 @@ impl FontFamily {
 
 impl Default for FontFamily {
     fn default() -> Self {
-        // Inter Tight is the default UI font for icedxdy
         Self::from_name("Inter Tight")
     }
 }
 
-/// Complete design configuration
-///
-/// This is the superset of Theme - it contains the color palette,
-/// the derived iced Theme, and font configuration.
+/// Complete design configuration — per-role palettes, surfaces, sidebar,
+/// fonts, and the derived iced Theme.
 #[derive(Debug, Clone)]
 pub struct Design {
-    /// Design name
     pub name: String,
-    /// Color palette
-    pub palette: Palette,
-    /// The seed used to generate the iced Theme
-    pub seed: iced_core::theme::palette::Seed,
-    /// The iced Theme derived from this design's palette
+
+    // Intent palettes — selectable via `Tint`.
+    pub neutral: Palette,
+    pub primary: Palette,
+    pub secondary: Palette,
+    pub muted: Palette,
+    pub accent: Palette,
+    pub destructive: Palette,
+    pub info: Palette,
+    pub success: Palette,
+    pub warning: Palette,
+
+    // Surface palettes — not Tint-eligible; widgets read them directly.
+    pub card: Palette,
+    pub popover: Palette,
+    pub code: Palette,
+
+    // Sidebar context — deferred reshape; stays as its own struct.
+    pub sidebar: SidebarPalette,
+
+    pub seed: Seed,
     pub theme: iced_core::Theme,
-    /// Sans-serif font family for UI text
     pub font_sans: FontFamily,
-    /// Monospace font for code
     pub font_mono: Font,
 }
 
 impl Design {
-    /// Create a new design with the given name and palette
-    pub fn new(name: impl Into<String>, palette: Palette) -> Self {
-        let name = name.into();
-        let seed = iced_core::theme::palette::Seed {
-            background: palette.background.into(),
-            text: palette.foreground.into(),
-            primary: palette.primary.base.into(),
-            success: palette.accent.base.into(),
-            danger: palette.destructive.base.into(),
-            warning: palette.secondary.base.into(),
-        };
-        let theme = iced_core::Theme::custom(name.clone(), seed);
-
-        Self {
-            name,
-            palette,
-            seed,
-            theme,
-            font_sans: FontFamily::default(),
-            font_mono: Font::MONOSPACE,
-        }
-    }
-
-    /// Create a light mode design
+    /// Light mode design (Neutral theme).
     pub fn light() -> Self {
-        Self::new("Light", Palette::light())
+        // Structural greys — chrome borders + focus ring.
+        let neutral_border = oklch(0.922, 0.0, 0.0);
+        let neutral_ring = oklch(0.708, 0.0, 0.0);
+
+        let neutral = Palette {
+            base: oklch(1.0, 0.0, 0.0),
+            foreground: oklch(0.145, 0.0, 0.0),
+            border: neutral_border,
+            ring: neutral_ring,
+        };
+
+        let primary = tinted_palette(
+            oklch(0.205, 0.0, 0.0),
+            oklch(0.985, 0.0, 0.0),
+        );
+        let secondary = tinted_palette(
+            oklch(0.97, 0.0, 0.0),
+            oklch(0.205, 0.0, 0.0),
+        );
+        let muted = tinted_palette(
+            oklch(0.97, 0.0, 0.0),
+            oklch(0.556, 0.0, 0.0),
+        );
+        let accent = tinted_palette(
+            oklch(0.97, 0.0, 0.0),
+            oklch(0.205, 0.0, 0.0),
+        );
+        let destructive = tinted_palette(
+            oklch(0.577, 0.245, 27.325),
+            oklch(0.97, 0.01, 17.0),
+        );
+        let info = tinted_palette(
+            oklch(0.55, 0.20, 245.0),
+            oklch(0.985, 0.0, 0.0),
+        );
+        let success = tinted_palette(
+            oklch(0.58, 0.18, 150.0),
+            oklch(0.985, 0.0, 0.0),
+        );
+        let warning = tinted_palette(
+            oklch(0.72, 0.16, 75.0),
+            oklch(0.205, 0.0, 0.0),
+        );
+
+        let card = surface_palette(
+            oklch(1.0, 0.0, 0.0),
+            oklch(0.145, 0.0, 0.0),
+            neutral_border,
+            neutral_ring,
+        );
+        let popover = surface_palette(
+            oklch(1.0, 0.0, 0.0),
+            oklch(0.145, 0.0, 0.0),
+            neutral_border,
+            neutral_ring,
+        );
+        let code = surface_palette(
+            oklch(0.98, 0.0, 0.0),
+            oklch(0.145, 0.0, 0.0),
+            neutral_border,
+            neutral_ring,
+        );
+
+        let sidebar = SidebarPalette {
+            background: oklch(0.985, 0.0, 0.0),
+            foreground: oklch(0.145, 0.0, 0.0),
+            primary: SidebarPair {
+                base: oklch(0.205, 0.0, 0.0),
+                foreground: oklch(0.985, 0.0, 0.0),
+            },
+            accent: SidebarPair {
+                base: oklch(0.97, 0.0, 0.0),
+                foreground: oklch(0.205, 0.0, 0.0),
+            },
+            border: oklch(0.922, 0.0, 0.0),
+            ring: oklch(0.708, 0.0, 0.0),
+        };
+
+        build(
+            "Light", neutral, primary, secondary, muted, accent, destructive, info, success,
+            warning, card, popover, code, sidebar,
+        )
     }
 
-    /// Create a dark mode design
+    /// Dark mode design (Neutral theme).
     pub fn dark() -> Self {
-        Self::new("Dark", Palette::dark())
+        let neutral_border = oklch_alpha(1.0, 0.0, 0.0, 0.1);
+        let neutral_ring = oklch(0.556, 0.0, 0.0);
+
+        // Legacy `palette.input` (0.15-alpha) merges into `border` (0.10) per
+        // Phase 1; widgets that used `Token::Input` now resolve `border`.
+        let neutral = Palette {
+            base: oklch(0.145, 0.0, 0.0),
+            foreground: oklch(0.985, 0.0, 0.0),
+            border: neutral_border,
+            ring: neutral_ring,
+        };
+
+        let primary = tinted_palette(
+            oklch(0.922, 0.0, 0.0),
+            oklch(0.205, 0.0, 0.0),
+        );
+        let secondary = tinted_palette(
+            oklch(0.269, 0.0, 0.0),
+            oklch(0.985, 0.0, 0.0),
+        );
+        let muted = tinted_palette(
+            oklch(0.269, 0.0, 0.0),
+            oklch(0.708, 0.0, 0.0),
+        );
+        let accent = tinted_palette(
+            oklch(0.371, 0.0, 0.0),
+            oklch(0.985, 0.0, 0.0),
+        );
+        let destructive = tinted_palette(
+            oklch(0.704, 0.191, 22.216),
+            oklch(0.58, 0.22, 27.0),
+        );
+        let info = tinted_palette(
+            oklch(0.70, 0.16, 245.0),
+            oklch(0.205, 0.0, 0.0),
+        );
+        let success = tinted_palette(
+            oklch(0.72, 0.16, 150.0),
+            oklch(0.205, 0.0, 0.0),
+        );
+        let warning = tinted_palette(
+            oklch(0.80, 0.15, 80.0),
+            oklch(0.205, 0.0, 0.0),
+        );
+
+        let card = surface_palette(
+            oklch(0.205, 0.0, 0.0),
+            oklch(0.985, 0.0, 0.0),
+            neutral_border,
+            neutral_ring,
+        );
+        let popover = surface_palette(
+            oklch(0.205, 0.0, 0.0),
+            oklch(0.985, 0.0, 0.0),
+            neutral_border,
+            neutral_ring,
+        );
+        let code = surface_palette(
+            oklch(0.2, 0.0, 0.0),
+            oklch(0.708, 0.0, 0.0),
+            neutral_border,
+            neutral_ring,
+        );
+
+        let sidebar = SidebarPalette {
+            background: oklch(0.205, 0.0, 0.0),
+            foreground: oklch(0.985, 0.0, 0.0),
+            primary: SidebarPair {
+                base: oklch(0.488, 0.243, 264.376),
+                foreground: oklch(0.985, 0.0, 0.0),
+            },
+            accent: SidebarPair {
+                base: oklch(0.269, 0.0, 0.0),
+                foreground: oklch(0.985, 0.0, 0.0),
+            },
+            border: oklch_alpha(1.0, 0.0, 0.0, 0.1),
+            ring: oklch(0.439, 0.0, 0.0),
+        };
+
+        build(
+            "Dark", neutral, primary, secondary, muted, accent, destructive, info, success, warning,
+            card, popover, code, sidebar,
+        )
     }
 
-    /// Set the sans (UI) font family
     pub fn with_font_sans(mut self, font: FontFamily) -> Self {
         self.font_sans = font;
         self
     }
 
-    /// Set the monospace font
     pub fn with_font_mono(mut self, font: Font) -> Self {
         self.font_mono = font;
         self
@@ -109,5 +255,75 @@ impl Design {
 impl Default for Design {
     fn default() -> Self {
         Self::light()
+    }
+}
+
+// Tinted-palette border/ring v0 derivation: border = base, ring = base @ 0.5.
+// Designer-specified overrides land later if pixel parity demands it.
+fn tinted_palette(base: Color, foreground: Color) -> Palette {
+    Palette {
+        base,
+        foreground,
+        border: base,
+        ring: base.alpha(0.5),
+    }
+}
+
+// Surface palettes (card, popover, code) inherit neutral's border + ring.
+fn surface_palette(base: Color, foreground: Color, border: Color, ring: Color) -> Palette {
+    Palette {
+        base,
+        foreground,
+        border,
+        ring,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build(
+    name: &'static str,
+    neutral: Palette,
+    primary: Palette,
+    secondary: Palette,
+    muted: Palette,
+    accent: Palette,
+    destructive: Palette,
+    info: Palette,
+    success: Palette,
+    warning: Palette,
+    card: Palette,
+    popover: Palette,
+    code: Palette,
+    sidebar: SidebarPalette,
+) -> Design {
+    let seed = Seed {
+        background: neutral.base.into(),
+        text: neutral.foreground.into(),
+        primary: primary.base.into(),
+        success: accent.base.into(),
+        danger: destructive.base.into(),
+        warning: secondary.base.into(),
+    };
+    let name = name.to_string();
+    let theme = iced_core::Theme::custom(name.clone(), seed);
+    Design {
+        name,
+        neutral,
+        primary,
+        secondary,
+        muted,
+        accent,
+        destructive,
+        info,
+        success,
+        warning,
+        card,
+        popover,
+        code,
+        sidebar,
+        seed,
+        theme,
+        font_sans: FontFamily::default(),
+        font_mono: Font::MONOSPACE,
     }
 }

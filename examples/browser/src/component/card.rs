@@ -103,7 +103,7 @@ fn image_placeholder<'a>() -> iced::Element<'a, Message, Theme> {
         .width(Fill)
         .height(Fill)
         .style(|theme: &Theme| Style {
-            background: Some(theme.palette().muted.base.into()),
+            background: Some(theme.muted.base.into()),
             border: Border {
                 radius: 0.0.into(),
                 width: 0.0,

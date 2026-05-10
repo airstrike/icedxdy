@@ -393,12 +393,12 @@ impl page::Page for AccordionPage {
                     .style(|theme: &Theme| {
                         use icedxdy::core::Border;
                         use icedxdy::theme::container::Style;
-                        let p = theme.palette();
+                        let p = theme;
                         Style {
                             background: None,
                             border: Border {
                                 width: 1.0,
-                                color: p.border,
+                                color: p.neutral.border,
                                 radius: icedxdy::radius::LG.into(),
                             },
                             ..Style::default()

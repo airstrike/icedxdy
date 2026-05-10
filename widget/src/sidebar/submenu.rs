@@ -22,7 +22,7 @@ pub fn submenu<'a, Message: 'a>(
             .width(1.0)
             .height(Fill)
             .style(|theme: &Theme| iced_widget::container::Style {
-                background: Some(theme.palette().border.into()),
+                background: Some(theme.neutral.border.into()),
                 ..Default::default()
             })
             .into();

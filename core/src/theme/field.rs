@@ -23,13 +23,13 @@ use crate::{Border, radius};
 /// Matches shadcn's `has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border`
 /// (inactive branch, no `has-data-checked` overrides).
 pub fn card(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: None,
         border: Border {
             radius: radius::MD.into(),
             width: 1.0,
-            color: p.border,
+            color: p.neutral.border,
         },
         ..Style::default()
     }
@@ -46,8 +46,8 @@ pub fn card(theme: &Theme) -> Style {
 /// the bg fill.
 pub fn card_active(theme: &Theme) -> Style {
     use crate::Background;
-    let p = theme.palette();
-    let dark = p.background.l < 0.5;
+    let p = theme;
+    let dark = p.neutral.base.l < 0.5;
     let (bg_alpha, border_alpha) = if dark { (0.10, 0.20) } else { (0.05, 0.30) };
     Style {
         background: Some(Background::Color(p.primary.base.alpha(bg_alpha))),
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn card_uses_palette_border() {
         let theme = Theme::dark();
-        let p = theme.palette();
+        let p = &theme;
         let style = card(&theme);
         assert!(
             style.background.is_none(),
@@ -111,7 +111,7 @@ mod tests {
             "card must have a 1px border",
         );
         let bc = style.border.color;
-        let expected = p.border;
+        let expected = p.neutral.border;
         assert!(
             (bc.l - expected.l).abs() < 1e-3
                 && (bc.c - expected.c).abs() < 1e-3
@@ -126,7 +126,7 @@ mod tests {
     fn card_active_light_alphas() {
         use crate::Background;
         let theme = Theme::light();
-        let p = theme.palette();
+        let p = &theme;
         let style = card_active(&theme);
         let ep = p.primary.base;
         let bc = style.border.color;
@@ -159,7 +159,7 @@ mod tests {
     fn card_active_dark_alphas() {
         use crate::Background;
         let theme = Theme::dark();
-        let p = theme.palette();
+        let p = &theme;
         let style = card_active(&theme);
         let ep = p.primary.base;
         let bc = style.border.color;

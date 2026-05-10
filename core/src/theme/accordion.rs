@@ -33,7 +33,7 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
-use crate::{Border, Color, Palette};
+use crate::{Border, Color};
 
 /// Status of a single accordion trigger row.
 ///
@@ -142,21 +142,21 @@ pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 /// - `disabled_alpha` = 0.5 (`disabled:opacity-50`).
 /// - `border` = transparent / 0px (no outer ring; this is the bare variant).
 pub fn default(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
 
     let ring = match status {
         Status::Focused { .. } => Some(Ring {
-            color: p.ring.alpha(0.5),
+            color: p.neutral.ring.alpha(0.5),
             width: 3.0,
         }),
         Status::Active { .. } | Status::Hovered { .. } | Status::Disabled { .. } => None,
     };
 
     Style {
-        divider: p.border,
-        trigger_text: p.foreground,
+        divider: p.neutral.border,
+        trigger_text: p.neutral.foreground,
         chevron: p.muted.foreground,
-        body_text: p.foreground,
+        body_text: p.neutral.foreground,
         ring,
         disabled_alpha: 0.5,
         border: Border::default(),
@@ -219,9 +219,8 @@ impl Spec {
     /// is applied in order.
     pub fn resolve(&self, theme: &Theme, status: Status) -> Style {
         let mut style = (self.variant)(theme, status);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette, status);
+            apply(t, &mut style, theme, status);
         }
         style
     }
@@ -275,7 +274,7 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 //                      "softer disabled" on top of the variant default.
 //   - `State`        → standard nested-trigger handling.
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme, status: Status) {
     match tweak {
         Tweak::Bg(_) => {
             // Accordion has no fill of its own — the wrapping card / preview
@@ -283,12 +282,12 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             // atom binding stable across widgets without surprising callers.
         }
         Tweak::Fg(t) => {
-            let c = t.resolve(palette);
+            let c = t.resolve(theme);
             style.trigger_text = c;
             style.body_text = c;
         }
         Tweak::BorderColor(t) => {
-            style.divider = t.resolve(palette);
+            style.divider = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border = Border {
@@ -309,7 +308,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
         Tweak::State(trigger, inner) => {
             if triggered(*trigger, status) {
                 for inner_tweak in &inner.0 {
-                    apply(inner_tweak, style, palette, status);
+                    apply(inner_tweak, style, theme, status);
                 }
             }
         }
@@ -319,7 +318,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             offset: _,
         } => {
             style.ring = Some(Ring {
-                color: color.resolve(palette),
+                color: color.resolve(theme),
                 width: *width,
             });
         }
@@ -394,7 +393,7 @@ mod tests {
     fn default_divider_is_border() {
         let theme = Theme::light();
         let resolved = default(&theme, Status::Active { is_open: false });
-        assert!(close(resolved.divider, theme.palette().border));
+        assert!(close(resolved.divider, theme.neutral.border));
     }
 
     /// Default chevron = `palette.muted.foreground`.
@@ -402,7 +401,7 @@ mod tests {
     fn default_chevron_is_muted_foreground() {
         let theme = Theme::light();
         let resolved = default(&theme, Status::Active { is_open: false });
-        assert!(close(resolved.chevron, theme.palette().muted.foreground));
+        assert!(close(resolved.chevron, theme.muted.foreground));
     }
 
     /// Focus-visible status writes a ring at width 3 and `ring/0.5` alpha.
@@ -412,7 +411,7 @@ mod tests {
         let resolved = default(&theme, Status::Focused { is_open: false });
         let ring = resolved.ring.expect("focused trigger should have ring");
         assert_eq!(ring.width, 3.0);
-        let expected = theme.palette().ring.alpha(0.5);
+        let expected = theme.neutral.ring.alpha(0.5);
         assert!(close(ring.color, expected));
     }
 
@@ -453,6 +452,6 @@ mod tests {
         let border_color = tweak::border::Color(Token::Foreground);
         let spec: Spec = (Default + border_color).into();
         let resolved = spec.resolve(&theme, Status::Active { is_open: false });
-        assert!(close(resolved.divider, theme.palette().foreground));
+        assert!(close(resolved.divider, theme.neutral.foreground));
     }
 }

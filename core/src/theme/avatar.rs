@@ -6,9 +6,9 @@
 //! avatar; the only atoms a Spec needs to know about are
 //!
 //! - the fallback bg (`bg-muted`) and fallback fg (`text-muted-foreground`),
-//!   shared with our muted SemanticColor;
+//!   shared with our muted palette;
 //! - a 2px outer ring (in group context) drawn as a `border-color =
-//!   palette.background` outset on the circular container.
+//!   neutral.base` outset on the circular container.
 //!
 //! Avatar's container border is *circular* (PILL_RADIUS clamp); a separate
 //! Spec layer is overkill at this stage, so the variants ship as
@@ -109,7 +109,7 @@ impl From<Lg> for Geometry {
 /// `*:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background` —
 /// pass `true` from `avatar::group` and `false` for stand-alone avatars.
 pub fn fallback_style(theme: &Theme, ring: bool) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: Some(p.muted.base.into()),
         text_color: Some(p.muted.foreground),
@@ -124,7 +124,7 @@ pub fn fallback_style(theme: &Theme, ring: bool) -> Style {
             // fallback bg).
             width: if ring { 2.0 } else { 0.0 },
             color: if ring {
-                p.background
+                p.neutral.base
             } else {
                 Color::TRANSPARENT
             },
@@ -138,14 +138,14 @@ pub fn fallback_style(theme: &Theme, ring: bool) -> Style {
 /// has a 2px ring against the page background so it reads as a separate
 /// dot punched into the avatar corner).
 pub fn badge_style(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: Some(p.primary.base.into()),
         text_color: Some(p.primary.foreground),
         border: Border {
             radius: PILL_RADIUS.into(),
             width: 2.0,
-            color: p.background,
+            color: p.neutral.base,
         },
         ..Style::default()
     }

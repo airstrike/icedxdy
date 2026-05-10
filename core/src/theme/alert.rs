@@ -8,20 +8,20 @@ use std::ops::Add;
 use super::Theme;
 use super::container::Style;
 use super::tweak::{Tweak, TweakSet};
-use crate::{Background, Border, Palette, radius};
+use crate::{Background, Border, radius};
 
 // --- Variant fns -------------------------------------------------------------
 
 /// Default alert: card surface, standard border, rounded-lg, card-foreground text.
 pub fn default(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: Some(p.card.base.into()),
         text_color: Some(p.card.foreground),
         border: Border {
             radius: radius::LG.into(),
             width: 1.0,
-            color: p.border,
+            color: p.neutral.border,
         },
         ..Style::default()
     }
@@ -29,8 +29,8 @@ pub fn default(theme: &Theme) -> Style {
 
 /// Destructive alert: card bg, destructive border + text.
 pub fn destructive(theme: &Theme) -> Style {
-    let p = theme.palette();
-    let is_dark = p.background.l < 0.5;
+    let p = theme;
+    let is_dark = p.neutral.base.l < 0.5;
     let border_color = if is_dark {
         p.destructive.base
     } else {
@@ -84,9 +84,8 @@ impl Spec {
     /// Resolve this spec to a concrete `Style` for the given theme.
     pub fn resolve(&self, theme: &Theme) -> Style {
         let mut style = (self.variant)(theme);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette);
+            apply(t, &mut style, theme);
         }
         style
     }
@@ -131,16 +130,16 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 // Alert has no status, so `Tweak::State(...)` silently drops — there's no
 // hover/pressed/disabled to react to. Identical body to container.rs::apply.
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = Some(t.resolve(palette).into());
+            style.background = Some(t.resolve(theme).into());
         }
         Tweak::Fg(t) => {
-            style.text_color = Some(t.resolve(palette));
+            style.text_color = Some(t.resolve(theme));
         }
         Tweak::BorderColor(t) => {
-            style.border.color = t.resolve(palette);
+            style.border.color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border.width = *w;
@@ -153,7 +152,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
         }
         Tweak::Opaque => {
             if let Some(Background::Color(src)) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Some(Background::Color(composed));
             }
@@ -215,7 +214,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = default(&theme);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().card.base;
+        let expected = theme.card.base;
         assert!(
             (bg.l - expected.l).abs() < 1e-4
                 && (bg.c - expected.c).abs() < 1e-4
@@ -231,7 +230,7 @@ mod tests {
         let spec: Spec = (Default + Bg(Token::Primary)).into();
         let resolved = spec.resolve(&theme);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().primary.base;
+        let expected = theme.primary.base;
         assert!(
             (bg.l - expected.l).abs() < 1e-4
                 && (bg.c - expected.c).abs() < 1e-4

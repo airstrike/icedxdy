@@ -18,7 +18,7 @@ impl Catalog for Theme {
 
 pub fn default(theme: &Theme) -> Style {
     Style {
-        color: theme.palette().border.into(),
+        color: theme.neutral.border.into(),
         radius: 0.0.into(),
         fill_mode: FillMode::Full,
         snap: true,

@@ -8,7 +8,7 @@ use std::ops::Add;
 use super::Theme;
 use super::container::Style;
 use super::tweak::{Tweak, TweakSet};
-use crate::{Background, Border, Palette};
+use crate::{Background, Border};
 
 /// Pill-shape radius — clamped to a huge value so the container renders as a
 /// fully rounded capsule regardless of size.
@@ -18,7 +18,7 @@ const PILL_RADIUS: f32 = u32::MAX as f32;
 
 /// Default: `bg-primary` text-`primary-foreground`.
 pub fn default(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: Some(p.primary.base.into()),
         text_color: Some(p.primary.foreground),
@@ -32,7 +32,7 @@ pub fn default(theme: &Theme) -> Style {
 
 /// Secondary: `bg-secondary` text-`secondary-foreground`.
 pub fn secondary(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: Some(p.secondary.base.into()),
         text_color: Some(p.secondary.foreground),
@@ -50,8 +50,8 @@ pub fn secondary(theme: &Theme) -> Style {
 /// is the destructive hue at 10% alpha (light) / 20% (dark); text is the
 /// destructive hue at full opacity (not `destructive-foreground`).
 pub fn destructive(theme: &Theme) -> Style {
-    let p = theme.palette();
-    let is_dark = p.background.l < 0.5;
+    let p = theme;
+    let is_dark = p.neutral.base.l < 0.5;
     let alpha = if is_dark { 0.20 } else { 0.10 };
     Style {
         background: Some(p.destructive.base.scale_alpha(alpha).into()),
@@ -66,14 +66,14 @@ pub fn destructive(theme: &Theme) -> Style {
 
 /// Outline: transparent bg, foreground text, 1px border.
 pub fn outline(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: None,
-        text_color: Some(p.foreground),
+        text_color: Some(p.neutral.foreground),
         border: Border {
             radius: PILL_RADIUS.into(),
             width: 1.0,
-            color: p.border,
+            color: p.neutral.border,
         },
         ..Style::default()
     }
@@ -81,10 +81,10 @@ pub fn outline(theme: &Theme) -> Style {
 
 /// Ghost: no background, no border, foreground text.
 pub fn ghost(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: None,
-        text_color: Some(p.foreground),
+        text_color: Some(p.neutral.foreground),
         border: Border {
             radius: PILL_RADIUS.into(),
             ..Border::default()
@@ -141,9 +141,8 @@ impl Spec {
     /// Resolve this spec to a concrete `Style` for the given theme.
     pub fn resolve(&self, theme: &Theme) -> Style {
         let mut style = (self.variant)(theme);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette);
+            apply(t, &mut style, theme);
         }
         style
     }
@@ -206,16 +205,16 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 // Badge has no status, so `Tweak::State(...)` silently drops. Identical body
 // to container.rs::apply.
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = Some(t.resolve(palette).into());
+            style.background = Some(t.resolve(theme).into());
         }
         Tweak::Fg(t) => {
-            style.text_color = Some(t.resolve(palette));
+            style.text_color = Some(t.resolve(theme));
         }
         Tweak::BorderColor(t) => {
-            style.border.color = t.resolve(palette);
+            style.border.color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border.width = *w;
@@ -228,7 +227,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
         }
         Tweak::Opaque => {
             if let Some(Background::Color(src)) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Some(Background::Color(composed));
             }
@@ -305,7 +304,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = default(&theme);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().primary.base;
+        let expected = theme.primary.base;
         assert!(
             (bg.l - expected.l).abs() < 1e-4
                 && (bg.c - expected.c).abs() < 1e-4

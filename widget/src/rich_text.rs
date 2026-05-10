@@ -185,14 +185,14 @@ impl<'a> Span<'a> {
     }
 
     /// Build the iced span used for *drawing*, with `color` resolved
-    /// against `palette`.
+    /// against the active theme.
     fn to_draw_span(
         &self,
-        palette: &icedxdy_core::Palette,
+        theme: &icedxdy_core::Theme,
     ) -> text::Span<'static, (), iced_core::Font> {
         let mut span = self.to_layout_span();
         if let Some(token) = self.color {
-            let color: Color = token.resolve(palette).into();
+            let color: Color = token.resolve(theme).into();
             span = span.color(color);
         }
         span
@@ -441,9 +441,8 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         let state = tree
             .state
             .downcast_ref::<State<<Renderer as text::Renderer>::Paragraph>>();
-        let palette = theme.palette();
 
-        // Resolve each span's Token against the live palette. Build a
+        // Resolve each span's Token against the live theme. Build a
         // throwaway paragraph for drawing — we don't want to mutate the
         // cached layout paragraph from `&self`. The drawn paragraph has
         // identical *shape* (size/font/weight/italic/letter-spacing match
@@ -458,7 +457,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         let draw_spans: Vec<_> = self
             .spans
             .iter()
-            .map(|s| s.to_draw_span(&palette))
+            .map(|s| s.to_draw_span(theme))
             .collect();
 
         let bounds = layout.bounds().size();

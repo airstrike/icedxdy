@@ -677,8 +677,8 @@ impl Map {
 /// [`Map::from_vscode_theme`].
 impl From<&icedxdy_core::Theme> for Map {
     fn from(theme: &icedxdy_core::Theme) -> Self {
-        let p = theme.palette();
-        let is_dark = p.background.l < 0.5;
+        let p = theme;
+        let is_dark = p.neutral.base.l < 0.5;
 
         // Hybrid mapping — TN's blue-family nuance for the categories
         // where it matters (paths read distinctly from punctuation reads
@@ -718,7 +718,7 @@ impl From<&icedxdy_core::Theme> for Map {
         let green = p.success.base.into();
         let amber = p.warning.base.into();
         let muted = p.muted.foreground.into();
-        let fg = p.foreground.into();
+        let fg = p.neutral.foreground.into();
 
         let semantic = |c: iced_core::Color| Style {
             color: Some(c),

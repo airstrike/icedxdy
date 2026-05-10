@@ -68,7 +68,7 @@ impl From<Hidden> for StyleFn<'static, Theme> {
 
 /// The project-wide default scrollable style: thin scroller, invisible rail.
 pub fn default(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
 
     let scroller_alpha = match status {
         Status::Dragged { .. } => 0.9,
@@ -127,19 +127,19 @@ pub fn hidden(theme: &Theme, _status: Status) -> Style {
 /// previous default. Only painted when `Scrollable::auto_scroll(true)`
 /// is set and middle-click triggers the autoscroll mode.
 fn auto_scroll_overlay(theme: &Theme) -> AutoScroll {
-    let p = theme.palette();
+    let p = theme;
     AutoScroll {
-        background: Background::Color(p.background.alpha(0.9).into()),
+        background: Background::Color(p.neutral.base.alpha(0.9).into()),
         border: Border {
             radius: (u32::MAX as f32).into(),
             width: 1.0,
-            color: p.border.into(),
+            color: p.neutral.border.into(),
         },
         shadow: Shadow {
             color: Color::BLACK.scale_alpha(0.3),
             offset: Vector::ZERO,
             blur_radius: 2.0,
         },
-        icon: p.foreground.alpha(0.6).into(),
+        icon: p.neutral.foreground.alpha(0.6).into(),
     }
 }

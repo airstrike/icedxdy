@@ -11,7 +11,7 @@ use std::ops::Add;
 
 use super::Theme;
 use super::tweak::{Tweak, TweakSet};
-use crate::{Color, Palette};
+use crate::Color;
 
 /// OKLCH-native text style. Mirrors `iced_widget::text::Style` field-for-field
 /// using our `Color`.
@@ -62,28 +62,28 @@ pub fn default(_theme: &Theme) -> Style {
 /// Body foreground color.
 pub fn foreground(theme: &Theme) -> Style {
     Style {
-        color: Some(theme.palette().foreground),
+        color: Some(theme.neutral.foreground),
     }
 }
 
 /// Muted/secondary text color.
 pub fn muted(theme: &Theme) -> Style {
     Style {
-        color: Some(theme.palette().muted.foreground),
+        color: Some(theme.muted.foreground),
     }
 }
 
 /// Primary-coloured link text.
 pub fn link(theme: &Theme) -> Style {
     Style {
-        color: Some(theme.palette().primary.base),
+        color: Some(theme.primary.base),
     }
 }
 
 /// Destructive (error) text color.
 pub fn destructive(theme: &Theme) -> Style {
     Style {
-        color: Some(theme.palette().destructive.base),
+        color: Some(theme.destructive.base),
     }
 }
 
@@ -135,9 +135,8 @@ impl Spec {
     /// Resolve this spec to a concrete `Style` for the given theme.
     pub fn resolve(&self, theme: &Theme) -> Style {
         let mut style = (self.variant)(theme);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette);
+            apply(t, &mut style, theme);
         }
         style
     }
@@ -201,10 +200,10 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 // (interpreted as text-color alpha since there's no background). Every other
 // tweak silently drops (CSS-style cascade).
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     match tweak {
         Tweak::Fg(t) => {
-            style.color = Some(t.resolve(palette));
+            style.color = Some(t.resolve(theme));
         }
         Tweak::Alpha(factor) => {
             // Text has no background, so Alpha targets the text color.
@@ -320,7 +319,7 @@ mod tests {
         let spec: Spec = (Foreground + Alpha(0.5)).into();
         let resolved = spec.resolve(&theme);
         let color = resolved.color.expect("foreground sets color");
-        let expected = theme.palette().foreground.a * 0.5;
+        let expected = theme.neutral.foreground.a * 0.5;
         assert!(
             (color.a - expected).abs() < 1e-4,
             "expected a={expected}, got a={}",
@@ -333,7 +332,7 @@ mod tests {
         let theme = Theme::dark();
         let spec: Spec = (Default + Fg(Token::Primary)).into();
         let resolved = spec.resolve(&theme);
-        let expected = theme.palette().primary.base;
+        let expected = theme.primary.base;
         let actual = resolved.color.expect("Fg sets color");
         assert!(
             (actual.l - expected.l).abs() < 1e-4 && (actual.c - expected.c).abs() < 1e-4,

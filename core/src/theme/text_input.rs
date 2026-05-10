@@ -56,7 +56,7 @@ impl From<iced_widget::text_input::Status> for Status {
 
 use super::Theme;
 use super::tweak::{Trigger, Tweak, TweakSet};
-use crate::{Background, Border, Color, Palette, radius};
+use crate::{Background, Border, Color, radius};
 
 /// OKLCH-native text input style. Mirrors `iced_widget::text_input::Style`
 /// field-for-field, plus a `ring` field with no iced equivalent — rendered
@@ -165,7 +165,7 @@ impl iced_widget::text_input::Catalog for Theme {
 }
 
 fn is_dark(theme: &Theme) -> bool {
-    theme.palette().background.l < 0.5
+    theme.neutral.base.l < 0.5
 }
 
 // --- Variant fns -------------------------------------------------------------
@@ -178,7 +178,7 @@ fn is_dark(theme: &Theme) -> bool {
 /// = `palette.input`, radius `radius::LG` (10px). Focused border swaps to
 /// `palette.ring`. Hover has NO state change (nova has no `:hover` rule).
 pub fn default(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let dark = is_dark(theme);
 
     let bg = if dark {
@@ -192,11 +192,11 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         // dark page bg. Workaround: substitute `muted.base` at 0.5 alpha,
         // which composites to a perceptually-similar quietly-lifted dark
         // surface in the dark palette. When iced's compositor is fixed
-        // upstream, restore `p.input.alpha(0.3)` here. Same shape as the
-        // switch fix in `core/src/theme/switch.rs::default`.
+        // upstream, restore `p.neutral.border.alpha(0.3)` here. Same shape
+        // as the switch fix in `core/src/theme/switch.rs::default`.
         p.muted.base.alpha(0.5)
     } else {
-        p.background
+        p.neutral.base
     };
 
     let active = Style {
@@ -204,11 +204,11 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         border: Border {
             radius: radius::LG.into(),
             width: 1.0,
-            color: p.input,
+            color: p.neutral.border,
         },
-        icon: p.foreground,
+        icon: p.neutral.foreground,
         placeholder: p.muted.foreground,
-        value: p.foreground,
+        value: p.neutral.foreground,
         selection: p.primary.base.alpha(0.3),
         ring: None,
     };
@@ -218,14 +218,14 @@ pub fn default(theme: &Theme, status: Status) -> Style {
         Status::Active | Status::Hovered => active,
         Status::Focused { .. } => Style {
             border: Border {
-                color: p.ring,
+                color: p.neutral.ring,
                 ..active.border
             },
             // Nova `focus-visible:ring-3 ring-ring/50` — 3px halo at
             // palette.ring with 50% alpha. Rendered by the vendored widget
             // as an expanded fill_quad behind the main fill.
             ring: Some(Ring {
-                color: p.ring.alpha(0.5),
+                color: p.neutral.ring.alpha(0.5),
                 width: 3.0,
             }),
             ..active
@@ -234,9 +234,9 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             // Tailwind `/N` overrides alpha; doesn't multiply with the
             // source. Spec: `disabled:bg-input/50` (light), `dark:disabled:bg-input/80`.
             let dis_bg = if dark {
-                p.input.alpha(0.8)
+                p.neutral.border.alpha(0.8)
             } else {
-                p.input.alpha(0.5)
+                p.neutral.border.alpha(0.5)
             };
             // The element-wide `disabled:opacity-50` on top multiplies every
             // pixel by 0.5 — we apply that to non-bg colors with `scale_alpha`
@@ -245,12 +245,12 @@ pub fn default(theme: &Theme, status: Status) -> Style {
             Style {
                 background: dis_bg.scale_alpha(0.5).into(),
                 border: Border {
-                    color: p.input.scale_alpha(0.5),
+                    color: p.neutral.border.scale_alpha(0.5),
                     ..active.border
                 },
-                value: p.foreground.scale_alpha(0.5),
+                value: p.neutral.foreground.scale_alpha(0.5),
                 placeholder: p.muted.foreground.scale_alpha(0.5),
-                icon: p.foreground.scale_alpha(0.5),
+                icon: p.neutral.foreground.scale_alpha(0.5),
                 ..active
             }
         }
@@ -270,7 +270,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 /// separate follow-up (needs `Token` to carry an alpha override or a new
 /// alpha-aware Ring tweak).
 pub fn invalid(theme: &Theme, status: Status) -> Style {
-    let p = theme.palette();
+    let p = theme;
     let base = default(theme, status);
 
     match status {
@@ -347,9 +347,8 @@ impl Spec {
     /// is applied in order.
     pub fn resolve(&self, theme: &Theme, status: Status) -> Style {
         let mut style = (self.variant)(theme, status);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette, status);
+            apply(t, &mut style, theme, status);
         }
         style
     }
@@ -390,18 +389,18 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 
 // --- Resolver ----------------------------------------------------------------
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme, status: Status) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = t.resolve(palette).into();
+            style.background = t.resolve(theme).into();
         }
         Tweak::Fg(t) => {
             // For an input the semantic "foreground" is the typed value.
             // Placeholder is its own slot and is not adjusted here.
-            style.value = t.resolve(palette);
+            style.value = t.resolve(theme);
         }
         Tweak::BorderColor(t) => {
-            style.border.color = t.resolve(palette);
+            style.border.color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border.width = *w;
@@ -413,7 +412,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             // OKLCH alpha-composite the variant's bg over palette.background
             // and force alpha=1.0. Same shape as button/container.
             if let Background::Color(src) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Background::Color(composed);
             }
@@ -424,7 +423,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
         Tweak::State(trigger, inner) => {
             if triggered(*trigger, status) {
                 for inner_tweak in &inner.0 {
-                    apply(inner_tweak, style, palette, status);
+                    apply(inner_tweak, style, theme, status);
                 }
             }
         }
@@ -437,7 +436,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette, status: Status) {
             // the main fill. `offset` is dropped (no iced equivalent for
             // Tailwind's `ring-offset` / CSS `outline-offset`).
             style.ring = Some(Ring {
-                color: color.resolve(palette),
+                color: color.resolve(theme),
                 width: *width,
             });
         }
@@ -516,7 +515,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = default(&theme, Status::Active);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().muted.base.alpha(0.5);
+        let expected = theme.muted.base.alpha(0.5);
         assert!(
             close(bg, expected),
             "expected bg ≈ muted.base.alpha(0.5) ({expected:?}), got {bg:?}",
@@ -529,7 +528,7 @@ mod tests {
         let theme = Theme::light();
         let resolved = default(&theme, Status::Focused { is_hovered: false });
         let actual = resolved.border.color;
-        let expected = theme.palette().ring;
+        let expected = theme.neutral.ring;
         assert!(
             close(actual, expected),
             "expected focused border = ring ({expected:?}), got {actual:?}",
@@ -559,7 +558,7 @@ mod tests {
         let spec: Spec = (Default + Bg(Token::Primary)).into();
         let resolved = spec.resolve(&theme, Status::Active);
         let actual = bg_color(&resolved);
-        let expected = theme.palette().primary.base;
+        let expected = theme.primary.base;
         assert!(
             close(actual, expected),
             "expected bg = primary ({expected:?}), got {actual:?}",
@@ -581,7 +580,7 @@ mod tests {
         let resolved = spec.resolve(&theme, Status::Active);
         let ring = resolved.ring.expect("ring should be set");
         assert_eq!(ring.width, 3.0);
-        assert!(close(ring.color, theme.palette().ring));
+        assert!(close(ring.color, theme.neutral.ring));
     }
 
     /// `focus(Ring(...))` writes ring only when status = Focused.

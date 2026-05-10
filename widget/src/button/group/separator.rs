@@ -107,7 +107,7 @@ where
         // `palette.input` (the same OKLCH translucent white the outline button
         // uses); in light mode `palette.border`. shadcn's separator uses
         // `bg-input` directly — same source.
-        let bg: iced_core::Color = theme.palette().input.into();
+        let bg: iced_core::Color = theme.neutral.border.into();
 
         renderer.fill_quad(
             renderer::Quad {

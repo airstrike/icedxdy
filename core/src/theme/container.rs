@@ -10,7 +10,7 @@ use iced_core::Vector;
 
 use super::Theme;
 use super::tweak::{Token, Trigger, Tweak, TweakSet};
-use crate::{Background, Border, Color, Palette, Shadow, radius};
+use crate::{Background, Border, Color, Shadow, radius};
 
 /// OKLCH-native container style. Mirrors `iced_widget::container::Style`
 /// field-for-field, but the color-bearing fields use our types.
@@ -88,20 +88,20 @@ pub fn transparent(_theme: &Theme) -> Style {
 /// Page background — solid `palette.background`.
 pub fn background(theme: &Theme) -> Style {
     Style {
-        background: Some(theme.palette().background.into()),
+        background: Some(theme.neutral.base.into()),
         ..Style::default()
     }
 }
 
 /// Card surface — bg-card + 1px border-border + rounded-lg.
 pub fn card(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: Some(p.card.base.into()),
         border: Border {
             radius: radius::LG.into(),
             width: 1.0,
-            color: p.border,
+            color: p.neutral.border,
         },
         ..Style::default()
     }
@@ -109,9 +109,9 @@ pub fn card(theme: &Theme) -> Style {
 
 /// Preview half of an example card — bg-background, only top corners rounded.
 pub fn card_preview(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
-        background: Some(p.background.into()),
+        background: Some(p.neutral.base.into()),
         border: Border {
             radius: crate::Radius {
                 top_left: radius::LG,
@@ -128,13 +128,13 @@ pub fn card_preview(theme: &Theme) -> Style {
 
 /// Muted card surface — bg-muted + 1px border-border + rounded-lg.
 pub fn card_muted(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
         background: Some(p.muted.base.into()),
         border: Border {
             radius: radius::LG.into(),
             width: 1.0,
-            color: p.border,
+            color: p.neutral.border,
         },
         ..Style::default()
     }
@@ -145,7 +145,7 @@ pub fn card_muted(theme: &Theme) -> Style {
 /// page-level prose (Usage, API Reference, Cursor, etc.).
 pub fn code_block(theme: &Theme) -> Style {
     Style {
-        background: Some(theme.palette().code.base.into()),
+        background: Some(theme.code.base.into()),
         border: Border {
             radius: radius::MD.into(),
             width: 0.0,
@@ -162,7 +162,7 @@ pub fn code_block(theme: &Theme) -> Style {
 /// rule cleanly.
 pub fn code_block_panel(theme: &Theme) -> Style {
     Style {
-        background: Some(theme.palette().code.base.into()),
+        background: Some(theme.code.base.into()),
         border: Border {
             radius: crate::Radius {
                 top_left: 0.0,
@@ -184,13 +184,13 @@ pub fn code_block_panel(theme: &Theme) -> Style {
 /// `radius::LG` (closest available) and add a 1px border for legibility
 /// in flat themes.
 pub fn sidebar_inset(theme: &Theme) -> Style {
-    let p = theme.palette();
+    let p = theme;
     Style {
-        background: Some(p.background.into()),
+        background: Some(p.neutral.base.into()),
         border: Border {
             radius: radius::LG.into(),
             width: 1.0,
-            color: p.border,
+            color: p.neutral.border,
         },
         shadow: Shadow {
             color: Color::BLACK.alpha(0.05),
@@ -212,7 +212,7 @@ pub fn code_fade_overlay(theme: &Theme) -> Style {
 
     // Gradient stops use iced's Color directly — gradients live in iced's
     // type system since we don't vendor the gradient module.
-    let code_bg: iced_core::Color = theme.palette().code.base.into();
+    let code_bg: iced_core::Color = theme.code.base.into();
     Style {
         background: Some(Background::Gradient(
             Linear::new(PI)
@@ -299,9 +299,8 @@ impl Spec {
     /// Resolve this spec to a concrete `Style` for the given theme.
     pub fn resolve(&self, theme: &Theme) -> Style {
         let mut style = (self.variant)(theme);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette);
+            apply(t, &mut style, theme);
         }
         style
     }
@@ -391,16 +390,16 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 // Container has no status, so `Tweak::State(...)` silently drops — there's no
 // hover/pressed/disabled to react to.
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = Some(t.resolve(palette).into());
+            style.background = Some(t.resolve(theme).into());
         }
         Tweak::Fg(t) => {
-            style.text_color = Some(t.resolve(palette));
+            style.text_color = Some(t.resolve(theme));
         }
         Tweak::BorderColor(t) => {
-            style.border.color = t.resolve(palette);
+            style.border.color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border.width = *w;
@@ -415,7 +414,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
             // Same OKLCH alpha-compositing as button — bake any translucent
             // variant bg into a solid color over palette.background.
             if let Some(Background::Color(src)) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Some(Background::Color(composed));
             }
@@ -572,7 +571,7 @@ mod tests {
         let spec: Spec = (Card + Alpha(0.5)).into();
         let resolved = spec.resolve(&theme);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().card.base.a * 0.5;
+        let expected = theme.card.base.a * 0.5;
         assert!(
             (bg.a - expected).abs() < 1e-4,
             "expected a={expected}, got a={}",
@@ -601,7 +600,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = sidebar_inset(&theme);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().background;
+        let expected = theme.neutral.base;
         assert!(
             (bg.l - expected.l).abs() < 1e-4 && (bg.c - expected.c).abs() < 1e-4,
             "SidebarInset bg must be palette.background ({expected:?}), got {bg:?}",

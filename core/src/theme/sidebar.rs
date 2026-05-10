@@ -14,21 +14,21 @@ use iced_core::Vector;
 use super::Theme;
 use super::container::Style;
 use super::tweak::{Tweak, TweakSet};
-use crate::{Background, Border, Color, Palette, Shadow, radius};
+use crate::{Background, Border, Color, Shadow, radius};
 
 // --- Variant fns -------------------------------------------------------------
 
 /// Sidebar background — flush variant, solid `palette.sidebar.background`.
 pub fn default(theme: &Theme) -> Style {
     Style {
-        background: Some(theme.palette().sidebar.background.into()),
+        background: Some(theme.sidebar.background.into()),
         ..Style::default()
     }
 }
 
 /// Floating sidebar — sidebar bg, 1px border, drop shadow, rounded-lg.
 pub fn floating(theme: &Theme) -> Style {
-    let sb = &theme.palette().sidebar;
+    let sb = &theme.sidebar;
     Style {
         background: Some(sb.background.into()),
         border: Border {
@@ -54,7 +54,7 @@ pub fn floating(theme: &Theme) -> Style {
 /// `super::container::sidebar_inset`.
 pub fn inset(theme: &Theme) -> Style {
     Style {
-        background: Some(theme.palette().sidebar.background.into()),
+        background: Some(theme.sidebar.background.into()),
         ..Style::default()
     }
 }
@@ -100,9 +100,8 @@ impl Spec {
     /// Resolve this spec to a concrete `Style` for the given theme.
     pub fn resolve(&self, theme: &Theme) -> Style {
         let mut style = (self.variant)(theme);
-        let palette = theme.palette();
         for t in &self.tweaks.0 {
-            apply(t, &mut style, palette);
+            apply(t, &mut style, theme);
         }
         style
     }
@@ -153,16 +152,16 @@ impl<T: Into<Tweak>> Add<T> for Spec {
 // Sidebar has no status, so `Tweak::State(...)` silently drops. Identical body
 // to container.rs::apply.
 
-fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
+fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
     match tweak {
         Tweak::Bg(t) => {
-            style.background = Some(t.resolve(palette).into());
+            style.background = Some(t.resolve(theme).into());
         }
         Tweak::Fg(t) => {
-            style.text_color = Some(t.resolve(palette));
+            style.text_color = Some(t.resolve(theme));
         }
         Tweak::BorderColor(t) => {
-            style.border.color = t.resolve(palette);
+            style.border.color = t.resolve(theme);
         }
         Tweak::BorderWidth(w) => {
             style.border.width = *w;
@@ -175,7 +174,7 @@ fn apply(tweak: &Tweak, style: &mut Style, palette: &Palette) {
         }
         Tweak::Opaque => {
             if let Some(Background::Color(src)) = style.background {
-                let dst = palette.background;
+                let dst = theme.neutral.base;
                 let composed = src.blend(dst, 1.0 - src.a).alpha(1.0);
                 style.background = Some(Background::Color(composed));
             }
@@ -239,7 +238,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = default(&theme);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().sidebar.background;
+        let expected = theme.sidebar.background;
         assert!(
             (bg.l - expected.l).abs() < 1e-4
                 && (bg.c - expected.c).abs() < 1e-4
@@ -254,7 +253,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = floating(&theme);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().sidebar.background;
+        let expected = theme.sidebar.background;
         assert!(
             (bg.l - expected.l).abs() < 1e-4
                 && (bg.c - expected.c).abs() < 1e-4
@@ -280,7 +279,7 @@ mod tests {
         let theme = Theme::dark();
         let resolved = inset(&theme);
         let bg = bg_color(&resolved);
-        let expected = theme.palette().sidebar.background;
+        let expected = theme.sidebar.background;
         assert!(
             (bg.l - expected.l).abs() < 1e-4
                 && (bg.c - expected.c).abs() < 1e-4
