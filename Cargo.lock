@@ -512,8 +512,8 @@ name = "browser"
 version = "0.1.0"
 dependencies = [
  "fount",
- "granita",
- "granita-build",
+ "granita 0.5.0",
+ "granita-build 0.5.0",
  "iced",
  "iced_lucide 0.1.0 (git+https://github.com/airstrike/iced_lucide)",
  "iced_widget",
@@ -1559,7 +1559,7 @@ dependencies = [
  "blake3",
  "cargo_metadata",
  "goblin",
- "granita-macros",
+ "granita-macros 0.5.0",
  "iced",
  "iced_graphics",
  "iced_lucide 0.1.0 (git+https://github.com/airstrike/granita)",
@@ -1576,13 +1576,57 @@ dependencies = [
 ]
 
 [[package]]
+name = "granita"
+version = "0.7.0-dev"
+source = "git+https://github.com/airstrike/granita.git?branch=master#bc13e6f4dfb7558b8ae2a86f2d4cafc584481bec"
+dependencies = [
+ "blake3",
+ "cargo_metadata",
+ "futures-channel",
+ "goblin",
+ "granita-macros 0.7.0-dev",
+ "iced",
+ "iced_core",
+ "iced_futures",
+ "iced_graphics",
+ "iced_lucide 0.1.0 (git+https://github.com/airstrike/granita.git?branch=master)",
+ "iced_renderer",
+ "iced_runtime",
+ "libloading 0.9.0",
+ "nix",
+ "notify",
+ "notify-debouncer-mini",
+ "png",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "granita-build"
 version = "0.5.0"
 source = "git+https://github.com/airstrike/granita#e9977d1d0648aa1b55ab69ed0545079f6f2d1a11"
 dependencies = [
  "cargo_metadata",
- "granita-common",
- "granita-hash",
+ "granita-common 0.5.0",
+ "granita-hash 0.5.0",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "granita-build"
+version = "0.7.0-dev"
+source = "git+https://github.com/airstrike/granita.git?branch=master#bc13e6f4dfb7558b8ae2a86f2d4cafc584481bec"
+dependencies = [
+ "cargo_metadata",
+ "granita-common 0.7.0-dev",
+ "granita-hash 0.7.0-dev",
  "proc-macro2",
  "quote",
  "syn",
@@ -1592,6 +1636,11 @@ dependencies = [
 name = "granita-common"
 version = "0.5.0"
 source = "git+https://github.com/airstrike/granita#e9977d1d0648aa1b55ab69ed0545079f6f2d1a11"
+
+[[package]]
+name = "granita-common"
+version = "0.7.0-dev"
+source = "git+https://github.com/airstrike/granita.git?branch=master#bc13e6f4dfb7558b8ae2a86f2d4cafc584481bec"
 
 [[package]]
 name = "granita-hash"
@@ -1604,12 +1653,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "granita-hash"
+version = "0.7.0-dev"
+source = "git+https://github.com/airstrike/granita.git?branch=master#bc13e6f4dfb7558b8ae2a86f2d4cafc584481bec"
+dependencies = [
+ "proc-macro2",
+ "rustc-hash 2.1.1",
+ "syn",
+]
+
+[[package]]
 name = "granita-macros"
 version = "0.5.0"
 source = "git+https://github.com/airstrike/granita#e9977d1d0648aa1b55ab69ed0545079f6f2d1a11"
 dependencies = [
- "granita-common",
- "granita-hash",
+ "granita-common 0.5.0",
+ "granita-hash 0.5.0",
+ "proc-macro2",
+ "quote",
+ "rustc-hash 2.1.1",
+ "syn",
+]
+
+[[package]]
+name = "granita-macros"
+version = "0.7.0-dev"
+source = "git+https://github.com/airstrike/granita.git?branch=master#bc13e6f4dfb7558b8ae2a86f2d4cafc584481bec"
+dependencies = [
+ "granita-common 0.7.0-dev",
+ "granita-hash 0.7.0-dev",
  "proc-macro2",
  "quote",
  "rustc-hash 2.1.1",
@@ -1889,6 +1961,18 @@ version = "0.15.0-dev"
 dependencies = [
  "iced_core",
  "two-face",
+]
+
+[[package]]
+name = "iced_lucide"
+version = "0.1.0"
+source = "git+https://github.com/airstrike/granita.git?branch=master#bc13e6f4dfb7558b8ae2a86f2d4cafc584481bec"
+dependencies = [
+ "serde",
+ "sha2",
+ "subsetter",
+ "toml 0.9.12+spec-1.1.0",
+ "ttf-parser",
 ]
 
 [[package]]
@@ -3350,6 +3434,8 @@ dependencies = [
 name = "palette"
 version = "0.1.0"
 dependencies = [
+ "granita 0.7.0-dev",
+ "granita-build 0.7.0-dev",
  "iced",
  "iced_widget",
  "icedxdy",

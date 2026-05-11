@@ -9,3 +9,10 @@ license.workspace = true
 icedxdy = { workspace = true, features = ["spinner"] }
 iced = { workspace = true }
 iced_widget = { workspace = true }
+granita = { git = "https://github.com/airstrike/granita.git", branch = "master" }
+
+[lib]
+crate-type = ["lib", "dylib"]
+
+[build-dependencies]
+granita-build = { git = "https://github.com/airstrike/granita.git", branch = "master" }
