@@ -36,7 +36,7 @@ members = [
 
 [workspace.package]
 version = "0.1.0"
-authors = ["Andy Gayton <andy@thecollective.dev>"]
+authors = ["Andy Terra <tech@andyterra.com>"]
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/airstrike/icedxdy"
@@ -88,18 +88,18 @@ crate-type = ["lib"]
 crate-type = ["lib"]
 
 [patch.crates-io]
-iced = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_core = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_runtime = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_selector = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_widget = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_graphics = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_renderer = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_program = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_winit = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_wgpu = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_tiny_skia = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_futures = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_debug = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
-iced_highlighter = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced = { path = "/Users/andy/projects/iced" }
+iced_core = { path = "/Users/andy/projects/iced/core" }
+iced_runtime = { path = "/Users/andy/projects/iced/runtime" }
+iced_selector = { path = "/Users/andy/projects/iced/selector" }
+iced_widget = { path = "/Users/andy/projects/iced/widget" }
+iced_graphics = { path = "/Users/andy/projects/iced/graphics" }
+iced_renderer = { path = "/Users/andy/projects/iced/renderer" }
+iced_program = { path = "/Users/andy/projects/iced/program" }
+iced_winit = { path = "/Users/andy/projects/iced/winit" }
+iced_wgpu = { path = "/Users/andy/projects/iced/wgpu" }
+iced_tiny_skia = { path = "/Users/andy/projects/iced/tiny_skia" }
+iced_futures = { path = "/Users/andy/projects/iced/futures" }
+iced_debug = { path = "/Users/andy/projects/iced/debug" }
+iced_highlighter = { path = "/Users/andy/projects/iced/highlighter" }
 cosmic-text = { git = "https://github.com/airstrike/cosmic-text", branch = "dev" }

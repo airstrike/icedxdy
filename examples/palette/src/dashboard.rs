@@ -35,10 +35,10 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .style(theme::text::Muted)
     .width(Fill);
 
-    let header = column([breadcrumbs.into(), title.into(), subtitle.into()]).spacing(8);
+    let header = column![breadcrumbs, title, subtitle].spacing(8);
 
-    let divider: iced::Element<'_, Message, Theme> = separator::horizontal().into();
-    let content = column([header.into(), Component::from(divider), grid(state)])
+    let divider = separator::horizontal();
+    let content = column![header, divider, grid(state)]
         .spacing(GAP)
         .padding(MAIN_PAD)
         .width(Fill);
@@ -48,34 +48,22 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
 
 fn grid(state: &State) -> Component<'_, Message> {
     column([
-        row![
-            wrap(quickstart::view(state)),
-            wrap(connection::view(state)),
-        ]
-        .spacing(GAP)
-        .width(Fill)
-        .into(),
-        row![
-            wrap(transactions::view(state)),
-            wrap(targets::view(state)),
-        ]
-        .spacing(GAP)
-        .width(Fill)
-        .into(),
-        row![
-            wrap(alerts::view()),
-            wrap(notifications::view(state)),
-        ]
-        .spacing(GAP)
-        .width(Fill)
-        .into(),
-        row![
-            wrap(form::view(state)),
-            wrap(danger::view(state)),
-        ]
-        .spacing(GAP)
-        .width(Fill)
-        .into(),
+        row![wrap(quickstart::view(state)), wrap(connection::view(state)),]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        row![wrap(transactions::view(state)), wrap(targets::view(state)),]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        row![wrap(alerts::view()), wrap(notifications::view(state)),]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        row![wrap(form::view(state)), wrap(danger::view(state)),]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
         row![wrap(tints::view(state))]
             .spacing(GAP)
             .width(Fill)
@@ -99,8 +87,8 @@ fn grid(state: &State) -> Component<'_, Message> {
 /// the gap, but `iced::Element` is covariant and lifts cleanly.
 fn wrap<'a>(content: iced::Element<'a, Message, Theme>) -> Component<'a, Message> {
     let wrapped: iced::Element<'a, Message, Theme> = container(content)
-        .min_width(Pixels(TILE_MIN_WIDTH))
         .width(Fill)
+        .min_width(Pixels(TILE_MIN_WIDTH))
         .into();
     Component::from(wrapped)
 }

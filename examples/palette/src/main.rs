@@ -19,17 +19,25 @@ use std::collections::HashSet;
 use iced::alignment;
 use iced::widget::space;
 use iced::{Center, Fill, Task};
+use icedxdy::Component;
 use icedxdy::Theme;
 use icedxdy::theme;
 use icedxdy::theme::container::background;
 use icedxdy::widget::rule;
 use icedxdy::widget::scrollable::{Direction, Scrollbar};
 use icedxdy::widget::{button, column, container, row, scrollable, switch, text};
-use icedxdy::Component;
 
 mod dashboard;
 mod sidebar;
 mod tiles;
+
+fn main() -> iced::Result {
+    iced::application(State::new, State::update, State::view)
+        .title("icedxdy \u{2022} palette demo")
+        .window_size([1280.0, 860.0])
+        .theme(State::theme)
+        .run()
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -164,26 +172,21 @@ impl State {
 
     fn view(&self) -> iced::Element<'_, Message, Theme> {
         let header = self.header();
-        let body = row![sidebar::view(self), dashboard::view(self)].spacing(0);
+        let body = row![sidebar::view(self), dashboard::view(self)]
+            .spacing(0)
+            .height(Fill)
+            .width(Fill);
 
-        // Vertical scroll only. `Direction::Both` makes both axes unbounded,
-        // which collapses every nested `Fill` to zero — content vanishes.
-        // Tiles that need horizontal overflow (transactions, tints) wrap
-        // their own scrollable inside.
         let scroller = scrollable(body)
             .width(Fill)
             .height(Fill)
-            .direction(Direction::Vertical(Scrollbar::default()));
+            .direction(both_scrollbars());
 
         let divider: iced::Element<'_, Message, Theme> = rule::horizontal(1).into();
-        let page = column([
-            Component::from(header),
-            Component::from(divider),
-            scroller.into(),
-        ])
-        .spacing(0)
-        .width(Fill)
-        .height(Fill);
+        let page = column![header, divider, scroller]
+            .spacing(0)
+            .width(Fill)
+            .height(Fill);
 
         container(page)
             .width(Fill)
@@ -199,14 +202,17 @@ impl State {
         // Fixed-width label container so the switch's position doesn't
         // jump when the label flips between "Connected" / "Disconnected".
         let connection_label = container(
-            text::small(if self.connected { "Connected" } else { "Disconnected" })
-                .style(theme::text::Muted),
+            text::small(if self.connected {
+                "Connected"
+            } else {
+                "Disconnected"
+            })
+            .style(theme::text::Muted),
         )
         .width(96)
         .align_x(alignment::Horizontal::Right);
 
-        let connection_switch =
-            switch::switch(self.connected).on_toggle(Message::ToggleConnection);
+        let connection_switch = switch::switch(self.connected).on_toggle(Message::ToggleConnection);
 
         let connection = row![Component::from(connection_label), connection_switch]
             .spacing(8)
@@ -219,27 +225,18 @@ impl State {
 
         let title_col = column([title.into(), subtitle.into()]).spacing(2);
 
-        let bar = row![
-            title_col,
-            space::horizontal(),
-            connection,
-            mode_button,
-        ]
-        .spacing(16)
-        .align_y(Center)
-        .width(Fill);
+        let bar = row![title_col, space::horizontal(), connection, mode_button,]
+            .spacing(16)
+            .align_y(Center)
+            .width(Fill);
 
-        container(bar)
-            .padding([16, 24])
-            .width(Fill)
-            .into()
+        container(bar).padding([16, 24]).width(Fill).into()
     }
 }
 
-fn main() -> iced::Result {
-    iced::application(State::new, State::update, State::view)
-        .title("icedxdy \u{2022} palette demo")
-        .window_size([1280.0, 860.0])
-        .theme(State::theme)
-        .run()
+fn both_scrollbars() -> Direction {
+    Direction::Both {
+        vertical: Scrollbar::default(),
+        horizontal: Scrollbar::default(),
+    }
 }

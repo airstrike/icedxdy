@@ -161,24 +161,25 @@ macro_rules! into_element {
     };
 }
 
-into_element!(iced_widget::text::Rich<'a, Message, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Column<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Row<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Scrollable<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Container<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Space);
 into_element!(iced_widget::Button<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Checkbox<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::TextInput<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Tooltip<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Sensor<'a, (), Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Pin<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::MouseArea<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Stack<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Grid<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::ProgressBar<'a, Theme>);
-into_element!(iced_widget::Toggler<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Column<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Container<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Float<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Grid<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::MouseArea<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Pin<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::ProgressBar<'a, Theme>);
+into_element!(iced_widget::Row<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Rule<'a, Theme>);
+into_element!(iced_widget::Scrollable<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Sensor<'a, (), Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Space);
+into_element!(iced_widget::Stack<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::TextInput<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Toggler<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Tooltip<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::text::Rich<'a, Message, Message, Theme, Renderer> where + Clone);
 
 // iced's Text gets a manual impl so `foreground_color` overrides its style
 // closure with the supplied color. The macro's blanket impl would no-op the

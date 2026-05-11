@@ -19,12 +19,12 @@ const RAIL_WIDTH: f32 = 240.0;
 const SWATCH_SIZE: f32 = 12.0;
 
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
-    let content = column([
+    let content = column![
         nav_group(state.nav),
         status_group(state),
-        Component::new(space::vertical()),
+        space::vertical(),
         legend_group(),
-    ])
+    ]
     .spacing(8)
     .height(Fill)
     .width(Fill);
@@ -105,10 +105,7 @@ fn kv_row(key: &'static str, value: &'static str) -> Component<'static, Message>
     container(inner).padding([4, 4]).width(Fill).into()
 }
 
-fn legend_row(
-    label: &'static str,
-    getter: fn(&Theme) -> Palette,
-) -> Component<'static, Message> {
+fn legend_row(label: &'static str, getter: fn(&Theme) -> Palette) -> Component<'static, Message> {
     let swatch = container(space::vertical())
         .width(SWATCH_SIZE)
         .height(SWATCH_SIZE)
