@@ -1,12 +1,34 @@
-use iced::{Element, Fill, Task};
-use icedxdy::Theme;
-use icedxdy::core::style::{outline, primary};
-use icedxdy::theme;
-use icedxdy::widget::{Column, button, container, row, text};
+//! Dogfood demo for the icedxdy widget catalog.
+//!
+//! Layout mirrors shadcn's `/create` page: a left rail (theme controls,
+//! nav, and a tint legend) and a dense main dashboard of cards exercising
+//! every widget in `widget/src/`. Tints appear thematically — a success
+//! alert, a destructive armed-delete, a primary CTA — rather than as
+//! abstract swatches.
+//!
+//! The header carries a `Switch` labeled `Connection`. When off, every
+//! action button across the dashboard wires `on_press(...)` only when
+//! `state.connected` is true, so flipping it surfaces the disabled
+//! visual on every tint at once.
+//!
+//! The root is a 2D `Scrollable` so the window can be sized arbitrarily
+//! without losing access to tiles off-screen.
 
-mod armed;
-mod gallery;
-mod swatches;
+use std::collections::HashSet;
+
+use iced::alignment;
+use iced::widget::space;
+use iced::{Center, Fill, Task};
+use icedxdy::Theme;
+use icedxdy::theme;
+use icedxdy::theme::container::{background, card};
+use icedxdy::widget::scrollable::{Direction, Scrollbar};
+use icedxdy::widget::{button, column, container, row, scrollable, switch, text};
+use icedxdy::Component;
+
+mod dashboard;
+mod sidebar;
+mod tiles;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -14,17 +36,68 @@ pub enum Mode {
     Dark,
 }
 
+/// Sidebar nav items. Visual only — clicking updates `State::nav` and
+/// highlights the active row, but every section shares the same dashboard
+/// body (we're dogfooding the widget catalog, not building a real router).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NavItem {
+    Overview,
+    Transactions,
+    Targets,
+    Notifications,
+    Settings,
+}
+
+impl NavItem {
+    pub const ALL: &'static [Self] = &[
+        Self::Overview,
+        Self::Transactions,
+        Self::Targets,
+        Self::Notifications,
+        Self::Settings,
+    ];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Overview => "Overview",
+            Self::Transactions => "Transactions",
+            Self::Targets => "Targets",
+            Self::Notifications => "Notifications",
+            Self::Settings => "Settings",
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
     SetMode(Mode),
-    ToggleArmed,
-    Flip,
+    ToggleConnection(bool),
+    SelectNav(NavItem),
+    EmailChanged(String),
+    NameChanged(String),
+    AcceptTerms(bool),
+    SubscribeEmails(bool),
+    SaveForm,
+    CancelForm,
+    ToggleNotification(String),
+    ArmDelete,
+    Delete,
+    Deploy,
+    NotificationCleared,
+    Noop,
 }
 
 pub struct State {
-    mode: Mode,
-    armed: bool,
-    flip: bool,
+    pub mode: Mode,
+    pub connected: bool,
+    pub nav: NavItem,
+    pub email: String,
+    pub name: String,
+    pub accept_terms: bool,
+    pub subscribe_emails: bool,
+    pub open_notifications: HashSet<String>,
+    pub armed: bool,
+    pub deploying: bool,
 }
 
 impl State {
@@ -37,8 +110,15 @@ impl State {
         (
             Self {
                 mode,
+                connected: true,
+                nav: NavItem::Overview,
+                email: "ada@icedxdy.dev".into(),
+                name: "Ada Lovelace".into(),
+                accept_terms: true,
+                subscribe_emails: false,
+                open_notifications: ["welcome".to_owned()].into_iter().collect(),
                 armed: false,
-                flip: false,
+                deploying: false,
             },
             Task::none(),
         )
@@ -46,85 +126,127 @@ impl State {
 
     fn update(&mut self, msg: Message) -> Task<Message> {
         match msg {
-            Message::SetMode(m) => {
-                self.mode = m;
+            Message::SetMode(m) => self.mode = m,
+            Message::ToggleConnection(v) => self.connected = v,
+            Message::SelectNav(n) => self.nav = n,
+            Message::EmailChanged(v) => self.email = v,
+            Message::NameChanged(v) => self.name = v,
+            Message::AcceptTerms(v) => self.accept_terms = v,
+            Message::SubscribeEmails(v) => self.subscribe_emails = v,
+            Message::SaveForm | Message::CancelForm => {}
+            Message::ToggleNotification(id) => {
+                if !self.open_notifications.remove(&id) {
+                    self.open_notifications.insert(id);
+                }
             }
-            Message::ToggleArmed => {
-                self.armed = !self.armed;
+            Message::ArmDelete => self.armed = !self.armed,
+            Message::Delete => {
+                self.armed = false;
             }
-            Message::Flip => {
-                self.flip = !self.flip;
-            }
+            Message::Deploy => self.deploying = !self.deploying,
+            Message::NotificationCleared => {}
+            Message::Noop => {}
         }
         Task::none()
     }
 
-    fn view(&self) -> Element<'_, Message, Theme> {
-        let theme = self.theme();
-        let header = header(self.mode);
-        let body: Column<'_, Message> = Column::new()
-            .push(header.into())
-            .push(text::h2("Palette swatches").into())
-            .push(swatches::view(&theme).into())
-            .push(text::h2("Button gallery").into())
-            .push(
-                text::muted("Click any button to flip which half is enabled.")
-                    .into(),
-            )
-            .push(gallery::view(self.flip).into())
-            .push(text::h2("Armed delete").into())
-            .push(armed::view(self.armed).into())
-            .spacing(24)
-            .padding(32)
-            .width(Fill);
-
-        container(body).width(Fill).height(Fill).into()
+    pub fn connected(&self) -> bool {
+        self.connected
     }
 
-    fn theme(&self) -> Theme {
+    pub fn theme(&self) -> Theme {
         match self.mode {
             Mode::Light => Theme::light(),
             Mode::Dark => Theme::dark(),
         }
     }
+
+    fn view(&self) -> iced::Element<'_, Message, Theme> {
+        let header = self.header();
+        let body = row![sidebar::view(self), dashboard::view(self)]
+            .spacing(0)
+            .height(Fill);
+
+        // 2D scrollable so the window can shrink in either axis without
+        // hiding tiles. Header pinned above; sidebar lives inside the
+        // scroll surface alongside the dashboard so horizontal scroll
+        // doesn't unanchor it.
+        let scroller = scrollable(body)
+            .width(Fill)
+            .height(Fill)
+            .direction(both_scrollbars());
+
+        let page = column([Component::from(header), scroller.into()])
+            .spacing(0)
+            .width(Fill)
+            .height(Fill);
+
+        container(page)
+            .width(Fill)
+            .height(Fill)
+            .style(background)
+            .into()
+    }
+
+    fn header(&self) -> iced::Element<'_, Message, Theme> {
+        let title = text::h2("icedxdy \u{2022} dogfood");
+        let subtitle = text::muted("Catalog demo — flip the toggle to disable every action.");
+
+        // Fixed-width label container so the switch's position doesn't
+        // jump when the label flips between "Connected" / "Disconnected".
+        let connection_label = container(
+            text::small(if self.connected { "Connected" } else { "Disconnected" })
+                .style(theme::text::Muted),
+        )
+        .width(96)
+        .align_x(alignment::Horizontal::Right);
+
+        let connection_switch =
+            switch::switch(self.connected).on_toggle(Message::ToggleConnection);
+
+        let connection = row![Component::from(connection_label), connection_switch]
+            .spacing(8)
+            .align_y(Center);
+
+        let mode_button = match self.mode {
+            Mode::Light => button("Dark").on_press(Message::SetMode(Mode::Dark)),
+            Mode::Dark => button("Light").on_press(Message::SetMode(Mode::Light)),
+        };
+
+        let title_col = column([title.into(), subtitle.into()]).spacing(2);
+
+        let bar = row![
+            title_col,
+            space::horizontal(),
+            connection,
+            mode_button,
+        ]
+        .spacing(16)
+        .align_y(Center)
+        .width(Fill);
+
+        container(bar)
+            .padding([16, 24])
+            .width(Fill)
+            .style(card)
+            .into()
+    }
 }
 
-fn header(mode: Mode) -> Element<'static, Message, Theme> {
-    let light_btn = if mode == Mode::Light {
-        button("Light")
-            .style(primary)
-            .on_press(Message::SetMode(Mode::Light))
-    } else {
-        button("Light")
-            .style(outline + primary)
-            .on_press(Message::SetMode(Mode::Light))
-    };
-
-    let dark_btn = if mode == Mode::Dark {
-        button("Dark")
-            .style(primary)
-            .on_press(Message::SetMode(Mode::Dark))
-    } else {
-        button("Dark")
-            .style(outline + primary)
-            .on_press(Message::SetMode(Mode::Dark))
-    };
-
-    let title = text::h1("icedxdy \u{2022} palette demo");
-    let toggle = row()
-        .spacing(8)
-        .push(light_btn.into())
-        .push(dark_btn.into());
-    let header: Column<'_, Message> = Column::new()
-        .push(title.into())
-        .push(toggle.into())
-        .spacing(10);
-    header.into()
+/// Both-axis scrollbar config. The project-wide thin-invisible default is
+/// for in-page scrollables; the root demo opts in to the iced stock
+/// 10px scrollbar so users discover horizontal overflow visibly.
+fn both_scrollbars() -> Direction {
+    Direction::Both {
+        vertical: Scrollbar::default(),
+        horizontal: Scrollbar::default(),
+    }
 }
 
 fn main() -> iced::Result {
     iced::application(State::new, State::update, State::view)
         .title("icedxdy \u{2022} palette demo")
+        .window_size([1280.0, 860.0])
         .theme(State::theme)
         .run()
 }

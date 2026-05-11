@@ -6,6 +6,6 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-icedxdy = { workspace = true }
+icedxdy = { workspace = true, features = ["spinner"] }
 iced = { workspace = true }
 iced_widget = { workspace = true }
