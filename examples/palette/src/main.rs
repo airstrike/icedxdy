@@ -11,8 +11,8 @@
 //! `state.connected` is true, so flipping it surfaces the disabled
 //! visual on every tint at once.
 //!
-//! The root is a 2D `Scrollable` so the window can be sized arbitrarily
-//! without losing access to tiles off-screen.
+//! The root is a vertical `Scrollable`; tiles that genuinely need
+//! horizontal overflow (transactions, tints) wrap their own.
 
 use std::collections::HashSet;
 
@@ -21,7 +21,8 @@ use iced::widget::space;
 use iced::{Center, Fill, Task};
 use icedxdy::Theme;
 use icedxdy::theme;
-use icedxdy::theme::container::{background, card};
+use icedxdy::theme::container::background;
+use icedxdy::widget::rule;
 use icedxdy::widget::scrollable::{Direction, Scrollbar};
 use icedxdy::widget::{button, column, container, row, scrollable, switch, text};
 use icedxdy::Component;
@@ -163,23 +164,26 @@ impl State {
 
     fn view(&self) -> iced::Element<'_, Message, Theme> {
         let header = self.header();
-        let body = row![sidebar::view(self), dashboard::view(self)]
-            .spacing(0)
-            .height(Fill);
+        let body = row![sidebar::view(self), dashboard::view(self)].spacing(0);
 
-        // 2D scrollable so the window can shrink in either axis without
-        // hiding tiles. Header pinned above; sidebar lives inside the
-        // scroll surface alongside the dashboard so horizontal scroll
-        // doesn't unanchor it.
+        // Vertical scroll only. `Direction::Both` makes both axes unbounded,
+        // which collapses every nested `Fill` to zero — content vanishes.
+        // Tiles that need horizontal overflow (transactions, tints) wrap
+        // their own scrollable inside.
         let scroller = scrollable(body)
             .width(Fill)
             .height(Fill)
-            .direction(both_scrollbars());
+            .direction(Direction::Vertical(Scrollbar::default()));
 
-        let page = column([Component::from(header), scroller.into()])
-            .spacing(0)
-            .width(Fill)
-            .height(Fill);
+        let divider: iced::Element<'_, Message, Theme> = rule::horizontal(1).into();
+        let page = column([
+            Component::from(header),
+            Component::from(divider),
+            scroller.into(),
+        ])
+        .spacing(0)
+        .width(Fill)
+        .height(Fill);
 
         container(page)
             .width(Fill)
@@ -228,18 +232,7 @@ impl State {
         container(bar)
             .padding([16, 24])
             .width(Fill)
-            .style(card)
             .into()
-    }
-}
-
-/// Both-axis scrollbar config. The project-wide thin-invisible default is
-/// for in-page scrollables; the root demo opts in to the iced stock
-/// 10px scrollbar so users discover horizontal overflow visibly.
-fn both_scrollbars() -> Direction {
-    Direction::Both {
-        vertical: Scrollbar::default(),
-        horizontal: Scrollbar::default(),
     }
 }
 
