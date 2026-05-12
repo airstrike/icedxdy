@@ -7,12 +7,11 @@
 
 use iced::widget::space;
 use iced::{Fill, Pixels};
-use icedxdy::theme;
-use icedxdy::widget::{breadcrumb, column, container, row, separator, text};
+use icedxdy::widget::{column, container, row};
 use icedxdy::{Component, Theme};
 
 use crate::tiles::{
-    alerts, connection, danger, form, notifications, quickstart, targets, tints, transactions,
+    alerts, danger, form, notifications, quickstart, targets, transactions, two_factor,
 };
 use crate::{Message, State};
 
@@ -21,24 +20,7 @@ const MAIN_PAD: f32 = 24.0;
 const GAP: f32 = 24.0;
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    let breadcrumbs = breadcrumb([
-        breadcrumb::link("Workspace", Message::Noop),
-        breadcrumb::link("Demos", Message::Noop),
-        breadcrumb::page("Overview"),
-    ]);
-
-    let title = text::h1("Overview");
-    let subtitle = text::p(
-        "Every widget in icedxdy/widget exercised exactly once, with tints used \
-         thematically rather than as standalone swatches.",
-    )
-    .style(theme::text::Muted)
-    .width(Fill);
-
-    let header = column![breadcrumbs, title, subtitle].spacing(8);
-
-    let divider = separator::horizontal();
-    let content = column![header, divider, grid(state)]
+    let content = column![grid(state)]
         .spacing(GAP)
         .padding(MAIN_PAD)
         .width(Fill);
@@ -48,23 +30,19 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
 
 fn grid(state: &State) -> Component<'_, Message> {
     column([
-        row![wrap(quickstart::view(state)), wrap(connection::view(state)),]
+        row![wrap(quickstart::view(state)), wrap(two_factor::view(state))]
             .spacing(GAP)
             .width(Fill)
             .into(),
-        row![wrap(transactions::view(state)), wrap(targets::view(state)),]
+        row![wrap(transactions::view(state)), wrap(notifications::view(state))]
             .spacing(GAP)
             .width(Fill)
             .into(),
-        row![wrap(alerts::view()), wrap(notifications::view(state)),]
+        row![wrap(form::view(state)), wrap(alerts::view())]
             .spacing(GAP)
             .width(Fill)
             .into(),
-        row![wrap(form::view(state)), wrap(danger::view(state)),]
-            .spacing(GAP)
-            .width(Fill)
-            .into(),
-        row![wrap(tints::view(state))]
+        row![wrap(targets::view(state)), wrap(danger::view(state))]
             .spacing(GAP)
             .width(Fill)
             .into(),

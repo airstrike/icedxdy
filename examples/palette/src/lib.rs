@@ -162,4 +162,15 @@ pub fn customizer(state: &State) -> iced::Element<'_, Message, Theme> {
     sidebar::view(state)
 }
 
+#[granita::preview(state = State::new().0)]
+pub fn two_factor(state: &State) -> iced::Element<'_, Message, Theme> {
+    use crate::tiles::two_factor;
+    two_factor::view(state)
+}
+
+#[granita::preview(state = State::new().0)]
+pub fn bento(state: &State) -> iced::Element<'_, Message, Theme> {
+    dashboard::view(state)
+}
+
 granita::previews!();
