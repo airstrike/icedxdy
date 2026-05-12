@@ -30,43 +30,10 @@ pub enum Mode {
     Dark,
 }
 
-/// Sidebar nav items. Visual only — clicking updates `State::nav` and
-/// highlights the active row, but every section shares the same dashboard
-/// body (we're dogfooding the widget catalog, not building a real router).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NavItem {
-    Overview,
-    Transactions,
-    Targets,
-    Notifications,
-    Settings,
-}
-
-impl NavItem {
-    pub const ALL: &'static [Self] = &[
-        Self::Overview,
-        Self::Transactions,
-        Self::Targets,
-        Self::Notifications,
-        Self::Settings,
-    ];
-
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::Overview => "Overview",
-            Self::Transactions => "Transactions",
-            Self::Targets => "Targets",
-            Self::Notifications => "Notifications",
-            Self::Settings => "Settings",
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub enum Message {
     SetMode(Mode),
     ToggleConnection(bool),
-    SelectNav(NavItem),
     EmailChanged(String),
     NameChanged(String),
     AcceptTerms(bool),
@@ -84,7 +51,6 @@ pub enum Message {
 pub struct State {
     pub mode: Mode,
     pub connected: bool,
-    pub nav: NavItem,
     pub email: String,
     pub name: String,
     pub accept_terms: bool,
@@ -105,7 +71,6 @@ impl State {
             Self {
                 mode,
                 connected: true,
-                nav: NavItem::Overview,
                 email: "ada@icedxdy.dev".into(),
                 name: "Ada Lovelace".into(),
                 accept_terms: true,
@@ -122,7 +87,6 @@ impl State {
         match msg {
             Message::SetMode(m) => self.mode = m,
             Message::ToggleConnection(v) => self.connected = v,
-            Message::SelectNav(n) => self.nav = n,
             Message::EmailChanged(v) => self.email = v,
             Message::NameChanged(v) => self.name = v,
             Message::AcceptTerms(v) => self.accept_terms = v,
@@ -191,6 +155,11 @@ fn both_scrollbars() -> Direction {
 #[granita::preview(state = State::new().0)]
 pub fn chrome(state: &State) -> iced::Element<'_, Message, Theme> {
     chrome::view(state)
+}
+
+#[granita::preview(state = State::new().0)]
+pub fn customizer(state: &State) -> iced::Element<'_, Message, Theme> {
+    sidebar::view(state)
 }
 
 granita::previews!();

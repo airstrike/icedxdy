@@ -24,10 +24,10 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let breadcrumbs = breadcrumb([
         breadcrumb::link("Workspace", Message::Noop),
         breadcrumb::link("Demos", Message::Noop),
-        breadcrumb::page(state.nav.label()),
+        breadcrumb::page("Overview"),
     ]);
 
-    let title = text::h1(state.nav.label());
+    let title = text::h1("Overview");
     let subtitle = text::p(
         "Every widget in icedxdy/widget exercised exactly once, with tints used \
          thematically rather than as standalone swatches.",
