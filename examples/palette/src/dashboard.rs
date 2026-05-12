@@ -31,39 +31,38 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
 
 fn grid(state: &State) -> Component<'_, Message> {
     column([
-        row![wrap(quickstart::view(state)), wrap(two_factor::view(state))]
-            .spacing(GAP)
-            .width(Fill)
-            .into(),
-        row![wrap(transactions::view(state)), wrap(notifications::view(state))]
-            .spacing(GAP)
-            .width(Fill)
-            .into(),
-        row![wrap(form::view(state)), wrap(alerts::view())]
-            .spacing(GAP)
-            .width(Fill)
-            .into(),
-        row![wrap(targets::view(state)), wrap(danger::view(state))]
-            .spacing(GAP)
-            .width(Fill)
-            .into(),
-        // Phase 4a parking rows — Phase 4b folds these into the final bento.
         row![wrap(banner::view(state))]
             .spacing(GAP)
             .width(Fill)
             .into(),
+        row![wrap(contributions::view(state)), wrap(quickstart::view(state))]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        row![wrap(targets::view(state)), wrap(chart::view(state))]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        row![wrap(transactions::view(state)), wrap(env_vars::view(state))]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        row![wrap(form::view(state)), wrap(two_factor::view(state))]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        row![wrap(alerts::view()), wrap(notifications::view(state))]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
         row![
-            wrap(contributions::view(state)),
-            wrap(chart::view(state)),
             wrap(invite_team::view(state)),
+            wrap(codespaces::view(state)),
+            wrap(danger::view(state)),
         ]
         .spacing(GAP)
         .width(Fill)
         .into(),
-        row![wrap(env_vars::view(state)), wrap(codespaces::view(state))]
-            .spacing(GAP)
-            .width(Fill)
-            .into(),
         // Trailing space gives the bottom edge of the last row room to
         // breathe under the horizontal scrollbar.
         Component::new(space::vertical()),
