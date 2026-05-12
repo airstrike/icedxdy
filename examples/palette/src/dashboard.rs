@@ -11,7 +11,8 @@ use icedxdy::widget::{column, container, row};
 use icedxdy::{Component, Theme};
 
 use crate::tiles::{
-    alerts, danger, form, notifications, quickstart, targets, transactions, two_factor,
+    alerts, banner, chart, codespaces, contributions, danger, env_vars, form, invite_team,
+    notifications, quickstart, targets, transactions, two_factor,
 };
 use crate::{Message, State};
 
@@ -43,6 +44,23 @@ fn grid(state: &State) -> Component<'_, Message> {
             .width(Fill)
             .into(),
         row![wrap(targets::view(state)), wrap(danger::view(state))]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        // Phase 4a parking rows — Phase 4b folds these into the final bento.
+        row![wrap(banner::view(state))]
+            .spacing(GAP)
+            .width(Fill)
+            .into(),
+        row![
+            wrap(contributions::view(state)),
+            wrap(chart::view(state)),
+            wrap(invite_team::view(state)),
+        ]
+        .spacing(GAP)
+        .width(Fill)
+        .into(),
+        row![wrap(env_vars::view(state)), wrap(codespaces::view(state))]
             .spacing(GAP)
             .width(Fill)
             .into(),

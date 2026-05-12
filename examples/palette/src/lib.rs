@@ -173,4 +173,40 @@ pub fn bento(state: &State) -> iced::Element<'_, Message, Theme> {
     dashboard::view(state)
 }
 
+#[granita::preview(state = State::new().0, group = "tiles")]
+pub fn contributions(state: &State) -> iced::Element<'_, Message, Theme> {
+    use crate::tiles::contributions;
+    contributions::view(state)
+}
+
+#[granita::preview(state = State::new().0, group = "tiles")]
+pub fn chart(state: &State) -> iced::Element<'_, Message, Theme> {
+    use crate::tiles::chart;
+    chart::view(state)
+}
+
+#[granita::preview(state = State::new().0, group = "tiles")]
+pub fn env_vars(state: &State) -> iced::Element<'_, Message, Theme> {
+    use crate::tiles::env_vars;
+    env_vars::view(state)
+}
+
+#[granita::preview(state = State::new().0, group = "tiles")]
+pub fn invite_team(state: &State) -> iced::Element<'_, Message, Theme> {
+    use crate::tiles::invite_team;
+    invite_team::view(state)
+}
+
+#[granita::preview(state = State::new().0, group = "tiles")]
+pub fn codespaces(state: &State) -> iced::Element<'_, Message, Theme> {
+    use crate::tiles::codespaces;
+    codespaces::view(state)
+}
+
+#[granita::preview(state = State::new().0, group = "tiles")]
+pub fn banner(state: &State) -> iced::Element<'_, Message, Theme> {
+    use crate::tiles::banner;
+    banner::view(state)
+}
+
 granita::previews!();

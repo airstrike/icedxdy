@@ -1,0 +1,82 @@
+//! Invite Team — email + role picker + Invite, plus a small members list.
+
+use iced::widget::space;
+use iced::Fill;
+use icedxdy::card;
+use icedxdy::theme;
+use icedxdy::widget::column::Column;
+use icedxdy::widget::{avatar, badge, button, column, container, input, row, text};
+use icedxdy::{Component, Theme};
+
+use crate::{Message, State};
+
+struct Member {
+    initials: &'static str,
+    name: &'static str,
+    email: &'static str,
+    role: &'static str,
+}
+
+const MEMBERS: &[Member] = &[
+    Member {
+        initials: "AL",
+        name: "Ada Lovelace",
+        email: "ada@icedxdy.dev",
+        role: "Admin",
+    },
+    Member {
+        initials: "GH",
+        name: "Grace Hopper",
+        email: "grace@icedxdy.dev",
+        role: "Editor",
+    },
+];
+
+pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+    let invite_row = row![
+        input("email@example.com", "").width(Fill),
+        button::outline("Viewer  \u{25BE}").on_press(Message::Noop),
+        button("Invite").on_press(Message::Noop),
+    ]
+    .spacing(8)
+    .width(Fill);
+
+    let members: Vec<Component<'static, Message>> =
+        MEMBERS.iter().map(member_row).collect();
+
+    let body: Column<'static, Message> =
+        column(std::iter::once(Component::from(invite_row)).chain(members))
+            .spacing(12)
+            .width(Fill);
+
+    card::card(
+        column([
+            card::header("Invite Team")
+                .description("Collaborate with your team.")
+                .into(),
+            card::content(container(body).padding([0, 16])).into(),
+        ])
+        .spacing(16)
+        .padding([16, 0]),
+    )
+    .width(Fill)
+    .into()
+}
+
+fn member_row(m: &Member) -> Component<'static, Message> {
+    let identity: Column<'static, Message> = column([
+        text::small(m.name).medium().into(),
+        text::xs(m.email).style(theme::text::Muted).into(),
+    ])
+    .spacing(2);
+
+    row![
+        Component::from(avatar(None).fallback(m.initials).size(avatar::Default)),
+        identity,
+        space::horizontal(),
+        badge::secondary(m.role),
+    ]
+    .spacing(12)
+    .width(Fill)
+    .into()
+}
