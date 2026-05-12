@@ -1,32 +1,25 @@
 //! Dogfood demo for the icedxdy widget catalog.
 //!
-//! Layout mirrors shadcn's `/create` page: a left rail (theme controls,
-//! nav, and a tint legend) and a dense main dashboard of cards exercising
-//! every widget in `widget/src/`. Tints appear thematically — a success
-//! alert, a destructive armed-delete, a primary CTA — rather than as
-//! abstract swatches.
+//! Layout mirrors shadcn's `/create` page: a top chrome bar (brand · nav ·
+//! search · auth), a left rail (customizer), and a dense main dashboard of
+//! cards exercising every widget in `widget/src/`. Tints appear thematically
+//! — a success alert, a destructive armed-delete, a primary CTA — rather
+//! than as abstract swatches.
 //!
-//! The header carries a `Switch` labeled `Connection`. When off, every
-//! action button across the dashboard wires `on_press(...)` only when
-//! `state.connected` is true, so flipping it surfaces the disabled
-//! visual on every tint at once.
-//!
-//! The root is a vertical `Scrollable`; tiles that genuinely need
-//! horizontal overflow (transactions, tints) wrap their own.
+//! The root scrollable opts into both axes; tiles that genuinely need
+//! horizontal overflow (transactions, etc.) wrap their own.
 
 use std::collections::HashSet;
 
-use iced::alignment;
-use iced::widget::space;
-use iced::{Center, Fill, Task};
-use icedxdy::Component;
+use iced::{Fill, Task};
 use icedxdy::Theme;
 use icedxdy::theme;
 use icedxdy::theme::container::background;
 use icedxdy::widget::rule;
 use icedxdy::widget::scrollable::{Direction, Scrollbar};
-use icedxdy::widget::{button, column, container, row, scrollable, switch, text};
+use icedxdy::widget::{column, container, row, scrollable};
 
+pub mod chrome;
 pub mod dashboard;
 pub mod sidebar;
 pub mod tiles;
@@ -163,7 +156,7 @@ impl State {
     }
 
     pub fn view(&self) -> iced::Element<'_, Message, Theme> {
-        let header = self.header();
+        let chrome = chrome::view(self);
         let body = row![sidebar::view(self), dashboard::view(self)]
             .spacing(0)
             .height(Fill)
@@ -175,7 +168,7 @@ impl State {
             .direction(both_scrollbars());
 
         let divider: iced::Element<'_, Message, Theme> = rule::horizontal(1).into();
-        let page = column![header, divider, scroller]
+        let page = column![chrome, divider, scroller]
             .spacing(0)
             .width(Fill)
             .height(Fill);
@@ -186,44 +179,6 @@ impl State {
             .style(background)
             .into()
     }
-
-    fn header(&self) -> iced::Element<'_, Message, Theme> {
-        let title = text::h2("icedxdy \u{2022} theme explorer");
-        let subtitle = text::muted("Catalog demo — flip the toggle to disable every action.");
-
-        // Fixed-width label container so the switch's position doesn't
-        // jump when the label flips between "Connected" / "Disconnected".
-        let connection_label = container(
-            text::small(if self.connected {
-                "Connected"
-            } else {
-                "Disconnected"
-            })
-            .style(theme::text::Muted),
-        )
-        .width(96)
-        .align_x(alignment::Horizontal::Right);
-
-        let connection_switch = switch::switch(self.connected).on_toggle(Message::ToggleConnection);
-
-        let connection = row![Component::from(connection_label), connection_switch]
-            .spacing(8)
-            .align_y(Center);
-
-        let mode_button = match self.mode {
-            Mode::Light => button("Dark").on_press(Message::SetMode(Mode::Dark)),
-            Mode::Dark => button("Light").on_press(Message::SetMode(Mode::Light)),
-        };
-
-        let title_col = column([title.into(), subtitle.into()]).spacing(2);
-
-        let bar = row![title_col, space::horizontal(), connection, mode_button,]
-            .spacing(16)
-            .align_y(Center)
-            .width(Fill);
-
-        container(bar).padding([16, 24]).width(Fill).into()
-    }
 }
 
 fn both_scrollbars() -> Direction {
@@ -231,6 +186,11 @@ fn both_scrollbars() -> Direction {
         vertical: Scrollbar::default(),
         horizontal: Scrollbar::default(),
     }
+}
+
+#[granita::preview(state = State::new().0)]
+pub fn chrome(state: &State) -> iced::Element<'_, Message, Theme> {
+    chrome::view(state)
 }
 
 granita::previews!();
