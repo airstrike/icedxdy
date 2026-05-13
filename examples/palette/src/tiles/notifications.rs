@@ -82,10 +82,11 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     card::card(
         column([
             header.into(),
-            card::content(container(body).padding([0, 16])).into(),
+            card::content(container(body).padding([0, 16]).width(Fill)).into(),
         ])
         .spacing(16)
-        .padding([16, 0]),
+        .padding([16, 0])
+        .width(Fill),
     )
     .width(Fill)
     .into()

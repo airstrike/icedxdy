@@ -79,10 +79,11 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
             card::header("Danger zone")
                 .description("Armed-delete swaps outline → filled destructive on the same button.")
                 .into(),
-            card::content(container(body).padding([0, 16])).into(),
+            card::content(container(body).padding([0, 16]).width(Fill)).into(),
         ])
         .spacing(16)
-        .padding([16, 0]),
+        .padding([16, 0])
+        .width(Fill),
     )
     .width(Fill)
     .into()

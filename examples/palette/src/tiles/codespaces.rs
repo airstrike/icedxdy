@@ -35,7 +35,8 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
             card::content(inner).into(),
         ])
         .spacing(16)
-        .padding([16, 0]),
+        .padding([16, 0])
+        .width(Fill),
     )
     .width(Fill)
     .into()
