@@ -16,7 +16,6 @@ use icedxdy::Theme;
 use icedxdy::theme;
 use icedxdy::theme::container::background;
 use icedxdy::widget::rule;
-use icedxdy::widget::scrollable::{Direction, Scrollbar};
 use icedxdy::widget::{column, container, row, scrollable};
 
 pub mod chrome;
@@ -126,10 +125,7 @@ impl State {
             .height(Fill)
             .width(Fill);
 
-        let scroller = scrollable(body)
-            .width(Fill)
-            .height(Fill)
-            .direction(both_scrollbars());
+        let scroller = scrollable(body).width(Fill).height(Fill);
 
         let divider: iced::Element<'_, Message, Theme> = rule::horizontal(1).into();
         let page = column![chrome, divider, scroller]
@@ -142,13 +138,6 @@ impl State {
             .height(Fill)
             .style(background)
             .into()
-    }
-}
-
-fn both_scrollbars() -> Direction {
-    Direction::Both {
-        vertical: Scrollbar::default(),
-        horizontal: Scrollbar::default(),
     }
 }
 
