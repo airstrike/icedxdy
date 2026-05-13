@@ -89,12 +89,15 @@ impl<'a, Message: Clone + 'a> From<SidebarRail<Message>> for crate::Component<'a
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for SidebarRail<Message> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for SidebarRail<Message> {
     fn size(&mut self, _size: Size) {
         // Fixed-width rail, ignore parent hints.
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         (*self).into()
     }
 }

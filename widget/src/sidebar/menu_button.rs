@@ -244,13 +244,16 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for SidebarMenuButton<'a, Message> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for SidebarMenuButton<'a, Message> {
     fn size(&mut self, _size: Size) {
         // SidebarMenuButton has its own size system (MenuButtonSize),
         // so we ignore parent size hints.
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         (*self).into()
     }
 }

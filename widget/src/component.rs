@@ -14,7 +14,14 @@ use icedxdy_core::Theme;
 ///
 /// Implementors can receive parent styling hints (e.g. [`Size`]) and
 /// ultimately convert into an `iced::Element`.
-pub trait IntoElement<'a, Message, T = Theme, R = Renderer>: 'a {
+///
+/// The trait deliberately does NOT take a lifetime parameter so that
+/// `Box<dyn IntoElement<...> + 'a>` (and therefore [`Component<'a>`]) is
+/// covariant in `'a`. The lifetime of the produced element comes from the
+/// late-bound `'a` on [`into_element`] together with the `Self: 'a` bound:
+/// callers pick a shorter lifetime when needed, matching how
+/// [`iced_core::Element`] works.
+pub trait IntoElement<Message, T = Theme, R = Renderer> {
     /// Parent is telling you what size context you live in.
     /// Implementors should respect explicit user overrides (no-op if already set).
     fn size(&mut self, _size: Size) {}
@@ -32,12 +39,17 @@ pub trait IntoElement<'a, Message, T = Theme, R = Renderer>: 'a {
     fn foreground_color(&mut self, _color: Color) {}
 
     /// Consume self and produce an iced Element.
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, T, R>;
+    fn into_element<'a>(self: Box<Self>) -> iced_core::Element<'a, Message, T, R>
+    where
+        Self: 'a;
 }
 
 /// A generic wrapper around any `icedxdy` component.
+///
+/// Covariant in `'a` (just like [`iced_core::Element`]) so heterogeneous-
+/// lifetime children can co-exist in containers like [`column!`]/[`row!`].
 pub struct Component<'a, Message, T = Theme, R = Renderer> {
-    inner: Box<dyn IntoElement<'a, Message, T, R>>,
+    inner: Box<dyn IntoElement<Message, T, R> + 'a>,
     /// Optional click-target message that should fire when this Component's
     /// label is clicked. Populated by `From<Checkbox>` and `From<Switch>` from
     /// the inner widget's `on_toggle(!current_state)`. Field consults this at
@@ -50,7 +62,7 @@ pub struct Component<'a, Message, T = Theme, R = Renderer> {
 
 impl<'a, Message: 'a, T: 'a, R: 'a> Component<'a, Message, T, R> {
     /// Wrap any [`IntoElement`] implementor.
-    pub fn new(widget: impl IntoElement<'a, Message, T, R>) -> Self {
+    pub fn new(widget: impl IntoElement<Message, T, R> + 'a) -> Self {
         Self {
             inner: Box::new(widget),
             toggle_target: None,
@@ -110,10 +122,15 @@ impl<'a, Message: 'a, T: 'a, R: 'a> Component<'a, Message, T, R> {
 }
 
 // iced::Element → IntoElement (no-op size/weight, just pass through)
-impl<'a, Message: 'a, T: 'a, R: iced_core::Renderer + 'a> IntoElement<'a, Message, T, R>
+impl<'a, Message: 'a, T: 'a, R: iced_core::Renderer + 'a> IntoElement<Message, T, R>
     for iced_core::Element<'a, Message, T, R>
 {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, T, R> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, T, R>
+    where
+        Self: 'b,
+    {
+        // Element is covariant in its lifetime; the `Self: 'b` bound gives us
+        // `'a: 'b`, so subtyping converts `Element<'a, …>` to `Element<'b, …>`.
         *self
     }
 }
@@ -145,10 +162,13 @@ macro_rules! into_element {
         into_element!($ty where);
     };
     ($ty:ty where $($bounds:tt)*) => {
-        impl<'a, Message: 'a $($bounds)*> IntoElement<'a, Message> for $ty {
-            fn into_element(
+        impl<'a, Message: 'a $($bounds)*> IntoElement<Message> for $ty {
+            fn into_element<'b>(
                 self: Box<Self>,
-            ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+            ) -> iced_core::Element<'b, Message, Theme, Renderer>
+            where
+                Self: 'b,
+            {
                 iced_core::Element::new(*self)
             }
         }
@@ -170,6 +190,7 @@ into_element!(iced_widget::Grid<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::MouseArea<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Pin<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::ProgressBar<'a, Theme>);
+into_element!(iced_widget::QRCode<'a, Theme>);
 into_element!(iced_widget::Row<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Rule<'a, Theme>);
 into_element!(iced_widget::Scrollable<'a, Message, Theme, Renderer> where + Clone);
@@ -185,13 +206,16 @@ into_element!(iced_widget::text::Rich<'a, Message, Message, Theme, Renderer> whe
 // closure with the supplied color. The macro's blanket impl would no-op the
 // hint, which would silently ignore color pushes onto icon glyphs
 // (`iced_lucide` produces them as iced's Text, not icedxdy's wrapper).
-impl<'a, Message: 'a> IntoElement<'a, Message> for iced_widget::Text<'a, Theme, Renderer> {
+impl<'a, Message: 'a> IntoElement<Message> for iced_widget::Text<'a, Theme, Renderer> {
     fn foreground_color(&mut self, color: Color) {
         let widget = std::mem::replace(self, iced_widget::text(""));
         *self = widget.color(color);
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         iced_core::Element::new(*self)
     }
 }
@@ -217,12 +241,15 @@ impl<'a, Message: 'a> From<String> for Component<'a, Message> {
 }
 
 // Slider<T>: T is the value type, not Message
-impl<'a, T, Message> IntoElement<'a, Message> for iced_widget::Slider<'a, T, Message, Theme>
+impl<'a, T, Message> IntoElement<Message> for iced_widget::Slider<'a, T, Message, Theme>
 where
     T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
     Message: Clone + 'a,
 {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         iced_core::Element::new(*self)
     }
 }
@@ -238,13 +265,16 @@ where
 }
 
 // ComboBox<T>
-impl<'a, T, Message> IntoElement<'a, Message>
+impl<'a, T, Message> IntoElement<Message>
     for iced_widget::ComboBox<'a, T, Message, Theme, Renderer>
 where
     T: std::fmt::Display + Clone + 'static,
     Message: Clone + 'a,
 {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         iced_core::Element::new(*self)
     }
 }

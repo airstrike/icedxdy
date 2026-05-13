@@ -171,7 +171,7 @@ impl<'a, Message: 'a> From<Container<'a, Message>> for crate::Component<'a, Mess
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for Container<'a, Message> {
+impl<'a, Message: 'a> IntoElement<Message> for Container<'a, Message> {
     fn size(&mut self, size: Size) {
         self.content.size(size);
     }
@@ -180,7 +180,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Container<'a, Message> {
         self.content.weight(weight);
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let mut c = widget::Container::new(self.content.into_iced())
             .width(self.width)
             .height(self.height)

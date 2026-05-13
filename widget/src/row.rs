@@ -91,7 +91,7 @@ impl<'a, Message: 'a> From<Row<'a, Message>> for crate::Component<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for Row<'a, Message> {
+impl<'a, Message: 'a> IntoElement<Message> for Row<'a, Message> {
     fn size(&mut self, size: Size) {
         for child in &mut self.children {
             child.size(size);
@@ -110,7 +110,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Row<'a, Message> {
         }
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let mut row = iced_widget::Row::new()
             .spacing(self.spacing.unwrap_or(0.0))
             .width(self.width)

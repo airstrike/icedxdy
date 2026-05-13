@@ -19,6 +19,7 @@ pub mod float;
 pub mod markdown;
 pub mod menu;
 pub mod progress_bar;
+pub mod qr_code;
 pub mod rule;
 pub mod scrollable;
 pub mod sidebar;

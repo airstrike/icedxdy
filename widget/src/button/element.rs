@@ -255,14 +255,17 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>> for crate::Component<'a,
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Button<'a, Message> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for Button<'a, Message> {
     fn size(&mut self, size: Size) {
         self.size = size;
     }
 
-    fn into_element(
+    fn into_element<'b>(
         self: Box<Self>,
-    ) -> iced_core::Element<'a, Message, Theme, iced_widget::Renderer> {
+    ) -> iced_core::Element<'b, Message, Theme, iced_widget::Renderer>
+    where
+        Self: 'b,
+    {
         (*self).into()
     }
 }

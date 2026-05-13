@@ -184,7 +184,7 @@ impl<'a, Message: 'a> From<Text<'a>> for crate::Component<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
+impl<'a, Message: 'a> IntoElement<Message> for Text<'a> {
     fn size(&mut self, size: Size) {
         if self.size.is_none() {
             self.size = Some(size.text_size());
@@ -214,7 +214,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Text<'a> {
         }
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         self.build().into()
     }
 }
@@ -359,8 +362,11 @@ impl<'a, Message: 'a> From<Blockquote<'a>> for Component<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for Blockquote<'a> {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+impl<'a, Message: 'a> IntoElement<Message> for Blockquote<'a> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let Blockquote { body } = *self;
 
         iced_widget::Row::new()
@@ -435,8 +441,11 @@ impl<'a, Message: 'a> From<List<'a, Message>> for Component<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for List<'a, Message> {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+impl<'a, Message: 'a> IntoElement<Message> for List<'a, Message> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let List { items, .. } = *self;
 
         let column = items.into_iter().fold(

@@ -124,7 +124,7 @@ impl<'a, Message: 'a> From<Column<'a, Message>> for crate::Component<'a, Message
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for Column<'a, Message> {
+impl<'a, Message: 'a> IntoElement<Message> for Column<'a, Message> {
     fn size(&mut self, size: Size) {
         for child in &mut self.children {
             child.size(size);
@@ -143,7 +143,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Column<'a, Message> {
         }
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let iced_children: Vec<iced_core::Element<'a, Message, Theme, Renderer>> = self
             .children
             .into_iter()

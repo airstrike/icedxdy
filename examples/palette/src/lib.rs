@@ -11,6 +11,7 @@
 
 use std::collections::HashSet;
 
+use iced::widget::qr_code;
 use iced::{Fill, Task};
 use icedxdy::Theme;
 use icedxdy::theme;
@@ -57,6 +58,21 @@ pub struct State {
     pub open_notifications: HashSet<String>,
     pub armed: bool,
     pub deploying: bool,
+}
+
+fn qr_data() -> &'static qr_code::Data {
+    use std::cell::OnceCell;
+    thread_local! {
+        static QR: OnceCell<&'static qr_code::Data> = const { OnceCell::new() };
+    }
+    QR.with(|cell| {
+        *cell.get_or_init(|| {
+            Box::leak(Box::new(
+                qr_code::Data::new("https://github.com/airstrike/icedxdy")
+                    .expect("static URL fits inside QR capacity"),
+            ))
+        })
+    })
 }
 
 impl State {

@@ -155,8 +155,11 @@ impl<'a, Message: Clone + 'a> From<Breadcrumb<'a, Message>> for Component<'a, Me
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Breadcrumb<'a, Message> {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for Breadcrumb<'a, Message> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let Breadcrumb { items, separator } = *self;
 
         let make_separator: SeparatorFn<'a, Message> =

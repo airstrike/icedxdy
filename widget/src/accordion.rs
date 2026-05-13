@@ -250,8 +250,11 @@ impl<'a, Message: 'a> From<Accordion<'a, Message>> for Component<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> crate::component::IntoElement<'a, Message> for Accordion<'a, Message> {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+impl<'a, Message: 'a> crate::component::IntoElement<Message> for Accordion<'a, Message> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         (*self).into()
     }
 }

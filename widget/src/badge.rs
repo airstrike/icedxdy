@@ -313,7 +313,7 @@ impl<'a, Message: Clone + 'a> From<Badge<'a, Message>> for Component<'a, Message
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Badge<'a, Message> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for Badge<'a, Message> {
     fn size(&mut self, size: crate::Size) {
         self.content.size(size);
     }
@@ -326,7 +326,10 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Badge<'a, Message> {
         self.content.line_height(line_height);
     }
 
-    fn into_element(mut self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(mut self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         // Push text-xs (12px), medium, and `leading-4` (16px) down to content
         // (nova `font-medium text-xs leading-none` — the badge wrapper supplies
         // the explicit `leading-4` parent so the rendered pill height matches

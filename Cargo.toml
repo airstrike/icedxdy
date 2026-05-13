@@ -53,13 +53,15 @@ iced = "0.15.0-dev"
 iced_core = "0.15.0-dev"
 iced_runtime = "0.15.0-dev"
 iced_selector = "0.15.0-dev"
-iced_widget = "0.15.0-dev"
+iced_widget = { version = "0.15.0-dev", features = ["qr_code"] }
 # Sweeten ships an enhanced data-grid `Table` (border, sticky header,
 # header underline) on its `dev` branch. Once `dev` merges to `master`
 # upstream, drop the `branch` qualifier.
 sweeten = { git = "https://github.com/airstrike/sweeten.git", branch = "dev" }
 log = "0.4"
-pulldown-cmark = { version = "0.12", default-features = false, features = ["html"] }
+pulldown-cmark = { version = "0.12", default-features = false, features = [
+  "html",
+] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tree-sitter = "0.26"
@@ -88,7 +90,7 @@ crate-type = ["lib"]
 crate-type = ["lib"]
 
 [patch.crates-io]
-iced = { path = "/Users/andy/projects/iced" }
+iced = { path = "/Users/andy/projects/iced", features = ["qr_code"] }
 iced_core = { path = "/Users/andy/projects/iced/core" }
 iced_runtime = { path = "/Users/andy/projects/iced/runtime" }
 iced_selector = { path = "/Users/andy/projects/iced/selector" }

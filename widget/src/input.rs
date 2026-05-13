@@ -177,7 +177,7 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>> for Component<'a, Message
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Input<'a, Message> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for Input<'a, Message> {
     fn size(&mut self, size: Size) {
         // Only override if user didn't explicitly set
         if self.size == Size::Default {
@@ -185,7 +185,10 @@ impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Input<'a, Message> {
         }
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         (*self).into()
     }
 }

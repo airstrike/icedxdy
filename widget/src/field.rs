@@ -224,8 +224,11 @@ impl<'a, Message: Clone + 'a> From<Field<'a, Message>> for Component<'a, Message
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for Field<'a, Message> {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let Field {
             label,
             content,

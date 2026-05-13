@@ -4,10 +4,9 @@
 //! real wiring lands later on `feat/style-api` via the `Tweak` atom
 //! system; this file just renders the shape.
 
-use iced::widget::space;
+use iced::widget::{qr_code, space};
 use iced::{Center, Fill};
 use icedxdy::theme;
-use icedxdy::widget::column::Column;
 use icedxdy::widget::row::Row;
 use icedxdy::widget::{badge, button, column, container, row, sidebar, text};
 use icedxdy::{Component, Theme};
@@ -15,11 +14,9 @@ use icedxdy::{Component, Theme};
 use crate::{Message, State};
 
 const RAIL_WIDTH: f32 = 240.0;
-const QR_CELLS: usize = 8;
-const QR_CELL_PX: f32 = 10.0;
-const QR_GAP_PX: f32 = 1.0;
+const QR_CELL_PX: f32 = 2.5;
 
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let content = column![
         style_group(),
         base_color_group(),
@@ -29,7 +26,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         variant_group(),
         echo_block(),
         space::vertical(),
-        footer_block(),
+        footer_block(state),
     ]
     .spacing(8)
     .height(Fill)
@@ -170,49 +167,16 @@ fn echo_block() -> Component<'static, Message> {
     container(inner).padding([4, 8]).width(Fill).into()
 }
 
-fn footer_block() -> Component<'static, Message> {
-    let qr = qr_placeholder();
+fn footer_block(_state: &State) -> Component<'static, Message> {
+    let qr: iced::Element<'static, Message, Theme> =
+        qr_code(crate::qr_data()).cell_size(QR_CELL_PX).into();
 
     let get_code = button("Get Code").width(Fill).on_press(Message::Noop);
 
-    let inner = column![qr, get_code].spacing(8).width(Fill).align_x(Center);
+    let inner = column![Component::from(qr), get_code]
+        .spacing(8)
+        .width(Fill)
+        .align_x(Center);
 
     container(inner).padding([8, 8]).width(Fill).into()
-}
-
-fn qr_placeholder() -> Component<'static, Message> {
-    let rows: Vec<Component<'static, Message>> = (0..QR_CELLS)
-        .map(|r| {
-            let cells: Vec<Component<'static, Message>> =
-                (0..QR_CELLS).map(|c| qr_cell(qr_filled(r, c))).collect();
-            Row::with_children(cells).spacing(QR_GAP_PX).into()
-        })
-        .collect();
-
-    Column::with_children(rows).spacing(QR_GAP_PX).into()
-}
-
-fn qr_cell(filled: bool) -> Component<'static, Message> {
-    container(space::vertical())
-        .width(QR_CELL_PX)
-        .height(QR_CELL_PX)
-        .style(move |t: &Theme| {
-            use theme::container::Style;
-            let color = if filled {
-                t.sidebar.foreground
-            } else {
-                t.sidebar.background
-            };
-            Style {
-                background: Some(color.into()),
-                ..Style::default()
-            }
-        })
-        .into()
-}
-
-fn qr_filled(r: usize, c: usize) -> bool {
-    let r = r as u32;
-    let c = c as u32;
-    ((r * 3 + c * 5) ^ (r ^ c).wrapping_mul(7)).count_ones() & 1 == 1
 }

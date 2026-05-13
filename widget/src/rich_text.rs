@@ -536,7 +536,7 @@ impl<'a, Message: 'a> From<RichText<'a>> for Component<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for RichText<'a> {
+impl<'a, Message: 'a> IntoElement<Message> for RichText<'a> {
     fn size(&mut self, size: crate::Size) {
         if self.size.is_none() {
             self.size = Some(Pixels(size.text_size()));
@@ -557,7 +557,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for RichText<'a> {
         }
     }
 
-    fn into_element(self: Box<Self>) -> Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         (*self).into()
     }
 }

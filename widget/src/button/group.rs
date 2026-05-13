@@ -209,8 +209,11 @@ impl<'a, Message: Clone + 'a> From<ButtonGroup<'a, Message>> for Component<'a, M
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for ButtonGroup<'a, Message> {
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for ButtonGroup<'a, Message> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let ButtonGroup {
             items,
             orientation,

@@ -82,12 +82,15 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<'a, Message> for SidebarMenuAction<'a, Message> {
+impl<'a, Message: Clone + 'a> IntoElement<Message> for SidebarMenuAction<'a, Message> {
     fn size(&mut self, _size: Size) {
         // Fixed size, ignore parent hints
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         (*self).into()
     }
 }

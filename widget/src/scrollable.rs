@@ -192,7 +192,7 @@ impl<'a, Message: 'a> From<Scrollable<'a, Message>> for crate::Component<'a, Mes
     }
 }
 
-impl<'a, Message: 'a> IntoElement<'a, Message> for Scrollable<'a, Message> {
+impl<'a, Message: 'a> IntoElement<Message> for Scrollable<'a, Message> {
     fn size(&mut self, size: crate::Size) {
         self.content.size(size);
     }
@@ -201,7 +201,10 @@ impl<'a, Message: 'a> IntoElement<'a, Message> for Scrollable<'a, Message> {
         self.content.weight(weight);
     }
 
-    fn into_element(self: Box<Self>) -> iced_core::Element<'a, Message, Theme, Renderer> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
         let mut s = widget::Scrollable::with_direction(self.content.into_iced(), self.direction)
             .width(self.width)
             .height(self.height)
