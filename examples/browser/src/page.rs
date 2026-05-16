@@ -394,27 +394,6 @@ fn render_example<'a>(
     viewer: &'a SnippetViewer,
     page: &'a dyn Page,
 ) -> iced::Element<'a, super::Message, Theme> {
-    // Hero (empty-title) example uses min_height so taller content (e.g.
-    // inline article previews if any) can grow; non-hero examples pin
-    // height to PREVIEW_HEIGHT.
-    let preview_el: iced::Element<'_, super::Message, Theme> = if title.is_empty() {
-        container(page.preview(id))
-            .center(Fill)
-            .min_height(PREVIEW_HEIGHT)
-            .width(Fill)
-            .padding(PREVIEW_PADDING)
-            .style(card_preview)
-            .into()
-    } else {
-        container(page.preview(id))
-            .center(Fill)
-            .height(PREVIEW_HEIGHT)
-            .width(Fill)
-            .padding(PREVIEW_PADDING)
-            .style(card_preview)
-            .into()
-    };
-
     let code: Option<iced::Element<'_, super::Message, Theme>> =
         (!snippet_path.is_empty()).then(|| {
             let body = st
@@ -422,49 +401,48 @@ fn render_example<'a>(
                 .get(snippet_path)
                 .and_then(|opt| opt.as_ref())
                 .map(|items| snippet(page_index, items, viewer))
-                .unwrap_or_else(|| text("Loading...").into());
-
-            let inner = container(body)
-                .padding(iced::Padding::default().top(12).bottom(12).left(16))
-                .width(Fill)
-                .style(code_block_panel);
-
-            if st.code_expanded.contains(&block_pos) {
-                let copy_btn: Component<'_, super::Message> = button::ghost(icon::copy().size(14))
-                    .size(Sm)
-                    .square()
-                    .on_press(super::Message::Page(
-                        page_index,
-                        Message::CopyCode(block_pos),
-                    ))
-                    .into();
-
-                let copy_corner = container(copy_btn)
-                    .align_x(End)
-                    .align_y(Start)
-                    .padding([8, 8])
-                    .width(Fill)
-                    .height(Fill);
-
-                stack![inner, copy_corner].into()
-            } else {
-                let truncated = inner.max_height(COLLAPSED_CODE_HEIGHT).clip(true);
-
-                let view_code_btn: Component<'_, super::Message> = button("View Code")
-                    .style(theme::button::Outline + Opaque + radius(Lg))
-                    .on_press(super::Message::Page(
-                        page_index,
-                        Message::ExpandCode(block_pos),
-                    ))
-                    .into();
-
-                let overlay = container(view_code_btn)
-                    .center(Fill)
-                    .style(code_fade_overlay)
-                    .height(COLLAPSED_CODE_HEIGHT);
-                stack![truncated, overlay].into()
-            }
+                .unwrap_or_else(|| text("Missing snippet!").into());
+            code_panel(
+                page_index,
+                block_pos,
+                body,
+                st.code_expanded.contains(&block_pos),
+            )
         });
+
+    example_card(depth, title, description, page.preview(id), code)
+}
+
+/// Render shadcn's example-card chrome: an optional depth-aware heading
+/// (`h2`/`h3`) and muted description, then the bordered card — a 288px
+/// preview surface over an optional collapsible code block. Shared by
+/// the page renderer and the standalone `#[granita::preview]` cards
+/// under `component/`. An empty `title` selects the hero form: no
+/// heading, and a `min_height` preview surface so tall content grows.
+pub fn example_card<'a>(
+    depth: u8,
+    title: &'a str,
+    description: Option<&'a str>,
+    preview: iced::Element<'a, super::Message, Theme>,
+    code: Option<iced::Element<'a, super::Message, Theme>>,
+) -> iced::Element<'a, super::Message, Theme> {
+    let preview_el: iced::Element<'_, super::Message, Theme> = if title.is_empty() {
+        container(preview)
+            .center(Fill)
+            .min_height(PREVIEW_HEIGHT)
+            .width(Fill)
+            .padding(PREVIEW_PADDING)
+            .style(card_preview)
+            .into()
+    } else {
+        container(preview)
+            .center(Fill)
+            .height(PREVIEW_HEIGHT)
+            .width(Fill)
+            .padding(PREVIEW_PADDING)
+            .style(card_preview)
+            .into()
+    };
 
     let divider: Option<iced::Element<'_, super::Message, Theme>> =
         code.as_ref().map(|_| rule::horizontal(1).into());
@@ -492,6 +470,59 @@ fn render_example<'a>(
     }
     col = col.push(card_el);
     col.into()
+}
+
+/// The collapsible code panel beneath a preview. Until expanded it is
+/// clipped to [`COLLAPSED_CODE_HEIGHT`] under a fade overlay carrying
+/// the "View Code" button; once expanded it shows the full snippet with
+/// a top-right copy button. Split out of [`render_example`] so
+/// `#[granita::preview]` cards reuse the exact chrome.
+pub fn code_panel<'a>(
+    page_index: usize,
+    block_pos: usize,
+    body: Component<'a, super::Message>,
+    expanded: bool,
+) -> iced::Element<'a, super::Message, Theme> {
+    let inner = container(body)
+        .padding(iced::Padding::default().top(12).bottom(12).left(16))
+        .width(Fill)
+        .style(code_block_panel);
+
+    if expanded {
+        let copy_btn: Component<'_, super::Message> = button::ghost(icon::copy().size(14))
+            .size(Sm)
+            .square()
+            .on_press(super::Message::Page(
+                page_index,
+                Message::CopyCode(block_pos),
+            ))
+            .into();
+
+        let copy_corner = container(copy_btn)
+            .align_x(End)
+            .align_y(Start)
+            .padding([8, 8])
+            .width(Fill)
+            .height(Fill);
+
+        stack![inner, copy_corner].into()
+    } else {
+        let truncated = inner.max_height(COLLAPSED_CODE_HEIGHT).clip(true);
+
+        let view_code_btn: Component<'_, super::Message> = button("View Code")
+            .style(theme::button::Outline + Opaque + radius(Lg))
+            .on_press(super::Message::Page(
+                page_index,
+                Message::ExpandCode(block_pos),
+            ))
+            .into();
+
+        let overlay = container(view_code_btn)
+            .center(Fill)
+            .style(code_fade_overlay)
+            .height(COLLAPSED_CODE_HEIGHT);
+        stack![truncated, overlay].into()
+    }
 }
 
 /// Right-side "On This Page" navigation.
@@ -629,7 +660,7 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         .into()
 }
 
-fn snippet<'a>(
+pub fn snippet<'a>(
     page_index: usize,
     items: &'a Vec<markdown::Item>,
     viewer: &'a SnippetViewer,
@@ -913,7 +944,7 @@ impl State {
 /// Extract the contents of the FIRST fenced code block from a markdown
 /// source — strips the opening ```lang fence and the closing ```. Falls
 /// back to the full input if no fence is present.
-fn extract_code_from_markdown(raw: &str) -> String {
+pub fn extract_code_from_markdown(raw: &str) -> String {
     let mut inside = false;
     let mut out: Vec<&str> = Vec::new();
     for line in raw.lines() {

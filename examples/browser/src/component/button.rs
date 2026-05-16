@@ -14,7 +14,7 @@
 // widget we have not yet ported, and As Child relies on Tailwind's
 // `data-slot` cascade that we don't reproduce.
 
-mod default;
+pub(crate) mod default;
 mod destructive;
 mod ghost;
 mod icon;

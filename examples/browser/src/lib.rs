@@ -14,6 +14,7 @@ pub mod font;
 pub mod fonts;
 pub mod icon;
 pub mod page;
+pub mod probe;
 
 use iced::widget::column;
 use iced::{Element, Subscription, Task};
