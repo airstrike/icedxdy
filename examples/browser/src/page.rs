@@ -1,5 +1,5 @@
 use std::collections::{BTreeSet, HashMap};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use tokio::fs::read_to_string;
 
@@ -867,7 +867,10 @@ impl State {
         let tasks: Vec<Task<super::Message>> = paths
             .into_iter()
             .map(|path| {
-                let buf = PathBuf::from(path);
+                let buf = Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .parent()
+                    .and_then(Path::parent)
+                    .map_or_else(|| PathBuf::from(path), |root| root.join(path));
                 Task::perform(
                     async move { read_to_string(buf).await.map_err(|e| e.to_string()) },
                     move |result| super::Message::Page(pi, Message::SnippetLoaded(path, result)),
