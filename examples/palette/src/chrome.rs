@@ -36,14 +36,14 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .width(Fill);
 
     let mode_button = match state.mode {
-        Mode::Light => button("Dark").on_press(Message::SetMode(Mode::Dark)),
-        Mode::Dark => button("Light").on_press(Message::SetMode(Mode::Light)),
+        Mode::Light => button::ghost("\u{263E}").on_press(Message::SetMode(Mode::Dark)),
+        Mode::Dark => button::ghost("\u{2600}").on_press(Message::SetMode(Mode::Light)),
     };
 
     let auth = row![
         mode_button,
         button::ghost("Sign In").on_press(Message::Noop),
-        button("Get for Free").on_press(Message::Noop),
+        button::outline("Get for Free").on_press(Message::Noop),
     ]
     .spacing(8)
     .align_y(Center);

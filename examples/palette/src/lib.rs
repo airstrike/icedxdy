@@ -82,20 +82,25 @@ impl State {
         } else {
             Mode::Light
         };
-        (
-            Self {
-                mode,
-                connected: true,
-                email: "ada@icedxdy.dev".into(),
-                name: "Ada Lovelace".into(),
-                accept_terms: true,
-                subscribe_emails: false,
-                open_notifications: ["welcome".to_owned()].into_iter().collect(),
-                armed: false,
-                deploying: false,
-            },
-            Task::none(),
-        )
+        (Self::with_mode(mode), Task::none())
+    }
+
+    pub fn dark() -> Self {
+        Self::with_mode(Mode::Dark)
+    }
+
+    fn with_mode(mode: Mode) -> Self {
+        Self {
+            mode,
+            connected: true,
+            email: "ada@icedxdy.dev".into(),
+            name: "Ada Lovelace".into(),
+            accept_terms: true,
+            subscribe_emails: false,
+            open_notifications: ["welcome".to_owned()].into_iter().collect(),
+            armed: false,
+            deploying: false,
+        }
     }
 
     pub fn update(&mut self, msg: Message) -> Task<Message> {
@@ -190,7 +195,7 @@ pub fn chart(state: &State) -> iced::Element<'_, Message, Theme> {
     chart::view(state)
 }
 
-#[granita::preview(state = State::new().0, group = "tiles")]
+#[granita::preview(state = State::dark(), group = "tiles")]
 pub fn env_vars(state: &State) -> iced::Element<'_, Message, Theme> {
     use crate::tiles::env_vars;
     env_vars::view(state)

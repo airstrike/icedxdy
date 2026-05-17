@@ -6,7 +6,9 @@
 
 use iced::widget::{qr_code, space};
 use iced::{Center, Fill};
+use icedxdy::core::Border;
 use icedxdy::theme;
+use icedxdy::theme::container::{Style, card};
 use icedxdy::widget::row::Row;
 use icedxdy::widget::{badge, button, column, container, row, sidebar, text};
 use icedxdy::{Component, Theme};
@@ -14,21 +16,22 @@ use icedxdy::{Component, Theme};
 use crate::{Message, State};
 
 const RAIL_WIDTH: f32 = 240.0;
-const QR_CELL_PX: f32 = 2.5;
+const QR_CELL_PX: f32 = 2.4;
+const SWATCH_PX: f32 = 18.0;
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let content = column![
         style_group(),
         base_color_group(),
-        border_radius_group(),
         heading_font_group(),
         body_font_group(),
+        border_radius_group(),
         variant_group(),
-        echo_block(),
         space::vertical(),
+        bottom_actions(),
         footer_block(state),
     ]
-    .spacing(8)
+    .spacing(10)
     .height(Fill)
     .width(Fill);
 
@@ -39,23 +42,55 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
 }
 
 fn style_group() -> Component<'static, Message> {
-    let chip_row = row![badge::secondary("preset 50")].align_y(Center);
-
-    let actions = row![
-        button::ghost("Open Preset").on_press(Message::Noop),
-        button::ghost("Random").on_press(Message::Noop),
-        button::ghost("Shuffle").on_press(Message::Noop),
-    ]
-    .spacing(4)
-    .align_y(Center);
-
     sidebar::group([
         sidebar::group_label("Style").into(),
-        sidebar::group_content([chip_row.into(), actions.into()])
-            .spacing(8)
-            .into(),
+        sidebar::group_content([preset_card()]).into(),
     ])
     .into()
+}
+
+fn preset_card() -> Component<'static, Message> {
+    let name = row![
+        text::small("preset 50").medium(),
+        space::horizontal(),
+        text::xs("\u{2714}").style(theme::text::Muted),
+    ]
+    .align_y(Center)
+    .width(Fill);
+
+    let swatches = row![
+        swatch(|t: &Theme| t.primary.base),
+        swatch(|t: &Theme| t.accent.base),
+        swatch(|t: &Theme| t.muted.base),
+        swatch(|t: &Theme| t.destructive.base),
+        swatch(|t: &Theme| t.success.base),
+    ]
+    .spacing(6)
+    .width(Fill);
+
+    let inner = column![name, swatches].spacing(10).width(Fill);
+
+    container(inner)
+        .padding(12)
+        .width(Fill)
+        .style(card)
+        .into()
+}
+
+fn swatch(getter: fn(&Theme) -> icedxdy::core::Color) -> Component<'static, Message> {
+    container(space::vertical())
+        .width(SWATCH_PX)
+        .height(SWATCH_PX)
+        .style(move |t: &Theme| Style {
+            background: Some(getter(t).into()),
+            border: Border {
+                radius: 4.0.into(),
+                width: 1.0,
+                color: t.neutral.border,
+            },
+            ..Style::default()
+        })
+        .into()
 }
 
 fn base_color_group() -> Component<'static, Message> {
@@ -156,15 +191,64 @@ fn variant_group() -> Component<'static, Message> {
     .into()
 }
 
-fn echo_block() -> Component<'static, Message> {
+fn bottom_actions() -> Component<'static, Message> {
     let inner = column![
-        text::xs("Default").style(theme::text::Foreground),
-        text::xs("Solid").style(theme::text::Muted),
+        radio_row("Default", true),
+        radio_row("Solid", true),
+        row![
+            text::xs("\u{2295}").style(theme::text::Muted),
+            badge::secondary("preset 50"),
+        ]
+        .spacing(6)
+        .align_y(Center),
+        button::ghost("\u{2197}  Open Preset")
+            .width(Fill)
+            .on_press(Message::Noop),
+        button::ghost("\u{21BB}  Shuffle")
+            .width(Fill)
+            .on_press(Message::Noop),
     ]
-    .spacing(2)
+    .spacing(6)
     .width(Fill);
 
     container(inner).padding([4, 8]).width(Fill).into()
+}
+
+fn radio_row(label: &'static str, active: bool) -> Component<'static, Message> {
+    let bullet: Component<'static, Message> = container(space::vertical())
+        .width(8.0)
+        .height(8.0)
+        .style(move |t: &Theme| Style {
+            background: if active {
+                Some(t.neutral.foreground.into())
+            } else {
+                None
+            },
+            border: Border {
+                radius: 999.0.into(),
+                width: 1.0,
+                color: if active {
+                    t.neutral.foreground
+                } else {
+                    t.neutral.border
+                },
+            },
+            ..Style::default()
+        })
+        .into();
+
+    let text_widget = if active {
+        text::xs(label).style(theme::text::Foreground)
+    } else {
+        text::xs(label).style(theme::text::Muted)
+    };
+
+    let inner = row![bullet, text_widget]
+        .spacing(8)
+        .align_y(Center)
+        .width(Fill);
+
+    container(inner).padding([2, 0]).width(Fill).into()
 }
 
 fn footer_block(_state: &State) -> Component<'static, Message> {

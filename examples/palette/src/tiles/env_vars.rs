@@ -1,4 +1,4 @@
-//! Environment variables form — paired KEY/value inputs and a Deploy CTA.
+//! Environment variables — pinned KEY chip + value, with Edit/Deploy footer.
 
 use iced::widget::space;
 use iced::Fill;
@@ -13,32 +13,33 @@ struct EnvVar {
     value: &'static str,
 }
 
+const DOTS: &str = "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}";
+
 const ENV: &[EnvVar] = &[
-    EnvVar { key: "DATABASE_URL", value: "postgres://localhost:5432/icedxdy" },
-    EnvVar { key: "NEXT_PUBLIC_API", value: "https://api.icedxdy.dev" },
-    EnvVar { key: "STRIPE_KEY", value: "sk_live_\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}" },
-    EnvVar { key: "FEATURE_FLAGS", value: "nova,radix" },
+    EnvVar { key: "DATABASE_URL", value: DOTS },
+    EnvVar { key: "NEXT_PUBLIC_API", value: "https://api.example.com" },
+    EnvVar { key: "STRIPE_SECRET", value: DOTS },
 ];
 
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let rows: Vec<Component<'static, Message>> = ENV.iter().map(env_row).collect();
 
     let footer = row![
-        button::ghost("Save").on_press(Message::Noop),
+        button::outline("Edit").on_press(Message::Noop),
         space::horizontal(),
-        button("Deploy").on_press(Message::Noop),
+        button::secondary("Deploy").on_press(Message::Noop),
     ]
     .spacing(8)
     .width(Fill);
 
     let body = column(rows.into_iter().chain([footer.into()]))
-        .spacing(12)
+        .spacing(10)
         .width(Fill);
 
     card::card(
         column([
             card::header("Environment Variables")
-                .description("Deploy-time keys for the runtime.")
+                .description("Production \u{00b7} 8 variables")
                 .into(),
             card::content(container(body).padding([0, 16]).width(Fill)).into(),
         ])
@@ -52,8 +53,8 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
 
 fn env_row(v: &EnvVar) -> Component<'static, Message> {
     row![
-        input("KEY", v.key).width(Fill),
-        input("value", v.value).width(Fill),
+        input("", v.key).width(Fill),
+        input("", v.value).width(Fill),
     ]
     .spacing(8)
     .width(Fill)

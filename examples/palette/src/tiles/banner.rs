@@ -1,10 +1,10 @@
 //! Observability-Plus-style hero — aspect-ratio thumbnail + text + CTA.
 
 use iced::Fill;
+use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme::container::card_muted;
 use icedxdy::widget::{aspect_ratio, button, column, container, row, text};
-use icedxdy::{Component, Theme};
 
 use crate::{Message, State};
 
@@ -18,22 +18,19 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     )
     .max_width(180.0);
 
-    let copy = column([
-        text::large("Observability Plus").into(),
+    let copy = column![
+        text::large("Observability +").width(Fill),
         text::p(
             "Replacing Monitoring across the org. Drop-in OTLP support, faster \
              queries, lower cost.",
         )
-        .width(Fill)
-        .into(),
-        button("Learn more").on_press(Message::Noop).into(),
-    ])
+        .width(Fill),
+        button("Learn more").on_press(Message::Noop),
+    ]
     .spacing(8)
     .width(Fill);
 
-    let body = row![Component::from(preview), copy]
-        .spacing(16)
-        .width(Fill);
+    let body = row![preview, copy].spacing(16).width(Fill);
 
     card::card(container(body).padding(16)).width(Fill).into()
 }
