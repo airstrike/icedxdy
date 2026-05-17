@@ -12,7 +12,7 @@ iced_widget.workspace = true
 fount = { git = "https://github.com/airstrike/fount" }
 tokio = { version = "1", features = ["fs"] }
 # granita = { path = "/Users/andy/projects/granita/crates/granita" }
-granita = { git = "https://github.com/airstrike/granita" }
+granita = { git = "https://github.com/airstrike/granita", features = ["mcp"] }
 
 [build-dependencies]
 iced_lucide = { git = "https://github.com/airstrike/iced_lucide" }

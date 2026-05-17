@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "engage": {
+      "args": ["mcp"],
+      "command": "engage"
+    },
+    "granita": {
+      "command": "/Users/andy/.cargo/bin/cargo-granita-mcp",
+      "args": ["granita-mcp", "serve", "-p", "browser"],
+      "cwd": "/Users/andy/projects/icedxdy/examples/browser",
+      "env": { "RUSTUP_TOOLCHAIN": "dev" }
+    }
+  }
+}
