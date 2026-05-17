@@ -69,12 +69,8 @@ pub use operation::scrollable::{AbsoluteOffset, RelativeOffset};
 /// Default `Theme` generic is `icedxdy_core::Theme` so the vendored
 /// `Catalog` impl in [`super::element`] is the one selected when the
 /// generic is left at the default — same shape as `widget/src/button/widget.rs`.
-pub struct Scrollable<
-    'a,
-    Message,
-    Theme = icedxdy_core::Theme,
-    Renderer = iced_widget::Renderer,
-> where
+pub struct Scrollable<'a, Message, Theme = icedxdy_core::Theme, Renderer = iced_widget::Renderer>
+where
     Theme: Catalog,
     Renderer: text::Renderer,
 {
@@ -2161,117 +2157,117 @@ mod bridge {
 
     use super::{AutoScroll, Rail, Scroller, Status, Style};
 
-impl From<scrollable::Style> for Style {
-    fn from(s: scrollable::Style) -> Self {
-        Self {
-            container: s.container,
-            vertical_rail: s.vertical_rail.into(),
-            horizontal_rail: s.horizontal_rail.into(),
-            gap: s.gap,
-            auto_scroll: s.auto_scroll.into(),
+    impl From<scrollable::Style> for Style {
+        fn from(s: scrollable::Style) -> Self {
+            Self {
+                container: s.container,
+                vertical_rail: s.vertical_rail.into(),
+                horizontal_rail: s.horizontal_rail.into(),
+                gap: s.gap,
+                auto_scroll: s.auto_scroll.into(),
+            }
         }
     }
-}
 
-impl From<scrollable::Rail> for Rail {
-    fn from(r: scrollable::Rail) -> Self {
-        Self {
-            background: r.background,
-            border: r.border,
-            scroller: r.scroller.into(),
+    impl From<scrollable::Rail> for Rail {
+        fn from(r: scrollable::Rail) -> Self {
+            Self {
+                background: r.background,
+                border: r.border,
+                scroller: r.scroller.into(),
+            }
         }
     }
-}
 
-impl From<scrollable::Scroller> for Scroller {
-    fn from(s: scrollable::Scroller) -> Self {
-        Self {
-            background: s.background,
-            border: s.border,
+    impl From<scrollable::Scroller> for Scroller {
+        fn from(s: scrollable::Scroller) -> Self {
+            Self {
+                background: s.background,
+                border: s.border,
+            }
         }
     }
-}
 
-impl From<scrollable::AutoScroll> for AutoScroll {
-    fn from(a: scrollable::AutoScroll) -> Self {
-        Self {
-            background: a.background,
-            border: a.border,
-            shadow: a.shadow,
-            icon: a.icon,
+    impl From<scrollable::AutoScroll> for AutoScroll {
+        fn from(a: scrollable::AutoScroll) -> Self {
+            Self {
+                background: a.background,
+                border: a.border,
+                shadow: a.shadow,
+                icon: a.icon,
+            }
         }
     }
-}
 
-impl From<scrollable::Status> for Status {
-    fn from(s: scrollable::Status) -> Self {
-        match s {
-            scrollable::Status::Active {
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            } => Status::Active {
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            },
-            scrollable::Status::Hovered {
-                is_horizontal_scrollbar_hovered,
-                is_vertical_scrollbar_hovered,
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            } => Status::Hovered {
-                is_horizontal_scrollbar_hovered,
-                is_vertical_scrollbar_hovered,
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            },
-            scrollable::Status::Dragged {
-                is_horizontal_scrollbar_dragged,
-                is_vertical_scrollbar_dragged,
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            } => Status::Dragged {
-                is_horizontal_scrollbar_dragged,
-                is_vertical_scrollbar_dragged,
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            },
+    impl From<scrollable::Status> for Status {
+        fn from(s: scrollable::Status) -> Self {
+            match s {
+                scrollable::Status::Active {
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                } => Status::Active {
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                },
+                scrollable::Status::Hovered {
+                    is_horizontal_scrollbar_hovered,
+                    is_vertical_scrollbar_hovered,
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                } => Status::Hovered {
+                    is_horizontal_scrollbar_hovered,
+                    is_vertical_scrollbar_hovered,
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                },
+                scrollable::Status::Dragged {
+                    is_horizontal_scrollbar_dragged,
+                    is_vertical_scrollbar_dragged,
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                } => Status::Dragged {
+                    is_horizontal_scrollbar_dragged,
+                    is_vertical_scrollbar_dragged,
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                },
+            }
         }
     }
-}
 
-impl From<Status> for scrollable::Status {
-    fn from(s: Status) -> Self {
-        match s {
-            Status::Active {
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            } => scrollable::Status::Active {
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            },
-            Status::Hovered {
-                is_horizontal_scrollbar_hovered,
-                is_vertical_scrollbar_hovered,
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            } => scrollable::Status::Hovered {
-                is_horizontal_scrollbar_hovered,
-                is_vertical_scrollbar_hovered,
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            },
-            Status::Dragged {
-                is_horizontal_scrollbar_dragged,
-                is_vertical_scrollbar_dragged,
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            } => scrollable::Status::Dragged {
-                is_horizontal_scrollbar_dragged,
-                is_vertical_scrollbar_dragged,
-                is_horizontal_scrollbar_disabled,
-                is_vertical_scrollbar_disabled,
-            },
+    impl From<Status> for scrollable::Status {
+        fn from(s: Status) -> Self {
+            match s {
+                Status::Active {
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                } => scrollable::Status::Active {
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                },
+                Status::Hovered {
+                    is_horizontal_scrollbar_hovered,
+                    is_vertical_scrollbar_hovered,
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                } => scrollable::Status::Hovered {
+                    is_horizontal_scrollbar_hovered,
+                    is_vertical_scrollbar_hovered,
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                },
+                Status::Dragged {
+                    is_horizontal_scrollbar_dragged,
+                    is_vertical_scrollbar_dragged,
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                } => scrollable::Status::Dragged {
+                    is_horizontal_scrollbar_dragged,
+                    is_vertical_scrollbar_dragged,
+                    is_horizontal_scrollbar_disabled,
+                    is_vertical_scrollbar_disabled,
+                },
+            }
         }
     }
-}
 } // end mod bridge

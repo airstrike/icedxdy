@@ -70,11 +70,7 @@ fn preset_card() -> Component<'static, Message> {
 
     let inner = column![name, swatches].spacing(10).width(Fill);
 
-    container(inner)
-        .padding(12)
-        .width(Fill)
-        .style(card)
-        .into()
+    container(inner).padding(12).width(Fill).style(card).into()
 }
 
 fn swatch(getter: fn(&Theme) -> icedxdy::core::Color) -> Component<'static, Message> {
@@ -96,12 +92,10 @@ fn swatch(getter: fn(&Theme) -> icedxdy::core::Color) -> Component<'static, Mess
 fn base_color_group() -> Component<'static, Message> {
     sidebar::group([
         sidebar::group_label("Base Color").into(),
-        sidebar::group_content([
-            button::outline("Neutral  \u{25BE}")
-                .width(Fill)
-                .on_press(Message::Noop)
-                .into(),
-        ])
+        sidebar::group_content([button::outline("Neutral  \u{25BE}")
+            .width(Fill)
+            .on_press(Message::Noop)
+            .into()])
         .into(),
     ])
     .into()
@@ -141,12 +135,10 @@ fn border_radius_group() -> Component<'static, Message> {
 fn heading_font_group() -> Component<'static, Message> {
     sidebar::group([
         sidebar::group_label("Heading Font").into(),
-        sidebar::group_content([
-            button::outline("Inter  \u{25BE}")
-                .width(Fill)
-                .on_press(Message::Noop)
-                .into(),
-        ])
+        sidebar::group_content([button::outline("Inter  \u{25BE}")
+            .width(Fill)
+            .on_press(Message::Noop)
+            .into()])
         .into(),
     ])
     .into()
@@ -155,12 +147,10 @@ fn heading_font_group() -> Component<'static, Message> {
 fn body_font_group() -> Component<'static, Message> {
     sidebar::group([
         sidebar::group_label("Body Font").into(),
-        sidebar::group_content([
-            button::outline("Inter  \u{25BE}")
-                .width(Fill)
-                .on_press(Message::Noop)
-                .into(),
-        ])
+        sidebar::group_content([button::outline("Inter  \u{25BE}")
+            .width(Fill)
+            .on_press(Message::Noop)
+            .into()])
         .into(),
     ])
     .into()

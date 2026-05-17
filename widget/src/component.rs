@@ -265,8 +265,7 @@ where
 }
 
 // ComboBox<T>
-impl<'a, T, Message> IntoElement<Message>
-    for iced_widget::ComboBox<'a, T, Message, Theme, Renderer>
+impl<'a, T, Message> IntoElement<Message> for iced_widget::ComboBox<'a, T, Message, Theme, Renderer>
 where
     T: std::fmt::Display + Clone + 'static,
     Message: Clone + 'a,

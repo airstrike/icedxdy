@@ -1,7 +1,7 @@
 //! Contribution-history heatmap — 7 rows × 24 cols of tinted cells.
 
-use iced::widget::space;
 use iced::Fill;
+use iced::widget::space;
 use icedxdy::card;
 use icedxdy::core::Border;
 use icedxdy::theme::container::Style;
@@ -26,8 +26,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         })
         .collect();
 
-    let grid: Column<'static, Message> =
-        Column::with_children(grid_rows).spacing(GAP_PX);
+    let grid: Column<'static, Message> = Column::with_children(grid_rows).spacing(GAP_PX);
 
     let body = container(grid).padding([0, 16]).width(Fill);
 

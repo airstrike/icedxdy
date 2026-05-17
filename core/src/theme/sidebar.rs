@@ -262,7 +262,10 @@ impl From<Inset> for style::StyleFn<fn(Palette, status::Status) -> style::Style>
     }
 }
 
-fn bridge<F, D>(sf: style::StyleFn<F>, defaults: D) -> iced_widget::container::StyleFn<'static, Theme>
+fn bridge<F, D>(
+    sf: style::StyleFn<F>,
+    defaults: D,
+) -> iced_widget::container::StyleFn<'static, Theme>
 where
     F: Fn(Palette, status::Status) -> style::Style + 'static,
     D: Fn(&Theme) -> style::Style + 'static,

@@ -5,10 +5,10 @@
 
 use iced::Fill;
 use icedxdy::Component;
+use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme;
 use icedxdy::widget::{button, column, container, progress, row, space, text};
-use icedxdy::Theme;
 
 use crate::{Message, State};
 
@@ -19,9 +19,21 @@ struct Target {
 }
 
 const TARGETS: &[Target] = &[
-    Target { label: "Emergency fund", sub: "$8,200 / $12,000", percent: 68.0 },
-    Target { label: "Vacation", sub: "$1,140 / $3,000", percent: 38.0 },
-    Target { label: "New laptop", sub: "$1,890 / $2,000", percent: 94.0 },
+    Target {
+        label: "Emergency fund",
+        sub: "$8,200 / $12,000",
+        percent: 68.0,
+    },
+    Target {
+        label: "Vacation",
+        sub: "$1,140 / $3,000",
+        percent: 38.0,
+    },
+    Target {
+        label: "New laptop",
+        sub: "$1,890 / $2,000",
+        percent: 94.0,
+    },
 ];
 
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
@@ -39,8 +51,12 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .spacing(8)
     .width(Fill);
 
-    let body =
-        column(std::iter::once(lead.into()).chain(rows).chain([footer.into()])).spacing(16);
+    let body = column(
+        std::iter::once(lead.into())
+            .chain(rows)
+            .chain([footer.into()]),
+    )
+    .spacing(16);
 
     card::card(
         column([

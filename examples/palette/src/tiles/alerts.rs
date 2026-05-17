@@ -33,22 +33,19 @@ pub fn view() -> iced::Element<'static, Message, Theme> {
         "Archive older sessions to reclaim space before exports start failing.",
     );
 
-    let destructive = alert::destructive()
-        .title("Payment failed")
-        .description("We couldn't charge the card on file. Update billing to keep this account active.");
+    let destructive = alert::destructive().title("Payment failed").description(
+        "We couldn't charge the card on file. Update billing to keep this account active.",
+    );
 
-    let body: Column<'_, Message> = column([
-        info,
-        success,
-        warning,
-        Component::from(destructive),
-    ])
-    .spacing(12)
-    .width(Fill);
+    let body: Column<'_, Message> = column([info, success, warning, Component::from(destructive)])
+        .spacing(12)
+        .width(Fill);
 
     card::card(
         column([
-            card::header("Alerts").description("Each row sits inside its own tint surface.").into(),
+            card::header("Alerts")
+                .description("Each row sits inside its own tint surface.")
+                .into(),
             card::content(body).into(),
         ])
         .spacing(16)
@@ -69,7 +66,10 @@ fn tinted_alert(
     description: &'static str,
 ) -> Component<'static, Message> {
     let body: Column<'static, Message> = column([
-        text::small(title).medium().style(theme::text::Foreground).into(),
+        text::small(title)
+            .medium()
+            .style(theme::text::Foreground)
+            .into(),
         text::small(description).style(theme::text::Muted).into(),
     ])
     .spacing(4)

@@ -1,10 +1,10 @@
 //! Two-factor authentication tile — switch + descriptive copy.
 
 use iced::Fill;
+use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme;
 use icedxdy::widget::{column, row, space, switch, text};
-use icedxdy::Theme;
 
 use crate::{Message, State};
 

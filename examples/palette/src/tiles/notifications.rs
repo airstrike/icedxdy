@@ -44,17 +44,13 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .map(|note| {
             let body_col = column([
                 text::small(note.body).style(theme::text::Muted).into(),
-                row![
-                    space::horizontal(),
-                    {
-                        let mut b = button("Dismiss")
-                            .style(outline + destructive);
-                        if state.connected {
-                            b = b.on_press(Message::NotificationCleared);
-                        }
-                        b
-                    },
-                ]
+                row![space::horizontal(), {
+                    let mut b = button("Dismiss").style(outline + destructive);
+                    if state.connected {
+                        b = b.on_press(Message::NotificationCleared);
+                    }
+                    b
+                },]
                 .spacing(8)
                 .width(Fill)
                 .into(),

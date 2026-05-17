@@ -7,8 +7,8 @@ pub use widget::{
 };
 
 use crate::component::{Component, IntoElement};
-use iced_core::widget::Id;
 use iced_core::Length;
+use iced_core::widget::Id;
 use iced_widget::Renderer;
 use icedxdy_core::Theme;
 
@@ -133,7 +133,11 @@ impl<'a, Message: 'a> Scrollable<'a, Message> {
     /// Anchor the vertical direction's scroll position.
     pub fn anchor_y(mut self, anchor: Anchor) -> Self {
         match &mut self.direction {
-            Direction::Vertical(scrollbar) | Direction::Both { vertical: scrollbar, .. } => {
+            Direction::Vertical(scrollbar)
+            | Direction::Both {
+                vertical: scrollbar,
+                ..
+            } => {
                 *scrollbar = scrollbar.anchor(anchor);
             }
             Direction::Horizontal(_) => {}
@@ -144,7 +148,11 @@ impl<'a, Message: 'a> Scrollable<'a, Message> {
     /// Anchor the horizontal direction's scroll position.
     pub fn anchor_x(mut self, anchor: Anchor) -> Self {
         match &mut self.direction {
-            Direction::Horizontal(scrollbar) | Direction::Both { horizontal: scrollbar, .. } => {
+            Direction::Horizontal(scrollbar)
+            | Direction::Both {
+                horizontal: scrollbar,
+                ..
+            } => {
                 *scrollbar = scrollbar.anchor(anchor);
             }
             Direction::Vertical(_) => {}

@@ -507,7 +507,8 @@ fn overlay_universal(univ: style::Style, base: Style) -> Style {
         ring: match (univ.ring, univ.ring_width) {
             (None, None) => base.ring,
             (color, width) => Some(Ring {
-                color: color.unwrap_or_else(|| base.ring.map(|r| r.color).unwrap_or(Color::TRANSPARENT)),
+                color: color
+                    .unwrap_or_else(|| base.ring.map(|r| r.color).unwrap_or(Color::TRANSPARENT)),
                 width: width.unwrap_or_else(|| base.ring.map(|r| r.width).unwrap_or(0.0)),
             }),
         },

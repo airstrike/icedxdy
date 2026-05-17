@@ -12,15 +12,14 @@ use icedxdy::{Component, Theme};
 
 use crate::{Message, State};
 
-const BARS: [f32; 12] = [40.0, 65.0, 50.0, 80.0, 95.0, 70.0, 110.0, 85.0, 120.0, 100.0, 75.0, 90.0];
+const BARS: [f32; 12] = [
+    40.0, 65.0, 50.0, 80.0, 95.0, 70.0, 110.0, 85.0, 120.0, 100.0, 75.0, 90.0,
+];
 const BAR_WIDTH: f32 = 20.0;
 const CHART_HEIGHT: f32 = 140.0;
 
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
-    let bars: Vec<Component<'static, Message>> = BARS
-        .iter()
-        .map(|h| bar(*h))
-        .collect();
+    let bars: Vec<Component<'static, Message>> = BARS.iter().map(|h| bar(*h)).collect();
 
     let chart = Row::with_children(bars)
         .spacing(6)
@@ -37,12 +36,9 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .spacing(8)
     .width(Fill);
 
-    let body = column([
-        Component::from(chart),
-        footer.into(),
-    ])
-    .spacing(16)
-    .width(Fill);
+    let body = column([Component::from(chart), footer.into()])
+        .spacing(16)
+        .width(Fill);
 
     card::card(
         column([

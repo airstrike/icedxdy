@@ -89,9 +89,7 @@ pub static BLOCKS: &[page::Block] = &[
             page::Block::Example {
                 id: "nested",
                 title: "Nested",
-                description: Some(
-                    "Nest button groups to create button groups with spacing.",
-                ),
+                description: Some("Nest button groups to create button groups with spacing."),
                 snippet: "examples/browser/snippets/button-group-nested.md",
             },
             page::Block::Example {

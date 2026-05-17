@@ -198,9 +198,7 @@ fn render_item<'a, Message: Clone + 'a>(item: Item<'a, Message>) -> Component<'a
 
 /// Render the current-page crumb. shadcn's `<BreadcrumbPage>` wraps the
 /// label in `text-foreground` to override the list's muted cascade.
-fn render_page<'a, Message: Clone + 'a>(
-    content: Component<'a, Message>,
-) -> Component<'a, Message> {
+fn render_page<'a, Message: Clone + 'a>(content: Component<'a, Message>) -> Component<'a, Message> {
     container(content.into_iced())
         .style(|t: &Theme| Style::default().color(t.neutral.foreground))
         .into()

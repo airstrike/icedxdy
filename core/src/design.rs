@@ -87,46 +87,15 @@ impl Design {
             is_dark: false,
         };
 
-        let primary = tinted_palette(
-            oklch(0.205, 0.0, 0.0),
-            oklch(0.985, 0.0, 0.0),
-            false,
-        );
-        let secondary = tinted_palette(
-            oklch(0.97, 0.0, 0.0),
-            oklch(0.205, 0.0, 0.0),
-            false,
-        );
-        let muted = tinted_palette(
-            oklch(0.97, 0.0, 0.0),
-            oklch(0.556, 0.0, 0.0),
-            false,
-        );
-        let accent = tinted_palette(
-            oklch(0.97, 0.0, 0.0),
-            oklch(0.205, 0.0, 0.0),
-            false,
-        );
-        let destructive = tinted_palette(
-            oklch(0.577, 0.245, 27.325),
-            oklch(0.97, 0.01, 17.0),
-            false,
-        );
-        let info = tinted_palette(
-            oklch(0.55, 0.20, 245.0),
-            oklch(0.985, 0.0, 0.0),
-            false,
-        );
-        let success = tinted_palette(
-            oklch(0.58, 0.18, 150.0),
-            oklch(0.985, 0.0, 0.0),
-            false,
-        );
-        let warning = tinted_palette(
-            oklch(0.72, 0.16, 75.0),
-            oklch(0.205, 0.0, 0.0),
-            false,
-        );
+        let primary = tinted_palette(oklch(0.205, 0.0, 0.0), oklch(0.985, 0.0, 0.0), false);
+        let secondary = tinted_palette(oklch(0.97, 0.0, 0.0), oklch(0.205, 0.0, 0.0), false);
+        let muted = tinted_palette(oklch(0.97, 0.0, 0.0), oklch(0.556, 0.0, 0.0), false);
+        let accent = tinted_palette(oklch(0.97, 0.0, 0.0), oklch(0.205, 0.0, 0.0), false);
+        let destructive =
+            tinted_palette(oklch(0.577, 0.245, 27.325), oklch(0.97, 0.01, 17.0), false);
+        let info = tinted_palette(oklch(0.55, 0.20, 245.0), oklch(0.985, 0.0, 0.0), false);
+        let success = tinted_palette(oklch(0.58, 0.18, 150.0), oklch(0.985, 0.0, 0.0), false);
+        let warning = tinted_palette(oklch(0.72, 0.16, 75.0), oklch(0.205, 0.0, 0.0), false);
 
         let card = surface_palette(
             oklch(1.0, 0.0, 0.0),
@@ -168,8 +137,21 @@ impl Design {
         let input = oklch(0.922, 0.0, 0.0);
 
         build(
-            "Light", neutral, primary, secondary, muted, accent, destructive, info, success,
-            warning, card, popover, code, sidebar, input,
+            "Light",
+            neutral,
+            primary,
+            secondary,
+            muted,
+            accent,
+            destructive,
+            info,
+            success,
+            warning,
+            card,
+            popover,
+            code,
+            sidebar,
+            input,
         )
     }
 
@@ -187,46 +169,15 @@ impl Design {
             is_dark: true,
         };
 
-        let primary = tinted_palette(
-            oklch(0.922, 0.0, 0.0),
-            oklch(0.205, 0.0, 0.0),
-            true,
-        );
-        let secondary = tinted_palette(
-            oklch(0.269, 0.0, 0.0),
-            oklch(0.985, 0.0, 0.0),
-            true,
-        );
-        let muted = tinted_palette(
-            oklch(0.269, 0.0, 0.0),
-            oklch(0.708, 0.0, 0.0),
-            true,
-        );
-        let accent = tinted_palette(
-            oklch(0.371, 0.0, 0.0),
-            oklch(0.985, 0.0, 0.0),
-            true,
-        );
-        let destructive = tinted_palette(
-            oklch(0.704, 0.191, 22.216),
-            oklch(0.58, 0.22, 27.0),
-            true,
-        );
-        let info = tinted_palette(
-            oklch(0.70, 0.16, 245.0),
-            oklch(0.205, 0.0, 0.0),
-            true,
-        );
-        let success = tinted_palette(
-            oklch(0.72, 0.16, 150.0),
-            oklch(0.205, 0.0, 0.0),
-            true,
-        );
-        let warning = tinted_palette(
-            oklch(0.80, 0.15, 80.0),
-            oklch(0.205, 0.0, 0.0),
-            true,
-        );
+        let primary = tinted_palette(oklch(0.922, 0.0, 0.0), oklch(0.205, 0.0, 0.0), true);
+        let secondary = tinted_palette(oklch(0.269, 0.0, 0.0), oklch(0.985, 0.0, 0.0), true);
+        let muted = tinted_palette(oklch(0.269, 0.0, 0.0), oklch(0.708, 0.0, 0.0), true);
+        let accent = tinted_palette(oklch(0.371, 0.0, 0.0), oklch(0.985, 0.0, 0.0), true);
+        let destructive =
+            tinted_palette(oklch(0.704, 0.191, 22.216), oklch(0.58, 0.22, 27.0), true);
+        let info = tinted_palette(oklch(0.70, 0.16, 245.0), oklch(0.205, 0.0, 0.0), true);
+        let success = tinted_palette(oklch(0.72, 0.16, 150.0), oklch(0.205, 0.0, 0.0), true);
+        let warning = tinted_palette(oklch(0.80, 0.15, 80.0), oklch(0.205, 0.0, 0.0), true);
 
         let card = surface_palette(
             oklch(0.205, 0.0, 0.0),
@@ -268,8 +219,21 @@ impl Design {
         let input = oklch_alpha(1.0, 0.0, 0.0, 0.15);
 
         build(
-            "Dark", neutral, primary, secondary, muted, accent, destructive, info, success, warning,
-            card, popover, code, sidebar, input,
+            "Dark",
+            neutral,
+            primary,
+            secondary,
+            muted,
+            accent,
+            destructive,
+            info,
+            success,
+            warning,
+            card,
+            popover,
+            code,
+            sidebar,
+            input,
         )
     }
 
@@ -309,7 +273,13 @@ fn tinted_palette(base: Color, foreground: Color, is_dark: bool) -> Palette {
 // Surface palettes (card, popover, code) inherit neutral's border + ring.
 // `tint_text = foreground` — surfaces aren't role tints; the readable
 // text color over them is `foreground` (the page text).
-fn surface_palette(base: Color, foreground: Color, border: Color, ring: Color, is_dark: bool) -> Palette {
+fn surface_palette(
+    base: Color,
+    foreground: Color,
+    border: Color,
+    ring: Color,
+    is_dark: bool,
+) -> Palette {
     Palette {
         base,
         foreground,

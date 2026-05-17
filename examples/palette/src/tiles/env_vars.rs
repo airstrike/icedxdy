@@ -1,7 +1,7 @@
 //! Environment variables — pinned KEY chip + value, with Edit/Deploy footer.
 
-use iced::widget::space;
 use iced::Fill;
+use iced::widget::space;
 use icedxdy::card;
 use icedxdy::widget::{button, column, container, input, row};
 use icedxdy::{Component, Theme};
@@ -16,9 +16,18 @@ struct EnvVar {
 const DOTS: &str = "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}";
 
 const ENV: &[EnvVar] = &[
-    EnvVar { key: "DATABASE_URL", value: DOTS },
-    EnvVar { key: "NEXT_PUBLIC_API", value: "https://api.example.com" },
-    EnvVar { key: "STRIPE_SECRET", value: DOTS },
+    EnvVar {
+        key: "DATABASE_URL",
+        value: DOTS,
+    },
+    EnvVar {
+        key: "NEXT_PUBLIC_API",
+        value: "https://api.example.com",
+    },
+    EnvVar {
+        key: "STRIPE_SECRET",
+        value: DOTS,
+    },
 ];
 
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
@@ -52,11 +61,8 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
 }
 
 fn env_row(v: &EnvVar) -> Component<'static, Message> {
-    row![
-        input("", v.key).width(Fill),
-        input("", v.value).width(Fill),
-    ]
-    .spacing(8)
-    .width(Fill)
-    .into()
+    row![input("", v.key).width(Fill), input("", v.value).width(Fill),]
+        .spacing(8)
+        .width(Fill)
+        .into()
 }

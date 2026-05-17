@@ -261,9 +261,7 @@ pub fn p<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
 }
 
 pub fn lead<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
-    Text::new(content)
-        .size(size::XL)
-        .style(theme::text::Muted)
+    Text::new(content).size(size::XL).style(theme::text::Muted)
 }
 
 pub fn large<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
@@ -292,9 +290,7 @@ pub fn label<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
 }
 
 pub fn muted<'a>(content: impl IntoFragment<'a>) -> Text<'a> {
-    Text::new(content)
-        .size(size::SM)
-        .style(theme::text::Muted)
+    Text::new(content).size(size::SM).style(theme::text::Muted)
 }
 
 /// Field-style error message typography

@@ -35,10 +35,13 @@ fn grid(state: &State) -> Component<'_, Message> {
             .spacing(GAP)
             .width(Fill)
             .into(),
-        row![wrap(contributions::view(state)), wrap(quickstart::view(state))]
-            .spacing(GAP)
-            .width(Fill)
-            .into(),
+        row![
+            wrap(contributions::view(state)),
+            wrap(quickstart::view(state))
+        ]
+        .spacing(GAP)
+        .width(Fill)
+        .into(),
         row![wrap(targets::view(state)), wrap(chart::view(state))]
             .spacing(GAP)
             .width(Fill)

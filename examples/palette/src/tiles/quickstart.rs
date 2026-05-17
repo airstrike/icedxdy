@@ -7,13 +7,13 @@
 
 use iced::Fill;
 use icedxdy::Component;
+use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme::container::card_muted;
 use icedxdy::theme::tweak::Token;
 use icedxdy::widget::{
     aspect_ratio, badge, button, column, container, rich_text, row, space, spinner, text,
 };
-use icedxdy::Theme;
 
 use crate::{Message, State};
 

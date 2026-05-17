@@ -170,11 +170,7 @@ pub fn outline(theme: &Theme, status: Status) -> Style {
             p.input.alpha(input_a * 0.5),
         )
     } else {
-        (
-            p.neutral.base,
-            p.neutral.border,
-            p.muted.base,
-        )
+        (p.neutral.base, p.neutral.border, p.muted.base)
     };
 
     let base = Style {
@@ -995,10 +991,8 @@ impl From<style::Tint> for iced_widget::button::StyleFn<'static, Theme> {
             style::Tint::Secondary => secondary_impl,
             _ => default_impl,
         };
-        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> = style::StyleFn {
-            inner,
-            tint: t,
-        };
+        let sf: style::StyleFn<fn(Palette, status::Status) -> style::Style> =
+            style::StyleFn { inner, tint: t };
         sf.into()
     }
 }

@@ -11,12 +11,12 @@
 use iced::widget::space;
 use iced::{Center, Fill};
 use icedxdy::Component;
+use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme;
 use icedxdy::widget::{
     Column, avatar, badge, button, column, container, row, rule, scrollable, separator, text,
 };
-use icedxdy::Theme;
 
 use crate::{Message, State};
 
@@ -95,13 +95,11 @@ const ROWS: &[Tx] = &[
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let header = card::header("Recent activity")
         .description("Filtered view: most-recent entries.")
-        .action(
-            if state.connected {
-                button::ghost("View all").on_press(Message::Noop)
-            } else {
-                button::ghost("View all")
-            },
-        );
+        .action(if state.connected {
+            button::ghost("View all").on_press(Message::Noop)
+        } else {
+            button::ghost("View all")
+        });
 
     let rows: Vec<Component<'_, Message>> = ROWS
         .iter()
@@ -109,7 +107,9 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .flat_map(|(i, tx)| {
             let mut items: Vec<Component<'_, Message>> = Vec::new();
             if i > 0 {
-                items.push(Component::from(iced::Element::from(separator::horizontal())));
+                items.push(Component::from(
+                    iced::Element::from(separator::horizontal()),
+                ));
             }
             items.push(tx_row(tx));
             items
@@ -152,7 +152,11 @@ fn tx_row(tx: &Tx) -> Component<'_, Message> {
     let pos = tx.amount_cents >= 0;
     let amount_style: iced_widget::text::StyleFn<'static, icedxdy::Theme> =
         Box::new(move |t: &icedxdy::Theme| iced_widget::text::Style {
-            color: Some(if pos { t.success.base.into() } else { t.destructive.base.into() }),
+            color: Some(if pos {
+                t.success.base.into()
+            } else {
+                t.destructive.base.into()
+            }),
         });
     let amount_text = text::small(amount).medium().style(amount_style);
 

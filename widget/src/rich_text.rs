@@ -454,11 +454,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         // hits perf issues, the right fix is interior mutability + a cached
         // palette signature on `State`, or moving the resolution into
         // `update` and triggering a relayout on theme change.
-        let draw_spans: Vec<_> = self
-            .spans
-            .iter()
-            .map(|s| s.to_draw_span(theme))
-            .collect();
+        let draw_spans: Vec<_> = self.spans.iter().map(|s| s.to_draw_span(theme)).collect();
 
         let bounds = layout.bounds().size();
         let size = self.size.unwrap_or_else(|| renderer.default_size());

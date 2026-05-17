@@ -1,7 +1,7 @@
 //! Invite Team — email + role picker + Invite, plus a small members list.
 
-use iced::widget::space;
 use iced::Fill;
+use iced::widget::space;
 use icedxdy::card;
 use icedxdy::theme;
 use icedxdy::widget::column::Column;
@@ -41,8 +41,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .spacing(8)
     .width(Fill);
 
-    let members: Vec<Component<'static, Message>> =
-        MEMBERS.iter().map(member_row).collect();
+    let members: Vec<Component<'static, Message>> = MEMBERS.iter().map(member_row).collect();
 
     let body: Column<'static, Message> =
         column(std::iter::once(Component::from(invite_row)).chain(members))
