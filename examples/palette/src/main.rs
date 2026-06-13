@@ -1,4 +1,4 @@
-use palette::State;
+use palette::{State, icon};
 
 #[granita::app(theme = icedxdy::Theme)]
 fn main() -> iced::Result {
@@ -6,5 +6,6 @@ fn main() -> iced::Result {
         .title("icedxdy • palette demo")
         .window_size([1280.0, 860.0])
         .theme(State::theme)
+        .font(icon::FONT)
         .run()
 }

@@ -1,7 +1,9 @@
 [toolchain]
 # Pin to nightly: the cargo fork (airstrike/cargo branch
-# crate-type-override) uses the unstable `profile-crate-type` feature,
-# which itself uses rustc's `-Z unstable-options` for the no_std-dylib
-# std force-link mechanism. Stable rustc rejects -Z, so the whole
-# workspace lives on nightly until the feature stabilizes upstream.
+# crate-type-override) exposes `-Z cascade-dylib`, which itself uses
+# rustc's `-Z unstable-options` for the no_std-dylib std force-link
+# mechanism. Stable rustc rejects -Z, so the whole workspace lives on
+# nightly until the feature stabilizes upstream. Granita's subprocess
+# builds (`cargo +dev granita run/preview`) pass the flag; stock
+# `cargo build` / `cargo run` in this workspace stay rlib-only.
 channel = "nightly"

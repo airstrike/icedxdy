@@ -51,16 +51,18 @@ pub mod spacing {
     pub const XL5: f32 = 32.0;
 }
 
-/// A spacing scalar — Tailwind `gap-N` mapped to pixels, surfaced as
-/// `Gap::G1 .. Gap::G8` so call sites that translate a shadcn classlist
-/// literally (`gap-2`, `gap-4`, …) read alongside the source they're
-/// porting with no translation table.
+/// A spacing scalar — Tailwind `gap-N` / `p-N` units mapped to pixels.
+///
+/// `Space::U4` reads as "Tailwind spacing unit 4" (`16px`) and can be
+/// used anywhere iced accepts `Pixels`; it also converts to uniform
+/// `Padding` for `p-N` call sites. `Gap::G4` remains as the gap-specific
+/// spelling for source ports that mirror `gap-4` literally.
 ///
 /// Wraps a raw `f32` so iced builders that take `impl Into<Pixels>`
 /// (`Column::spacing`, `Padding::top`, `Padding::ZERO.bottom`, …) accept
-/// `Gap::G2` directly via the `From<Gap> for iced_core::Pixels` impl
-/// below. Custom values escape via the public `f32` field
-/// (`Gap(13.0)`) or the `From<f32>` impl that mirrors `Pixels` itself.
+/// `Space::U2` / `Gap::G2` directly via the `From<Gap> for Pixels` impl
+/// below. Custom values escape via the public `f32` field (`Gap(13.0)`)
+/// or the `From<f32>` impl that mirrors `Pixels` itself.
 ///
 /// Modeled as a struct with associated constants (rather than an enum)
 /// for parity with iced's own scalar wrappers (`Pixels`, `Em`) and to
@@ -70,6 +72,36 @@ pub mod spacing {
 pub struct Gap(pub f32);
 
 impl Gap {
+    /// Raw logical pixels for struct literals that require `f32` fields.
+    pub const fn px(self) -> f32 {
+        self.0
+    }
+
+    /// `0` — 0px.
+    pub const U0: Gap = Gap(0.0);
+    /// `0.5` — 2px.
+    pub const U0_5: Gap = Gap(2.0);
+    /// `1` — 4px.
+    pub const U1: Gap = Gap(4.0);
+    /// `1.5` — 6px.
+    pub const U1_5: Gap = Gap(6.0);
+    /// `2` — 8px.
+    pub const U2: Gap = Gap(8.0);
+    /// `2.5` — 10px.
+    pub const U2_5: Gap = Gap(10.0);
+    /// `3` — 12px.
+    pub const U3: Gap = Gap(12.0);
+    /// `4` — 16px.
+    pub const U4: Gap = Gap(16.0);
+    /// `5` — 20px.
+    pub const U5: Gap = Gap(20.0);
+    /// `6` — 24px.
+    pub const U6: Gap = Gap(24.0);
+    /// `7` — 28px.
+    pub const U7: Gap = Gap(28.0);
+    /// `8` — 32px.
+    pub const U8: Gap = Gap(32.0);
+
     /// `gap-1` — 4px.
     pub const G1: Gap = Gap(4.0);
     /// `gap-2` — 8px.
@@ -105,6 +137,16 @@ impl From<Gap> for iced_core::Pixels {
         iced_core::Pixels(gap.0)
     }
 }
+
+impl From<Gap> for iced_core::Padding {
+    fn from(gap: Gap) -> Self {
+        iced_core::Padding::new(gap.0)
+    }
+}
+
+/// Semantic alias for call sites that are not specifically translating a
+/// `gap-*` class, such as `p-4`, `pt-6`, or component layout constants.
+pub type Space = Gap;
 
 /// Font size constants (in pixels)
 pub mod font_size {

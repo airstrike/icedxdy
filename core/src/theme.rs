@@ -18,6 +18,7 @@ pub mod float;
 #[cfg(feature = "markdown")]
 pub mod markdown;
 pub mod menu;
+pub mod pick_list;
 pub mod progress_bar;
 pub mod qr_code;
 pub mod rule;

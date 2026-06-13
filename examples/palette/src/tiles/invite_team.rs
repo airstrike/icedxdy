@@ -34,7 +34,10 @@ const MEMBERS: &[Member] = &[
 
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let invite_row = row![
-        input("email@example.com", "").width(Fill),
+        input("email@example.com", "")
+            .width(Fill)
+            .on_input(|_| Message::Noop)
+            .on_submit(Message::Noop),
         button::outline("Viewer  \u{25BE}").on_press(Message::Noop),
         button("Invite").on_press(Message::Noop),
     ]
@@ -51,7 +54,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     card::card(
         column([
             card::header("Invite Team")
-                .description("Collaborate with your team.")
+                .description("Add members to your workspace")
                 .into(),
             card::content(container(body).padding([0, 16]).width(Fill)).into(),
         ])
@@ -60,6 +63,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
+    .height(312.0)
     .into()
 }
 

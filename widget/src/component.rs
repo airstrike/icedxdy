@@ -197,6 +197,8 @@ into_element!(iced_widget::Scrollable<'a, Message, Theme, Renderer> where + Clon
 into_element!(iced_widget::Sensor<'a, (), Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Space);
 into_element!(iced_widget::Stack<'a, Message, Theme, Renderer> where + Clone);
+#[cfg(feature = "svg")]
+into_element!(iced_widget::Svg<'a, Theme>);
 into_element!(iced_widget::TextInput<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Toggler<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Tooltip<'a, Message, Theme, Renderer> where + Clone);
@@ -260,6 +262,36 @@ where
     Message: Clone + 'a,
 {
     fn from(w: iced_widget::Slider<'a, T, Message, Theme>) -> Self {
+        Component::new(w)
+    }
+}
+
+// PickList<T>
+impl<'a, T, L, V, Message> IntoElement<Message>
+    for iced_widget::PickList<'a, T, L, V, Message, Theme, Renderer>
+where
+    T: PartialEq + Clone + 'a,
+    L: std::borrow::Borrow<[T]> + 'a,
+    V: std::borrow::Borrow<T> + 'a,
+    Message: Clone + 'a,
+{
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
+        iced_core::Element::new(*self)
+    }
+}
+
+impl<'a, T, L, V, Message> From<iced_widget::PickList<'a, T, L, V, Message, Theme, Renderer>>
+    for Component<'a, Message>
+where
+    T: PartialEq + Clone + 'a,
+    L: std::borrow::Borrow<[T]> + 'a,
+    V: std::borrow::Borrow<T> + 'a,
+    Message: Clone + 'a,
+{
+    fn from(w: iced_widget::PickList<'a, T, L, V, Message, Theme, Renderer>) -> Self {
         Component::new(w)
     }
 }

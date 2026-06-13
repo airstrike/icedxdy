@@ -1,14 +1,21 @@
-//! Top chrome bar — brand · nav · search · auth.
+//! Top chrome bar — shadcn site nav · search · create actions.
 
-use iced::widget::space;
+use iced::widget::{space, svg};
 use iced::{Center, Fill};
+use iced_widget::button::Status;
+use icedxdy::core::{Border, Color, oklch};
 use icedxdy::theme::container::background;
 use icedxdy::widget::input::{Input, input};
 use icedxdy::widget::row::Row;
-use icedxdy::widget::{Component, button, container, row, text};
+use icedxdy::widget::{Component, Size, button, container, row, rule, text};
 use icedxdy::{Theme, theme};
 
-use crate::{Message, Mode, State};
+use crate::{Message, Mode, State, icon};
+
+const LOGO_BYTES: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../assets/logo.svg"
+));
 
 const NAV_LABELS: &[&str] = &[
     "Docs",
@@ -16,53 +23,169 @@ const NAV_LABELS: &[&str] = &[
     "Blocks",
     "Charts",
     "Directory",
-    "Themes",
+    "Create",
 ];
 
-const SEARCH_MAX_WIDTH: f32 = 420.0;
+const HEADER_HEIGHT: f32 = 56.0;
+const SEARCH_WIDTH: f32 = 256.0;
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    let brand = text::large("icedxdy").style(theme::text::Foreground);
+    let brand = container(
+        svg(svg::Handle::from_memory(LOGO_BYTES))
+            .width(22)
+            .height(22),
+    )
+    .width(32.0)
+    .height(32.0)
+    .align_x(Center)
+    .align_y(Center);
 
     let nav_items: Vec<Component<'_, Message>> = NAV_LABELS
         .iter()
-        .map(|label| button::ghost(*label).on_press(Message::Noop).into())
+        .map(|label| {
+            button::ghost(*label)
+                .size(Size::Sm)
+                .on_press(Message::Noop)
+                .into()
+        })
         .collect();
-    let nav = Row::with_children(nav_items).spacing(2).align_y(Center);
+    let nav = Row::with_children(nav_items).spacing(0).align_y(Center);
 
-    let search_input: Input<'_, Message> = input("Search documentation...", "").width(Fill);
+    let search_input: Input<'_, Message> = input("Search documentation...", "")
+        .width(Fill)
+        .on_input(|_| Message::Noop)
+        .on_submit(Message::Noop)
+        .style(search_input_style());
     let search = container(search_input)
-        .max_width(SEARCH_MAX_WIDTH)
-        .width(Fill);
+        .width(SEARCH_WIDTH)
+        .max_width(SEARCH_WIDTH);
 
     let mode_button = match state.mode {
-        Mode::Light => button::ghost("\u{263E}").on_press(Message::SetMode(Mode::Dark)),
-        Mode::Dark => button::ghost("\u{2600}").on_press(Message::SetMode(Mode::Light)),
+        Mode::Light => button::ghost(icon::moon().size(16))
+            .size(Size::Sm)
+            .square()
+            .on_press(Message::SetMode(Mode::Dark)),
+        Mode::Dark => button::ghost(icon::sun().size(16))
+            .size(Size::Sm)
+            .square()
+            .on_press(Message::SetMode(Mode::Light)),
     };
 
+    let github = row![icon::github().size(14), text::small("114k")]
+        .spacing(6)
+        .align_y(Center);
+
     let auth = row![
+        button::ghost(github).size(Size::Sm).on_press(Message::Noop),
+        separator(),
         mode_button,
-        button::ghost("Sign In").on_press(Message::Noop),
-        button::outline("Get for Free").on_press(Message::Noop),
+        separator(),
+        button::outline("Open in v0")
+            .size(Size::Sm)
+            .style(chrome_outline_button_style())
+            .on_press(Message::Noop),
+        button("Get Code")
+            .size(Size::Sm)
+            .style(chrome_primary_button_style())
+            .on_press(Message::Noop),
     ]
     .spacing(8)
     .align_y(Center);
 
-    let bar = row![
-        brand,
-        nav,
-        space::horizontal(),
-        search,
-        space::horizontal(),
-        auth,
-    ]
-    .spacing(16)
-    .align_y(Center)
-    .width(Fill);
+    let bar = row![brand, nav, space::horizontal(), search, auth,]
+        .spacing(10)
+        .align_y(Center)
+        .width(Fill);
 
     container(bar)
-        .padding([12, 24])
+        .padding([10, 24])
         .width(Fill)
+        .height(HEADER_HEIGHT)
         .style(background)
         .into()
+}
+
+fn separator<'a>() -> Component<'a, Message> {
+    let line: iced::Element<'a, Message, Theme> = rule::vertical(1).into();
+    container(line).height(16.0).into()
+}
+
+fn search_input_style() -> theme::text_input::StyleFn<'static, Theme> {
+    Box::new(|_, _| theme::text_input::Style {
+        background: control().into(),
+        border: Border {
+            radius: 8.0.into(),
+            width: 1.0,
+            color: border(),
+        },
+        icon: muted(),
+        placeholder: muted(),
+        value: foreground(),
+        selection: foreground().alpha(0.25),
+        ring: None,
+    })
+}
+
+fn chrome_outline_button_style() -> iced_widget::button::StyleFn<'static, Theme> {
+    Box::new(|_, status| {
+        let background = match status {
+            Status::Hovered | Status::Pressed => control_hover(),
+            Status::Active | Status::Disabled => control(),
+        };
+
+        iced_widget::button::Style {
+            background: Some(iced::Background::Color(background.into())),
+            text_color: foreground().into(),
+            border: iced::Border {
+                radius: 8.0.into(),
+                width: 1.0,
+                color: border().into(),
+            },
+            ..Default::default()
+        }
+    })
+}
+
+fn chrome_primary_button_style() -> iced_widget::button::StyleFn<'static, Theme> {
+    Box::new(|_, status| {
+        let background = match status {
+            Status::Disabled => foreground().alpha(0.55),
+            Status::Pressed => foreground().alpha(0.86),
+            Status::Hovered | Status::Active => foreground(),
+        };
+
+        iced_widget::button::Style {
+            background: Some(iced::Background::Color(background.into())),
+            text_color: surface().into(),
+            border: iced::Border {
+                radius: 8.0.into(),
+                ..iced::Border::default()
+            },
+            ..Default::default()
+        }
+    })
+}
+
+fn surface() -> Color {
+    oklch(0.145, 0.0, 0.0)
+}
+
+fn control() -> Color {
+    oklch(0.19, 0.0, 0.0)
+}
+
+fn control_hover() -> Color {
+    oklch(0.24, 0.0, 0.0)
+}
+
+fn border() -> Color {
+    oklch(0.29, 0.0, 0.0)
+}
+
+fn foreground() -> Color {
+    oklch(0.985, 0.0, 0.0)
+}
+
+fn muted() -> Color {
+    oklch(0.708, 0.0, 0.0)
 }

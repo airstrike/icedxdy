@@ -1,5 +1,3 @@
-cargo-features = ["cascade-dylib"]
-
 [package]
 name = "icedxdy"
 description = "A shadcn-inspired component library for Iced"
@@ -15,7 +13,7 @@ keywords.workspace = true
 default = []
 markdown = ["icedxdy_core/markdown", "icedxdy_widget/markdown"]
 spinner = ["icedxdy_widget/spinner"]
-svg = ["icedxdy_core/svg"]
+svg = ["icedxdy_core/svg", "icedxdy_widget/svg"]
 sweeten = ["icedxdy_widget/sweeten"]
 
 [dependencies]
@@ -71,12 +69,23 @@ tree-sitter-rust = "0.24"
 [profile.dev]
 rpath = true
 
+# Optimize dependencies (built once, cached) while the workspace crates stay at
+# the default dev opt-level for fast incremental recompiles. The per-frame
+# widget walk lives mostly in deps (iced/wgpu/icedxdy_widget), so this is the
+# big lever for dev-loop runtime cost without slowing reload compiles.
+[profile.dev.package."*"]
+opt-level = 3
+
 # Opt OUT of the cascade-dylib promotion — tree-sitter ships C source built
 # by its build.rs (`cc` archive of `ts_*` symbols). When the cascade
 # promotes tree-sitter to dylib, the C archive doesn't make it across the
 # dylib boundary and tree-sitter-highlight fails to link
 # (`Undefined symbol: _ts_query_cursor_next_capture`). Forcing rlib keeps
 # the C objects bundled the way the build script expects.
+#
+# Stock cargo emits a one-line "unused manifest key" warning per entry
+# and otherwise ignores them; the forked cargo (`-Z cascade-dylib`)
+# reads them as opt-outs from the runtime-closure promotion.
 [profile.dev.package.tree-sitter]
 crate-type = ["lib"]
 
@@ -90,18 +99,18 @@ crate-type = ["lib"]
 crate-type = ["lib"]
 
 [patch.crates-io]
-iced = { path = "/Users/andy/projects/iced", features = ["qr_code"] }
-iced_core = { path = "/Users/andy/projects/iced/core" }
-iced_runtime = { path = "/Users/andy/projects/iced/runtime" }
-iced_selector = { path = "/Users/andy/projects/iced/selector" }
-iced_widget = { path = "/Users/andy/projects/iced/widget" }
-iced_graphics = { path = "/Users/andy/projects/iced/graphics" }
-iced_renderer = { path = "/Users/andy/projects/iced/renderer" }
-iced_program = { path = "/Users/andy/projects/iced/program" }
-iced_winit = { path = "/Users/andy/projects/iced/winit" }
-iced_wgpu = { path = "/Users/andy/projects/iced/wgpu" }
-iced_tiny_skia = { path = "/Users/andy/projects/iced/tiny_skia" }
-iced_futures = { path = "/Users/andy/projects/iced/futures" }
-iced_debug = { path = "/Users/andy/projects/iced/debug" }
-iced_highlighter = { path = "/Users/andy/projects/iced/highlighter" }
+iced = { git = "https://github.com/airstrike/iced.git", branch = "dev", features = ["qr_code"] }
+iced_core = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_runtime = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_selector = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_widget = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_graphics = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_renderer = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_program = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_winit = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_wgpu = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_tiny_skia = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_futures = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_debug = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_highlighter = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 cosmic-text = { git = "https://github.com/airstrike/cosmic-text", branch = "dev" }

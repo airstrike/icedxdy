@@ -10,17 +10,25 @@
 //! horizontal overflow (transactions, etc.) wrap their own.
 
 use std::collections::HashSet;
+use std::f32::consts::PI;
 
-use iced::widget::qr_code;
-use iced::{Fill, Task};
+use iced::gradient::Linear;
+use iced::widget::Id;
+use iced::widget::stack;
+use iced::{Bottom, Fill, Padding, Right, Task};
+use iced_widget::button::Status;
 use icedxdy::Theme;
+use icedxdy::core::{Background, Border};
 use icedxdy::theme;
-use icedxdy::theme::container::background;
-use icedxdy::widget::rule;
-use icedxdy::widget::{column, container, row, scrollable};
+use icedxdy::theme::container::Style;
+use icedxdy::widget::Size;
+use icedxdy::widget::qr_code;
+use icedxdy::widget::scrollable::{Direction, thin_scrollbar};
+use icedxdy::widget::{button, column, container, row, scrollable};
 
 pub mod chrome;
 pub mod dashboard;
+pub mod icon;
 pub mod sidebar;
 pub mod tiles;
 
@@ -30,9 +38,16 @@ pub enum Mode {
     Dark,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PreviewPage {
+    One,
+    Two,
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
     SetMode(Mode),
+    SetPreviewPage(PreviewPage),
     ToggleConnection(bool),
     EmailChanged(String),
     NameChanged(String),
@@ -50,6 +65,7 @@ pub enum Message {
 
 pub struct State {
     pub mode: Mode,
+    pub preview_page: PreviewPage,
     pub connected: bool,
     pub email: String,
     pub name: String,
@@ -58,21 +74,7 @@ pub struct State {
     pub open_notifications: HashSet<String>,
     pub armed: bool,
     pub deploying: bool,
-}
-
-fn qr_data() -> &'static qr_code::Data {
-    use std::cell::OnceCell;
-    thread_local! {
-        static QR: OnceCell<&'static qr_code::Data> = const { OnceCell::new() };
-    }
-    QR.with(|cell| {
-        *cell.get_or_init(|| {
-            Box::leak(Box::new(
-                qr_code::Data::new("https://github.com/airstrike/icedxdy")
-                    .expect("static URL fits inside QR capacity"),
-            ))
-        })
-    })
+    pub qr_connect: Option<qr_code::Data>,
 }
 
 impl State {
@@ -92,6 +94,7 @@ impl State {
     fn with_mode(mode: Mode) -> Self {
         Self {
             mode,
+            preview_page: PreviewPage::One,
             connected: true,
             email: "ada@icedxdy.dev".into(),
             name: "Ada Lovelace".into(),
@@ -100,12 +103,14 @@ impl State {
             open_notifications: ["welcome".to_owned()].into_iter().collect(),
             armed: false,
             deploying: false,
+            qr_connect: qr_code::Data::new("https://ledger.app/connect/jd-4829").ok(),
         }
     }
 
     pub fn update(&mut self, msg: Message) -> Task<Message> {
         match msg {
             Message::SetMode(m) => self.mode = m,
+            Message::SetPreviewPage(page) => self.preview_page = page,
             Message::ToggleConnection(v) => self.connected = v,
             Message::EmailChanged(v) => self.email = v,
             Message::NameChanged(v) => self.name = v,
@@ -141,15 +146,49 @@ impl State {
 
     pub fn view(&self) -> iced::Element<'_, Message, Theme> {
         let chrome = chrome::view(self);
-        let body = row![sidebar::view(self), dashboard::view(self)]
-            .spacing(0)
+        let preview = container(
+            scrollable(dashboard::view(self))
+                .id(Id::new("create-preview-scroll-v2"))
+                .direction(Direction::Both {
+                    vertical: thin_scrollbar(),
+                    horizontal: thin_scrollbar(),
+                })
+                .width(Fill)
+                .height(Fill),
+        )
+        .width(Fill)
+        .height(Fill)
+        .clip(true)
+        .style(preview_frame);
+
+        let preview = stack![
+            preview,
+            container(page_switcher(self.preview_page))
+                .width(Fill)
+                .height(Fill)
+                .padding(12)
+                .align_x(Right)
+                .align_y(Bottom)
+        ]
+        .width(Fill)
+        .height(Fill);
+
+        let body = row![sidebar::view(self), preview]
+            .spacing(24)
             .height(Fill)
             .width(Fill);
 
-        let scroller = scrollable(body).width(Fill).height(Fill);
+        let designer = container(body)
+            .padding(Padding {
+                top: 6.0,
+                right: 24.0,
+                bottom: 24.0,
+                left: 24.0,
+            })
+            .width(Fill)
+            .height(Fill);
 
-        let divider: iced::Element<'_, Message, Theme> = rule::horizontal(1).into();
-        let page = column![chrome, divider, scroller]
+        let page = column![chrome, designer]
             .spacing(0)
             .width(Fill)
             .height(Fill);
@@ -157,9 +196,96 @@ impl State {
         container(page)
             .width(Fill)
             .height(Fill)
-            .style(background)
+            .style(section_soft)
             .into()
     }
+}
+
+fn page_switcher(page: PreviewPage) -> iced::Element<'static, Message, Theme> {
+    let one = page_button("01", PreviewPage::One, page == PreviewPage::One);
+    let two = page_button("02", PreviewPage::Two, page == PreviewPage::Two);
+
+    container(row![one, two].spacing(4).align_y(iced::Center))
+        .padding(4)
+        .style(switcher_style)
+        .into()
+}
+
+fn page_button(
+    label: &'static str,
+    page: PreviewPage,
+    active: bool,
+) -> iced::Element<'static, Message, Theme> {
+    let button = button::ghost(label)
+        .size(Size::Sm)
+        .width(36.0)
+        .style(page_button_style(active))
+        .on_press(Message::SetPreviewPage(page));
+
+    button.into()
+}
+
+fn preview_frame(theme: &Theme) -> Style {
+    Style {
+        background: Some(theme.neutral.base.into()),
+        border: Border {
+            radius: 18.0.into(),
+            width: 1.0,
+            color: theme.neutral.foreground.alpha(0.10),
+        },
+        ..Style::default()
+    }
+}
+
+fn section_soft(theme: &Theme) -> Style {
+    let top: iced::Color = theme.neutral.base.into();
+    let bottom: iced::Color = theme.code.base.alpha(0.40).into();
+
+    Style {
+        background: Some(Background::Gradient(
+            Linear::new(PI)
+                .add_stop(0.0, top)
+                .add_stop(1.0, bottom)
+                .into(),
+        )),
+        ..Style::default()
+    }
+}
+
+fn switcher_style(theme: &Theme) -> Style {
+    Style {
+        text_color: Some(theme.neutral.foreground.into()),
+        background: Some(theme.card.base.scale_alpha(0.90).into()),
+        border: Border {
+            radius: 14.0.into(),
+            ..Border::default()
+        },
+        ..Style::default()
+    }
+}
+
+fn page_button_style(active: bool) -> iced_widget::button::StyleFn<'static, Theme> {
+    Box::new(move |theme, status| {
+        let mut style = iced_widget::button::Style {
+            text_color: if active {
+                theme.accent.foreground.into()
+            } else {
+                theme.muted.foreground.into()
+            },
+            border: Border {
+                radius: 10.0.into(),
+                ..Border::default()
+            }
+            .into(),
+            ..Default::default()
+        };
+
+        if active || matches!(status, Status::Hovered) {
+            style.background = Some(theme.accent.base.into());
+        }
+
+        style
+    })
 }
 
 #[granita::preview(state = State::new().0)]
@@ -178,7 +304,7 @@ pub fn two_factor(state: &State) -> iced::Element<'_, Message, Theme> {
     two_factor::view(state)
 }
 
-#[granita::preview(state = State::new().0)]
+#[granita::preview(state = State::dark())]
 pub fn bento(state: &State) -> iced::Element<'_, Message, Theme> {
     dashboard::view(state)
 }

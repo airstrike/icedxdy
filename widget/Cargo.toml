@@ -20,6 +20,7 @@ highlighter = [
 ]
 markdown = ["dep:pulldown-cmark", "highlighter"]
 spinner = ["canvas", "dep:lyon_algorithms"]
+svg = ["iced_widget/svg", "icedxdy_core/svg"]
 sweeten = ["dep:sweeten", "icedxdy_core/sweeten"]
 
 [dependencies]

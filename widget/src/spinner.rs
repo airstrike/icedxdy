@@ -191,15 +191,32 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        _layout: Layout<'_>,
+        layout: Layout<'_>,
         _cursor: mouse::Cursor,
         _renderer: &Renderer,
         shell: &mut Shell<'_, Message>,
-        _viewport: &Rectangle,
+        viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_mut::<State>();
 
         if let Event::Window(iced_core::window::Event::RedrawRequested(now)) = event {
+            // Only animate while on-screen. A spinner self-drives its repaint
+            // by requesting the next frame on every RedrawRequested; gating
+            // that on viewport intersection means a spinner scrolled out of a
+            // scrollable (or otherwise off-screen) stops driving redraws
+            // instead of repainting the whole window for a frame nobody sees.
+            // It resumes when scrolled back in: that scroll emits its own
+            // redraw, during which the spinner sees it's visible and re-enters
+            // the loop. (`viewport` here is the scrollable's visible window in
+            // content space; `bounds` are the content-natural positions — the
+            // same culling iced's own `draw` performs.)
+            //
+            // This only removes the OFF-SCREEN waste. A visible spinner still
+            // repaints the whole window each frame — iced has no damage
+            // tracking, so partial repaint is the real fix and isn't here.
+            if !layout.bounds().intersects(viewport) {
+                return;
+            }
             state.animation.advance(self.rotation_duration, *now);
             state.cache.clear();
             shell.request_redraw();

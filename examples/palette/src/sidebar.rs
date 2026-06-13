@@ -1,256 +1,321 @@
-//! Left rail — `/create`-style customizer panels.
-//!
-//! Pure visual placeholders: every control fires `Message::Noop`. The
-//! real wiring lands later on `feat/style-api` via the `Tweak` atom
-//! system; this file just renders the shape.
+//! Left rail — `/create`-style customizer card.
 
-use iced::widget::{qr_code, space};
+use iced::widget::space;
 use iced::{Center, Fill};
-use icedxdy::core::Border;
-use icedxdy::theme;
-use icedxdy::theme::container::{Style, card};
-use icedxdy::widget::row::Row;
-use icedxdy::widget::{badge, button, column, container, row, sidebar, text};
-use icedxdy::{Component, Theme};
+use iced_widget::button::Status;
+use icedxdy::Theme;
+use icedxdy::core::{Border, Color, oklch};
+use icedxdy::theme::container::Style;
+use icedxdy::widget::{Component, Size, button, column, container, row, rule, scrollable, text};
 
-use crate::{Message, State};
+use crate::{Message, State, icon};
 
-const RAIL_WIDTH: f32 = 240.0;
-const QR_CELL_PX: f32 = 2.4;
-const SWATCH_PX: f32 = 18.0;
+const RAIL_WIDTH: f32 = 224.0;
+const FIELD_HEIGHT: f32 = 54.0;
+const HEADER_HEIGHT: f32 = 60.0;
+const FOOTER_PAD_X: f32 = 14.0;
+const SECTION_PAD_X: f32 = 12.0;
+const SECTION_PAD_Y: f32 = 12.0;
 
-pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    let content = column![
-        style_group(),
-        base_color_group(),
-        heading_font_group(),
-        body_font_group(),
-        border_radius_group(),
-        variant_group(),
-        space::vertical(),
-        bottom_actions(),
-        footer_block(state),
+#[derive(Debug, Clone, Copy)]
+enum Trailing {
+    Dot,
+    Menu,
+    Paintbrush,
+    Radius,
+    Square,
+    Settings,
+    Text(&'static str),
+}
+
+pub fn view(_state: &State) -> iced::Element<'_, Message, Theme> {
+    let fields = column![
+        section([
+            picker("Style", "Nova", Trailing::Square),
+            picker("Base Color", "Neutral", Trailing::Dot),
+            picker("Theme", "Neutral", Trailing::Dot),
+            picker("Chart Color", "Neutral", Trailing::Dot),
+        ]),
+        divider(),
+        section([
+            picker("Heading", "Inter", Trailing::Text("Aa")),
+            picker("Font", "Inter", Trailing::Text("Aa")),
+        ]),
+        divider(),
+        section([
+            picker("Icon Library", "Lucide", Trailing::Settings),
+            picker("Radius", "Default", Trailing::Radius),
+        ]),
+        divider(),
+        section([
+            picker("Menu", "Default / Solid", Trailing::Menu),
+            picker("Menu Accent", "Subtle", Trailing::Paintbrush),
+        ]),
     ]
-    .spacing(10)
-    .height(Fill)
+    .spacing(0)
     .width(Fill);
 
-    sidebar::fixed(sidebar::content([content.into()]))
+    let content = column![
+        menu_header(),
+        divider(),
+        scrollable(fields).width(Fill).height(Fill),
+        divider(),
+        preset_actions(),
+        divider(),
+        get_code(),
+    ]
+    .spacing(0)
+    .width(Fill)
+    .height(Fill);
+
+    container(content)
         .width(RAIL_WIDTH)
         .height(Fill)
+        .clip(true)
+        .style(rail_style)
         .into()
 }
 
-fn style_group() -> Component<'static, Message> {
-    sidebar::group([
-        sidebar::group_label("Style").into(),
-        sidebar::group_content([preset_card()]).into(),
-    ])
-    .into()
-}
-
-fn preset_card() -> Component<'static, Message> {
-    let name = row![
-        text::small("preset 50").medium(),
+fn menu_header() -> Component<'static, Message> {
+    let trigger = row![
+        text::small("Menu").medium().style(text_style(foreground())),
         space::horizontal(),
-        text::xs("\u{2714}").style(theme::text::Muted),
+        icon::menu().size(20),
     ]
     .align_y(Center)
     .width(Fill);
 
-    let swatches = row![
-        swatch(|t: &Theme| t.primary.base),
-        swatch(|t: &Theme| t.accent.base),
-        swatch(|t: &Theme| t.muted.base),
-        swatch(|t: &Theme| t.destructive.base),
-        swatch(|t: &Theme| t.success.base),
-    ]
-    .spacing(6)
-    .width(Fill);
-
-    let inner = column![name, swatches].spacing(10).width(Fill);
-
-    container(inner).padding(12).width(Fill).style(card).into()
+    container(
+        container(trigger)
+            .width(Fill)
+            .height(36.0)
+            .padding([0, 7])
+            .style(control_style),
+    )
+    .height(HEADER_HEIGHT)
+    .padding([12.0, SECTION_PAD_X])
+    .width(Fill)
+    .into()
 }
 
-fn swatch(getter: fn(&Theme) -> icedxdy::core::Color) -> Component<'static, Message> {
-    container(space::vertical())
-        .width(SWATCH_PX)
-        .height(SWATCH_PX)
-        .style(move |t: &Theme| Style {
-            background: Some(getter(t).into()),
-            border: Border {
-                radius: 4.0.into(),
-                width: 1.0,
-                color: t.neutral.border,
-            },
-            ..Style::default()
-        })
+fn section(
+    fields: impl IntoIterator<Item = Component<'static, Message>>,
+) -> Component<'static, Message> {
+    container(column(fields).spacing(10).width(Fill))
+        .padding([SECTION_PAD_Y, SECTION_PAD_X])
+        .width(Fill)
         .into()
 }
 
-fn base_color_group() -> Component<'static, Message> {
-    sidebar::group([
-        sidebar::group_label("Base Color").into(),
-        sidebar::group_content([button::outline("Neutral  \u{25BE}")
-            .width(Fill)
-            .on_press(Message::Noop)
-            .into()])
-        .into(),
-    ])
-    .into()
-}
-
-fn border_radius_group() -> Component<'static, Message> {
-    let labels = ["0", "0.25", "0.5", "0.75", "1.0"];
-    let active_index = 2;
-
-    let buttons: Vec<Component<'static, Message>> = labels
-        .iter()
-        .enumerate()
-        .map(|(i, label)| {
-            if i == active_index {
-                button::secondary(*label)
-                    .width(Fill)
-                    .on_press(Message::Noop)
-                    .into()
-            } else {
-                button::outline(*label)
-                    .width(Fill)
-                    .on_press(Message::Noop)
-                    .into()
-            }
-        })
-        .collect();
-
-    let inner = Row::with_children(buttons).spacing(4).width(Fill);
-
-    sidebar::group([
-        sidebar::group_label("Border Radius").into(),
-        sidebar::group_content([inner.into()]).into(),
-    ])
-    .into()
-}
-
-fn heading_font_group() -> Component<'static, Message> {
-    sidebar::group([
-        sidebar::group_label("Heading Font").into(),
-        sidebar::group_content([button::outline("Inter  \u{25BE}")
-            .width(Fill)
-            .on_press(Message::Noop)
-            .into()])
-        .into(),
-    ])
-    .into()
-}
-
-fn body_font_group() -> Component<'static, Message> {
-    sidebar::group([
-        sidebar::group_label("Body Font").into(),
-        sidebar::group_content([button::outline("Inter  \u{25BE}")
-            .width(Fill)
-            .on_press(Message::Noop)
-            .into()])
-        .into(),
-    ])
-    .into()
-}
-
-fn variant_group() -> Component<'static, Message> {
-    let buttons: Vec<Component<'static, Message>> = vec![
-        button::secondary("Default")
-            .width(Fill)
-            .on_press(Message::Noop)
-            .into(),
-        button::outline("Outline")
-            .width(Fill)
-            .on_press(Message::Noop)
-            .into(),
-        button::outline("Ghost")
-            .width(Fill)
-            .on_press(Message::Noop)
-            .into(),
-    ];
-
-    let inner = Row::with_children(buttons).spacing(4).width(Fill);
-
-    sidebar::group([
-        sidebar::group_label("Variant").into(),
-        sidebar::group_content([inner.into()]).into(),
-    ])
-    .into()
-}
-
-fn bottom_actions() -> Component<'static, Message> {
-    let inner = column![
-        radio_row("Default", true),
-        radio_row("Solid", true),
-        row![
-            text::xs("\u{2295}").style(theme::text::Muted),
-            badge::secondary("preset 50"),
-        ]
-        .spacing(6)
-        .align_y(Center),
-        button::ghost("\u{2197}  Open Preset")
-            .width(Fill)
-            .on_press(Message::Noop),
-        button::ghost("\u{21BB}  Shuffle")
-            .width(Fill)
-            .on_press(Message::Noop),
+fn picker(
+    label: &'static str,
+    value: &'static str,
+    trailing: Trailing,
+) -> Component<'static, Message> {
+    let copy = column![
+        text::xs(label).style(text_style(muted())),
+        text::small(value).medium().style(text_style(foreground())),
     ]
-    .spacing(6)
+    .spacing(1)
     .width(Fill);
 
-    container(inner).padding([4, 8]).width(Fill).into()
-}
-
-fn radio_row(label: &'static str, active: bool) -> Component<'static, Message> {
-    let bullet: Component<'static, Message> = container(space::vertical())
-        .width(8.0)
-        .height(8.0)
-        .style(move |t: &Theme| Style {
-            background: if active {
-                Some(t.neutral.foreground.into())
-            } else {
-                None
-            },
-            border: Border {
-                radius: 999.0.into(),
-                width: 1.0,
-                color: if active {
-                    t.neutral.foreground
-                } else {
-                    t.neutral.border
-                },
-            },
-            ..Style::default()
-        })
-        .into();
-
-    let text_widget = if active {
-        text::xs(label).style(theme::text::Foreground)
-    } else {
-        text::xs(label).style(theme::text::Muted)
-    };
-
-    let inner = row![bullet, text_widget]
-        .spacing(8)
+    let content = row![copy, trailing_view(trailing)]
+        .spacing(10)
         .align_y(Center)
         .width(Fill);
 
-    container(inner).padding([2, 0]).width(Fill).into()
+    container(content)
+        .height(FIELD_HEIGHT)
+        .padding([8, 10])
+        .width(Fill)
+        .style(control_style)
+        .into()
 }
 
-fn footer_block(_state: &State) -> Component<'static, Message> {
-    let qr: iced::Element<'static, Message, Theme> =
-        qr_code(crate::qr_data()).cell_size(QR_CELL_PX).into();
+fn trailing_view(trailing: Trailing) -> Component<'static, Message> {
+    match trailing {
+        Trailing::Dot => container(space::vertical())
+            .width(16.0)
+            .height(16.0)
+            .style(dot_style)
+            .into(),
+        Trailing::Square => lucide(icon::square().size(16)),
+        Trailing::Menu => lucide(icon::menu().size(16)),
+        Trailing::Radius => lucide(icon::radius().size(16)),
+        Trailing::Settings => lucide(icon::settings().size(16)),
+        Trailing::Paintbrush => lucide(icon::paintbrush().size(16)),
+        Trailing::Text(label) => text_icon(label),
+    }
+}
 
-    let get_code = button("Get Code").width(Fill).on_press(Message::Noop);
+fn text_icon(label: &'static str) -> Component<'static, Message> {
+    container(text::small(label).style(text_style(foreground())))
+        .width(24.0)
+        .align_x(Center)
+        .into()
+}
 
-    let inner = column![Component::from(qr), get_code]
-        .spacing(8)
+fn lucide(icon: impl Into<Component<'static, Message>>) -> Component<'static, Message> {
+    container(icon).width(24.0).align_x(Center).into()
+}
+
+fn preset_actions() -> Component<'static, Message> {
+    let content = column![
+        button::outline("--preset b0")
+            .size(Size::Sm)
+            .width(Fill)
+            .style(rail_button_style())
+            .on_press(Message::Noop),
+        button::outline("Open Preset")
+            .size(Size::Sm)
+            .width(Fill)
+            .style(rail_button_style())
+            .on_press(Message::Noop),
+        button::outline("Shuffle")
+            .size(Size::Sm)
+            .width(Fill)
+            .style(rail_button_style())
+            .on_press(Message::Noop),
+    ]
+    .spacing(8)
+    .width(Fill);
+
+    container(content)
+        .padding([12.0, FOOTER_PAD_X])
         .width(Fill)
-        .align_x(Center);
+        .into()
+}
 
-    container(inner).padding([8, 8]).width(Fill).into()
+fn get_code() -> Component<'static, Message> {
+    container(
+        button("Get Code")
+            .size(Size::Sm)
+            .width(Fill)
+            .style(rail_primary_button_style())
+            .on_press(Message::Noop),
+    )
+    .padding([12.0, FOOTER_PAD_X])
+    .width(Fill)
+    .into()
+}
+
+fn divider() -> Component<'static, Message> {
+    let line: iced::Element<'static, Message, Theme> =
+        rule::horizontal(1).style(divider_style()).into();
+
+    container(line).width(Fill).height(1.0).into()
+}
+
+fn rail_style(_theme: &Theme) -> Style {
+    Style {
+        text_color: Some(foreground()),
+        background: Some(surface().alpha(0.90).into()),
+        border: Border {
+            radius: 18.0.into(),
+            width: 1.0,
+            color: foreground().alpha(0.10),
+        },
+        ..Style::default()
+    }
+}
+
+fn control_style(_theme: &Theme) -> Style {
+    Style {
+        text_color: Some(foreground()),
+        background: Some(control().into()),
+        border: Border {
+            radius: 8.0.into(),
+            width: 1.0,
+            color: border(),
+        },
+        ..Style::default()
+    }
+}
+
+fn dot_style(_theme: &Theme) -> Style {
+    Style {
+        background: Some(muted().into()),
+        border: Border {
+            radius: 999.0.into(),
+            ..Border::default()
+        },
+        ..Style::default()
+    }
+}
+
+fn text_style(color: Color) -> iced_widget::text::StyleFn<'static, Theme> {
+    Box::new(move |_| iced_widget::text::Style {
+        color: Some(color.into()),
+    })
+}
+
+fn divider_style() -> rule::StyleFn<'static, Theme> {
+    Box::new(|_| rule::Style {
+        background: iced::Background::Color(border().into()),
+        ..rule::Style::default()
+    })
+}
+
+fn rail_button_style() -> iced_widget::button::StyleFn<'static, Theme> {
+    Box::new(|_, status| {
+        let background = match status {
+            Status::Hovered | Status::Pressed => control_hover(),
+            Status::Active | Status::Disabled => control(),
+        };
+
+        iced_widget::button::Style {
+            background: Some(iced::Background::Color(background.into())),
+            text_color: foreground().into(),
+            border: iced::Border {
+                radius: 8.0.into(),
+                width: 1.0,
+                color: border().into(),
+            },
+            ..Default::default()
+        }
+    })
+}
+
+fn rail_primary_button_style() -> iced_widget::button::StyleFn<'static, Theme> {
+    Box::new(|_, status| {
+        let background = match status {
+            Status::Disabled => foreground().alpha(0.55),
+            Status::Pressed => foreground().alpha(0.86),
+            Status::Hovered | Status::Active => foreground(),
+        };
+
+        iced_widget::button::Style {
+            background: Some(iced::Background::Color(background.into())),
+            text_color: surface().into(),
+            border: iced::Border {
+                radius: 8.0.into(),
+                ..iced::Border::default()
+            },
+            ..Default::default()
+        }
+    })
+}
+
+fn surface() -> Color {
+    oklch(0.205, 0.0, 0.0)
+}
+
+fn control() -> Color {
+    oklch(0.19, 0.0, 0.0)
+}
+
+fn control_hover() -> Color {
+    oklch(0.24, 0.0, 0.0)
+}
+
+fn border() -> Color {
+    oklch(0.29, 0.0, 0.0)
+}
+
+fn foreground() -> Color {
+    oklch(0.985, 0.0, 0.0)
+}
+
+fn muted() -> Color {
+    oklch(0.708, 0.0, 0.0)
 }

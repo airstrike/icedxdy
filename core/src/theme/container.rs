@@ -96,15 +96,15 @@ pub fn background(theme: &Theme) -> Style {
     }
 }
 
-/// Card surface — bg-card + 1px border-border + rounded-lg.
+/// Card surface — bg-card + foreground/10 ring + rounded-xl.
 pub fn card(theme: &Theme) -> Style {
     let p = theme;
     Style {
         background: Some(p.card.base.into()),
         border: Border {
-            radius: radius::LG.into(),
+            radius: radius::XL.into(),
             width: 1.0,
-            color: p.neutral.border,
+            color: p.neutral.foreground.alpha(0.10),
         },
         ..Style::default()
     }

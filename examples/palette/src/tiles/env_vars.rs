@@ -57,12 +57,21 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
+    .height(273.0)
     .into()
 }
 
 fn env_row(v: &EnvVar) -> Component<'static, Message> {
-    row![input("", v.key).width(Fill), input("", v.value).width(Fill),]
+    row![active_input(v.key), active_input(v.value),]
         .spacing(8)
         .width(Fill)
+        .into()
+}
+
+fn active_input(value: &'static str) -> Component<'static, Message> {
+    input("", value)
+        .width(Fill)
+        .on_input(|_| Message::Noop)
+        .on_submit(Message::Noop)
         .into()
 }

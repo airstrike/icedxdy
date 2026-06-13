@@ -34,8 +34,13 @@ use iced_widget::text::LineHeight;
 
 use crate::Gap;
 use crate::Theme;
+use crate::core::{Border, Radius};
+use crate::radius;
 use crate::theme;
+use crate::theme::container;
+use crate::theme::container::Style;
 use crate::widget::Component;
+use crate::widget::rule;
 use crate::widget::space;
 use crate::widget::text;
 
@@ -51,7 +56,9 @@ mod padding {
 pub fn card<'a, Message>(
     content: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
 ) -> Container<'a, Message, Theme, Renderer> {
-    Container::new(content).style(|t| theme::container::card(t).into())
+    Container::new(content)
+        .clip(true)
+        .style(|t| container::card(t).into())
 }
 
 /// A `<CardTitle>`-shaped Text — `text-base font-medium leading-snug`,
@@ -277,23 +284,53 @@ pub fn content<'a, Message: 'a>(
 }
 
 /// Card footer section. Caller composes the inner shape (row of buttons,
-/// stacked column, etc.); `footer` applies the `px-4` horizontal padding.
+/// stacked column, etc.); `footer` applies nova's muted footer surface.
 pub fn footer<'a, Message: 'a>(
     child: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
-) -> Container<'a, Message, Theme, Renderer> {
-    Container::new(child)
-        .padding(
-            iced_core::Padding::ZERO
-                .left(padding::SECTION)
-                .right(padding::SECTION),
-        )
+) -> Component<'a, Message> {
+    let line: iced_core::Element<'a, Message, Theme, Renderer> =
+        rule::horizontal(1).style(footer_rule_style()).into();
+
+    let body = Container::new(child)
+        .padding(padding::SECTION)
         .width(Length::Fill)
+        .style(|t| footer_style(t).into());
+
+    let footer: iced_core::Element<'a, Message, Theme, Renderer> = Column::new()
+        .push(line)
+        .push(body)
+        .width(Length::Fill)
+        .into();
+
+    Component::from(footer)
 }
 
 /// Card footer as a row of children with 8px (`gap-2`) spacing.
 pub fn footer_row<'a, Message: 'a>(
     children: impl IntoIterator<Item = iced_core::Element<'a, Message, Theme, Renderer>>,
-) -> Container<'a, Message, Theme, Renderer> {
+) -> Component<'a, Message> {
     let row = Row::with_children(children).spacing(Gap::G2);
     footer(row)
+}
+
+fn footer_style(theme: &Theme) -> Style {
+    Style {
+        background: Some(theme.muted.base.alpha(0.50).into()),
+        border: Border {
+            radius: Radius {
+                bottom_right: radius::XL,
+                bottom_left: radius::XL,
+                ..Radius::default()
+            },
+            ..Border::default()
+        },
+        ..Style::default()
+    }
+}
+
+fn footer_rule_style() -> rule::StyleFn<'static, Theme> {
+    Box::new(|theme| rule::Style {
+        background: theme.neutral.border.into(),
+        ..rule::Style::default()
+    })
 }

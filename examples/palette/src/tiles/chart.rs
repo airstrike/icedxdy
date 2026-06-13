@@ -16,7 +16,7 @@ const BARS: [f32; 12] = [
     40.0, 65.0, 50.0, 80.0, 95.0, 70.0, 110.0, 85.0, 120.0, 100.0, 75.0, 90.0,
 ];
 const BAR_WIDTH: f32 = 20.0;
-const CHART_HEIGHT: f32 = 140.0;
+const CHART_HEIGHT: f32 = 156.0;
 
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let bars: Vec<Component<'static, Message>> = BARS.iter().map(|h| bar(*h)).collect();
@@ -43,7 +43,10 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     card::card(
         column([
             card::header("Traffic channels")
-                .description("Top channels by visits")
+                .description(
+                    "Monthly desktop and mobile traffic for the last six\n\
+                     months--compare volume and mix across...",
+                )
                 .into(),
             card::content(container(body).padding([0, 16]).width(Fill)).into(),
         ])
@@ -52,6 +55,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
+    .height(412.0)
     .into()
 }
 

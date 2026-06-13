@@ -20,6 +20,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let mut email_field = field(
         input("you@example.com", &state.email)
             .on_input(Message::EmailChanged)
+            .on_submit(Message::SaveForm)
             .width(Fill),
     )
     .label("Email")
@@ -33,6 +34,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let name_field = field(
         input("Display name", &state.name)
             .on_input(Message::NameChanged)
+            .on_submit(Message::SaveForm)
             .width(Fill),
     )
     .label("Name")

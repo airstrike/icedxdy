@@ -70,6 +70,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
+    .height(430.0)
     .into()
 }
 
