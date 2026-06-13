@@ -44,7 +44,7 @@ fn view_one(state: &State) -> iced::Element<'_, Message, Theme> {
             index_investing::view(state),
             // FIXME(spinner-cpu): perpetual spinner() (via empty::media_icon)
             // request_redraw()s every frame → continuous whole-window repaint
-            // at idle. Same root cause as loading_card above.
+            // at idle.
             syncing_state::view(state),
         ]),
         stack([
@@ -68,9 +68,6 @@ fn view_one(state: &State) -> iced::Element<'_, Message, Theme> {
             card_overview::view(state),
             transfer_funds::view(state),
             cover_art::view(state),
-            // FIXME(spinner-cpu): hosts a perpetual spinner() that calls
-            // shell.request_redraw() every frame → iced repaints the whole
-            // window continuously at idle. Profiled at ~15-20% CPU on its own.
             loading_card::view(state),
         ]),
         stack([

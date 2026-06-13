@@ -191,6 +191,7 @@ into_element!(iced_widget::MouseArea<'a, Message, Theme, Renderer> where + Clone
 into_element!(iced_widget::Pin<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::ProgressBar<'a, Theme>);
 into_element!(iced_widget::QRCode<'a, Theme>);
+into_element!(iced_widget::Radio<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Row<'a, Message, Theme, Renderer> where + Clone);
 into_element!(iced_widget::Rule<'a, Theme>);
 into_element!(iced_widget::Scrollable<'a, Message, Theme, Renderer> where + Clone);

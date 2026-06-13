@@ -74,8 +74,8 @@ pub const PREVIEW_02: &[Tile] = &[
     },
     Tile {
         source: "kitchen-island.tsx",
-        status: Status::ApiGap,
-        gaps: &["ToggleGroup", "ItemMedia"],
+        status: Status::Confirmed,
+        gaps: &[],
     },
     Tile {
         source: "savings-targets.tsx",
@@ -100,7 +100,7 @@ pub const PREVIEW_02: &[Tile] = &[
     Tile {
         source: "payments.tsx",
         status: Status::ApiGap,
-        gaps: &["DropdownMenu", "ItemMedia"],
+        gaps: &["DropdownMenu"],
     },
     Tile {
         source: "front-door.tsx",
@@ -110,12 +110,12 @@ pub const PREVIEW_02: &[Tile] = &[
     Tile {
         source: "release-catalog.tsx",
         status: Status::ApiGap,
-        gaps: &["InputGroup", "ToggleGroup", "ItemMedia"],
+        gaps: &["InputGroup"],
     },
     Tile {
         source: "account-access.tsx",
         status: Status::ApiGap,
-        gaps: &["Input secure/password builder", "ItemMedia"],
+        gaps: &["Input secure/password builder"],
     },
     Tile {
         source: "card-overview.tsx",
@@ -134,19 +134,13 @@ pub const PREVIEW_02: &[Tile] = &[
     },
     Tile {
         source: "loading-card.tsx",
-        status: Status::ApiGap,
-        gaps: &["Skeleton"],
+        status: Status::Confirmed,
+        gaps: &[],
     },
     Tile {
         source: "receiving-method.tsx",
         status: Status::ApiGap,
-        gaps: &[
-            "RadioGroup",
-            "FieldSet",
-            "FieldLegend",
-            "FieldContent",
-            "FieldTitle",
-        ],
+        gaps: &["FieldSet", "FieldLegend", "FieldContent", "FieldTitle"],
     },
     Tile {
         source: "power-usage.tsx",
@@ -165,8 +159,8 @@ pub const PREVIEW_02: &[Tile] = &[
     },
     Tile {
         source: "roller-shades.tsx",
-        status: Status::ApiGap,
-        gaps: &["ToggleGroup"],
+        status: Status::Confirmed,
+        gaps: &[],
     },
     Tile {
         source: "stock-performance.tsx",

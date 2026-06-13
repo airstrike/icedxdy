@@ -44,6 +44,34 @@ pub enum PreviewPage {
     Two,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReceivingMethod {
+    BankTransfer,
+    Paypal,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ShadePosition {
+    Open,
+    Half,
+    Closed,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KitchenMode {
+    Hue,
+    Color,
+    Ambient,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KitchenScene {
+    Cooking,
+    Dining,
+    Nightlight,
+    Focus,
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
     SetMode(Mode),
@@ -53,6 +81,11 @@ pub enum Message {
     NameChanged(String),
     AcceptTerms(bool),
     SubscribeEmails(bool),
+    SetReceivingMethod(ReceivingMethod),
+    SetShadePosition(ShadePosition),
+    ToggleShadeSchedule(bool),
+    SetKitchenMode(KitchenMode),
+    SetKitchenScene(KitchenScene),
     SaveForm,
     CancelForm,
     ToggleNotification(String),
@@ -71,6 +104,11 @@ pub struct State {
     pub name: String,
     pub accept_terms: bool,
     pub subscribe_emails: bool,
+    pub receiving_method: ReceivingMethod,
+    pub shade_position: ShadePosition,
+    pub shade_auto_schedule: bool,
+    pub kitchen_mode: KitchenMode,
+    pub kitchen_scene: KitchenScene,
     pub open_notifications: HashSet<String>,
     pub armed: bool,
     pub deploying: bool,
@@ -100,6 +138,11 @@ impl State {
             name: "Ada Lovelace".into(),
             accept_terms: true,
             subscribe_emails: false,
+            receiving_method: ReceivingMethod::BankTransfer,
+            shade_position: ShadePosition::Half,
+            shade_auto_schedule: true,
+            kitchen_mode: KitchenMode::Hue,
+            kitchen_scene: KitchenScene::Dining,
             open_notifications: ["welcome".to_owned()].into_iter().collect(),
             armed: false,
             deploying: false,
@@ -116,6 +159,11 @@ impl State {
             Message::NameChanged(v) => self.name = v,
             Message::AcceptTerms(v) => self.accept_terms = v,
             Message::SubscribeEmails(v) => self.subscribe_emails = v,
+            Message::SetReceivingMethod(v) => self.receiving_method = v,
+            Message::SetShadePosition(v) => self.shade_position = v,
+            Message::ToggleShadeSchedule(v) => self.shade_auto_schedule = v,
+            Message::SetKitchenMode(v) => self.kitchen_mode = v,
+            Message::SetKitchenScene(v) => self.kitchen_scene = v,
             Message::SaveForm | Message::CancelForm => {}
             Message::ToggleNotification(id) => {
                 if !self.open_notifications.remove(&id) {

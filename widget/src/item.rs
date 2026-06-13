@@ -3,8 +3,9 @@
 //! Mirrors shadcn's `Item` primitive for compact rows or muted panels inside
 //! cards.
 
-use iced_core::text::LineHeight;
 use iced_core::Length::{self, Fill};
+use iced_core::alignment::{Horizontal, Vertical};
+use iced_core::text::LineHeight;
 use iced_core::{Alignment, Padding};
 use iced_widget::Renderer;
 use icedxdy_core::theme::container::Style;
@@ -85,9 +86,7 @@ impl<'a, Message: 'a> Item<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> From<Item<'a, Message>>
-    for iced_core::Element<'a, Message, Theme, Renderer>
-{
+impl<'a, Message: 'a> From<Item<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(item: Item<'a, Message>) -> Self {
         Box::new(item).into_element()
     }
@@ -166,11 +165,11 @@ pub fn content<'a, Message: 'a>(
     children: impl IntoIterator<Item = Component<'a, Message>>,
 ) -> Content<'a, Message> {
     Content {
-            children: children.into_iter().collect(),
-            spacing: 4.0,
-            width: Fill,
-        }
+        children: children.into_iter().collect(),
+        spacing: 4.0,
+        width: Fill,
     }
+}
 
 impl<'a, Message: 'a> Content<'a, Message> {
     /// Set slot spacing.
@@ -233,6 +232,86 @@ pub fn description<'a>(content: impl iced_core::text::IntoFragment<'a>) -> text:
     text::muted(content).line_height(LineHeight::Relative(1.5))
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum MediaVariant {
+    #[default]
+    Default,
+    Icon,
+    Image,
+}
+
+/// Item media slot.
+pub struct Media<'a, Message> {
+    content: Component<'a, Message>,
+    variant: MediaVariant,
+}
+
+/// Create an item media slot.
+pub fn media<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Media<'a, Message> {
+    Media {
+        content: content.into(),
+        variant: MediaVariant::Default,
+    }
+}
+
+/// Create an icon item media slot.
+pub fn media_icon<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Media<'a, Message> {
+    media(content).variant(MediaVariant::Icon)
+}
+
+/// Create an image item media slot.
+pub fn media_image<'a, Message: 'a>(
+    content: impl Into<Component<'a, Message>>,
+) -> Media<'a, Message> {
+    media(content).variant(MediaVariant::Image)
+}
+
+impl<'a, Message: 'a> Media<'a, Message> {
+    pub fn variant(mut self, variant: MediaVariant) -> Self {
+        self.variant = variant;
+        self
+    }
+}
+
+impl<'a, Message: 'a> From<Media<'a, Message>>
+    for iced_core::Element<'a, Message, Theme, Renderer>
+{
+    fn from(media: Media<'a, Message>) -> Self {
+        Box::new(media).into_element()
+    }
+}
+
+impl<'a, Message: 'a> From<Media<'a, Message>> for Component<'a, Message> {
+    fn from(media: Media<'a, Message>) -> Self {
+        Component::new(media)
+    }
+}
+
+impl<'a, Message: 'a> IntoElement<Message> for Media<'a, Message> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
+        let Media { content, variant } = *self;
+        let content = content.into_iced();
+
+        match variant {
+            MediaVariant::Default | MediaVariant::Icon => crate::container(content)
+                .align_x(Horizontal::Center)
+                .align_y(Vertical::Center)
+                .into(),
+            MediaVariant::Image => crate::container(content)
+                .width(40.0)
+                .height(40.0)
+                .clip(true)
+                .style(media_image_style)
+                .into(),
+        }
+    }
+}
+
 /// Item actions row.
 pub fn actions<'a, Message: 'a>(
     children: impl IntoIterator<Item = Component<'a, Message>>,
@@ -277,6 +356,16 @@ fn slot_row<'a, Message: 'a>(
             .into();
 
     Component::from(element)
+}
+
+fn media_image_style(_theme: &Theme) -> Style {
+    Style {
+        border: Border {
+            radius: radius::SM.into(),
+            ..Border::default()
+        },
+        ..Style::default()
+    }
 }
 
 fn style(variant: Variant) -> impl Fn(&Theme) -> Style + 'static {

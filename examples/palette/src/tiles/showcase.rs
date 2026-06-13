@@ -12,7 +12,8 @@ use icedxdy::theme::text_input;
 use icedxdy::widget::button::Button;
 use icedxdy::widget::row::Row;
 use icedxdy::widget::{
-    Component, Size, badge, button, checkbox, column, container, input, row, slider, switch, text,
+    Component, Size, Skeleton, badge, button, checkbox, column, container, input, row, skeleton,
+    slider, switch, text,
 };
 
 use crate::{Message, State, icon};
@@ -213,10 +214,7 @@ pub fn controls_card(state: &State) -> iced::Element<'static, Message, Theme> {
 pub fn skeleton_card() -> iced::Element<'static, Message, Theme> {
     let lines = column![
         row![
-            container(space::vertical())
-                .width(40.0)
-                .height(40.0)
-                .style(skeleton_dot),
+            skeleton().width(40.0).height(40.0).radius(999.0),
             column![skeleton_line(118.0, 16.0), skeleton_line(180.0, 12.0),].spacing(12)
         ]
         .spacing(14)
@@ -233,10 +231,13 @@ pub fn skeleton_card() -> iced::Element<'static, Message, Theme> {
 
 fn swatch_row(items: [(&'static str, Color); 6]) -> Component<'static, Message> {
     Row::with_children(items.into_iter().map(|(label, color)| {
-        column![swatch(color), text::xs(label).style(theme::text::Muted)]
-            .spacing(7)
-            .width(48.0)
-            .into()
+        column![
+            swatch(color),
+            text::xs(label).size(10.0).style(theme::text::Muted)
+        ]
+        .spacing(7)
+        .width(48.0)
+        .into()
     }))
     .spacing(11)
     .width(Fill)
@@ -277,12 +278,8 @@ fn panel(
         .into()
 }
 
-fn skeleton_line(width: f32, height: f32) -> Component<'static, Message> {
-    container(space::vertical())
-        .width(width)
-        .height(height)
-        .style(skeleton_line_style)
-        .into()
+fn skeleton_line(width: f32, height: f32) -> Skeleton<'static, Message> {
+    skeleton().width(width).height(height)
 }
 
 fn name_input() -> Component<'static, Message> {
@@ -319,28 +316,6 @@ fn control_style(_theme: &Theme) -> theme::container::Style {
             radius: 8.0.into(),
             width: 1.0,
             color: oklch(0.29, 0.0, 0.0),
-        },
-        ..Default::default()
-    }
-}
-
-fn skeleton_line_style(_theme: &Theme) -> theme::container::Style {
-    theme::container::Style {
-        background: Some(oklch(0.22, 0.0, 0.0).into()),
-        border: Border {
-            radius: 7.0.into(),
-            ..Border::default()
-        },
-        ..Default::default()
-    }
-}
-
-fn skeleton_dot(_theme: &Theme) -> theme::container::Style {
-    theme::container::Style {
-        background: Some(oklch(0.18, 0.0, 0.0).into()),
-        border: Border {
-            radius: 999.0.into(),
-            ..Border::default()
         },
         ..Default::default()
     }

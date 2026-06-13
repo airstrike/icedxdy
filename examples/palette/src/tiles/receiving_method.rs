@@ -2,22 +2,97 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/receiving-method.tsx`.
 
-use icedxdy::Theme;
+use iced::Fill;
+use icedxdy::widget::{button, column, field, input, radio, text};
+use icedxdy::{Component, Theme, card};
 
 use super::api_gap;
-use crate::{Message, State};
+use crate::{Message, ReceivingMethod, State};
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
-    api_gap::missing(
-        "Receiving Method",
-        "receiving-method.tsx",
-        &[
-            "RadioGroup",
-            "FieldSet",
-            "FieldLegend",
-            "FieldContent",
-            "FieldTitle",
-        ],
+pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
+    let account = field::field(
+        input("", "Morgan Shah")
+            .on_input(|_| Message::Noop)
+            .width(Fill),
     )
+    .label("Account Holder Name")
+    .width(Fill);
+
+    let options = column![
+        method_card(
+            state,
+            ReceivingMethod::BankTransfer,
+            "Bank Transfer",
+            "SWIFT / IBAN",
+        ),
+        method_card(state, ReceivingMethod::Paypal, "PayPal", "Instant Payout",),
+    ]
+    .spacing(12)
+    .width(Fill);
+
+    let routing = field::field(
+        input("", "DE89 3704 0044 0532 0130 00")
+            .on_input(|_| Message::Noop)
+            .width(Fill),
+    )
+    .label("IBAN / Account Number")
+    .width(Fill);
+
+    card::card(
+        column![
+            card::header("Receiving Method").action(api_gap::marker()),
+            card::content(
+                column![
+                    account,
+                    column![text::p("Receiving Method").medium(), options,]
+                        .spacing(10)
+                        .width(Fill),
+                    routing,
+                ]
+                .spacing(16)
+                .width(Fill)
+            ),
+            card::footer(
+                button("Save Payout Settings")
+                    .width(Fill)
+                    .on_press(Message::Noop)
+            ),
+        ]
+        .spacing(16)
+        .padding([16, 0])
+        .width(Fill),
+    )
+    .width(Fill)
+    .into()
+}
+
+fn method_card(
+    state: &State,
+    method: ReceivingMethod,
+    title: &'static str,
+    description: &'static str,
+) -> Component<'static, Message> {
+    let selected = state.receiving_method == method;
+    let control = radio(
+        "",
+        method,
+        Some(state.receiving_method),
+        Message::SetReceivingMethod,
+    )
+    .spacing(0.0);
+    let label: Component<'static, Message> = column![
+        text::small(title).medium(),
+        text::muted(description).size(13.0),
+    ]
+    .spacing(2)
+    .into();
+
+    field::field(control)
+        .orientation(field::Horizontal)
+        .label(label)
+        .card(selected)
+        .on_press(Message::SetReceivingMethod(method))
+        .width(Fill)
+        .into()
 }

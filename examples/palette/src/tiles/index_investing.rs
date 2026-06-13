@@ -3,9 +3,10 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/index-investing.tsx`.
 
 use iced::Fill;
-use icedxdy::theme::container;
+use icedxdy::core::Border;
+use icedxdy::theme::container::Style;
 use icedxdy::widget::{column, container, text};
-use icedxdy::{Theme, card};
+use icedxdy::{Theme, card, radius};
 
 use crate::{Message, State};
 
@@ -31,10 +32,20 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .style(|t: &Theme| {
-        let mut style = container::card(t);
-        style.text_color = Some(t.muted.foreground.into());
-        style.into()
-    })
+    .style(index_card_style)
+    .into()
+}
+
+fn index_card_style(theme: &Theme) -> iced_widget::container::Style {
+    Style {
+        text_color: Some(theme.muted.foreground.into()),
+        background: Some(theme.card.base.into()),
+        border: Border {
+            radius: radius::XL.into(),
+            width: 1.0,
+            color: theme.neutral.foreground.alpha(0.10),
+        },
+        ..Default::default()
+    }
     .into()
 }

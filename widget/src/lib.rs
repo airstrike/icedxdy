@@ -27,6 +27,7 @@ pub mod scrollable;
 pub mod separator;
 pub mod sidebar;
 pub mod size;
+pub mod skeleton;
 #[cfg(feature = "spinner")]
 pub mod spinner;
 pub mod switch;
@@ -37,8 +38,10 @@ pub mod switch;
 pub use sweeten::widget::table;
 pub mod text;
 pub mod text_input;
+pub mod toggle_group;
 pub mod weight;
 
+pub use iced_widget::Radio;
 pub use iced_widget::slider;
 pub use iced_widget::space;
 pub use iced_widget::{QRCode, qr_code};
@@ -57,13 +60,15 @@ pub use component::{Component, IntoElement};
 pub use empty::Empty;
 pub use field::Field;
 pub use input::Input;
-pub use item::Item;
+pub use item::{Item, Media};
 pub use progress::Progress;
 pub use rich_text::{RichText, Span, rich_text, span};
 pub use row::Row;
 pub use size::Size;
+pub use skeleton::Skeleton;
 pub use switch::Switch;
 pub use text::Text;
+pub use toggle_group::ToggleGroup;
 pub use weight::Weight;
 
 /// Create a [`Button`] with the given content and default style.
@@ -117,6 +122,32 @@ pub fn scrollable<'a, Message: 'a>(
     content: impl Into<Component<'a, Message>>,
 ) -> scrollable::Scrollable<'a, Message> {
     scrollable::scrollable(content)
+}
+
+/// Create a [`Skeleton`] loading placeholder.
+pub fn skeleton<'a, Message: 'a>() -> Skeleton<'a, Message> {
+    skeleton::skeleton()
+}
+
+/// Create a stock iced [`Radio`] styled by the icedxdy [`Theme`].
+pub fn radio<'a, Message, V>(
+    label: impl Into<String>,
+    value: V,
+    selected: Option<V>,
+    on_click: impl FnOnce(V) -> Message,
+) -> Radio<'a, Message, icedxdy_core::Theme, iced_widget::Renderer>
+where
+    Message: Clone + 'a,
+    V: Eq + Copy,
+{
+    iced_widget::radio(label, value, selected, on_click)
+}
+
+/// Create a [`ToggleGroup`] from toggle-group items.
+pub fn toggle_group<'a, Message: Clone + 'a>(
+    items: impl IntoIterator<Item = toggle_group::Item<'a, Message>>,
+) -> ToggleGroup<'a, Message> {
+    toggle_group::toggle_group(items)
 }
 
 /// Create a [`Badge`] with the given content.

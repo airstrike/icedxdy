@@ -28,7 +28,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .width(Fill);
 
     let danger = item::muted([
-        icon::circle_help().size(16).into(),
+        item::media_icon(icon::circle_help().size(16)).into(),
         item::content([
             item::title("Danger Zone").into(),
             item::description("Archive account and remove catalog").into(),
