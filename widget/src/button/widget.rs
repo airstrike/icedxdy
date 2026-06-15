@@ -357,8 +357,12 @@ where
         limits: &layout::Limits,
     ) -> layout::Node {
         // When translate is on: 1px top + 1px bottom for press-down effect.
-        // `inset` adds transparent margin around the painted bg/border —
+        // `inset` adds transparent margin around the painted bg/border -
         // bounds grow to include it so hover/hit-test stay continuous.
+        //
+        // The child sits at the top edge of the reserved translate budget.
+        // Draw then consumes that budget only while pressed, keeping the
+        // resting text optically centered while layout accounts for travel.
         let translate = if self.translate { 1.0 } else { 0.0 };
         let padding = Padding {
             top: self.padding.top + translate + self.inset.top,
@@ -366,11 +370,18 @@ where
             left: self.padding.left + self.inset.left,
             right: self.padding.right + self.inset.right,
         };
-        layout::padded(limits, self.width, self.height, padding, |limits| {
-            self.content
-                .as_widget_mut()
-                .layout(&mut tree.children[0], renderer, limits)
-        })
+        layout::positioned(
+            limits,
+            self.width,
+            self.height,
+            padding,
+            |limits| {
+                self.content
+                    .as_widget_mut()
+                    .layout(&mut tree.children[0], renderer, limits)
+            },
+            |content, _| content.translate(Vector::new(0.0, -translate)),
+        )
     }
 
     fn operate(

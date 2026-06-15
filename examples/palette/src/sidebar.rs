@@ -88,7 +88,7 @@ fn menu_header() -> Component<'static, Message> {
     container(
         container(trigger)
             .width(Fill)
-            .height(36.0)
+            .center_y(36.0)
             .padding([0, 7])
             .style(control_style),
     )

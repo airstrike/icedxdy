@@ -48,7 +48,7 @@ fn targets_card() -> Component<'static, Message> {
             ),
         ]
         .spacing(16)
-        .padding([16, 0])
+        .padding(iced::Padding::ZERO.top(16.0))
         .width(Fill),
     )
     .width(Fill)
@@ -95,7 +95,7 @@ fn buy_card() -> Component<'static, Message> {
             ),
         ]
         .spacing(16)
-        .padding([16, 0])
+        .padding(iced::Padding::ZERO.top(16.0))
         .width(Fill),
     )
     .width(Fill)

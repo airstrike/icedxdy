@@ -77,7 +77,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
             card::footer(button("Save Threshold").width(Fill).on_press(Message::Noop)),
         ]
         .spacing(Space::U4)
-        .padding(Padding::ZERO.top(Space::U4).bottom(Space::U4))
+        .padding(Padding::ZERO.top(Space::U4))
         .width(Fill),
     )
     .width(Fill)

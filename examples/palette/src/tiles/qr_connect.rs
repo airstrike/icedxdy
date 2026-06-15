@@ -67,7 +67,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
             ),
         ]
         .spacing(16)
-        .padding([16, 0])
+        .padding(iced::Padding::ZERO.top(16.0))
         .width(Fill),
     )
     .width(Fill)

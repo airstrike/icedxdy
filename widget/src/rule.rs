@@ -7,7 +7,9 @@ use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
 use iced_core::widget::Tree;
-use iced_core::{Background, Color, Element, Layout, Length, Pixels, Rectangle, Size, Widget};
+use iced_core::{
+    Background, Border, Color, Element, Layout, Length, Pixels, Rectangle, Size, Widget,
+};
 
 /// Creates a horizontal [`Rule`] with the given height.
 pub fn horizontal<'a, Theme: Catalog>(height: impl Into<Pixels>) -> Rule<'a, Theme> {
@@ -113,6 +115,73 @@ where
             }
         };
 
+        let edge = style.border.width.max(0.0);
+        let inset = if self.is_vertical {
+            edge.min(bounds.height / 2.0)
+        } else {
+            edge.min(bounds.width / 2.0)
+        };
+
+        if style.border.color.a > 0.0 && inset > 0.0 {
+            let (first, second) = if self.is_vertical {
+                (
+                    Rectangle {
+                        height: inset,
+                        ..bounds
+                    },
+                    Rectangle {
+                        y: bounds.y + bounds.height - inset,
+                        height: inset,
+                        ..bounds
+                    },
+                )
+            } else {
+                (
+                    Rectangle {
+                        width: inset,
+                        ..bounds
+                    },
+                    Rectangle {
+                        x: bounds.x + bounds.width - inset,
+                        width: inset,
+                        ..bounds
+                    },
+                )
+            };
+
+            let background = Background::Color(style.border.color);
+            renderer.fill_quad(
+                renderer::Quad {
+                    bounds: first,
+                    border: border::rounded(style.border.radius),
+                    snap: style.snap,
+                    ..renderer::Quad::default()
+                },
+                background,
+            );
+            renderer.fill_quad(
+                renderer::Quad {
+                    bounds: second,
+                    border: border::rounded(style.border.radius),
+                    snap: style.snap,
+                    ..renderer::Quad::default()
+                },
+                background,
+            );
+        }
+
+        if self.is_vertical {
+            bounds.y += inset;
+            bounds.height = (bounds.height - 2.0 * inset).max(0.0);
+        } else {
+            bounds.x += inset;
+            bounds.width = (bounds.width - 2.0 * inset).max(0.0);
+        }
+
+        if bounds.width == 0.0 || bounds.height == 0.0 {
+            return;
+        }
+
         if style.snap {
             let unit = 1.0 / renderer.scale_factor().unwrap_or(1.0);
             bounds.width = bounds.width.max(unit);
@@ -149,6 +218,12 @@ pub struct Style {
     pub background: Background,
     /// The radius of the line corners.
     pub radius: border::Radius,
+    /// The caps at both ends of the rule's long axis.
+    ///
+    /// The rule draws its fill inside this width. Leave the color transparent
+    /// to keep separators from painting over a parent border; set a color to
+    /// intentionally paint the extra pixels at the ends.
+    pub border: Border,
     /// The [`FillMode`] of the rule.
     pub fill_mode: FillMode,
     /// Whether the rule should be snapped to the pixel grid.
@@ -160,6 +235,11 @@ impl Default for Style {
         Self {
             background: Background::Color(Color::TRANSPARENT),
             radius: 0.0.into(),
+            border: Border {
+                width: 1.0,
+                color: Color::TRANSPARENT,
+                ..Border::default()
+            },
             fill_mode: FillMode::Full,
             snap: true,
         }
