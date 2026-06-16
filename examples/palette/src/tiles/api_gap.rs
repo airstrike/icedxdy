@@ -3,7 +3,7 @@
 //! These are intentionally explicit: a tile may be present in the grid while
 //! still documenting which icedxdy primitive is missing before it can be LPP.
 
-use iced::Fill;
+use iced::{Center, Fill};
 use icedxdy::core::Border;
 use icedxdy::theme;
 use icedxdy::theme::container::Style;
@@ -17,6 +17,28 @@ pub fn marker() -> Component<'static, Message> {
 }
 
 pub fn inline(gaps: &'static [&'static str]) -> Component<'static, Message> {
+    let rows = gap_rows(gaps);
+
+    container(column(rows).spacing(8).width(Fill))
+        .padding(12)
+        .width(Fill)
+        .style(inline_style)
+        .into()
+}
+
+pub fn panel(gaps: &'static [&'static str], height: f32) -> Component<'static, Message> {
+    let rows = gap_rows(gaps);
+
+    container(column(rows).spacing(8).width(Fill))
+        .padding(12)
+        .width(Fill)
+        .height(height)
+        .align_y(Center)
+        .style(inline_style)
+        .into()
+}
+
+fn gap_rows(gaps: &'static [&'static str]) -> Vec<Component<'static, Message>> {
     let mut rows: Vec<Component<'static, Message>> = vec![
         row![
             marker(),
@@ -31,11 +53,7 @@ pub fn inline(gaps: &'static [&'static str]) -> Component<'static, Message> {
 
     rows.extend(gaps.iter().map(|gap| gap_row(gap)));
 
-    container(column(rows).spacing(8).width(Fill))
-        .padding(12)
-        .width(Fill)
-        .style(inline_style)
-        .into()
+    rows
 }
 
 pub fn missing(

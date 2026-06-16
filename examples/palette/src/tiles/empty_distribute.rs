@@ -9,6 +9,10 @@ use icedxdy::widget::{button, column, empty};
 
 use crate::{Message, State, icon};
 
+const CARD_HEIGHT: f32 = 276.0;
+const CARD_PADDING_Y: f32 = 16.0;
+const CONTENT_HEIGHT: f32 = CARD_HEIGHT - CARD_PADDING_Y * 2.0;
+
 #[granita::preview(state = State::dark(), group = "preview-01")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let content = empty::empty()
@@ -21,8 +25,11 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         )
         .content(button("Create Release").on_press(Message::Noop));
 
-    card::card(column![card::content(content)].padding([16, 0]).width(Fill))
-        .width(Fill)
-        .height(276.0)
-        .into()
+    card::card(
+        column![card::content(content).height(CONTENT_HEIGHT)]
+            .padding([CARD_PADDING_Y, 0.0])
+            .width(Fill),
+    )
+    .width(Fill)
+    .into()
 }

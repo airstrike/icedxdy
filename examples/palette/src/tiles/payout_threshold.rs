@@ -2,12 +2,12 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/payout-threshold.tsx`.
 
-use iced::widget::space;
-use iced::{Bottom, Fill, Padding};
+use iced::widget::{space, svg};
+use iced::{Bottom, Center, Fill, Padding};
 use iced_widget::slider::{Handle, HandleShape, Rail, Style, StyleFn};
 use icedxdy::card;
-use icedxdy::core::{Border, oklch};
-use icedxdy::widget::{button, column, field, row, slider, text};
+use icedxdy::core::Border;
+use icedxdy::widget::{Component, button, column, container, field, row, slider, text};
 use icedxdy::{Size, Space, Theme, font_size, radius};
 
 use super::{api_gap, select};
@@ -19,6 +19,12 @@ const CURRENCIES: &[&str] = &[
     "GBP — British Pound",
     "JPY — Japanese Yen",
 ];
+const X_ICON: &[u8] = br##"
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+  <path d="M18 6 6 18"/>
+  <path d="m6 6 12 12"/>
+</svg>
+"##;
 
 #[granita::preview(state = State::dark(), group = "preview-01")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
@@ -27,7 +33,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .action(
             row![
                 api_gap::marker(),
-                button::ghost("x")
+                button::ghost(close_icon())
                     .size(Size::Sm)
                     .square()
                     .style(close_button_style())
@@ -51,9 +57,10 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     ]
     .width(Fill);
 
-    let body = column![
+    let body = field::group([
         field::field(select::trigger("USD — United States Dollar", CURRENCIES))
-            .label("Preferred Currency"),
+            .label("Preferred Currency")
+            .into(),
         field::field(
             column![
                 amount,
@@ -64,11 +71,12 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
             ]
             .spacing(Space::U2)
             .width(Fill),
-        ),
-        field::field(api_gap::inline(&["Textarea"])).label("Notes"),
-    ]
-    .spacing(Space::U5)
-    .width(Fill);
+        )
+        .into(),
+        field::field(api_gap::panel(&["Textarea"], 90.0))
+            .label("Notes")
+            .into(),
+    ]);
 
     card::card(
         column![
@@ -82,6 +90,22 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     )
     .width(Fill)
     .into()
+}
+
+fn close_icon() -> Component<'static, Message> {
+    let icon = svg(svg::Handle::from_memory(X_ICON))
+        .width(16.0)
+        .height(16.0)
+        .style(|theme: &Theme, _| iced_widget::svg::Style {
+            color: Some(theme.muted.foreground.into()),
+        });
+
+    container(icon)
+        .width(16.0)
+        .height(16.0)
+        .align_x(Center)
+        .align_y(Center)
+        .into()
 }
 
 fn close_button_style() -> iced_widget::button::StyleFn<'static, Theme> {
@@ -101,8 +125,8 @@ fn slider_style() -> StyleFn<'static, Theme> {
     Box::new(|theme, _status| Style {
         rail: Rail {
             backgrounds: (
-                iced::Background::Color(theme.neutral.foreground.into()),
-                iced::Background::Color(oklch(0.23, 0.0, 0.0).into()),
+                iced::Background::Color(theme.primary.base.into()),
+                iced::Background::Color(theme.muted.base.into()),
             ),
             width: 4.0,
             border: Border {
@@ -112,10 +136,10 @@ fn slider_style() -> StyleFn<'static, Theme> {
             .into(),
         },
         handle: Handle {
-            shape: HandleShape::Circle { radius: 8.0 },
-            background: iced::Background::Color(theme.neutral.foreground.into()),
-            border_color: theme.neutral.foreground.into(),
-            border_width: 0.0,
+            shape: HandleShape::Circle { radius: 6.0 },
+            background: iced::Background::Color(iced::Color::WHITE),
+            border_color: theme.neutral.ring.into(),
+            border_width: 1.0,
         },
     })
 }

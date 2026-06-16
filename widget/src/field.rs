@@ -2,9 +2,8 @@
 //!
 //! A wrapper around a form input with optional label, description, and error
 //! slots. Mirrors shadcn's `Field`/`FieldLabel`/`FieldDescription`/`FieldError`
-//! (the MVP subset). Other shadcn field exports — `FieldGroup`, `FieldSet`,
-//! `FieldLegend`, `FieldSeparator`, `FieldContent`, `FieldTitle` — are not
-//! yet ported.
+//! (the MVP subset). Other shadcn field exports — `FieldSet`, `FieldLegend`,
+//! `FieldSeparator`, `FieldContent`, `FieldTitle` — are not yet ported.
 //!
 //! # Example
 //!
@@ -99,6 +98,17 @@ pub struct Field<'a, Message> {
     width: Option<Length>,
 }
 
+/// A vertical group of fields.
+///
+/// Mirrors shadcn's `FieldGroup`: `flex w-full flex-col gap-5`. Nested
+/// group-specific CSS variants are intentionally deferred until the matching
+/// checkbox/radio group primitives exist.
+pub struct Group<'a, Message> {
+    children: Vec<Component<'a, Message>>,
+    spacing: f32,
+    width: Length,
+}
+
 /// Create a [`Field`] wrapping the given input content.
 ///
 /// The input widget is the only required argument. Add a label,
@@ -113,6 +123,17 @@ pub fn field<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Fie
         card: None,
         on_press: None,
         width: None,
+    }
+}
+
+/// Create a [`Group`] wrapping related fields.
+pub fn group<'a, Message: 'a>(
+    children: impl IntoIterator<Item = Component<'a, Message>>,
+) -> Group<'a, Message> {
+    Group {
+        children: children.into_iter().collect(),
+        spacing: 20.0,
+        width: Length::Fill,
     }
 }
 
@@ -180,6 +201,55 @@ impl<'a, Message: 'a> Field<'a, Message> {
     pub fn width(mut self, width: impl Into<Length>) -> Self {
         self.width = Some(width.into());
         self
+    }
+}
+
+impl<'a, Message: 'a> Group<'a, Message> {
+    /// Set the group gap in logical pixels.
+    pub fn spacing(mut self, spacing: impl Into<iced_core::Pixels>) -> Self {
+        self.spacing = spacing.into().0;
+        self
+    }
+
+    /// Set the group width.
+    pub fn width(mut self, width: impl Into<Length>) -> Self {
+        self.width = width.into();
+        self
+    }
+}
+
+impl<'a, Message: 'a> From<Group<'a, Message>>
+    for iced_core::Element<'a, Message, Theme, Renderer>
+{
+    fn from(g: Group<'a, Message>) -> Self {
+        Box::new(g).into_element()
+    }
+}
+
+impl<'a, Message: 'a> From<Group<'a, Message>> for Component<'a, Message> {
+    fn from(g: Group<'a, Message>) -> Self {
+        Component::new(g)
+    }
+}
+
+impl<'a, Message: 'a> IntoElement<Message> for Group<'a, Message> {
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
+        let Group {
+            children,
+            spacing,
+            width,
+        } = *self;
+
+        let elements: Vec<iced_core::Element<'a, Message, Theme, Renderer>> =
+            children.into_iter().map(Component::into_iced).collect();
+
+        iced_widget::Column::with_children(elements)
+            .spacing(spacing)
+            .width(width)
+            .into()
     }
 }
 
@@ -573,6 +643,15 @@ mod tests {
         assert!(f.label.is_some());
         assert!(f.description.is_some());
         assert!(f.error.is_some());
+    }
+
+    #[test]
+    fn group_defaults_to_field_group_spacing() {
+        let g: field::Group<'_, Msg> =
+            field::group([field::field("First").into(), field::field("Second").into()]);
+
+        assert_eq!(g.spacing, 20.0);
+        assert_eq!(g.width, iced_core::Length::Fill);
     }
 
     /// Horizontal orientation is the default-opposite — builder field

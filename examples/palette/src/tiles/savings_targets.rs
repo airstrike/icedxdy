@@ -6,7 +6,7 @@ use iced::widget::space;
 use iced::{Center, Fill};
 use icedxdy::theme;
 use icedxdy::widget::{button, column, container, field, input, item, progress, row, text};
-use icedxdy::{Component, Space, Theme, Vertical, card};
+use icedxdy::{Component, Theme, Vertical, card};
 
 use super::{api_gap, select};
 use crate::{Message, State};
@@ -27,13 +27,7 @@ fn targets_card() -> Component<'static, Message> {
         column![
             card::header("Savings Targets")
                 .description("Active milestones for 2024")
-                .action(
-                    row![
-                        api_gap::marker(),
-                        button::outline("New Goal").on_press(Message::Noop),
-                    ]
-                    .spacing(Space::U2)
-                ),
+                .action(button::outline("New Goal").on_press(Message::Noop)),
             card::content(
                 column![
                     target("RETIREMENT", "$420,000", 65.0, "65% achieved", "$273,000"),
@@ -72,16 +66,17 @@ fn buy_card() -> Component<'static, Message> {
     card::card(
         column![
             card::header("Buy Investment").action(api_gap::marker()),
-            card::content(
+            card::content(field::group([
+                amount.into(),
+                order.into(),
                 column![
-                    amount,
-                    order,
                     info_row("Estimated Shares", "1.95"),
                     info_row("Buying Power", "$12,450.00"),
                 ]
-                .spacing(16)
+                .spacing(8)
                 .width(Fill)
-            ),
+                .into(),
+            ])),
             card::footer(
                 column![
                     button("Review Order").width(Fill).on_press(Message::Noop),
@@ -90,7 +85,7 @@ fn buy_card() -> Component<'static, Message> {
                     ))
                     .center_x(Fill),
                 ]
-                .spacing(10)
+                .spacing(12)
                 .width(Fill)
             ),
         ]

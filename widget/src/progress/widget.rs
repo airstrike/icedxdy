@@ -19,7 +19,6 @@ use std::ops::RangeInclusive;
 use std::time::Duration;
 
 use iced_core::animation::Easing;
-use iced_core::border::Border;
 use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
@@ -254,6 +253,15 @@ where
         );
 
         if active_progress_length > 0.0 {
+            let is_complete = displayed >= range_end;
+            let mut bar_border = style.border;
+            bar_border.color = Color::TRANSPARENT;
+
+            if !is_complete {
+                bar_border.radius.top_right = 0.0;
+                bar_border.radius.bottom_right = 0.0;
+            }
+
             let bar_bounds = Rectangle {
                 width: active_progress_length,
                 ..bounds
@@ -262,10 +270,7 @@ where
             renderer.fill_quad(
                 renderer::Quad {
                     bounds: bar_bounds,
-                    border: Border {
-                        color: Color::TRANSPARENT,
-                        ..style.border
-                    },
+                    border: bar_border,
                     ..renderer::Quad::default()
                 },
                 style.bar,

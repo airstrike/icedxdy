@@ -12,10 +12,11 @@
 use std::collections::HashSet;
 use std::f32::consts::PI;
 
+use iced::font;
 use iced::gradient::Linear;
 use iced::widget::Id;
 use iced::widget::stack;
-use iced::{Bottom, Fill, Padding, Right, Task};
+use iced::{Bottom, Fill, Font, Padding, Pixels, Right, Task};
 use iced_widget::button::Status;
 use icedxdy::Theme;
 use icedxdy::core::{Background, Border};
@@ -28,6 +29,7 @@ use icedxdy::widget::{button, column, container, row, scrollable};
 
 pub mod chrome;
 pub mod dashboard;
+pub mod fonts;
 pub mod icon;
 pub mod sidebar;
 pub mod tiles;
@@ -86,6 +88,8 @@ pub enum Message {
     ToggleShadeSchedule(bool),
     SetKitchenMode(KitchenMode),
     SetKitchenScene(KitchenScene),
+    Font(fonts::Message),
+    GitHubStarsLoaded(Result<String, String>),
     SaveForm,
     CancelForm,
     ToggleNotification(String),
@@ -113,6 +117,9 @@ pub struct State {
     pub armed: bool,
     pub deploying: bool,
     pub qr_connect: Option<qr_code::Data>,
+    fount: fount::Fount,
+    geist_loaded: bool,
+    pub github_stars: Option<String>,
 }
 
 impl State {
@@ -122,7 +129,14 @@ impl State {
         } else {
             Mode::Light
         };
-        (Self::with_mode(mode), Task::none())
+
+        (
+            Self::with_mode(mode),
+            Task::batch([
+                fonts::init().map(Message::Font),
+                Task::perform(fetch_github_stars(), Message::GitHubStarsLoaded),
+            ]),
+        )
     }
 
     pub fn dark() -> Self {
@@ -147,6 +161,9 @@ impl State {
             armed: false,
             deploying: false,
             qr_connect: qr_code::Data::new("https://ledger.app/connect/jd-4829").ok(),
+            fount: fount::Fount::new(),
+            geist_loaded: false,
+            github_stars: None,
         }
     }
 
@@ -164,6 +181,11 @@ impl State {
             Message::ToggleShadeSchedule(v) => self.shade_auto_schedule = v,
             Message::SetKitchenMode(v) => self.kitchen_mode = v,
             Message::SetKitchenScene(v) => self.kitchen_scene = v,
+            Message::Font(msg) => return self.update_font(msg),
+            Message::GitHubStarsLoaded(Ok(stars)) => self.github_stars = Some(stars),
+            Message::GitHubStarsLoaded(Err(e)) => {
+                eprintln!("GitHub star count failed: {e}");
+            }
             Message::SaveForm | Message::CancelForm => {}
             Message::ToggleNotification(id) => {
                 if !self.open_notifications.remove(&id) {
@@ -179,6 +201,51 @@ impl State {
             Message::Noop => {}
         }
         Task::none()
+    }
+
+    fn update_font(&mut self, msg: fonts::Message) -> Task<Message> {
+        match msg {
+            fonts::Message::SystemFontsLoaded(families) => {
+                let names: Vec<String> = families
+                    .into_iter()
+                    .map(|f| f.to_string())
+                    .filter(|name| !name.starts_with('.'))
+                    .collect();
+                self.fount.set_system_families(names);
+
+                if !self.geist_loaded && self.fount.system_families().iter().any(|n| n == "Geist") {
+                    self.geist_loaded = true;
+                    font::set_defaults(Font::new("Geist"), Pixels(14.0))
+                } else {
+                    Task::none()
+                }
+            }
+            fonts::Message::CatalogLoaded(Ok(catalog)) => {
+                self.fount.set_google_catalog(catalog);
+
+                if self.geist_loaded {
+                    Task::none()
+                } else {
+                    fonts::load("Geist".to_string(), self.fount.google_catalog()).map(Message::Font)
+                }
+            }
+            fonts::Message::CatalogLoaded(Err(e)) => {
+                eprintln!("Font catalog loading failed: {e}");
+                Task::none()
+            }
+            fonts::Message::Loaded(name, Err(e)) => {
+                eprintln!("Font loading failed ({name}): {e}");
+                Task::none()
+            }
+            fonts::Message::Loaded(name, Ok(())) => {
+                if name == "Geist" && !self.geist_loaded {
+                    self.geist_loaded = true;
+                    font::set_defaults(Font::new("Geist"), Pixels(14.0))
+                } else {
+                    Task::none()
+                }
+            }
+        }
     }
 
     pub fn connected(&self) -> bool {
@@ -246,6 +313,35 @@ impl State {
             .height(Fill)
             .style(section_soft)
             .into()
+    }
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct GithubRepo {
+    stargazers_count: u64,
+}
+
+async fn fetch_github_stars() -> Result<String, String> {
+    let repo = reqwest::Client::new()
+        .get("https://api.github.com/repos/shadcn-ui/ui")
+        .header(reqwest::header::USER_AGENT, "icedxdy-palette")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .error_for_status()
+        .map_err(|e| e.to_string())?
+        .json::<GithubRepo>()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(format_stars(repo.stargazers_count))
+}
+
+fn format_stars(count: u64) -> String {
+    if count >= 1000 {
+        format!("{}k", ((count as f64) / 1000.0).round() as u64)
+    } else {
+        count.to_string()
     }
 }
 

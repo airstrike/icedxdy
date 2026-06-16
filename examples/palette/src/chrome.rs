@@ -71,11 +71,15 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
             .on_press(Message::SetMode(Mode::Light)),
     };
 
-    let github = row![icon::github().size(14), text::small("114k")]
-        .spacing(6)
-        .align_y(Center);
+    let github = row![
+        icon::github().size(14),
+        text::small(state.github_stars.as_deref().unwrap_or("...")),
+    ]
+    .spacing(6)
+    .align_y(Center);
 
     let auth = row![
+        separator(),
         button::ghost(github).size(Size::Sm).on_press(Message::Noop),
         separator(),
         mode_button,
@@ -93,12 +97,12 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .align_y(Center);
 
     let bar = row![brand, nav, space::horizontal(), search, auth,]
-        .spacing(10)
+        .spacing(8)
         .align_y(Center)
         .width(Fill);
 
     container(bar)
-        .padding([10, 24])
+        .padding([12, 24])
         .width(Fill)
         .height(HEADER_HEIGHT)
         .style(background)

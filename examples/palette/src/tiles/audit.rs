@@ -65,7 +65,7 @@ pub const PREVIEW_02: &[Tile] = &[
     Tile {
         source: "preferences.tsx",
         status: Status::ApiGap,
-        gaps: &["Select", "FieldGroup", "FieldSeparator"],
+        gaps: &["Select", "FieldSeparator"],
     },
     Tile {
         source: "savings-progress.tsx",
@@ -80,7 +80,7 @@ pub const PREVIEW_02: &[Tile] = &[
     Tile {
         source: "savings-targets.tsx",
         status: Status::ApiGap,
-        gaps: &["InputGroup", "NativeSelect", "FieldGroup"],
+        gaps: &["InputGroup", "NativeSelect"],
     },
     Tile {
         source: "recent-transactions.tsx",
