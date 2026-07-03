@@ -18,20 +18,25 @@ const CURRENCIES: &[&str] = &[
 ];
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let currency = field::field(select::trigger("USD — United States Dollar", CURRENCIES))
         .label("Default Currency")
         .width(Fill);
 
-    let public = field::field(switch(true).on_toggle(|_| Message::Noop))
-        .orientation(field::Horizontal)
-        .label("Public Statistics")
-        .description("Allow others to see your total stream count and listening activity");
+    let public = field::field(
+        switch(state.preferences_public_stats).on_toggle(Message::PreferencesPublicStatsChanged),
+    )
+    .orientation(field::Horizontal)
+    .label("Public Statistics")
+    .description("Allow others to see your total stream count and listening activity");
 
-    let email = field::field(switch(true).on_toggle(|_| Message::Noop))
-        .orientation(field::Horizontal)
-        .label("Email Notifications")
-        .description("Monthly royalty reports and distribution updates");
+    let email = field::field(
+        switch(state.preferences_email_notifications)
+            .on_toggle(Message::PreferencesEmailNotificationsChanged),
+    )
+    .orientation(field::Horizontal)
+    .label("Email Notifications")
+    .description("Monthly royalty reports and distribution updates");
 
     card::card(
         column![

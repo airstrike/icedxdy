@@ -28,21 +28,17 @@ pub mod separator;
 pub mod sidebar;
 pub mod size;
 pub mod skeleton;
+pub mod slider;
 #[cfg(feature = "spinner")]
 pub mod spinner;
 pub mod switch;
-/// Re-export of sweeten's table module so consumers reach the table API
-/// without taking sweeten as a direct dependency. Catalog impl for our
-/// `Theme` lives in core (also feature-gated).
-#[cfg(feature = "sweeten")]
-pub use sweeten::widget::table;
+pub mod table;
 pub mod text;
 pub mod text_input;
 pub mod toggle_group;
 pub mod weight;
 
 pub use iced_widget::Radio;
-pub use iced_widget::slider;
 pub use iced_widget::space;
 pub use iced_widget::{QRCode, qr_code};
 
@@ -66,7 +62,9 @@ pub use rich_text::{RichText, Span, rich_text, span};
 pub use row::Row;
 pub use size::Size;
 pub use skeleton::Skeleton;
+pub use slider::Slider;
 pub use switch::Switch;
+pub use table::Table;
 pub use text::Text;
 pub use toggle_group::ToggleGroup;
 pub use weight::Weight;
@@ -113,6 +111,19 @@ pub fn row<'a, Message: 'a>() -> Row<'a, Message> {
     Row::new()
 }
 
+/// Create a nova-styled [`Slider`].
+pub fn slider<'a, T, Message>(
+    range: std::ops::RangeInclusive<T>,
+    value: T,
+    on_change: impl Fn(T) -> Message + 'a,
+) -> Slider<'a, T, Message>
+where
+    T: Copy + From<u8> + PartialOrd,
+    Message: Clone,
+{
+    slider::slider(range, value, on_change)
+}
+
 /// Create a [`scrollable::Scrollable`] wrapping the given content. The
 /// project-wide default style is the thin invisible-rail spec from
 /// the `default` fn in core's theme/scrollable — 1px transparent rail,
@@ -122,6 +133,14 @@ pub fn scrollable<'a, Message: 'a>(
     content: impl Into<Component<'a, Message>>,
 ) -> scrollable::Scrollable<'a, Message> {
     scrollable::scrollable(content)
+}
+
+/// Create a [`Table`] with the given table child slots.
+pub fn table<'a, Message: 'a, C>(children: impl IntoIterator<Item = C>) -> Table<'a, Message>
+where
+    C: Into<Component<'a, Message>>,
+{
+    table::table(children)
 }
 
 /// Create a [`Skeleton`] loading placeholder.

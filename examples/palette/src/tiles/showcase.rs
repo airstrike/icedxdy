@@ -3,7 +3,6 @@
 use iced::widget::{space, stack};
 use iced::{Center, Fill};
 use iced_widget::button::Status;
-use iced_widget::slider::{Handle, HandleShape, Rail, Style, StyleFn};
 use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::core::{Border, Color, oklch};
@@ -125,7 +124,7 @@ pub fn icon_grid() -> iced::Element<'static, Message, Theme> {
     )
 }
 
-pub fn controls_card(state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
     let tabs = row![
         button("Button").size(Size::Sm).on_press(Message::Noop),
         button::secondary("Secondary")
@@ -161,8 +160,8 @@ pub fn controls_card(state: &State) -> iced::Element<'static, Message, Theme> {
         badge::outline("Outline"),
         space::horizontal(),
         checkbox(state.accept_terms).on_toggle(Message::AcceptTerms),
-        checkbox(false).on_toggle(Message::SubscribeEmails),
-        checkbox(true).on_toggle(Message::SubscribeEmails),
+        checkbox(state.showcase_middle_checkbox).on_toggle(Message::SetShowcaseMiddleCheckbox),
+        checkbox(state.showcase_trailing_checkbox).on_toggle(Message::SetShowcaseTrailingCheckbox),
     ]
     .spacing(10)
     .align_y(Center)
@@ -197,10 +196,13 @@ pub fn controls_card(state: &State) -> iced::Element<'static, Message, Theme> {
     let body = column![
         tabs,
         field,
-        slider(0.0..=100.0, 45.0, |_| Message::Noop)
-            .width(Fill)
-            .style(slider_style()),
-        name_input(),
+        slider(
+            0.0..=100.0,
+            state.showcase_slider,
+            Message::SetShowcaseSlider
+        )
+        .width(Fill),
+        name_input(state),
         textarea_placeholder(),
         badges,
         footer,
@@ -268,10 +270,10 @@ fn icon_button<'a>(icon: impl Into<Component<'a, Message>>) -> Button<'a, Messag
         .on_press(Message::Noop)
 }
 
-fn panel(
-    body: impl Into<Component<'static, Message>>,
+fn panel<'a>(
+    body: impl Into<Component<'a, Message>>,
     height: f32,
-) -> iced::Element<'static, Message, Theme> {
+) -> iced::Element<'a, Message, Theme> {
     card::card(container(body.into()).padding(16).width(Fill).height(Fill))
         .width(Fill)
         .height(height)
@@ -282,11 +284,11 @@ fn skeleton_line(width: f32, height: f32) -> Skeleton<'static, Message> {
     skeleton().width(width).height(height)
 }
 
-fn name_input() -> Component<'static, Message> {
-    let input = input("Name", "")
+fn name_input(state: &State) -> Component<'_, Message> {
+    let input = input("Name", &state.showcase_name)
         .width(Fill)
         .style(control_input_style())
-        .on_input(|_| Message::Noop)
+        .on_input(Message::ShowcaseNameChanged)
         .on_submit(Message::Noop);
 
     let trailing = container(icon::search().size(16))
@@ -361,27 +363,5 @@ fn control_outline_button_style() -> iced_widget::button::StyleFn<'static, Theme
             },
             ..Default::default()
         }
-    })
-}
-
-fn slider_style() -> StyleFn<'static, Theme> {
-    Box::new(|theme, _status| Style {
-        rail: Rail {
-            backgrounds: (
-                theme.neutral.foreground.into(),
-                oklch(0.22, 0.0, 0.0).into(),
-            ),
-            width: 4.0,
-            border: iced::Border {
-                radius: 2.0.into(),
-                ..Default::default()
-            },
-        },
-        handle: Handle {
-            shape: HandleShape::Circle { radius: 6.0 },
-            background: theme.neutral.foreground.into(),
-            border_width: 0.0,
-            border_color: iced::Color::TRANSPARENT,
-        },
     })
 }

@@ -85,7 +85,8 @@ impl<'a, Message: 'a> Column<'a, Message> {
     }
 
     /// Sets the [`Padding`] of the [`Column`].
-    pub fn padding(mut self, padding: impl Into<Padding>) -> Self {
+    pub fn padding(mut self, padding: impl Into<icedxdy_core::Padding>) -> Self {
+        let padding: icedxdy_core::Padding = padding.into();
         self.padding = padding.into();
         self
     }

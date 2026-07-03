@@ -13,8 +13,9 @@ pub mod separator;
 pub use card::card;
 
 pub use icedxdy_core as core;
+pub use icedxdy_core::padding;
 pub use icedxdy_core::theme;
-pub use icedxdy_core::{Color, Design, FontFamily, Gap, Palette, Space, Theme};
+pub use icedxdy_core::{Color, Design, FontFamily, Gap, Padding, Palette, Space, Theme};
 pub use icedxdy_core::{font_size, height, icon_size, radius, spacing};
 
 // Layout-axis primitive shared across widgets (Field, ButtonGroup, ...).

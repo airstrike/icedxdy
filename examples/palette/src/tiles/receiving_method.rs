@@ -10,10 +10,10 @@ use super::api_gap;
 use crate::{Message, ReceivingMethod, State};
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let account = field::field(
-        input("", "Morgan Shah")
-            .on_input(|_| Message::Noop)
+        input("", &state.receiving_account_holder)
+            .on_input(Message::ReceivingAccountHolderChanged)
             .width(Fill),
     )
     .label("Account Holder Name")
@@ -32,8 +32,8 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .width(Fill);
 
     let routing = field::field(
-        input("", "DE89 3704 0044 0532 0130 00")
-            .on_input(|_| Message::Noop)
+        input("", &state.receiving_routing)
+            .on_input(Message::ReceivingRoutingChanged)
             .width(Fill),
     )
     .label("IBAN / Account Number")

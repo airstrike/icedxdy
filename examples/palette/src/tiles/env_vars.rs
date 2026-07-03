@@ -8,30 +8,20 @@ use icedxdy::{Component, Theme};
 
 use crate::{Message, State};
 
-struct EnvVar {
-    key: &'static str,
-    value: &'static str,
-}
-
-const DOTS: &str = "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}";
-
-const ENV: &[EnvVar] = &[
-    EnvVar {
-        key: "DATABASE_URL",
-        value: DOTS,
-    },
-    EnvVar {
-        key: "NEXT_PUBLIC_API",
-        value: "https://api.example.com",
-    },
-    EnvVar {
-        key: "STRIPE_SECRET",
-        value: DOTS,
-    },
-];
-
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
-    let rows: Vec<Component<'static, Message>> = ENV.iter().map(env_row).collect();
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
+    let rows: Vec<Component<'_, Message>> = vec![
+        env_row(
+            "DATABASE_URL",
+            &state.env_database,
+            Message::EnvDatabaseChanged,
+        ),
+        env_row("NEXT_PUBLIC_API", &state.env_api, Message::EnvApiChanged),
+        env_row(
+            "STRIPE_SECRET",
+            &state.env_stripe,
+            Message::EnvStripeChanged,
+        ),
+    ];
 
     let footer = row![
         button::outline("Edit").on_press(Message::Noop),
@@ -61,17 +51,25 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .into()
 }
 
-fn env_row(v: &EnvVar) -> Component<'static, Message> {
-    row![active_input(v.key), active_input(v.value),]
+fn env_row<'a>(
+    key: &'static str,
+    value: &'a str,
+    on_input: fn(String) -> Message,
+) -> Component<'a, Message> {
+    row![readonly_input(key), active_input(value, on_input),]
         .spacing(8)
         .width(Fill)
         .into()
 }
 
-fn active_input(value: &'static str) -> Component<'static, Message> {
+fn readonly_input(value: &'static str) -> Component<'static, Message> {
+    input("", value).width(Fill).into()
+}
+
+fn active_input<'a>(value: &'a str, on_input: fn(String) -> Message) -> Component<'a, Message> {
     input("", value)
         .width(Fill)
-        .on_input(|_| Message::Noop)
+        .on_input(on_input)
         .on_submit(Message::Noop)
         .into()
 }

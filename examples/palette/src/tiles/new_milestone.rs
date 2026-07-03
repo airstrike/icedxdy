@@ -9,22 +9,26 @@ use icedxdy::{Theme, card};
 use crate::{Message, State};
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let goal = field::field(
-        input("e.g. New Car, Home Downpayment", "")
-            .on_input(|_| Message::Noop)
+        input("e.g. New Car, Home Downpayment", &state.new_milestone_goal)
+            .on_input(Message::NewMilestoneGoalChanged)
             .width(Fill),
     )
     .label("Goal Name")
     .width(Fill);
 
-    let amount = field::field(input("", "$15,000").on_input(|_| Message::Noop).width(Fill))
-        .label("Target Amount")
-        .width(Fill);
+    let amount = field::field(
+        input("", &state.new_milestone_amount)
+            .on_input(Message::NewMilestoneAmountChanged)
+            .width(Fill),
+    )
+    .label("Target Amount")
+    .width(Fill);
 
     let date = field::field(
-        input("", "Dec 2025")
-            .on_input(|_| Message::Noop)
+        input("", &state.new_milestone_date)
+            .on_input(Message::NewMilestoneDateChanged)
             .width(Fill),
     )
     .label("Target Date")

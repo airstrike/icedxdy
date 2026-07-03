@@ -69,7 +69,8 @@ impl<'a, Message: 'a> Empty<'a, Message> {
 
     /// Override root padding. shadcn's default is `p-6`; many blocks pass
     /// class overrides like `p-4`.
-    pub fn padding(mut self, padding: impl Into<Padding>) -> Self {
+    pub fn padding(mut self, padding: impl Into<icedxdy_core::Padding>) -> Self {
+        let padding: icedxdy_core::Padding = padding.into();
         self.padding = padding.into();
         self
     }

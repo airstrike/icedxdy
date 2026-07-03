@@ -267,6 +267,29 @@ where
     }
 }
 
+impl<'a, T, Message> IntoElement<Message> for crate::slider::Slider<'a, T, Message, Theme>
+where
+    T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
+    Message: Clone + 'a,
+{
+    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    where
+        Self: 'b,
+    {
+        iced_core::Element::new(*self)
+    }
+}
+
+impl<'a, T, Message> From<crate::slider::Slider<'a, T, Message, Theme>> for Component<'a, Message>
+where
+    T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
+    Message: Clone + 'a,
+{
+    fn from(w: crate::slider::Slider<'a, T, Message, Theme>) -> Self {
+        Component::new(w)
+    }
+}
+
 // PickList<T>
 impl<'a, T, L, V, Message> IntoElement<Message>
     for iced_widget::PickList<'a, T, L, V, Message, Theme, Renderer>

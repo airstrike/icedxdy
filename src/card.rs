@@ -33,6 +33,7 @@ use iced_widget::container::Container;
 use iced_widget::text::LineHeight;
 
 use crate::Gap;
+use crate::Padding;
 use crate::Theme;
 use crate::core::{Border, Radius};
 use crate::radius;
@@ -43,13 +44,6 @@ use crate::widget::Component;
 use crate::widget::rule;
 use crate::widget::space;
 use crate::widget::text;
-
-/// Padding values based on shadcn nova card.
-mod padding {
-    /// Section horizontal padding (`px-4` = 16px on header / content; the
-    /// footer wraps this with full `p-4`).
-    pub const SECTION: f32 = 16.0;
-}
 
 /// Card root — wraps content with shadcn's card surface (bg-card + ring +
 /// rounded corners).
@@ -181,11 +175,7 @@ impl<'a, Message: 'a> From<Header<'a, Message>>
         };
 
         iced_widget::container(padded_inner)
-            .padding(
-                iced_core::Padding::ZERO
-                    .left(padding::SECTION)
-                    .right(padding::SECTION),
-            )
+            .padding(Padding::X4)
             .width(Length::Fill)
             .into()
     }
@@ -275,11 +265,7 @@ pub fn content<'a, Message: 'a>(
     child: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
 ) -> Container<'a, Message, Theme, Renderer> {
     Container::new(child)
-        .padding(
-            iced_core::Padding::ZERO
-                .left(padding::SECTION)
-                .right(padding::SECTION),
-        )
+        .padding(Padding::X4)
         .width(Length::Fill)
 }
 
@@ -292,7 +278,7 @@ pub fn footer<'a, Message: 'a>(
         rule::horizontal(1).style(footer_rule_style()).into();
 
     let body = Container::new(child)
-        .padding(padding::SECTION)
+        .padding(Padding::P4)
         .width(Length::Fill)
         .style(|t| footer_style(t).into());
 

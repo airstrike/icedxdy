@@ -14,8 +14,8 @@ use crate::{Message, State};
 const ORDER_TYPES: &[&str] = &["Market Order", "Limit Order", "Stop Order"];
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
-    row![targets_card(), buy_card()]
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
+    row![targets_card(), buy_card(state)]
         .spacing(40)
         .align_y(Center)
         .width(Fill)
@@ -49,10 +49,10 @@ fn targets_card() -> Component<'static, Message> {
     .into()
 }
 
-fn buy_card() -> Component<'static, Message> {
+fn buy_card(state: &State) -> Component<'_, Message> {
     let amount = field::field(
-        input("", "$ 1,000.00")
-            .on_input(|_| Message::Noop)
+        input("", &state.buy_investment_amount)
+            .on_input(Message::BuyInvestmentAmountChanged)
             .width(Fill),
     )
     .label("Amount to Invest")

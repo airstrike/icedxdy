@@ -13,7 +13,6 @@ struct Notification {
     id: &'static str,
     label: &'static str,
     description: &'static str,
-    checked: bool,
 }
 
 const NOTIFICATIONS: &[Notification] = &[
@@ -21,38 +20,40 @@ const NOTIFICATIONS: &[Notification] = &[
         id: "transactions",
         label: "Transaction alerts",
         description: "Deposits, withdrawals, and transfers.",
-        checked: true,
     },
     Notification {
         id: "security",
         label: "Security alerts",
         description: "Login attempts and account changes.",
-        checked: true,
     },
     Notification {
         id: "goals",
         label: "Goal milestones",
         description: "Updates at 25%, 50%, 75%, and 100%.",
-        checked: false,
     },
     Notification {
         id: "market",
         label: "Market updates",
         description: "Daily portfolio summary and price alerts.",
-        checked: false,
     },
 ];
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
+    let select_all_state = match state.notification_settings.len() {
+        0 => checkbox::State::Unchecked,
+        n if n == NOTIFICATIONS.len() => checkbox::State::Checked,
+        _ => checkbox::State::Indeterminate,
+    };
+
     let select_all = field::field(
-        checkbox::checkbox(checkbox::State::Indeterminate).on_toggle(|_| Message::Noop),
+        checkbox::checkbox(select_all_state).on_toggle(Message::SetAllNotificationSettings),
     )
     .orientation(field::Horizontal)
     .label("Select all");
 
     let mut fields = vec![select_all.into()];
-    fields.extend(NOTIFICATIONS.iter().map(notification_field));
+    fields.extend(NOTIFICATIONS.iter().map(|n| notification_field(state, n)));
 
     card::card(
         column![
@@ -72,11 +73,11 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .into()
 }
 
-fn notification_field(n: &Notification) -> icedxdy::Component<'static, Message> {
+fn notification_field(state: &State, n: &Notification) -> icedxdy::Component<'static, Message> {
     let id = n.id;
     field::field(
-        checkbox::checkbox(n.checked)
-            .on_toggle(move |_| Message::ToggleNotification(id.to_owned())),
+        checkbox::checkbox(state.notification_settings.contains(id))
+            .on_toggle(move |_| Message::ToggleNotificationSetting(id.to_owned())),
     )
     .orientation(field::Horizontal)
     .label(n.label)

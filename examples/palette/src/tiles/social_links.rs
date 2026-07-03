@@ -10,16 +10,32 @@ use super::api_gap;
 use crate::{Message, State};
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     card::card(
         column![
             card::header("Social Links").action(api_gap::marker()),
             card::content(
                 column![
-                    link_field("Spotify Artist URL", "spotify.com/artist/3j...2k"),
-                    link_field("Instagram Handle", "@julianduryea_music"),
-                    link_field("SoundCloud URL", "soundcloud.com/username"),
-                    link_field("Website", "https://yoursite.com"),
+                    link_field(
+                        "Spotify Artist URL",
+                        &state.social_spotify,
+                        Message::SocialSpotifyChanged
+                    ),
+                    link_field(
+                        "Instagram Handle",
+                        &state.social_instagram,
+                        Message::SocialInstagramChanged
+                    ),
+                    link_field(
+                        "SoundCloud URL",
+                        &state.social_soundcloud,
+                        Message::SocialSoundCloudChanged
+                    ),
+                    link_field(
+                        "Website",
+                        &state.social_website,
+                        Message::SocialWebsiteChanged
+                    ),
                 ]
                 .spacing(16)
                 .width(Fill)
@@ -42,8 +58,12 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .into()
 }
 
-fn link_field(label: &'static str, value: &'static str) -> icedxdy::Component<'static, Message> {
-    field::field(input("", value).on_input(|_| Message::Noop).width(Fill))
+fn link_field<'a>(
+    label: &'static str,
+    value: &'a str,
+    on_input: fn(String) -> Message,
+) -> icedxdy::Component<'a, Message> {
+    field::field(input("", value).on_input(on_input).width(Fill))
         .label(label)
         .width(Fill)
         .into()

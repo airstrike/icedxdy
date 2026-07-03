@@ -20,10 +20,10 @@ const TO_ACCOUNTS: &[&str] = &[
 ];
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let amount = field::field(
-        input("", "$ 1,200.00")
-            .on_input(|_| Message::Noop)
+        input("", &state.transfer_amount)
+            .on_input(Message::TransferAmountChanged)
             .width(Fill),
     )
     .label("Amount to Transfer")
@@ -48,7 +48,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         divider(),
         money_row("Transaction fee", "$0.00", false),
         divider(),
-        money_row("Total amount", "$1,200.00", true),
+        money_row("Total amount", &state.transfer_amount, true),
     ])
     .spacing(12.0)
     .into()])
@@ -80,11 +80,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .into()
 }
 
-fn money_row(
-    label: &'static str,
-    value: &'static str,
-    strong: bool,
-) -> Component<'static, Message> {
+fn money_row<'a>(label: &'static str, value: &'a str, strong: bool) -> Component<'a, Message> {
     let value = if strong {
         text::small(value).semibold()
     } else {

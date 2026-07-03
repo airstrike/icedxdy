@@ -32,11 +32,11 @@ const MEMBERS: &[Member] = &[
     },
 ];
 
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let invite_row = row![
-        input("email@example.com", "")
+        input("email@example.com", &state.invite_email)
             .width(Fill)
-            .on_input(|_| Message::Noop)
+            .on_input(Message::InviteEmailChanged)
             .on_submit(Message::Noop),
         button::outline("Viewer  \u{25BE}").on_press(Message::Noop),
         button("Invite").on_press(Message::Noop),
@@ -44,9 +44,9 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .spacing(8)
     .width(Fill);
 
-    let members: Vec<Component<'static, Message>> = MEMBERS.iter().map(member_row).collect();
+    let members: Vec<Component<'_, Message>> = MEMBERS.iter().map(member_row).collect();
 
-    let body: Column<'static, Message> =
+    let body: Column<'_, Message> =
         column(std::iter::once(Component::from(invite_row)).chain(members))
             .spacing(12)
             .width(Fill);

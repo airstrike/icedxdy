@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 105761374c687a36b181fe30603b5afcd30526f9128c836d0d016ad6e03807e9
+// 55eddfaf9c2cd8fe35c765d65de57f261cb170b18d8622044f352f7ec5b2f12c
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -12,12 +12,14 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("archive", "\u{E041}"),
     ("arrow_left", "\u{E048}"),
     ("arrow_right", "\u{E049}"),
+    ("car", "\u{E1D5}"),
     ("check", "\u{E06C}"),
     ("chevron_down", "\u{E06D}"),
     ("chevron_right", "\u{E06F}"),
     ("chevron_up", "\u{E070}"),
     ("circle", "\u{E076}"),
     ("circle_help", "\u{E082}"),
+    ("coffee", "\u{E096}"),
     ("copy", "\u{E09E}"),
     ("ellipsis", "\u{E0B6}"),
     ("github", "\u{E0E6}"),
@@ -30,10 +32,13 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("refresh_cw", "\u{E145}"),
     ("search", "\u{E151}"),
     ("settings", "\u{E154}"),
+    ("shopping_cart", "\u{E15C}"),
     ("square", "\u{E167}"),
     ("sun", "\u{E178}"),
     ("trash_2", "\u{E18E}"),
+    ("tv", "\u{E195}"),
     ("upload", "\u{E19E}"),
+    ("wallet", "\u{E204}"),
     ("x", "\u{E1B2}"),
 ];
 
@@ -56,6 +61,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E049}")
+}
+
+pub fn car<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E1D5}")
 }
 
 pub fn check<'a, Theme>() -> Text<'a, Theme>
@@ -98,6 +110,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E082}")
+}
+
+pub fn coffee<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E096}")
 }
 
 pub fn copy<'a, Theme>() -> Text<'a, Theme>
@@ -184,6 +203,13 @@ where
     icon("\u{E154}")
 }
 
+pub fn shopping_cart<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E15C}")
+}
+
 pub fn square<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -205,11 +231,25 @@ where
     icon("\u{E18E}")
 }
 
+pub fn tv<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E195}")
+}
+
 pub fn upload<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E19E}")
+}
+
+pub fn wallet<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E204}")
 }
 
 pub fn x<'a, Theme>() -> Text<'a, Theme>

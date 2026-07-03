@@ -4,7 +4,6 @@
 
 use iced::widget::{space, svg};
 use iced::{Bottom, Center, Fill, Padding};
-use iced_widget::slider::{Handle, HandleShape, Rail, Style, StyleFn};
 use icedxdy::card;
 use icedxdy::core::Border;
 use icedxdy::widget::{Component, button, column, container, field, row, slider, text};
@@ -27,7 +26,7 @@ const X_ICON: &[u8] = br##"
 "##;
 
 #[granita::preview(state = State::dark(), group = "preview-01")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let header = card::header("Payout Threshold")
         .description("Set the minimum balance required before a payout is triggered.")
         .action(
@@ -45,7 +44,9 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let amount = row![
         text::small("Minimum Payout Amount").medium(),
         space::horizontal(),
-        text::p("$2500.00").size(font_size::XL2).semibold(),
+        text::p(format!("${:.2}", state.payout_threshold))
+            .size(font_size::XL2)
+            .semibold(),
     ]
     .align_y(Bottom)
     .width(Fill);
@@ -64,9 +65,12 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         field::field(
             column![
                 amount,
-                slider(50.0..=10000.0, 2500.0, |_| Message::Noop)
-                    .width(Fill)
-                    .style(slider_style()),
+                slider(
+                    50.0..=10000.0,
+                    state.payout_threshold,
+                    Message::SetPayoutThreshold
+                )
+                .width(Fill),
                 bounds,
             ]
             .spacing(Space::U2)
@@ -118,28 +122,5 @@ fn close_button_style() -> iced_widget::button::StyleFn<'static, Theme> {
         }
         .into(),
         ..Default::default()
-    })
-}
-
-fn slider_style() -> StyleFn<'static, Theme> {
-    Box::new(|theme, _status| Style {
-        rail: Rail {
-            backgrounds: (
-                iced::Background::Color(theme.primary.base.into()),
-                iced::Background::Color(theme.muted.base.into()),
-            ),
-            width: 4.0,
-            border: Border {
-                radius: 999.0.into(),
-                ..Border::default()
-            }
-            .into(),
-        },
-        handle: Handle {
-            shape: HandleShape::Circle { radius: 6.0 },
-            background: iced::Background::Color(iced::Color::WHITE),
-            border_color: theme.neutral.ring.into(),
-            border_width: 1.0,
-        },
     })
 }

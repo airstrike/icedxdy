@@ -48,8 +48,16 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
                     column![text::small("Scenes").medium(), scenes,]
                         .spacing(Space::U2)
                         .width(Fill),
-                    slider_row("Brightness", 72.0),
-                    slider_row("Color Temp", 44.0),
+                    slider_row(
+                        "Brightness",
+                        state.kitchen_brightness,
+                        Message::SetKitchenBrightness
+                    ),
+                    slider_row(
+                        "Color Temp",
+                        state.kitchen_color_temp,
+                        Message::SetKitchenColorTemp
+                    ),
                 ]
                 .spacing(Space::U4)
                 .width(Fill)
@@ -83,10 +91,14 @@ fn scene_item(
         .on_press(Message::SetKitchenScene(scene))
 }
 
-fn slider_row(label: &'static str, value: f32) -> Component<'static, Message> {
+fn slider_row(
+    label: &'static str,
+    value: f32,
+    on_change: fn(f32) -> Message,
+) -> Component<'static, Message> {
     column![
         text::small(label).style(theme::text::Muted),
-        slider(0.0..=100.0, value, |_| Message::Noop).width(Fill),
+        slider(0.0..=100.0, value, on_change).width(Fill),
     ]
     .spacing(Space::U2)
     .width(Fill)

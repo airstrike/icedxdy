@@ -10,18 +10,18 @@ use super::api_gap;
 use crate::{Message, State, icon};
 
 #[granita::preview(state = State::dark(), group = "preview-02")]
-pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let email = field::field(
-        input("", "artist@studio.inc")
-            .on_input(|_| Message::Noop)
+        input("", &state.account_email)
+            .on_input(Message::AccountEmailChanged)
             .width(Fill),
     )
     .label("Email Address")
     .width(Fill);
 
     let password = field::field(
-        input("", "***********")
-            .on_input(|_| Message::Noop)
+        input("", &state.account_password)
+            .on_input(Message::AccountPasswordChanged)
             .width(Fill),
     )
     .label("Current Password")

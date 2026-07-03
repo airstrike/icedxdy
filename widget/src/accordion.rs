@@ -191,7 +191,8 @@ impl<'a, Message: 'a> Accordion<'a, Message> {
     /// Override outer padding. Defaults to zero — the wrapping container
     /// (e.g. card) is responsible for outer breathing room. Surfaced as
     /// a knob so the `borders` example can supply `px-4`.
-    pub fn padding(mut self, padding: impl Into<Padding>) -> Self {
+    pub fn padding(mut self, padding: impl Into<icedxdy_core::Padding>) -> Self {
+        let padding: icedxdy_core::Padding = padding.into();
         self.outer_padding = padding.into();
         self
     }
