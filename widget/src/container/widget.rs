@@ -391,6 +391,7 @@ where
 /// `width`/`height` are expected to already encode any min/max bounds via
 /// [`Length::Bounded`]; they're applied via [`Limits::width`] /
 /// [`Limits::height`] inside [`layout::positioned`].
+#[allow(clippy::too_many_arguments)]
 pub fn layout(
     tree: &mut Tree,
     limits: &layout::Limits,

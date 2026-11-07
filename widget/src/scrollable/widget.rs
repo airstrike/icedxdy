@@ -2350,6 +2350,7 @@ impl State {
     /// disabled), and, while the button is held, a constant-velocity
     /// autoscroll runs after a delay until the scroller reaches the
     /// pointer (stepped on each frame, via [`Self::step_rail`]).
+    #[allow(clippy::too_many_arguments)]
     fn press_rail(
         &mut self,
         axis: Axis,
@@ -2629,6 +2630,7 @@ impl State {
     ///
     /// Returns the [`Interact`] effects to materialize on the [`Shell`] and
     /// whether the event must be delegated to the content.
+    #[allow(clippy::too_many_arguments)]
     fn interact(
         &mut self,
         event: &Event,
@@ -2951,6 +2953,7 @@ impl State {
     /// delegated to the content.
     ///
     /// Returns the [`Update`] effects to materialize on the [`Shell`].
+    #[allow(clippy::too_many_arguments)]
     fn update(
         &mut self,
         event: &Event,

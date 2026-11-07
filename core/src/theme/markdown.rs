@@ -1,7 +1,7 @@
 //! Markdown styling
 
-use iced_core::text::highlighter::{self, Highlighter};
 use iced_core::text::Highlight;
+use iced_core::text::highlighter::{self, Highlighter};
 use iced_core::theme::Base;
 use iced_core::{Code, border, font, padding};
 use iced_widget::container;

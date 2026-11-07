@@ -718,10 +718,10 @@ pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 impl From<iced_widget::toggler::Style> for Style {
     fn from(s: iced_widget::toggler::Style) -> Self {
         Style {
-            background: s.background.into(),
+            background: s.background,
             background_border_width: s.background_border_width,
             background_border_color: s.background_border_color,
-            foreground: s.foreground.into(),
+            foreground: s.foreground,
             foreground_border_width: s.foreground_border_width,
             foreground_border_color: s.foreground_border_color,
             text_color: s.text_color,
