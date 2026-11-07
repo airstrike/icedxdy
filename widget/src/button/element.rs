@@ -53,6 +53,7 @@ where
     width: Option<Length>,
     style: Theme::Class<'a>,
     on_press: Option<Message>,
+    disabled: bool,
 }
 
 /// Create a button with default size and style
@@ -71,6 +72,7 @@ pub fn button<'a, Message: Clone + 'a>(
         width: None,
         style: Box::new(|t, s| theme::button::default(t, s).into()),
         on_press: None,
+        disabled: false,
     }
 }
 
@@ -168,9 +170,24 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
         self
     }
 
-    /// Set the on_press message
+    /// Set the message published when the button is pressed. A button
+    /// without one stays enabled and publishes nothing; use
+    /// [`disabled`](Self::disabled) to disable it.
     pub fn on_press(mut self, message: Message) -> Self {
         self.on_press = Some(message);
+        self
+    }
+
+    /// Set the message published when the button is pressed, if `Some`.
+    pub fn on_press_maybe(mut self, message: Option<Message>) -> Self {
+        self.on_press = message;
+        self
+    }
+
+    /// Disable the button: it ignores input, is skipped by focus traversal
+    /// and paints with the variant's disabled style (nova `disabled:opacity-50`).
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 }
@@ -245,7 +262,7 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
             iced_btn = iced_btn.on_press(on_press);
         }
 
-        iced_btn.into()
+        iced_btn.disabled(btn.disabled).into()
     }
 }
 

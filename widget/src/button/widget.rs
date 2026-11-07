@@ -6,8 +6,10 @@
 //! - [`Button::on_focus`] — Emit a message when the button gains focus
 //! - [`Button::on_blur`] — Emit a message when the button loses focus
 //!
-//! The button is focusable when enabled (i.e., when [`Button::on_press`] is
-//! set), and responds to `Enter` and `Space` keys when focused.
+//! The button is enabled unless [`Button::disabled`] is set. An enabled
+//! button is focusable, responds to `Enter` and `Space` keys when focused,
+//! and captures presses even without an [`Button::on_press`] message, so a
+//! wrapping marker (a trigger) can observe the activation.
 //!
 //! [`button`]: https://docs.iced.rs/iced/widget/button/
 //!
@@ -73,8 +75,8 @@ use crate::core::{
 /// }
 /// ```
 ///
-/// If a [`Button::on_press`] handler is not set, the resulting [`Button`] will
-/// be disabled:
+/// A [`Button`] is disabled only through [`Button::disabled`]; one without
+/// an [`Button::on_press`] message stays interactive and publishes nothing:
 ///
 /// ```no_run
 /// # mod iced { pub mod widget { pub use iced_widget::*; } pub use iced_widget::Renderer; pub use iced_widget::core::*; }
@@ -88,7 +90,7 @@ use crate::core::{
 /// }
 ///
 /// fn view(state: &State) -> impl Widget<Message> {
-///     button("I am disabled!")
+///     button("I publish nothing")
 /// }
 /// ```
 pub struct Button<'a, Message, Theme = iced_widget::Theme, Renderer = iced_widget::Renderer>
@@ -98,6 +100,7 @@ where
 {
     content: Element<'a, Message, Theme, Renderer>,
     on_press: Option<OnPress<'a, Message>>,
+    disabled: bool,
     on_focus: Option<Message>,
     on_blur: Option<Message>,
     id: Option<widget::Id>,
@@ -140,6 +143,7 @@ where
         Button {
             content: content._boxed(),
             on_press: None,
+            disabled: false,
             on_focus: None,
             on_blur: None,
             id: Some(widget::Id::unique()),
@@ -184,8 +188,6 @@ where
     }
 
     /// Sets the message that will be produced when the [`Button`] is pressed.
-    ///
-    /// Unless `on_press` is called, the [`Button`] will be disabled.
     pub fn on_press(mut self, on_press: Message) -> Self {
         self.on_press = Some(OnPress::Direct(on_press));
         self
@@ -206,10 +208,15 @@ where
 
     /// Sets the message that will be produced when the [`Button`] is pressed,
     /// if `Some`.
-    ///
-    /// If `None`, the [`Button`] will be disabled.
     pub fn on_press_maybe(mut self, on_press: Option<Message>) -> Self {
         self.on_press = on_press.map(OnPress::Direct);
+        self
+    }
+
+    /// Sets whether the [`Button`] is disabled. A disabled button ignores
+    /// input, is not focusable and paints with [`Status::Disabled`].
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 
@@ -392,7 +399,7 @@ where
         renderer: &Renderer,
         operation: &mut dyn Operation,
     ) {
-        if self.on_press.is_some() {
+        if !self.disabled {
             let state = tree.state.downcast_mut::<State>();
             operation.focusable(self.id.as_ref(), layout.bounds(), state);
         }
@@ -454,7 +461,7 @@ where
                 let bounds = layout.bounds();
 
                 if cursor.is_over(bounds) {
-                    if self.on_press.is_some() {
+                    if !self.disabled {
                         state.is_pressed = true;
                         shell.capture_event();
 
@@ -476,20 +483,18 @@ where
             }
             Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))
             | Event::Touch(touch::Event::FingerLifted { .. }) => {
-                if let Some(on_press) = &self.on_press {
-                    let state = tree.state.downcast_mut::<State>();
+                let state = tree.state.downcast_mut::<State>();
 
-                    if state.is_pressed {
-                        state.is_pressed = false;
+                if !self.disabled && state.is_pressed {
+                    state.is_pressed = false;
 
-                        let bounds = layout.bounds();
-
-                        if cursor.is_over(bounds) {
-                            shell.publish(on_press.get());
-                        }
-
-                        shell.capture_event();
+                    if cursor.is_over(layout.bounds())
+                        && let Some(on_press) = &self.on_press
+                    {
+                        shell.publish(on_press.get());
                     }
+
+                    shell.capture_event();
                 }
             }
             Event::Touch(touch::Event::FingerLost { .. }) => {
@@ -500,13 +505,13 @@ where
             Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) => {
                 let state = tree.state.downcast_mut::<State>();
 
-                if state.is_focused
-                    && let Some(on_press) = &self.on_press
-                {
+                if state.is_focused && !self.disabled {
                     match key.as_ref() {
                         keyboard::Key::Named(key::Named::Enter)
                         | keyboard::Key::Named(key::Named::Space) => {
-                            shell.publish(on_press.get());
+                            if let Some(on_press) = &self.on_press {
+                                shell.publish(on_press.get());
+                            }
                             shell.capture_event();
                         }
                         _ => {}
@@ -521,7 +526,7 @@ where
 
         // Animate hover transitions
         if let Event::Window(window::Event::RedrawRequested(now)) = event {
-            let should_hover = is_hovered && self.on_press.is_some();
+            let should_hover = is_hovered && !self.disabled;
             if should_hover != state.hover.value() {
                 state.hover.go_mut(should_hover, *now);
             }
@@ -530,7 +535,7 @@ where
             }
         }
 
-        let current_status = if self.on_press.is_none() {
+        let current_status = if self.disabled {
             Status::Disabled
         } else if is_hovered && state.is_pressed {
             Status::Pressed
@@ -676,7 +681,7 @@ where
         _viewport: &Rectangle,
         _renderer: &Renderer,
     ) -> mouse::Interaction {
-        if cursor.is_over(layout.bounds()) && self.on_press.is_some() {
+        if cursor.is_over(layout.bounds()) && !self.disabled {
             self.interaction.unwrap_or_default()
         } else {
             mouse::Interaction::default()
