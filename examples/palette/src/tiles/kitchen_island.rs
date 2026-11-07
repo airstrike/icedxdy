@@ -98,7 +98,10 @@ fn slider_row(
 ) -> Slot<'static, Message> {
     column![
         text::small(label).style(theme::text::Muted),
-        slider(0.0..=100.0, value, on_change).width(Fill),
+        slider(0.0..=100.0)
+            .value(value)
+            .on_value_change(on_change)
+            .width(Fill),
     ]
     .spacing(Space::U2)
     .width(Fill)

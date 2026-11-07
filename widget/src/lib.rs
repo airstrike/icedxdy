@@ -113,17 +113,13 @@ pub fn row<'a, Message: 'a>() -> Row<'a, Message> {
     Row::new()
 }
 
-/// Create a nova-styled [`Slider`].
-pub fn slider<'a, T, Message>(
-    range: std::ops::RangeInclusive<T>,
-    value: T,
-    on_change: impl Fn(T) -> Message + 'a,
-) -> Slider<'a, T, Message>
+/// Create an uncontrolled, nova-styled [`Slider`] over `range`.
+pub fn slider<'a, T, Message>(range: std::ops::RangeInclusive<T>) -> Slider<'a, T, Message>
 where
     T: Copy + From<u8> + PartialOrd,
     Message: Clone,
 {
-    slider::slider(range, value, on_change)
+    slider::slider(range)
 }
 
 /// Create a [`scrollable::Scrollable`] wrapping the given content. The

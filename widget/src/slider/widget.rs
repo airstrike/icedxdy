@@ -1,11 +1,8 @@
 //! Sliders let users set a value by moving an indicator.
 //!
 //! # Example
-//! ```no_run
-//! # mod iced { pub mod widget { pub use iced_widget::*; } pub use iced_widget::Renderer; pub use iced_widget::core::*; }
-//! # use iced::widget::Widget;
-//! #
-//! use iced::widget::slider;
+//! ```ignore
+//! use icedxdy::widget::slider;
 //!
 //! struct State {
 //!    value: f32,
@@ -17,7 +14,9 @@
 //! }
 //!
 //! fn view(state: &State) -> impl Widget<Message> {
-//!     slider(0.0..=100.0, state.value, Message::ValueChanged)
+//!     slider(0.0..=100.0)
+//!         .value(state.value)
+//!         .on_value_change(Message::ValueChanged)
 //! }
 //!
 //! fn update(state: &mut State, message: Message) {
@@ -63,11 +62,8 @@ use std::time::Duration;
 /// scales is already less than the precision lost from the f64 representation.
 ///
 /// # Example
-/// ```no_run
-/// # mod iced { pub mod widget { pub use iced_widget::*; } pub use iced_widget::Renderer; pub use iced_widget::core::*; }
-/// # use iced::widget::Widget;
-/// #
-/// use iced::widget::slider;
+/// ```ignore
+/// use icedxdy::widget::slider;
 ///
 /// struct State {
 ///    value: f32,
@@ -79,7 +75,9 @@ use std::time::Duration;
 /// }
 ///
 /// fn view(state: &State) -> impl Widget<Message> {
-///     slider(0.0..=100.0, state.value, Message::ValueChanged)
+///     slider(0.0..=100.0)
+///         .value(state.value)
+///         .on_value_change(Message::ValueChanged)
 /// }
 ///
 /// fn update(state: &mut State, message: Message) {
@@ -98,8 +96,10 @@ where
     step: f64,
     shift_step: Option<f64>,
     value: T,
+    /// Whether the value is the app's (`true`) or kept in the widget tree.
+    is_controlled: bool,
     default: Option<T>,
-    on_change: Box<dyn Fn(T) -> Message + 'a>,
+    on_change: Option<Box<dyn Fn(T) -> Message + 'a>>,
     on_release: Option<Message>,
     width: Length,
     height: f32,
@@ -116,42 +116,56 @@ where
     /// The default height of a [`Slider`].
     pub const DEFAULT_HEIGHT: f32 = 16.0;
 
-    /// Creates a new [`Slider`].
-    ///
-    /// It expects:
-    ///   * an inclusive range of possible values
-    ///   * the current value of the [`Slider`]
-    ///   * a function that will be called when the [`Slider`] is dragged.
-    ///     It receives the new value of the [`Slider`] and must produce a
-    ///     `Message`.
-    pub fn new<F>(range: RangeInclusive<T>, value: T, on_change: F) -> Self
-    where
-        F: 'a + Fn(T) -> Message,
-    {
-        let value = if value >= *range.start() {
-            value
-        } else {
-            *range.start()
-        };
-
-        let value = if value <= *range.end() {
-            value
-        } else {
-            *range.end()
-        };
-
+    /// Creates an uncontrolled [`Slider`] over `range`, starting at its
+    /// start.
+    pub fn new(range: RangeInclusive<T>) -> Self {
         Slider {
-            value,
+            value: *range.start(),
+            is_controlled: false,
             default: None,
             range,
             step: 1.0,
             shift_step: None,
-            on_change: Box::new(on_change),
+            on_change: None,
             on_release: None,
             width: Length::Fill,
             height: Self::DEFAULT_HEIGHT,
             class: Theme::default(),
             status: None,
+        }
+    }
+
+    /// Controls the [`Slider`]: it always shows `value` (clamped to its
+    /// range), and dragging only publishes
+    /// [`on_value_change`](Self::on_value_change).
+    pub fn value(mut self, value: T) -> Self {
+        self.value = self.clamp(value);
+        self.is_controlled = true;
+        self
+    }
+
+    /// The initial value of an uncontrolled [`Slider`]. Later rebuilds keep
+    /// the value the user dragged to.
+    pub fn default_value(mut self, value: T) -> Self {
+        self.value = self.clamp(value);
+        self.is_controlled = false;
+        self
+    }
+
+    /// Sets the message published with the new value while the [`Slider`]
+    /// is dragged.
+    pub fn on_value_change(mut self, on_change: impl Fn(T) -> Message + 'a) -> Self {
+        self.on_change = Some(Box::new(on_change));
+        self
+    }
+
+    fn clamp(&self, value: T) -> T {
+        if value < *self.range.start() {
+            *self.range.start()
+        } else if value > *self.range.end() {
+            *self.range.end()
+        } else {
+            value
         }
     }
 
@@ -233,6 +247,16 @@ where
 
     fn state(&self) -> tree::State {
         tree::State::new(State::default())
+    }
+
+    fn diff(&mut self, tree: &mut Tree) {
+        let state = tree.state.downcast_mut::<State>();
+
+        if self.is_controlled {
+            state.uncontrolled = None;
+        } else if let Some(value) = state.uncontrolled.and_then(T::from_f64) {
+            self.value = value;
+        }
     }
 
     fn size(&self) -> Size<Length> {
@@ -323,9 +347,13 @@ where
 
             let change = |new_value: T| {
                 if (self.value.as_() - new_value.as_()).abs() > f64::EPSILON {
-                    shell.publish((self.on_change)(new_value));
+                    if let Some(on_change) = &self.on_change {
+                        shell.publish(on_change(new_value));
+                    }
 
-                    self.value = new_value;
+                    if !self.is_controlled || self.on_change.is_some() {
+                        self.value = new_value;
+                    }
                 }
             };
 
@@ -401,6 +429,10 @@ where
         };
 
         update();
+
+        if !self.is_controlled {
+            state.uncontrolled = Some(self.value.as_());
+        }
 
         let current_status = if state.is_dragging {
             Status::Dragged
@@ -575,6 +607,8 @@ where
 }
 
 struct State {
+    /// The value of an uncontrolled slider, kept across rebuilds.
+    uncontrolled: Option<f64>,
     is_dragging: bool,
     keyboard_modifiers: keyboard::Modifiers,
     ring: Animation<bool>,
@@ -584,6 +618,7 @@ struct State {
 impl Default for State {
     fn default() -> Self {
         Self {
+            uncontrolled: None,
             is_dragging: false,
             keyboard_modifiers: keyboard::Modifiers::default(),
             ring: Animation::new(false)

@@ -214,8 +214,8 @@ impl page::Page for InputPage {
             .width(320)
             .into(),
 
-            // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
-            "disabled" => field(input("Email").width(Fill))
+            // Disabled: nova `disabled` on the input.
+            "disabled" => field(input("Email").width(Fill).disabled(true))
                 .label("Email")
                 .description("This field is currently disabled.")
                 .width(320)

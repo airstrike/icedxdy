@@ -116,6 +116,9 @@ where
     on_blur: Option<Message>,
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
     on_paste: Option<Box<dyn Fn(String) -> Message + 'a>>,
+    /// Whether the value is the app's (`true`) or kept in the widget tree.
+    is_controlled: bool,
+    is_disabled: bool,
     on_submit: Option<Message>,
     icon: Option<Icon>,
     class: Theme::Class<'a>,
@@ -151,6 +154,8 @@ where
             on_blur: None,
             on_input: None,
             on_paste: None,
+            is_controlled: true,
+            is_disabled: false,
             on_submit: None,
             icon: None,
             class: Theme::default(),
@@ -185,10 +190,56 @@ where
         self
     }
 
+    /// Whether typing edits the value: enabled, and either uncontrolled or
+    /// listening through [`on_input`](Self::on_input).
+    fn is_editable(&self) -> bool {
+        !self.is_disabled && (self.on_input.is_some() || !self.is_controlled)
+    }
+
+    /// Record an edit already applied to `self.value`: an uncontrolled input
+    /// keeps it, and the change is published through `on_paste` (for a
+    /// paste, when set) or `on_input`.
+    fn changed(
+        &self,
+        uncontrolled: &mut Option<Value>,
+        is_paste: bool,
+        shell: &mut Shell<'_, Message>,
+    ) {
+        if !self.is_controlled {
+            *uncontrolled = Some(self.value.clone());
+        }
+
+        let contents = self.value.to_string();
+        let on_change = match &self.on_paste {
+            Some(on_paste) if is_paste => Some(on_paste),
+            _ => self.on_input.as_ref(),
+        };
+
+        if let Some(on_change) = on_change {
+            shell.publish(on_change(contents));
+        }
+    }
+
+    /// Makes the [`TextInput`] uncontrolled: it starts with `value` and keeps
+    /// its own value in the widget tree from then on. Edits still publish
+    /// [`on_input`](Self::on_input), if set.
+    pub fn uncontrolled(mut self, value: &str) -> Self {
+        self.value = Value::new(value);
+        self.is_controlled = false;
+        self
+    }
+
+    /// Sets whether the [`TextInput`] is disabled: not focusable, not
+    /// editable, painted with [`Status::Disabled`].
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.is_disabled = disabled;
+        self
+    }
+
     /// Sets the message that should be produced when some text is typed into
     /// the [`TextInput`].
     ///
-    /// If this method is not called, the [`TextInput`] will be disabled.
+    /// A controlled input without it is read-only.
     pub fn on_input(mut self, on_input: impl Fn(String) -> Message + 'a) -> Self {
         self.on_input = Some(Box::new(on_input));
         self
@@ -477,7 +528,7 @@ where
     ) {
         let state = tree.state.downcast_ref::<State<Renderer::Paragraph>>();
         let value = value.unwrap_or(&self.value);
-        let is_disabled = self.on_input.is_none();
+        let is_disabled = self.is_disabled;
 
         let secure_value = self.is_secure.then(|| value.secure());
         let value = secure_value.as_ref().unwrap_or(value);
@@ -517,11 +568,11 @@ where
         // paints inward from the expanded bounds, so the visible halo is
         // around (not over) the field.
         //
-        // Belt-and-suspenders: also gate on `on_input.is_some()` so a stale
+        // Belt-and-suspenders: also gate on `is_disabled` so a stale
         // `is_focused = Some(_)` from before disable can't keep painting the
-        // halo. Disabled inputs (no `on_input`) never show the ring.
+        // halo. Disabled inputs never show the ring.
         if state.is_focused()
-            && self.on_input.is_some()
+            && !self.is_disabled
             && let Some(ring) = focused_style.ring
         {
             let r = ring.width;
@@ -741,9 +792,16 @@ where
 
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
-        // Stop pasting if input becomes disabled
-        if self.on_input.is_none() {
+        // Stop pasting if input becomes read-only
+        if !self.is_editable() {
             state.is_pasting = None;
+        }
+
+        if self.is_controlled {
+            state.uncontrolled = None;
+        } else {
+            let value = state.uncontrolled.get_or_insert_with(|| self.value.clone());
+            self.value = value.clone();
         }
     }
 
@@ -815,10 +873,10 @@ where
             }
         }
 
-        // HTML semantics: a disabled input (no `on_input`) is not focusable
-        // and shouldn't react to clicks at all — no focus mutation, no
-        // cursor placement, no `on_focus`/`on_blur` publish.
-        let is_disabled = self.on_input.is_none();
+        // HTML semantics: a disabled input is not focusable and shouldn't
+        // react to clicks at all — no focus mutation, no cursor placement,
+        // no `on_focus`/`on_blur` publish.
+        let is_disabled = self.is_disabled;
 
         match &event {
             Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
@@ -1025,9 +1083,9 @@ where
                             return;
                         }
                         Some('x') if state.keyboard_modifiers.command() && !self.is_secure => {
-                            let Some(on_input) = &self.on_input else {
+                            if !self.is_editable() {
                                 return;
-                            };
+                            }
 
                             if let Some((start, end)) = state.cursor.selection(&self.value) {
                                 shell.write_clipboard(clipboard::Content::Text(
@@ -1038,8 +1096,7 @@ where
                             let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                             editor.delete();
 
-                            let message = (on_input)(editor.contents());
-                            shell.publish(message);
+                            self.changed(&mut state.uncontrolled, false, shell);
                             shell.capture_event();
 
                             focus.updated_at = Instant::now();
@@ -1050,9 +1107,9 @@ where
                             if state.keyboard_modifiers.command()
                                 && !state.keyboard_modifiers.alt() =>
                         {
-                            let Some(on_input) = &self.on_input else {
+                            if !self.is_editable() {
                                 return;
-                            };
+                            }
 
                             let content = match &state.is_pasting {
                                 Some(Paste::Pasting(content)) => content,
@@ -1067,12 +1124,7 @@ where
                             let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                             editor.paste(content.clone());
 
-                            let message = if let Some(paste) = &self.on_paste {
-                                (paste)(editor.contents())
-                            } else {
-                                (on_input)(editor.contents())
-                            };
-                            shell.publish(message);
+                            self.changed(&mut state.uncontrolled, true, shell);
                             shell.capture_event();
 
                             focus.updated_at = Instant::now();
@@ -1100,9 +1152,9 @@ where
                     }
 
                     if let Some(text) = text {
-                        let Some(on_input) = &self.on_input else {
+                        if !self.is_editable() {
                             return;
-                        };
+                        }
 
                         state.is_pasting = None;
 
@@ -1111,8 +1163,7 @@ where
 
                             editor.insert(c);
 
-                            let message = (on_input)(editor.contents());
-                            shell.publish(message);
+                            self.changed(&mut state.uncontrolled, false, shell);
                             shell.capture_event();
 
                             focus.updated_at = Instant::now();
@@ -1135,9 +1186,9 @@ where
                             }
                         }
                         keyboard::Key::Named(key::Named::Backspace) => {
-                            let Some(on_input) = &self.on_input else {
+                            if !self.is_editable() {
                                 return;
-                            };
+                            }
 
                             if state.cursor.selection(&self.value).is_none() {
                                 if (self.is_secure && modifiers.jump()) || modifiers.macos_command()
@@ -1153,17 +1204,16 @@ where
                             let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                             editor.backspace();
 
-                            let message = (on_input)(editor.contents());
-                            shell.publish(message);
+                            self.changed(&mut state.uncontrolled, false, shell);
                             shell.capture_event();
 
                             focus.updated_at = Instant::now();
                             update_cache(state, &self.value);
                         }
                         keyboard::Key::Named(key::Named::Delete) => {
-                            let Some(on_input) = &self.on_input else {
+                            if !self.is_editable() {
                                 return;
-                            };
+                            }
 
                             if state.cursor.selection(&self.value).is_none() {
                                 if (self.is_secure && modifiers.jump()) || modifiers.macos_command()
@@ -1180,8 +1230,7 @@ where
                             let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                             editor.delete();
 
-                            let message = (on_input)(editor.contents());
-                            shell.publish(message);
+                            self.changed(&mut state.uncontrolled, false, shell);
                             shell.capture_event();
 
                             focus.updated_at = Instant::now();
@@ -1337,9 +1386,9 @@ where
                 state.keyboard_modifiers = *modifiers;
             }
             Event::Clipboard(clipboard::Event::Read(Ok(content))) => {
-                let Some(on_input) = &self.on_input else {
+                if !self.is_editable() {
                     return;
-                };
+                }
 
                 let state = state::<Renderer>(tree);
 
@@ -1355,12 +1404,7 @@ where
                     let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                     editor.paste(Value::new(text));
 
-                    let message = if let Some(paste) = &self.on_paste {
-                        (paste)(editor.contents())
-                    } else {
-                        (on_input)(editor.contents())
-                    };
-                    shell.publish(message);
+                    self.changed(&mut state.uncontrolled, true, shell);
                     shell.capture_event();
 
                     focus.updated_at = Instant::now();
@@ -1394,9 +1438,9 @@ where
                     let state = state::<Renderer>(tree);
 
                     if let Some(focus) = &mut state.is_focused {
-                        let Some(on_input) = &self.on_input else {
+                        if !self.is_editable() {
                             return;
-                        };
+                        }
 
                         let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                         editor.paste(Value::new(text));
@@ -1404,8 +1448,7 @@ where
                         focus.updated_at = Instant::now();
                         state.is_pasting = None;
 
-                        let message = (on_input)(editor.contents());
-                        shell.publish(message);
+                        self.changed(&mut state.uncontrolled, false, shell);
                         shell.capture_event();
 
                         update_cache(state, &self.value);
@@ -1436,8 +1479,7 @@ where
                 // Disabled inputs don't react to focus visually — keep the
                 // animation pinned to `false` so the border stays at the
                 // resolved Disabled style.
-                let is_disabled = self.on_input.is_none();
-                let is_focused = state.is_focused.is_some() && !is_disabled;
+                let is_focused = state.is_focused.is_some() && !self.is_disabled;
                 if is_focused != state.focus_anim.value() {
                     state.focus_anim.go_mut(is_focused, *now);
                 }
@@ -1466,9 +1508,8 @@ where
         }
 
         let state = state::<Renderer>(tree);
-        let is_disabled = self.on_input.is_none();
 
-        let status = if is_disabled {
+        let status = if self.is_disabled {
             Status::Disabled
         } else if state.is_focused() {
             Status::Focused {
@@ -1512,7 +1553,7 @@ where
         _renderer: &Renderer,
     ) -> mouse::Interaction {
         if cursor.is_over(layout.bounds()) {
-            if self.on_input.is_none() {
+            if self.is_disabled {
                 mouse::Interaction::Idle
             } else {
                 mouse::Interaction::Text
@@ -1568,6 +1609,8 @@ pub struct State<P: text::Paragraph> {
     keyboard_modifiers: keyboard::Modifiers,
     scroll_offset: f32,
     focus_anim: crate::core::Animation<bool>,
+    /// The value of an uncontrolled input, kept across rebuilds.
+    uncontrolled: Option<Value>,
 }
 
 impl<P: text::Paragraph> Default for State<P> {
@@ -1585,6 +1628,7 @@ impl<P: text::Paragraph> Default for State<P> {
             cursor: Cursor::default(),
             keyboard_modifiers: keyboard::Modifiers::default(),
             scroll_offset: 0.0,
+            uncontrolled: None,
             focus_anim: Animation::new(false)
                 .easing(Easing::Custom(|t| {
                     crate::animation::cubic_bezier(0.4, 0.0, 0.2, 1.0, t)

@@ -164,11 +164,13 @@ impl page::Page for ProgressPage {
             // Controlled: progress bar driven by an iced stock slider.
             "controlled" => column![
                 progress(self.controlled_value).width(320),
-                slider(0.0..=100.0, self.controlled_value, move |v| {
-                    Message::Page(pi, page::Message::ValueChanged(F_CONTROLLED, v))
-                })
-                .step(1.0_f32)
-                .width(320),
+                slider(0.0..=100.0)
+                    .value(self.controlled_value)
+                    .on_value_change(move |v| {
+                        Message::Page(pi, page::Message::ValueChanged(F_CONTROLLED, v))
+                    })
+                    .step(1.0_f32)
+                    .width(320),
             ]
             .spacing(16)
             .into(),

@@ -65,12 +65,10 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         field::field(
             column![
                 amount,
-                slider(
-                    50.0..=10000.0,
-                    state.payout_threshold,
-                    Message::SetPayoutThreshold
-                )
-                .width(Fill),
+                slider(50.0..=10000.0)
+                    .value(state.payout_threshold)
+                    .on_value_change(Message::SetPayoutThreshold)
+                    .width(Fill),
                 bounds,
             ]
             .spacing(Space::U2)

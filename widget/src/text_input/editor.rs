@@ -10,10 +10,6 @@ impl<'a> Editor<'a> {
         Editor { value, cursor }
     }
 
-    pub fn contents(&self) -> String {
-        self.value.to_string()
-    }
-
     pub fn insert(&mut self, character: char) {
         if let Some((left, right)) = self.cursor.selection(self.value) {
             self.cursor.move_left(self.value);

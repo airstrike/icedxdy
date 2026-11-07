@@ -8,6 +8,10 @@
 //! ```ignore
 //! use icedxdy::widget::input;
 //!
+//! // Uncontrolled: the input keeps what the user types.
+//! input("Name").default_value("Pedro Duarte")
+//!
+//! // Controlled: the app owns the value.
 //! input("Email").value(&self.email).on_input(Message::EmailChanged)
 //! ```
 
@@ -24,14 +28,16 @@ use icedxdy_core::theme;
 
 /// A styled text input field matching shadcn/ui's Input component.
 ///
-/// Disabled state follows iced's convention: an input with no `.on_input(...)`
-/// is disabled (you can't type into it). To toggle disabled at runtime, use
-/// `.on_input_maybe(Option<Fn>)` — though our wrapper exposes only the
-/// always-Some `.on_input(...)` builder, so the natural pattern is to omit
-/// the call entirely.
+/// React state: uncontrolled by default, keeping what the user types in the
+/// widget tree (seeded by [`default_value`](Self::default_value)), or
+/// controlled with [`value`](Self::value) plus [`on_input`](Self::on_input).
+/// A controlled input without `on_input` is read-only. It is enabled unless
+/// [`disabled`](Self::disabled) or a disabled ancestor says otherwise.
 pub struct Input<'a, Message> {
     placeholder: Fragment<'a>,
-    value: Fragment<'a>,
+    value: Option<Fragment<'a>>,
+    default_value: Fragment<'a>,
+    disabled: bool,
     size: Option<Size>,
     width: Length,
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
@@ -49,7 +55,9 @@ pub struct Input<'a, Message> {
 pub fn input<'a, Message: Clone + 'a>(placeholder: impl IntoFragment<'a>) -> Input<'a, Message> {
     Input {
         placeholder: placeholder.into_fragment(),
-        value: Fragment::Borrowed(""),
+        value: None,
+        default_value: Fragment::Borrowed(""),
+        disabled: false,
         size: None,
         width: Length::Shrink,
         on_input: None,
@@ -61,9 +69,23 @@ pub fn input<'a, Message: Clone + 'a>(placeholder: impl IntoFragment<'a>) -> Inp
 }
 
 impl<'a, Message: Clone + 'a> Input<'a, Message> {
-    /// Set the current value, owned or borrowed.
+    /// Control the input: it always shows `value`, and edits only publish
+    /// [`on_input`](Self::on_input). Owned or borrowed.
     pub fn value(mut self, value: impl IntoFragment<'a>) -> Self {
-        self.value = value.into_fragment();
+        self.value = Some(value.into_fragment());
+        self
+    }
+
+    /// The initial value of an uncontrolled input. Later rebuilds keep what
+    /// the user typed.
+    pub fn default_value(mut self, value: impl IntoFragment<'a>) -> Self {
+        self.default_value = value.into_fragment();
+        self
+    }
+
+    /// Disable the input: not focusable, not editable, muted.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
         self
     }
 
@@ -83,7 +105,7 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
         self
     }
 
-    /// Set the callback for when the input value changes.
+    /// Set the message published with the new value on every edit.
     pub fn on_input(mut self, on_input: impl Fn(String) -> Message + 'a) -> Self {
         self.on_input = Some(Box::new(on_input));
         self
@@ -150,12 +172,17 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
         let text_size = input.text_size();
         let padding = input.padding();
 
-        let mut ti: text_input::TextInput<'a, Message, Theme, Renderer> =
-            text_input::TextInput::new(&input.placeholder, &input.value)
-                .padding(padding)
-                .size(text_size)
-                .width(input.width)
-                .height(height);
+        let ti: text_input::TextInput<'a, Message, Theme, Renderer> = match &input.value {
+            Some(value) => text_input::TextInput::new(&input.placeholder, value),
+            None => text_input::TextInput::new(&input.placeholder, "")
+                .uncontrolled(&input.default_value),
+        };
+        let mut ti = ti
+            .disabled(input.disabled)
+            .padding(padding)
+            .size(text_size)
+            .width(input.width)
+            .height(height);
 
         if let Some(style) = input.style {
             // Wrap the core StyleFn so it produces widget::Style (with ring).
@@ -192,6 +219,7 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>> for Slot<'a, Message> {
 impl<'a, Message: Clone + 'a> Compose<Message> for Input<'a, Message> {
     fn inherit(&mut self, from: &Inherited) {
         self.size = self.size.or(from.size());
+        self.disabled |= from.is_disabled();
     }
 
     fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>

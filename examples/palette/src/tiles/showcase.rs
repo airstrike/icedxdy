@@ -207,12 +207,10 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
     let body = column![
         tabs,
         field,
-        slider(
-            0.0..=100.0,
-            state.showcase_slider,
-            Message::SetShowcaseSlider
-        )
-        .width(Fill),
+        slider(0.0..=100.0)
+            .value(state.showcase_slider)
+            .on_value_change(Message::SetShowcaseSlider)
+            .width(Fill),
         name_input(state),
         textarea_placeholder(),
         badges,
