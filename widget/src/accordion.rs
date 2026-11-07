@@ -7,38 +7,35 @@
 //!
 //! ```ignore
 //! use icedxdy::widget::{accordion, text};
-//! use std::collections::HashSet;
 //!
-//! let open: HashSet<String> = ...; // from app state
-//!
+//! // Uncontrolled: the accordion keeps its own open set.
 //! accordion(vec![
 //!     accordion::item("shipping", "What are your shipping options?")
 //!         .content(text::p("We offer standard, express, and overnight ...")),
 //!     accordion::item("returns", "What is your return policy?")
 //!         .content(text::p("Returns accepted within 30 days ...")),
 //! ])
-//! .open(&open)
-//! .on_toggle(Message::ToggleAccordion)
+//! .default_value(["shipping"])
+//!
+//! // Controlled: the app owns the open set.
+//! accordion(items)
+//!     .value(&self.open)
+//!     .on_value_change(Message::Faq)
 //! ```
 //!
 //! # State model
 //!
-//! Open-state lives in the parent app, mirroring [`crate::switch`]. The
-//! widget's own tree state only tracks per-item animation transitions
-//! (Animation<bool>, last_is_open, cached natural body height). The
-//! parent passes the current open-set in via `.open(...)` and receives
-//! `on_toggle(id)` callbacks when the user clicks a trigger; it's the
-//! parent's job to mutate its open-set and re-render. This keeps the
-//! single-vs-multiple branching, persistence, and any custom rules
-//! (e.g. "keep first item open by default") at the layer that already
-//! has the message context.
+//! Radix state: uncontrolled with [`default_value`](Accordion::default_value)
+//! (the open set lives in the widget tree), or controlled with
+//! [`value`](Accordion::value) plus
+//! [`on_value_change`](Accordion::on_value_change). Either way the widget
+//! applies the [`Mode`] rules itself and publishes the complete new open
+//! set.
 
 pub(crate) mod element;
 pub mod widget;
 
 pub use widget::{Catalog, Mode, StyleFn};
-
-use std::collections::HashSet;
 
 use iced_core::Padding;
 use iced_widget::Renderer;
@@ -116,8 +113,9 @@ pub fn item<'a, Message: 'a>(
 pub struct Accordion<'a, Message> {
     items: Vec<Item<'a, Message>>,
     mode: Mode,
-    open: Vec<String>,
-    on_toggle: Option<Box<dyn Fn(String) -> Message + 'a>>,
+    value: Option<Vec<String>>,
+    default_value: Vec<String>,
+    on_value_change: Option<Box<dyn Fn(Vec<String>) -> Message + 'a>>,
     style: Option<theme::accordion::StyleFn<'a, Theme>>,
     outer_padding: Padding,
 }
@@ -130,8 +128,9 @@ where
     Accordion {
         items: items.into_iter().collect(),
         mode: Mode::Single { collapsible: true },
-        open: Vec::new(),
-        on_toggle: None,
+        value: None,
+        default_value: Vec::new(),
+        on_value_change: None,
         style: None,
         outer_padding: Padding::ZERO,
     }
@@ -145,39 +144,24 @@ impl<'a, Message: 'a> Accordion<'a, Message> {
         self
     }
 
-    /// Pass the current open-set as a slice of ids. Items not in the set
-    /// render closed; items in the set render open.
-    ///
-    /// Single-mode callers can pass `[id]` (a one-element slice) or an
-    /// empty slice to model "no item open" (when `collapsible: true`).
-    /// Multiple-mode callers pass the full set.
-    pub fn open(mut self, open: impl IntoIterator<Item = impl Into<String>>) -> Self {
-        self.open = open.into_iter().map(Into::into).collect();
+    /// Control the accordion: it always shows `value` open, and a trigger
+    /// click only publishes [`on_value_change`](Self::on_value_change).
+    pub fn value(mut self, value: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.value = Some(value.into_iter().map(Into::into).collect());
         self
     }
 
-    /// Convenience for `Mode::Single`: pass a single optional open id.
-    /// `None` means no item is open (only valid with
-    /// `Mode::Single { collapsible: true }`).
-    pub fn open_one(self, open: Option<impl Into<String>>) -> Self {
-        match open {
-            Some(id) => self.open([id.into()]),
-            None => self.open(Vec::<String>::new()),
-        }
+    /// The items an uncontrolled accordion starts with open. Later rebuilds
+    /// keep the set the user toggled to.
+    pub fn default_value(mut self, value: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.default_value = value.into_iter().map(Into::into).collect();
+        self
     }
 
-    /// Sync the open-set against a `&HashSet<String>`. The widget makes
-    /// its own owned copy — accordion isn't a hot-path widget, the alloc
-    /// at view time is fine.
-    pub fn open_set(self, open: &HashSet<String>) -> Self {
-        self.open(open.iter().cloned())
-    }
-
-    /// Set the click handler. The handler receives the toggled item id
-    /// and is expected to mutate the parent's open-set in response. The
-    /// widget itself is open-set-agnostic past view-time.
-    pub fn on_toggle(mut self, on_toggle: impl Fn(String) -> Message + 'a) -> Self {
-        self.on_toggle = Some(Box::new(on_toggle));
+    /// Set the message published with the complete new open set on every
+    /// accepted trigger click, after the [`Mode`] rules are applied.
+    pub fn on_value_change(mut self, on_change: impl Fn(Vec<String>) -> Message + 'a) -> Self {
+        self.on_value_change = Some(Box::new(on_change));
         self
     }
 
@@ -233,11 +217,13 @@ impl<'a, Message: 'a> From<Accordion<'a, Message>>
             None => <Theme as widget::Catalog>::default(),
         };
 
+        let is_controlled = a.value.is_some();
         let widget = widget::Accordion {
             items,
             mode: a.mode,
-            open: a.open,
-            on_toggle: a.on_toggle,
+            open: a.value.unwrap_or(a.default_value),
+            is_controlled,
+            on_value_change: a.on_value_change,
             class,
             outer_padding: a.outer_padding,
         };
@@ -264,29 +250,8 @@ impl<'a, Message: 'a> crate::compose::Compose<Message> for Accordion<'a, Message
 mod tests {
     use super::*;
 
-    /// Pure-logic transition function for the open-set under a given Mode.
-    /// Mirrors the click handler's match expression in `widget::update`,
-    /// extracted so it can be unit-tested without spinning up a render
-    /// loop. Returns `Some(new_set)` when the click is allowed; `None`
-    /// when the mode-rules refuse it (Single+!collapsible+already_open).
-    fn apply_toggle(mode: Mode, open: &[String], clicked: &str) -> Option<Vec<String>> {
-        let is_open_now = open.iter().any(|s| s == clicked);
-        match (mode, is_open_now) {
-            (Mode::Single { collapsible: false }, true) => None,
-            (Mode::Single { .. }, true) => Some(Vec::new()),
-            (Mode::Single { .. }, false) => Some(vec![clicked.to_owned()]),
-            (Mode::Multiple, true) => Some(
-                open.iter()
-                    .filter(|s| s.as_str() != clicked)
-                    .cloned()
-                    .collect(),
-            ),
-            (Mode::Multiple, false) => {
-                let mut out = open.to_vec();
-                out.push(clicked.to_owned());
-                Some(out)
-            }
-        }
+    fn ids(open: &[&str]) -> Vec<String> {
+        open.iter().map(|id| (*id).to_owned()).collect()
     }
 
     /// Single-mode click on a closed item opens it AND closes whatever
@@ -294,9 +259,8 @@ mod tests {
     #[test]
     fn single_mode_toggle_opens_one_closes_others() {
         let mode = Mode::Single { collapsible: true };
-        let open = vec!["a".to_owned()];
-        let next = apply_toggle(mode, &open, "b").expect("click should be allowed");
-        assert_eq!(next, vec!["b".to_owned()]);
+        let next = mode.toggle(&ids(&["a"]), "b");
+        assert_eq!(next, Some(ids(&["b"])));
     }
 
     /// Single-mode + collapsible: clicking the open item closes it
@@ -304,75 +268,43 @@ mod tests {
     #[test]
     fn single_mode_collapsible_close_yields_empty_set() {
         let mode = Mode::Single { collapsible: true };
-        let open = vec!["a".to_owned()];
-        let next = apply_toggle(mode, &open, "a").expect("collapsible accepts close");
-        assert!(next.is_empty());
+        assert_eq!(mode.toggle(&ids(&["a"]), "a"), Some(Vec::new()));
     }
 
     /// Single-mode + !collapsible: clicking the currently-open item is
-    /// refused (open-set unchanged). One item must always remain open.
+    /// refused. One item must always remain open.
     #[test]
     fn single_mode_non_collapsible_refuses_close_of_open_item() {
         let mode = Mode::Single { collapsible: false };
-        let open = vec!["a".to_owned()];
-        let result = apply_toggle(mode, &open, "a");
-        assert!(
-            result.is_none(),
-            "non-collapsible single-mode must refuse close of the open item",
-        );
+        assert_eq!(mode.toggle(&ids(&["a"]), "a"), None);
+        assert_eq!(mode.toggle(&ids(&["a"]), "b"), Some(ids(&["b"])));
     }
 
-    /// Multiple-mode: opening item B leaves A open. Both items stay open
-    /// independently.
+    /// Multiple-mode: opening item B leaves A open.
     #[test]
     fn multiple_mode_open_b_keeps_a_open() {
-        let mode = Mode::Multiple;
-        let open = vec!["a".to_owned()];
-        let next = apply_toggle(mode, &open, "b").expect("multiple accepts add");
-        assert!(next.contains(&"a".to_owned()));
-        assert!(next.contains(&"b".to_owned()));
-        assert_eq!(next.len(), 2);
+        let next = Mode::Multiple.toggle(&ids(&["a"]), "b");
+        assert_eq!(next, Some(ids(&["a", "b"])));
     }
 
     /// Multiple-mode: closing one of two open items leaves the other open.
     #[test]
     fn multiple_mode_close_b_keeps_a_open() {
-        let mode = Mode::Multiple;
-        let open = vec!["a".to_owned(), "b".to_owned()];
-        let next = apply_toggle(mode, &open, "b").expect("multiple accepts close");
-        assert_eq!(next, vec!["a".to_owned()]);
+        let next = Mode::Multiple.toggle(&ids(&["a", "b"]), "b");
+        assert_eq!(next, Some(ids(&["a"])));
     }
 
-    /// Disabled items don't reach `apply_toggle` at all — the click
-    /// handler short-circuits before the mode check (`if !item.disabled`
-    /// in `widget::update`). This test asserts the *intent* by calling
-    /// the same gate the runtime uses.
+    /// The builder accepts `&str` ids and starts uncontrolled at its
+    /// default set; `value` makes it controlled.
     #[test]
-    fn disabled_item_short_circuits_before_mode_check() {
-        struct ToggleAttempt {
-            disabled: bool,
-        }
-        let attempt = ToggleAttempt { disabled: true };
+    fn default_value_seeds_an_uncontrolled_accordion() {
+        let uncontrolled = accordion::<(), _>(Vec::<Item<()>>::new()).default_value(["one"]);
+        assert_eq!(uncontrolled.value, None);
+        assert_eq!(uncontrolled.default_value, ids(&["one"]));
 
-        // Mirrors the `if !item.disabled` guard in widget::update —
-        // disabled items must be filtered out before any mode logic
-        // runs, regardless of what apply_toggle would otherwise do.
-        let click_allowed = !attempt.disabled;
-        assert!(
-            !click_allowed,
-            "disabled items must not reach the mode-check at all",
-        );
-    }
-
-    /// Builder ergonomics check: `accordion(...).open([id]).on_toggle(f)`
-    /// should compile and produce a usable `Accordion<'_, M>` value.
-    /// Caught a regression earlier where `open()` accepted `&[String]`
-    /// but rejected `&[&str]` — the `Into<String>` bound fixes that.
-    #[test]
-    fn builder_accepts_str_slice_for_open_set() {
-        let _ = accordion::<(), _>(Vec::<Item<()>>::new())
-            .mode(Mode::Single { collapsible: true })
-            .open(["one"])
-            .on_toggle(|_id| ());
+        let controlled = accordion::<(), _>(Vec::<Item<()>>::new())
+            .value(["two"])
+            .on_value_change(|_open| ());
+        assert_eq!(controlled.value, Some(ids(&["two"])));
     }
 }

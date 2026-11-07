@@ -28,6 +28,5 @@ accordion(items.into_iter().map(|(id, trigger, body)| {
         .content(text::small(body))
 }))
 .mode(accordion::Mode::Single { collapsible: true })
-.open(["item-1"])
-.on_toggle(Message::Toggle)
+.default_value(["item-1"])
 ```

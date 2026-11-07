@@ -1,9 +1,6 @@
 ```rust
 use icedxdy::widget::{accordion, text};
 
-let mut open = std::collections::HashSet::new();
-open.insert("shipping".to_string());
-
 accordion([
     accordion::item("shipping", text::small("What are your shipping options?").medium())
         .content(text::small(
@@ -22,6 +19,5 @@ accordion([
         )),
 ])
 .mode(accordion::Mode::Single { collapsible: true })
-.open(open.iter().cloned())
-.on_toggle(Message::Toggle)
+.default_value(["shipping"])
 ```

@@ -30,6 +30,5 @@ accordion(items.into_iter().map(|(id, trigger, body)| {
         .content(text::small(body))
 }))
 .mode(accordion::Mode::Multiple)
-.open(["notifications"])
-.on_toggle(Message::Toggle)
+.default_value(["notifications"])
 ```

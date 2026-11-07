@@ -122,7 +122,7 @@ pub enum Message {
     GitHubStarsLoaded(Result<String, String>),
     SaveForm,
     CancelForm,
-    ToggleNotification(String),
+    NotificationsOpened(Vec<String>),
     ArmDelete,
     Delete,
     Deploy,
@@ -170,7 +170,7 @@ pub struct State {
     pub env_api: String,
     pub env_stripe: String,
     pub notification_settings: HashSet<String>,
-    pub open_notifications: HashSet<String>,
+    pub open_notifications: Vec<String>,
     pub armed: bool,
     pub deploying: bool,
     pub qr_connect: Option<qr_code::Data>,
@@ -243,7 +243,7 @@ impl State {
             notification_settings: ["transactions".to_owned(), "security".to_owned()]
                 .into_iter()
                 .collect(),
-            open_notifications: ["welcome".to_owned()].into_iter().collect(),
+            open_notifications: vec!["welcome".to_owned()],
             armed: false,
             deploying: false,
             qr_connect: qr_code::Data::new("https://ledger.app/connect/jd-4829").ok(),
@@ -316,11 +316,7 @@ impl State {
                 eprintln!("GitHub star count failed: {e}");
             }
             Message::SaveForm | Message::CancelForm => {}
-            Message::ToggleNotification(id) => {
-                if !self.open_notifications.remove(&id) {
-                    self.open_notifications.insert(id);
-                }
-            }
+            Message::NotificationsOpened(open) => self.open_notifications = open,
             Message::ArmDelete => self.armed = !self.armed,
             Message::Delete => {
                 self.armed = false;

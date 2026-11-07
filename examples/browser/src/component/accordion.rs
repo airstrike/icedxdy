@@ -9,7 +9,6 @@
 // iced).
 
 use iced::Widget;
-use std::collections::HashSet;
 
 use iced::Task;
 
@@ -80,68 +79,19 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/accordion-api-reference.md"),
 ];
 
-/// Stable per-example open-set state. Each block has its own open-set so
-/// they animate independently (clicking an item on the demo card doesn't
-/// affect what's open on the disabled card).
+/// The accordion page. Each example keeps its own open set in its widget
+/// tree, seeded from shadcn's `defaultValue`.
 pub struct AccordionPage {
     state: page::State,
-    demo: HashSet<String>,
-    basic: HashSet<String>,
-    multiple: HashSet<String>,
-    disabled: HashSet<String>,
-    borders: HashSet<String>,
-    card: HashSet<String>,
 }
 
 impl AccordionPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
-        // Match shadcn's `defaultValue` prop on each example.
-        let demo = ["shipping"].into_iter().map(String::from).collect();
-        let basic = ["item-1"].into_iter().map(String::from).collect();
-        let multiple = ["notifications"].into_iter().map(String::from).collect();
-        let disabled = HashSet::new();
-        let borders = ["billing"].into_iter().map(String::from).collect();
-        let card = ["plans"].into_iter().map(String::from).collect();
-
         Box::new(Self {
             state: page::State::new(page_index, BLOCKS),
-            demo,
-            basic,
-            multiple,
-            disabled,
-            borders,
-            card,
         })
     }
-
-    /// Apply a single-mode + collapsible toggle to an open-set. Empty
-    /// returned set models "everything closed" — single-mode collapsible
-    /// allows zero open. Used by every example except the multiple one.
-    fn apply_single(set: &mut HashSet<String>, id: String) {
-        if set.contains(&id) {
-            set.clear();
-        } else {
-            set.clear();
-            set.insert(id);
-        }
-    }
-
-    /// Apply a multiple-mode toggle: insert if absent, remove if present.
-    fn apply_multiple(set: &mut HashSet<String>, id: String) {
-        if !set.remove(&id) {
-            set.insert(id);
-        }
-    }
 }
-
-/// Routing tag for `Toggled(usize, String)` so the page can dispatch the
-/// click to the right per-example open-set.
-const F_DEMO: usize = 0;
-const F_BASIC: usize = 1;
-const F_MULTIPLE: usize = 2;
-const F_DISABLED: usize = 3;
-const F_BORDERS: usize = 4;
-const F_CARD: usize = 5;
 
 /// Helper: build a chevron-down icon at 16px, sized to nova's `size-4`.
 /// Lives here rather than in the page state because the icon is used at
@@ -155,18 +105,12 @@ fn chevron_open<'a>() -> icedxdy::Slot<'a, Message> {
     icon::chevron_up().size(16).into()
 }
 
-/// Build the accordion preview for a single example.
-///
-/// `page_index` routes the message through the multiplex; `field_id`
-/// is the per-example routing tag (`F_DEMO` / `F_BASIC` / ...); `mode`
-/// drives the widget's internal click gate; `open` is the current
-/// open-set borrowed for the duration of the view. Bundling here keeps
-/// each `preview()` arm to a single `accordion(...)` call.
+/// Build the accordion preview for a single example: `mode` and `open`
+/// mirror shadcn's `type` and `defaultValue`. Bundling here keeps each
+/// `preview()` arm to a single `accordion(...)` call.
 fn build_accordion<'a>(
-    page_index: usize,
-    field_id: usize,
     mode: accordion::Mode,
-    open: &HashSet<String>,
+    open: &[&'a str],
     items: impl IntoIterator<Item = (&'a str, &'a str, &'a str, bool)>,
 ) -> icedxdy::Slot<'a, Message> {
     let items: Vec<_> = items
@@ -182,8 +126,7 @@ fn build_accordion<'a>(
 
     accordion(items)
         .mode(mode)
-        .open(open.iter().cloned())
-        .on_toggle(move |id| Message::Page(page_index, page::Message::InputChanged(field_id, id)))
+        .default_value(open.iter().copied())
         .into()
 }
 
@@ -209,21 +152,7 @@ impl page::Page for AccordionPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        if let page::Message::InputChanged(field, id) = event {
-            match field {
-                F_DEMO => Self::apply_single(&mut self.demo, id),
-                F_BASIC => Self::apply_single(&mut self.basic, id),
-                F_MULTIPLE => Self::apply_multiple(&mut self.multiple, id),
-                F_DISABLED => Self::apply_single(&mut self.disabled, id),
-                F_BORDERS => Self::apply_single(&mut self.borders, id),
-                F_CARD => Self::apply_single(&mut self.card, id),
-                _ => {}
-            }
-        }
-        Task::none()
+        self.state.update(&event).unwrap_or_else(Task::none)
     }
 
     fn reset_volatile(&mut self) {
@@ -233,14 +162,11 @@ impl page::Page for AccordionPage {
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
         let single = accordion::Mode::Single { collapsible: true };
         let multiple = accordion::Mode::Multiple;
-        let pi = self.state.page_index;
 
         match id {
             "demo" => container(build_accordion(
-                pi,
-                F_DEMO,
                 single,
-                &self.demo,
+                &["shipping"],
                 [
                     (
                         "shipping",
@@ -267,10 +193,8 @@ impl page::Page for AccordionPage {
             .into(),
 
             "basic" => container(build_accordion(
-                pi,
-                F_BASIC,
                 single,
-                &self.basic,
+                &["item-1"],
                 [
                     (
                         "item-1",
@@ -297,10 +221,8 @@ impl page::Page for AccordionPage {
             .into(),
 
             "multiple" => container(build_accordion(
-                pi,
-                F_MULTIPLE,
                 multiple,
-                &self.multiple,
+                &["notifications"],
                 [
                     (
                         "notifications",
@@ -327,10 +249,8 @@ impl page::Page for AccordionPage {
             .into(),
 
             "disabled" => container(build_accordion(
-                pi,
-                F_DISABLED,
                 single,
-                &self.disabled,
+                &[],
                 [
                     (
                         "item-1",
@@ -360,10 +280,8 @@ impl page::Page for AccordionPage {
                 // wraps the accordion and each item adds `px-4`. We supply
                 // both via the wrapping container + `accordion::padding(...)`.
                 let inner = build_accordion(
-                    pi,
-                    F_BORDERS,
                     single,
-                    &self.borders,
+                    &["billing"],
                     [
                         (
                             "billing",
@@ -412,10 +330,8 @@ impl page::Page for AccordionPage {
                 // CardHeader has the title + description; CardContent
                 // holds the accordion itself.
                 let inner = build_accordion(
-                    pi,
-                    F_CARD,
                     single,
-                    &self.card,
+                    &["plans"],
                     [
                         (
                             "plans",

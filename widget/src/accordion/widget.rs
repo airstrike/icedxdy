@@ -33,12 +33,14 @@
 //!
 //! # State
 //!
-//! Open-state is **external** (passed in via `Accordion::open`), mirroring
-//! the switch pattern (`is_toggled: bool`). The widget's tree state only
-//! tracks per-item animation bookkeeping: `last_is_open`, `Animation<bool>`,
-//! and the cached natural body height. When the parent re-renders with a
-//! new `open` set, the widget kicks the relevant animations from `update`
-//! and the next layout/draw cycle interpolates accordingly.
+//! Radix state: the open set lives in the tree state of an uncontrolled
+//! accordion (seeded from its default), or comes from the app each rebuild
+//! when controlled; `diff` syncs the two. A trigger click applies the
+//! [`Mode`] rules with [`Mode::toggle`], stores the new set when
+//! uncontrolled and publishes it in full. Per-item animation bookkeeping
+//! (`last_is_open`, `Animation<bool>`, the cached natural body height) sits
+//! beside it; when the set changes the widget kicks the relevant animations
+//! from `update` and the next layout/draw cycle interpolates accordingly.
 
 use std::time::Duration;
 
@@ -111,22 +113,50 @@ pub enum Mode {
     Multiple,
 }
 
+impl Mode {
+    /// The open set after a click on `clicked`'s trigger, or `None` when the
+    /// mode refuses the click (closing the open item of a non-collapsible
+    /// single accordion).
+    pub fn toggle(self, open: &[String], clicked: &str) -> Option<Vec<String>> {
+        let is_open = open.iter().any(|id| id == clicked);
+
+        match (self, is_open) {
+            (Mode::Single { collapsible: false }, true) => None,
+            (Mode::Single { collapsible: true }, true) => Some(Vec::new()),
+            (Mode::Single { .. }, false) => Some(vec![clicked.to_owned()]),
+            (Mode::Multiple, true) => Some(
+                open.iter()
+                    .filter(|id| id.as_str() != clicked)
+                    .cloned()
+                    .collect(),
+            ),
+            (Mode::Multiple, false) => {
+                let mut next = open.to_vec();
+                next.push(clicked.to_owned());
+                Some(next)
+            }
+        }
+    }
+}
+
 /// The disclosure widget proper. Constructed by the public `accordion()`
 /// builder in the parent module; users never name this type directly.
 pub struct Accordion<'a, Message> {
     pub(crate) items: Vec<Item<'a, Message>>,
     pub(crate) mode: Mode,
+    /// The open set: the app's when controlled, otherwise synced from the
+    /// tree state in `diff`.
     pub(crate) open: Vec<String>,
-    pub(crate) on_toggle: Option<Box<dyn Fn(String) -> Message + 'a>>,
+    pub(crate) is_controlled: bool,
+    pub(crate) on_value_change: Option<Box<dyn Fn(Vec<String>) -> Message + 'a>>,
     pub(crate) class: <Theme as Catalog>::Class<'a>,
     pub(crate) outer_padding: Padding,
 }
 
 impl<'a, Message> Accordion<'a, Message> {
-    /// Resolve whether item `id` is "currently open" from the *external*
-    /// open set. Used both at update time (to spot transitions) and at
-    /// draw time (to pick which chevron to render).
-    fn is_externally_open(&self, id: &str) -> bool {
+    /// Whether item `id` is open. Used both at update time (to spot
+    /// transitions) and at draw time (to pick which chevron to render).
+    fn is_open(&self, id: &str) -> bool {
         self.open.iter().any(|s| s == id)
     }
 }
@@ -168,6 +198,8 @@ impl ItemState {
 /// Tree state for the whole accordion: one [`ItemState`] per item, keyed
 /// by id so reordering items between renders preserves animation state.
 struct State {
+    /// The open set of an uncontrolled accordion.
+    open: Vec<String>,
     items: Vec<ItemState>,
     /// Most recent frame timestamp from the runtime. `None` until the
     /// first `RedrawRequested` fires.
@@ -186,12 +218,16 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             .items
             .iter()
             .map(|item| {
-                let is_open = self.is_externally_open(&item.id);
+                let is_open = self.is_open(&item.id);
                 ItemState::seeded(item.id.clone(), is_open)
             })
             .collect();
 
-        tree::State::new(State { items, now: None })
+        tree::State::new(State {
+            open: self.open.clone(),
+            items,
+            now: None,
+        })
     }
 
     fn diff(&mut self, tree: &mut Tree) {
@@ -218,9 +254,16 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         // dropped; surviving items keep their animations + caches by
         // walking the existing state vector by id.
         let state = tree.state.downcast_mut::<State>();
+
+        if self.is_controlled {
+            state.open.clone_from(&self.open);
+        } else {
+            self.open.clone_from(&state.open);
+        }
+
         let mut next: Vec<ItemState> = Vec::with_capacity(self.items.len());
         for item in &self.items {
-            let is_open = self.is_externally_open(&item.id);
+            let is_open = self.is_open(&item.id);
             let existing = state.items.iter().position(|s| s.id == item.id);
             match existing {
                 Some(i) => next.push(state.items.swap_remove(i)),
@@ -434,7 +477,7 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
 
         // Detect external is_open drift and kick the animation.
         for item in &self.items {
-            let is_open = self.is_externally_open(&item.id);
+            let is_open = self.is_open(&item.id);
             let s = state
                 .items
                 .iter_mut()
@@ -451,6 +494,8 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         }
 
         // Hover + click handling per item.
+        let mut clicked = None;
+
         for (item, (item_layout, item_tree)) in self
             .items
             .iter_mut()
@@ -492,39 +537,17 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
                 shell.request_redraw();
             }
 
-            // Click → on_toggle dispatch (skipped for disabled items).
-            if !item.disabled {
-                let pressed =
-                    matches!(
-                        event,
-                        Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-                    ) || matches!(event, Event::Touch(touch::Event::FingerPressed { .. }));
-                if pressed
-                    && cursor.is_over(trigger_hit)
-                    && let Some(on_toggle) = self.on_toggle.as_ref()
-                {
-                    // Mode-aware refusal: Single { collapsible: false }
-                    // refuses a close click on the currently-open item.
-                    // Inline is_externally_open to avoid &self while
-                    // self.items is borrowed mut by the surrounding loop.
-                    let is_open_now = self.open.iter().any(|s| s == &item.id);
-                    let allow = match (self.mode, is_open_now) {
-                        // The one refusal case: single + non-collapsible
-                        // forbids closing the currently-open item
-                        // because there must always be one open.
-                        (Mode::Single { collapsible: false }, true) => false,
-                        // All three remaining (Mode, is_open) shapes
-                        // accept the click; the parent state mutation
-                        // and re-render will reflect the new open-set.
-                        (Mode::Single { collapsible: false }, false)
-                        | (Mode::Single { collapsible: true }, _)
-                        | (Mode::Multiple, _) => true,
-                    };
-                    if allow {
-                        shell.publish(on_toggle(item.id.clone()));
-                        shell.capture_event();
-                    }
-                }
+            // Trigger clicks (skipped for disabled items) are applied once
+            // the loop releases `self.items`.
+            if !item.disabled
+                && cursor.is_over(trigger_hit)
+                && matches!(
+                    event,
+                    Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
+                        | Event::Touch(touch::Event::FingerPressed { .. })
+                )
+            {
+                clicked = Some(item.id.clone());
             }
 
             // Forward inner events to trigger / body. We forward
@@ -557,6 +580,23 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
                     viewport,
                 );
             }
+        }
+
+        if let Some(clicked) = clicked
+            && let Some(next) = self.mode.toggle(&self.open, &clicked)
+        {
+            if !self.is_controlled {
+                state.open.clone_from(&next);
+                self.open.clone_from(&next);
+                shell.invalidate_layout();
+                shell.request_redraw();
+            }
+
+            if let Some(on_value_change) = &self.on_value_change {
+                shell.publish(on_value_change(next));
+            }
+
+            shell.capture_event();
         }
     }
 
@@ -686,7 +726,7 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // focus here yet (no Tab traversal in iced for arbitrary
             // widget content), so Focused is currently unreachable from
             // pure widget-side state — left as a seam for the future.
-            let is_open_now = self.is_externally_open(&item.id);
+            let is_open_now = self.is_open(&item.id);
             let status = if item.disabled {
                 Status::Disabled {
                     is_open: is_open_now,

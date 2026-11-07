@@ -33,8 +33,7 @@ let inner = accordion(items.into_iter().map(|(id, trigger, body)| {
         .content(text::small(body))
 }))
 .mode(accordion::Mode::Single { collapsible: true })
-.open(["plans"])
-.on_toggle(Message::Toggle);
+.default_value(["plans"]);
 
 let header = card::header("Subscription & Billing")
     .description("Common questions about your account, plans, payments and cancellations.");

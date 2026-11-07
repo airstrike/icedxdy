@@ -73,8 +73,8 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
 
     let body = accordion(items)
         .mode(accordion::Mode::Multiple)
-        .open(state.open_notifications.iter().cloned())
-        .on_toggle(Message::ToggleNotification);
+        .value(&state.open_notifications)
+        .on_value_change(Message::NotificationsOpened);
 
     card::card(
         column([

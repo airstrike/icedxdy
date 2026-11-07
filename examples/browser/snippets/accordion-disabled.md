@@ -22,5 +22,4 @@ accordion([
         )),
 ])
 .mode(accordion::Mode::Single { collapsible: true })
-.on_toggle(Message::Toggle)
 ```
