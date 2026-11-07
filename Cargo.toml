@@ -89,3 +89,7 @@ iced_futures = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 iced_debug = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 iced_highlighter = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 cosmic-text = { git = "https://github.com/airstrike/cosmic-text", branch = "dev" }
+
+# cryoglyph pins hecrj/cosmic-text; route it to the same fork iced uses.
+[patch."https://github.com/hecrj/cosmic-text.git"]
+cosmic-text = { git = "https://github.com/airstrike/cosmic-text", branch = "dev" }
