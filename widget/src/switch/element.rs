@@ -59,4 +59,8 @@ impl widget::Catalog for Theme {
     fn style(&self, class: &Self::Class<'_>, status: widget::Status) -> widget::Style {
         class(self, status)
     }
+
+    fn selection(&self) -> iced_core::Color {
+        Theme::selection(self)
+    }
 }

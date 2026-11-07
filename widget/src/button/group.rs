@@ -53,6 +53,7 @@
 
 use iced_core::Length;
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use icedxdy_core::Theme;
 
 use crate::Button;
@@ -270,7 +271,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for ButtonGroup<'a, Message> 
                         Item::Separator(mut sep) => {
                             sep.group_orientation = orientation;
                             sep.cross_axis = cross_axis_size;
-                            iced_core::Element::new(sep)
+                            sep.boxed()
                         }
                     }
                 },
@@ -286,15 +287,15 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for ButtonGroup<'a, Message> 
             Orientation::Horizontal => iced_widget::Row::with_children(elements)
                 .spacing(0)
                 .align_y(iced_core::Alignment::Center)
-                .into(),
+                .boxed(),
             Orientation::Vertical => iced_widget::Column::with_children(elements)
                 .spacing(0)
                 .align_x(iced_core::Alignment::Start)
-                .into(),
+                .boxed(),
         };
 
         match width {
-            Some(w) => iced_widget::container(element).width(w).into(),
+            Some(w) => iced_widget::container(element).width(w).boxed(),
             None => element,
         }
     }

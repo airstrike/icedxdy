@@ -20,6 +20,7 @@
 //! badge::outline!["Bookmark", icon::bookmark()]
 //! ```
 
+use iced_widget::Widget;
 /// Create a badge with one or more children using the default variant.
 ///
 /// Two forms:
@@ -363,8 +364,8 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Badge<'a, Message> {
             Some(message) => mouse_area(pill)
                 .interaction(Interaction::Pointer)
                 .on_press(message)
-                .into(),
-            None => pill.into(),
+                .boxed(),
+            None => pill.boxed(),
         }
     }
 }

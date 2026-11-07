@@ -17,6 +17,7 @@ use crate::text_input;
 use crate::text_input::element::from_core;
 use iced_core::{Length, Padding};
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use icedxdy_core::Theme;
 use icedxdy_core::theme;
 
@@ -167,7 +168,7 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
             ti = ti.on_blur(on_blur);
         }
 
-        ti.into()
+        ti.boxed()
     }
 }
 

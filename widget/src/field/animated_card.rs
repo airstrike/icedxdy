@@ -26,6 +26,7 @@ use crate::core::mouse;
 use crate::core::renderer;
 use crate::core::time::Instant;
 use crate::core::widget::tree::{self, Tree};
+use crate::core::widget::{Meta, Operation};
 use crate::core::window;
 use crate::core::{
     Animation, Background, Border, Color, Element, Event, Layout, Length, Padding, Rectangle,
@@ -61,13 +62,13 @@ where
     /// Create an animated card. `inactive` and `active` resolve to the
     /// container styles to cross-fade between as `is_active` flips.
     pub fn new(
-        content: impl Into<Element<'a, Message, Theme, Renderer>>,
+        content: Element<'a, Message, Theme, Renderer>,
         is_active: bool,
         inactive: StyleFn<'a, Theme>,
         active: StyleFn<'a, Theme>,
     ) -> Self {
         Self {
-            content: content.into(),
+            content,
             is_active,
             inactive,
             active,
@@ -90,6 +91,11 @@ struct State {
     last_is_active: bool,
 }
 
+impl<Message, Renderer> Meta for AnimatedCard<'_, Message, Renderer> where
+    Renderer: crate::core::Renderer
+{
+}
+
 impl<Message, Renderer> Widget<Message, Theme, Renderer> for AnimatedCard<'_, Message, Renderer>
 where
     Renderer: crate::core::Renderer,
@@ -110,45 +116,32 @@ where
         })
     }
 
-    fn children(&self) -> Vec<Tree> {
-        vec![Tree::new(&self.content)]
-    }
-
-    fn diff(&self, tree: &mut Tree) {
-        tree.diff_children(std::slice::from_ref(&self.content));
+    fn diff(&mut self, tree: &mut Tree) {
+        tree.diff_children(std::slice::from_mut(&mut self.content));
     }
 
     fn size(&self) -> Size<Length> {
-        self.content.as_widget().size()
+        self.content.size()
     }
 
-    fn layout(
-        &mut self,
-        tree: &mut Tree,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+    fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
         let limits = limits.shrink(self.padding);
-        let content_node =
-            self.content
-                .as_widget_mut()
-                .layout(&mut tree.children[0], renderer, &limits);
-        let size = content_node.size();
-        let padded_size = Size::new(
+        let child = &mut tree.children[0];
+        self.content.layout(child, renderer, &limits);
+        child.translation = Vector::new(self.padding.left, self.padding.top);
+
+        let size = child.size;
+        tree.size = Size::new(
             size.width + self.padding.x(),
             size.height + self.padding.y(),
         );
-        layout::Node::with_children(
-            padded_size,
-            vec![content_node.move_to((self.padding.left, self.padding.top))],
-        )
     }
 
     fn update(
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         renderer: &Renderer,
         shell: &mut Shell<'_, Message>,
@@ -175,10 +168,12 @@ where
 
         // Always pass the event through to the child — the card chrome is
         // purely visual; toggling logic lives on the inner widget.
-        self.content.as_widget_mut().update(
-            &mut tree.children[0],
+        let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+        self.content.update(
+            child_tree,
             event,
-            layout.children().next().unwrap(),
+            child_layout,
             cursor,
             renderer,
             shell,
@@ -189,35 +184,31 @@ where
     fn mouse_interaction(
         &self,
         tree: &Tree,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
-        self.content.as_widget().mouse_interaction(
-            &tree.children[0],
-            layout.children().next().unwrap(),
-            cursor,
-            viewport,
-            renderer,
-        )
+        let (child_layout, child_tree) = layout.iter(&tree.children).next().unwrap();
+
+        self.content
+            .mouse_interaction(child_tree, child_layout, cursor, viewport, renderer)
     }
 
     fn operate(
         &mut self,
         tree: &mut Tree,
-        layout: Layout<'_>,
+        layout: Layout,
+        viewport: &Rectangle,
         renderer: &Renderer,
-        operation: &mut dyn iced_core::widget::Operation,
+        operation: &mut dyn Operation,
     ) {
-        operation.container(None, layout.bounds());
+        operation.container(None, layout.bounds(), viewport);
         operation.traverse(&mut |operation| {
-            self.content.as_widget_mut().operate(
-                &mut tree.children[0],
-                layout.children().next().unwrap(),
-                renderer,
-                operation,
-            );
+            let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+            self.content
+                .operate(child_tree, child_layout, viewport, renderer, operation);
         });
     }
 
@@ -227,7 +218,7 @@ where
         renderer: &mut Renderer,
         theme: &Theme,
         renderer_style: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
@@ -311,14 +302,16 @@ where
                 );
             }
 
-            self.content.as_widget().draw(
-                &tree.children[0],
+            let (child_layout, child_tree) = layout.iter(&tree.children).next().unwrap();
+
+            self.content.draw(
+                child_tree,
                 renderer,
                 theme,
                 &renderer::Style {
                     text_color: style.text_color.unwrap_or(renderer_style.text_color),
                 },
-                layout.children().next().unwrap(),
+                child_layout,
                 cursor,
                 &clipped_viewport,
             );
@@ -328,17 +321,21 @@ where
     fn overlay<'b>(
         &'b mut self,
         tree: &'b mut Tree,
-        layout: Layout<'b>,
+        layout: Layout,
         renderer: &Renderer,
         viewport: &Rectangle,
         translation: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-        self.content.as_widget_mut().overlay(
-            &mut tree.children[0],
-            layout.children().next().unwrap(),
+        window: Size,
+    ) -> Vec<overlay::Element<'b, Message, Theme, Renderer>> {
+        let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+        self.content.overlay(
+            child_tree,
+            child_layout,
             renderer,
             viewport,
             translation,
+            window,
         )
     }
 }
@@ -349,6 +346,6 @@ where
     Renderer: crate::core::Renderer + 'a,
 {
     fn from(card: AnimatedCard<'a, Message, Renderer>) -> Self {
-        Element::new(card)
+        card._boxed()
     }
 }

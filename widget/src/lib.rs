@@ -154,7 +154,7 @@ pub fn radio<'a, Message, V>(
     value: V,
     selected: Option<V>,
     on_click: impl FnOnce(V) -> Message,
-) -> Radio<'a, Message, icedxdy_core::Theme, iced_widget::Renderer>
+) -> Radio<'a, Message, icedxdy_core::Theme>
 where
     Message: Clone + 'a,
     V: Eq + Copy,

@@ -10,6 +10,7 @@
 //! text::p("Bold text").bold()
 //! ```
 
+use iced_widget::Widget;
 use std::marker::PhantomData;
 
 use crate::core::Length;
@@ -125,7 +126,7 @@ impl<'a> Text<'a> {
     }
 
     /// Build the iced text widget
-    fn build(self) -> iced_widget::Text<'a, Theme, Renderer> {
+    fn build(self) -> iced_widget::Text<'a, Theme> {
         let mut widget = iced_widget::text(self.fragment);
 
         if let Some(size) = self.size {
@@ -174,7 +175,7 @@ impl<'a> Text<'a> {
 
 impl<'a, Message: 'a> From<Text<'a>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(t: Text<'a>) -> Self {
-        t.build().into()
+        t.build().boxed()
     }
 }
 
@@ -210,6 +211,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Text<'a> {
         if self.style.is_none() {
             self.style = Some(Box::new(move |_| iced_widget::text::Style {
                 color: Some(color),
+                selection: None,
             }));
         }
     }
@@ -218,7 +220,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Text<'a> {
     where
         Self: 'b,
     {
-        self.build().into()
+        self.build().boxed()
     }
 }
 
@@ -368,9 +370,9 @@ impl<'a, Message: 'a> IntoElement<Message> for Blockquote<'a> {
         iced_widget::Row::new()
             .spacing(24)
             .height(Length::Shrink)
-            .push(rule::vertical(2))
-            .push(body.build())
-            .into()
+            .push(rule::vertical(2).boxed())
+            .push(body.build().boxed())
+            .boxed()
     }
 }
 
@@ -456,6 +458,6 @@ impl<'a, Message: 'a> IntoElement<Message> for List<'a, Message> {
             })
             .width(Fill)
             .height(Length::Shrink)
-            .into()
+            .boxed()
     }
 }

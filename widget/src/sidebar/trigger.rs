@@ -10,7 +10,8 @@
 //! sidebar::trigger(Message::ToggleSidebar)
 //! ```
 
-use iced_widget::Renderer;
+use iced_core::Element;
+use iced_widget::{Renderer, Widget};
 
 use icedxdy_core::Theme;
 use icedxdy_core::theme::button;
@@ -20,13 +21,11 @@ use icedxdy_core::theme::button;
 /// Emits `on_toggle` when pressed. Uses a hamburger icon placeholder.
 pub fn trigger<'a, Message: Clone + 'a>(
     on_toggle: Message,
-) -> iced_widget::Button<'a, Message, Theme, Renderer> {
-    iced_widget::button(iced_widget::center(
-        iced_widget::text("\u{2630}").size(16.0),
-    ))
-    .width(28.0)
-    .height(28.0)
-    .padding(0)
-    .style(|t, s| button::ghost(t, s).into())
-    .on_press(on_toggle)
+) -> iced_widget::Button<'a, Message, Element<'a, Message, Theme, Renderer>, Theme> {
+    iced_widget::button(iced_widget::center(iced_widget::text("\u{2630}").size(16.0)).boxed())
+        .width(28.0)
+        .height(28.0)
+        .padding(0)
+        .style(|t, s| button::ghost(t, s).into())
+        .on_press(on_toggle)
 }

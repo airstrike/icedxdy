@@ -1,3 +1,4 @@
+use iced_widget::Widget;
 mod element;
 pub mod widget;
 
@@ -222,7 +223,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Scrollable<'a, Message> {
             s = s.id(id);
         }
         if let Some(on_scroll) = self.on_scroll {
-            s = s.on_scroll(move |v| on_scroll(v));
+            s = s.on_scroll(move |scroll| on_scroll(scroll.viewport));
         }
         if let Some(style) = self.style {
             // Bridge: wrapper's `style` is `iced_widget::scrollable::StyleFn`
@@ -236,6 +237,6 @@ impl<'a, Message: 'a> IntoElement<Message> for Scrollable<'a, Message> {
             });
         }
 
-        s.into()
+        s.boxed()
     }
 }

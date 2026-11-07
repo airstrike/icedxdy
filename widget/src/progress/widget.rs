@@ -23,6 +23,7 @@ use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
 use iced_core::time::Instant;
+use iced_core::widget::Meta;
 use iced_core::widget::tree::{self, Tree};
 use iced_core::window;
 use iced_core::{
@@ -148,6 +149,8 @@ impl State {
     }
 }
 
+impl<Message, Theme> Meta for ProgressBar<'_, Message, Theme> where Theme: progress_bar::Catalog {}
+
 impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer> for ProgressBar<'_, Message, Theme>
 where
     Theme: progress_bar::Catalog,
@@ -168,16 +171,11 @@ where
         }
     }
 
-    fn layout(
-        &mut self,
-        _tree: &mut Tree,
-        _renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
-        layout::atomic(limits, self.length, self.girth)
+    fn layout(&mut self, tree: &mut Tree, _renderer: &Renderer, limits: &layout::Limits) {
+        tree.size = layout::atomic(limits, self.length, self.girth);
     }
 
-    fn diff(&self, tree: &mut Tree) {
+    fn diff(&mut self, tree: &mut Tree) {
         let state = tree.state.downcast_mut::<State>();
         if state.animated.value() != self.value {
             // Re-target without snapping: lilt's `transition` interpolates
@@ -194,7 +192,7 @@ where
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        _layout: Layout<'_>,
+        _layout: Layout,
         _cursor: mouse::Cursor,
         _renderer: &Renderer,
         shell: &mut Shell<'_, Message>,
@@ -221,7 +219,7 @@ where
         renderer: &mut Renderer,
         theme: &Theme,
         _style: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         _cursor: mouse::Cursor,
         _viewport: &Rectangle,
     ) {
@@ -289,6 +287,6 @@ where
     fn from(
         progress_bar: ProgressBar<'a, Message, Theme>,
     ) -> Element<'a, Message, Theme, Renderer> {
-        Element::new(progress_bar)
+        progress_bar._boxed()
     }
 }

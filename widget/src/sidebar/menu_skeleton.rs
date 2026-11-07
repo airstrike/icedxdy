@@ -3,6 +3,7 @@
 use crate::component::Component;
 use crate::container::Container;
 use iced_core::Length::Fill;
+use iced_widget::{Widget, space};
 use icedxdy_core::radius;
 use icedxdy_core::theme::container::Style;
 use icedxdy_core::{Border, Theme};
@@ -14,7 +15,7 @@ use icedxdy_core::{Border, Theme};
 /// items are loading.
 pub fn menu_skeleton<'a, Message: 'a>() -> Container<'a, Message> {
     let spacer: iced_core::Element<'a, Message, Theme, iced_widget::Renderer> =
-        iced_widget::space::horizontal().into();
+        space::horizontal().boxed();
     Container::new(Component::from(spacer))
         .width(Fill)
         .height(32)

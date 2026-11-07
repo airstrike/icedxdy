@@ -1,9 +1,9 @@
-use iced_core::Font;
 use iced_core::Length;
 use iced_core::Length::Fill;
 use iced_core::Padding;
 use iced_core::alignment;
 use iced_core::text::Span;
+use iced_widget::Widget;
 use iced_widget::text::Rich;
 
 use crate::Size;
@@ -209,7 +209,7 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
                     iced_widget::container(content)
                         .width(Fill)
                         .align_x(alignment::Horizontal::Center)
-                        .into()
+                        .boxed()
                 } else {
                     content
                 };
@@ -286,7 +286,7 @@ impl Link {
         self,
         message: Message,
     ) -> Rich<'a, Message, Message, Theme> {
-        let span: Span<'a, Message, Font> = Span::new(self.label).link(message);
+        let span: Span<'a, Message> = Span::new(self.label).link(message);
         Rich::with_spans([span])
             .on_link_click(|msg| msg)
             .style(|t| theme::text::link(t).into())

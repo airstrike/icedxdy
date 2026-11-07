@@ -50,6 +50,7 @@ use crate::core::font::{self, Font};
 use crate::core::padding;
 use crate::core::theme::palette;
 use crate::core::{self, Color, Element, Padding, Pixels, Theme, color};
+use iced_widget::Widget;
 use iced_widget::{checkbox, column, container, rich_text, row, rule, scrollable, span, text};
 
 #[cfg(feature = "highlighter")]
@@ -1236,7 +1237,7 @@ pub fn view<'a, Theme, Renderer>(
 ) -> Element<'a, Uri, Theme, Renderer>
 where
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     view_with(items, settings, &DefaultViewer)
 }
@@ -1254,7 +1255,7 @@ pub fn view_with<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     let settings = settings.into();
 
@@ -1263,7 +1264,7 @@ where
         .enumerate()
         .map(|(i, item_)| item(viewer, settings, item_, i));
 
-    Element::new(column(blocks).spacing(settings.spacing))
+    column(blocks).spacing(settings.spacing).boxed()
 }
 
 /// Displays an [`Item`] using the given [`Viewer`].
@@ -1276,7 +1277,7 @@ pub fn item<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     match item {
         Item::Image { url, title, alt } => viewer.image(settings, url, title, alt),
@@ -1312,7 +1313,7 @@ pub fn heading<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     let Settings {
         h1_size,
@@ -1346,7 +1347,7 @@ where
     } else {
         Pixels::ZERO
     }))
-    .into()
+    .boxed()
 }
 
 /// Displays a paragraph using the default look.
@@ -1358,7 +1359,7 @@ pub fn paragraph<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     rich_text(text.spans(
         settings.style,
@@ -1368,7 +1369,7 @@ where
     .size(settings.text_size)
     .line_height(settings.line_height)
     .on_link_click(on_link_click)
-    .into()
+    .boxed()
 }
 
 /// Displays an unordered list using the default look and
@@ -1381,19 +1382,18 @@ pub fn unordered_list<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     column(bullets.iter().map(|bullet| {
         row![
             match bullet {
                 Bullet::Point { .. } => {
-                    text("•").size(settings.text_size).into()
+                    text("•").size(settings.text_size).boxed()
                 }
                 Bullet::Task { done, .. } => {
-                    Element::from(
-                        container(checkbox(*done).size(settings.text_size))
-                            .center_y(text::LineHeight::default().to_absolute(settings.text_size)),
-                    )
+                    container(checkbox(*done).size(settings.text_size))
+                        .center_y(text::LineHeight::default().to_absolute(settings.text_size))
+                        .boxed()
                 }
             },
             view_with(
@@ -1406,11 +1406,10 @@ where
             )
         ]
         .spacing(settings.spacing)
-        .into()
     }))
     .spacing(settings.spacing * 0.75)
     .padding([0.0, settings.spacing.0])
-    .into()
+    .boxed()
 }
 
 /// Displays an ordered list using the default look and
@@ -1424,7 +1423,7 @@ pub fn ordered_list<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     let digits = (start + bullets.len() as u64).max(1).ilog10() + 1;
 
@@ -1444,10 +1443,10 @@ where
             )
         ]
         .spacing(settings.spacing)
-        .into()
+        .boxed()
     }))
     .spacing(settings.spacing * 0.75)
-    .into()
+    .boxed()
 }
 
 /// Displays a code block using the default look. The `code_theme`
@@ -1463,7 +1462,7 @@ pub fn code_block<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     container(
         scrollable(
@@ -1477,7 +1476,6 @@ where
                     .on_link_click(on_link_click.clone())
                     .font(settings.style.code_block_font)
                     .size(settings.code_size)
-                    .into()
             })))
             .padding(settings.code_size),
         )
@@ -1490,7 +1488,7 @@ where
     .width(Fill)
     .padding(settings.code_size / 4)
     .class(Theme::code_block())
-    .into()
+    .boxed()
 }
 
 /// Displays a quote using the default look.
@@ -1502,7 +1500,7 @@ pub fn quote<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     row![
         rule::vertical(4),
@@ -1516,7 +1514,7 @@ where
     ]
     .height(Shrink)
     .spacing(settings.spacing.0)
-    .into()
+    .boxed()
 }
 
 /// Displays a rule using the default look.
@@ -1524,9 +1522,9 @@ pub fn rule<'a, Message, Theme, Renderer>() -> Element<'a, Message, Theme, Rende
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
-    rule::horizontal(2).into()
+    rule::horizontal(2).boxed()
 }
 
 /// Displays a table using the default look.
@@ -1539,7 +1537,7 @@ pub fn table<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     use iced_widget::table;
 
@@ -1549,7 +1547,7 @@ where
                 if let Some(cells) = row.cells.get(i) {
                     items(viewer, settings, cells)
                 } else {
-                    text("").into()
+                    text("").boxed()
                 }
             })
             .align_x(match column.alignment {
@@ -1571,7 +1569,7 @@ where
             scrollable::Scrollbar::default(),
         ))
         .spacing(settings.spacing.0 / 2.0)
-        .into()
+        .boxed()
 }
 
 /// Displays a column of items with the default look.
@@ -1583,7 +1581,7 @@ pub fn items<'a, Message, Theme, Renderer>(
 where
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     column(
         items
@@ -1592,7 +1590,7 @@ where
             .map(|(i, content)| item(viewer, settings, content, i)),
     )
     .spacing(settings.spacing.0)
-    .into()
+    .boxed()
 }
 
 /// A view strategy to display a Markdown [`Item`].
@@ -1601,7 +1599,7 @@ where
     Self: Sized + 'a,
     Message: 'a,
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     /// Produces a message when a link is clicked with the given [`Uri`].
     fn on_link_click(url: Uri) -> Message;
@@ -1629,7 +1627,7 @@ where
         )
         .padding(settings.spacing.0)
         .class(Theme::code_block())
-        .into()
+        .boxed()
     }
 
     /// Displays a heading.
@@ -1757,7 +1755,7 @@ struct DefaultViewer;
 impl<'a, Theme, Renderer> Viewer<'a, Uri, Theme, Renderer> for DefaultViewer
 where
     Theme: Catalog + 'a,
-    Renderer: core::text::Renderer<Font = Font> + 'a,
+    Renderer: core::text::Renderer + 'a,
 {
     fn on_link_click(url: Uri) -> Uri {
         url

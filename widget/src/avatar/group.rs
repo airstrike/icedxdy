@@ -16,6 +16,7 @@
 //! and naturally lands at the top of the stacking context).
 
 use iced_core::Length;
+use iced_widget::Widget;
 use iced_widget::{Renderer, row};
 use icedxdy_core::Theme;
 use icedxdy_core::theme::avatar::group_count_style;
@@ -115,7 +116,7 @@ impl<'a, Message: 'a> From<Group<'a, Message>>
             children.push(c);
         }
 
-        row(children).spacing(OVERLAP_PX).into()
+        row(children).spacing(OVERLAP_PX).boxed()
     }
 }
 

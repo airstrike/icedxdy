@@ -6,6 +6,7 @@
 
 use iced_core::Length::{self, Shrink};
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use icedxdy_core::theme::button;
 use icedxdy_core::{Orientation, Theme};
 
@@ -160,15 +161,15 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for ToggleGroup<'a, Message> 
                 Orientation::Horizontal => iced_widget::Row::with_children(elements)
                     .spacing(spacing)
                     .align_y(iced_core::Alignment::Center)
-                    .into(),
+                    .boxed(),
                 Orientation::Vertical => iced_widget::Column::with_children(elements)
                     .spacing(spacing)
                     .width(width)
-                    .into(),
+                    .boxed(),
             };
 
             match orientation {
-                Orientation::Horizontal => iced_widget::container(element).width(width).into(),
+                Orientation::Horizontal => iced_widget::container(element).width(width).boxed(),
                 Orientation::Vertical => element,
             }
         }

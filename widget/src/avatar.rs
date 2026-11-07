@@ -53,7 +53,7 @@ pub mod group;
 use iced_core::Length;
 use iced_core::Length::Fill;
 use iced_core::image::Handle;
-use iced_widget::Renderer;
+use iced_widget::{Renderer, Widget};
 use icedxdy_core::Theme;
 use icedxdy_core::theme::avatar::fallback_style;
 
@@ -212,13 +212,14 @@ impl<'a, Message: 'a> IntoElement<Message> for Avatar<'a, Message> {
         // text otherwise. iced's Image widget supports `border_radius`
         // directly — the pill clamp matches the surrounding container.
         let inner: Component<'_, Message> = if let Some(handle) = handle {
-            Component::from(iced_core::Element::from(
+            Component::from(
                 iced_widget::Image::new(handle)
                     .width(Fill)
                     .height(Fill)
                     .content_fit(iced_core::ContentFit::Cover)
-                    .border_radius(u32::MAX as f32),
-            ))
+                    .border_radius(u32::MAX as f32)
+                    .boxed(),
+            )
         } else {
             // Centered fallback. The fallback's text size is pushed down
             // through the standard size-propagation channel so a bare

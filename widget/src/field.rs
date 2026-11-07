@@ -55,6 +55,7 @@
 //! conditional-push pattern `alert::Alert` uses for its title/description
 //! pair.
 
+use iced_widget::Widget;
 mod animated_card;
 
 use iced_core::Length;
@@ -249,7 +250,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Group<'a, Message> {
         iced_widget::Column::with_children(elements)
             .spacing(spacing)
             .width(width)
-            .into()
+            .boxed()
     }
 }
 
@@ -327,7 +328,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
                     let label_element = match toggle_target.as_ref() {
                         Some(target) => iced_widget::mouse_area(label_element)
                             .on_press(target.clone())
-                            .into(),
+                            .boxed(),
                         None => label_element,
                     };
                     col = col.push(label_element);
@@ -339,7 +340,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
                 if let Some(error) = error {
                     col = col.push(error.into_iced());
                 }
-                col.into()
+                col.boxed()
             }
             Orientation::Horizontal => {
                 // shadcn `field.tsx` horizontal: `flex-row items-center
@@ -374,7 +375,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
                         let label_element = match toggle_target.as_ref() {
                             Some(target) => iced_widget::mouse_area(label_element)
                                 .on_press(target.clone())
-                                .into(),
+                                .boxed(),
                             None => label_element,
                         };
                         right = right.push(label_element);
@@ -389,15 +390,15 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
                         .spacing(8)
                         .align_y(align)
                         .push(content_element)
-                        .push(right)
-                        .into()
+                        .push(right.boxed())
+                        .boxed()
                 } else {
                     // No right-hand content — just content on its own in a row.
                     iced_widget::Row::new()
                         .spacing(8)
                         .align_y(iced_core::Alignment::Center)
                         .push(content.into_iced())
-                        .into()
+                        .boxed()
                 }
             }
         };
@@ -429,7 +430,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
 
         // Optionally wrap in a mouse_area for click-anywhere handling.
         let pressed: iced_core::Element<'a, Message, Theme, Renderer> = match on_press {
-            Some(message) => iced_widget::mouse_area(carded).on_press(message).into(),
+            Some(message) => iced_widget::mouse_area(carded).on_press(message).boxed(),
             None => carded,
         };
 
@@ -438,7 +439,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
         // AnimatedCard, mouse_area), and matches the convention of similar
         // wrapper widgets.
         match width {
-            Some(w) => iced_widget::container(pressed).width(w).into(),
+            Some(w) => iced_widget::container(pressed).width(w).boxed(),
             None => pressed,
         }
     }

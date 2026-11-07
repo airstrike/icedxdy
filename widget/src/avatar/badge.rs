@@ -10,6 +10,7 @@ use iced_core::Length;
 use iced_core::Length::Fill;
 use iced_core::alignment::{Horizontal, Vertical};
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use iced_widget::stack;
 use icedxdy_core::Theme;
 use icedxdy_core::theme::avatar::badge_style;
@@ -79,7 +80,7 @@ pub fn badge<'a, Message: 'a>(
         .align_y(Vertical::Bottom);
 
     let composed: iced_core::Element<'a, Message, Theme, Renderer> =
-        stack![avatar_el, overlay].into();
+        stack![avatar_el, overlay].boxed();
     Component::from(composed)
 }
 

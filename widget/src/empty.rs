@@ -8,6 +8,7 @@ use iced_core::Padding;
 use iced_core::alignment::{Horizontal, Vertical};
 use iced_core::text::LineHeight;
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use icedxdy_core::theme::container::Style;
 use icedxdy_core::{Border, Gap, Theme, radius};
 
@@ -119,9 +120,8 @@ impl<'a, Message: 'a> IntoElement<Message> for Empty<'a, Message> {
         if let Some(content) = content {
             let element: iced_core::Element<'a, Message, Theme, Renderer> =
                 iced_widget::container(content.into_iced())
-                    .center_x(Fill)
-                    .max_width(384.0)
-                    .into();
+                    .center_x(Fill.max(384.0))
+                    .boxed();
             body = body.push(element);
         }
 
@@ -130,7 +130,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Empty<'a, Message> {
             .width(Fill)
             .center_y(Fill)
             .style(|theme| empty_style(theme).into())
-            .into()
+            .boxed()
     }
 }
 
@@ -211,7 +211,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Media<'a, Message> {
                 bottom: 8.0,
                 ..Padding::ZERO
             })
-            .into()
+            .boxed()
     }
 }
 
@@ -300,9 +300,8 @@ fn header<'a, Message: 'a>(
     }
 
     iced_widget::container(column)
-        .center_x(Fill)
-        .max_width(384.0)
-        .into()
+        .center_x(Fill.max(384.0))
+        .boxed()
 }
 
 fn empty_style(_theme: &Theme) -> Style {

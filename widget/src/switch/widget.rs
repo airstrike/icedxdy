@@ -20,14 +20,18 @@ use crate::core::layout;
 use crate::core::mouse;
 use crate::core::renderer;
 use crate::core::text;
+use crate::core::text::paragraph;
 use crate::core::time::Instant;
 use crate::core::touch;
+use crate::core::widget;
 use crate::core::widget::tree::{self, Tree};
 use crate::core::window;
 use crate::core::{
-    Animation, Background, Border, Color, Element, Em, Event, Layout, Length, Pixels, Rectangle,
-    Shell, Size, Theme, Widget,
+    Animation, Background, Border, Color, Element, Em, Event, Font, Layout, Length, Pixels,
+    Rectangle, Shell, Size, Theme, Widget,
 };
+
+use std::marker::PhantomData;
 
 // Iced's widget crate re-exports `core::widget::text::*` at `crate::text`. We
 // can't reuse that path (our `crate::text` is the icedxdy typography helpers,
@@ -36,7 +40,7 @@ use crate::core::{
 // calls shallow `text_helpers::*` paths that satisfy the pre-commit deep-path
 // / aliased-import checks. Mirrors `widget/src/checkbox/widget.rs`.
 mod text_helpers {
-    pub use iced_widget::text::{Format, State, Style, draw, layout};
+    pub use iced_widget::text::{Format, Style, draw, layout};
 }
 
 /// A toggler (switch) widget.
@@ -58,10 +62,11 @@ where
     letter_spacing: Em,
     font_features: Vec<font::Feature>,
     spacing: f32,
-    font: Option<Renderer::Font>,
+    font: Option<Font>,
     class: Theme::Class<'a>,
     interaction: Option<mouse::Interaction>,
     last_status: Option<Status>,
+    renderer: PhantomData<Renderer>,
 }
 
 impl<'a, Message, Theme, Renderer> Toggler<'a, Message, Theme, Renderer>
@@ -104,6 +109,7 @@ where
             class: Theme::default(),
             interaction: None,
             last_status: None,
+            renderer: PhantomData,
         }
     }
 
@@ -197,10 +203,8 @@ where
         self
     }
 
-    /// Sets the [`Renderer::Font`] of the text of the [`Toggler`].
-    ///
-    /// [`Renderer::Font`]: text::Renderer
-    pub fn font(mut self, font: impl Into<Renderer::Font>) -> Self {
+    /// Sets the [`Font`] of the text of the [`Toggler`].
+    pub fn font(mut self, font: impl Into<Font>) -> Self {
         self.font = Some(font.into());
         self
     }
@@ -239,10 +243,17 @@ where
 
 /// Internal state for the animated [`Toggler`].
 struct State<P: text::Paragraph> {
-    paragraph: text_helpers::State<P>,
+    paragraph: paragraph::Plain<P>,
     animation: Animation<bool>,
     now: Option<Instant>,
     last_is_toggled: bool,
+}
+
+impl<Message, Theme, Renderer> widget::Meta for Toggler<'_, Message, Theme, Renderer>
+where
+    Theme: Catalog,
+    Renderer: text::Renderer,
+{
 }
 
 impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer>
@@ -257,7 +268,7 @@ where
 
     fn state(&self) -> tree::State {
         tree::State::new(State::<Renderer::Paragraph> {
-            paragraph: text_helpers::State::default(),
+            paragraph: paragraph::Plain::default(),
             animation: Animation::new(self.is_toggled)
                 .very_quick()
                 .easing(Easing::EaseOut),
@@ -273,74 +284,74 @@ where
         }
     }
 
-    fn layout(
-        &mut self,
-        tree: &mut Tree,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+    fn diff(&mut self, tree: &mut Tree) {
+        // The children of the tree are the track and the label; they only
+        // carry their geometry, so no state is needed.
+        tree.children.resize_with(2, Tree::empty);
+    }
+
+    fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
         let limits = limits.width(self.width);
 
-        layout::next_to_each_other(
-            &limits,
-            if self.label.is_some() {
-                self.spacing
+        let spacing = if self.label.is_some() {
+            self.spacing
+        } else {
+            0.0
+        };
+
+        let toggler = {
+            let size = if renderer::CRISP {
+                let scale_factor = renderer.hint_factor().unwrap_or(1.0);
+
+                (self.size * scale_factor).round() / scale_factor
             } else {
-                0.0
-            },
-            |_| {
-                let size = if renderer::CRISP {
-                    let scale_factor = renderer.scale_factor().unwrap_or(1.0);
+                self.size
+            };
 
-                    (self.size * scale_factor).round() / scale_factor
-                } else {
-                    self.size
-                };
+            // Nova default: `data-[size=default]:w-[32px] h-[18.4px]`.
+            // Width = (32 / 18.4) * size preserves the exact aspect ratio
+            // at any caller-supplied size. At DEFAULT_SIZE = 18.4 this
+            // yields exactly 32 × 18.4. (Sweeten used 2.0 × size = 32 × 16.)
+            Size::new(32.0 / 18.4 * size, size)
+        };
 
-                // Nova default: `data-[size=default]:w-[32px] h-[18.4px]`.
-                // Width = (32 / 18.4) * size preserves the exact aspect ratio
-                // at any caller-supplied size. At DEFAULT_SIZE = 18.4 this
-                // yields exactly 32 × 18.4. (Sweeten used 2.0 × size = 32 × 16.)
-                layout::Node::new(Size::new(32.0 / 18.4 * size, size))
-            },
-            |limits| {
-                if let Some(label) = self.label.as_deref() {
-                    let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
+        let label = if let Some(label) = self.label.as_deref() {
+            let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
-                    text_helpers::layout(
-                        &mut state.paragraph,
-                        renderer,
-                        limits,
-                        label,
-                        text_helpers::Format {
-                            width: self.width,
-                            height: Length::Shrink,
-                            line_height: self.line_height,
-                            size: self.text_size,
-                            font: self.font,
-                            align_x: self.alignment,
-                            align_y: alignment::Vertical::Top,
-                            shaping: self.text_shaping,
-                            wrapping: self.wrapping,
-                            ellipsis: text::Ellipsis::None,
-                            letter_spacing: self.letter_spacing,
-                            font_features: self.font_features.clone(),
-                            font_variations: Vec::new(),
-                            weight: None,
-                        },
-                    )
-                } else {
-                    layout::Node::new(Size::ZERO)
-                }
-            },
-        )
+            text_helpers::layout(
+                &mut state.paragraph,
+                renderer,
+                &limits.shrink(Size::new(toggler.width + spacing, 0.0)),
+                label,
+                text_helpers::Format {
+                    width: self.width,
+                    height: Length::Shrink,
+                    line_height: Some(self.line_height),
+                    size: self.text_size,
+                    font: self.font,
+                    align_x: self.alignment,
+                    align_y: alignment::Vertical::Top,
+                    shaping: self.text_shaping,
+                    wrapping: self.wrapping,
+                    ellipsis: text::Ellipsis::None,
+                    letter_spacing: self.letter_spacing,
+                    font_features: self.font_features.clone(),
+                    font_variations: Vec::new(),
+                    weight: None,
+                },
+            )
+        } else {
+            Size::ZERO
+        };
+
+        layout::next_to_each_other(tree, toggler, label, spacing);
     }
 
     fn update(
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         _renderer: &Renderer,
         shell: &mut Shell<'_, Message>,
@@ -410,7 +421,7 @@ where
     fn mouse_interaction(
         &self,
         _tree: &Tree,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         _viewport: &Rectangle,
         _renderer: &Renderer,
@@ -432,14 +443,14 @@ where
         renderer: &mut Renderer,
         theme: &Theme,
         defaults: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         _cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_ref::<State<Renderer::Paragraph>>();
 
-        let mut children = layout.children();
-        let toggler_layout = children.next().unwrap();
+        let mut children = layout.iter(&tree.children);
+        let (toggler_layout, _) = children.next().unwrap();
 
         let current_status = self.last_status.unwrap_or(Status::Disabled {
             is_toggled: self.is_toggled,
@@ -485,7 +496,7 @@ where
         };
 
         if self.label.is_some() {
-            let label_layout = children.next().unwrap();
+            let (label_layout, _) = children.next().unwrap();
 
             text_helpers::draw(
                 renderer,
@@ -494,12 +505,14 @@ where
                 state.paragraph.raw(),
                 text_helpers::Style {
                     color: style.text_color,
+                    selection: None,
                 },
+                theme.selection(),
                 viewport,
             );
         }
 
-        let scale_factor = renderer.scale_factor().unwrap_or(1.0);
+        let scale_factor = renderer.hint_factor().unwrap_or(1.0);
         let bounds = toggler_layout.bounds();
 
         let border_radius = style
@@ -608,7 +621,7 @@ where
     fn from(
         toggler: Toggler<'a, Message, Theme, Renderer>,
     ) -> Element<'a, Message, Theme, Renderer> {
-        Element::new(toggler)
+        toggler._boxed()
     }
 }
 
@@ -688,6 +701,9 @@ pub trait Catalog: Sized {
 
     /// The [`Style`] of a class with the given status.
     fn style(&self, class: &Self::Class<'_>, status: Status) -> Style;
+
+    /// The global selection [`Color`].
+    fn selection(&self) -> Color;
 }
 
 /// A styling function for a [`Toggler`].
@@ -729,6 +745,10 @@ impl Catalog for Theme {
 
     fn style(&self, class: &Self::Class<'_>, status: Status) -> Style {
         class(self, status)
+    }
+
+    fn selection(&self) -> Color {
+        <Theme as iced_widget::toggler::Catalog>::selection(self)
     }
 }
 

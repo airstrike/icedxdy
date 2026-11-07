@@ -30,7 +30,6 @@
 
 use std::ops::Add;
 
-use crate::core::Renderer as _;
 use crate::core::alignment;
 use crate::core::font;
 use crate::core::font::{Feature, Variation};
@@ -40,6 +39,7 @@ use crate::core::renderer;
 use crate::core::text;
 use crate::core::text::Renderer as _;
 use crate::core::text::paragraph::Paragraph as _;
+use crate::core::widget::Meta;
 use crate::core::widget::text::{Alignment, Catalog, Shaping, Wrapping, draw};
 use crate::core::widget::tree::{self, Tree};
 use crate::core::{
@@ -159,7 +159,7 @@ impl<'a> Span<'a> {
     /// Build the iced span used for *layout* (color stripped — color is a
     /// rendering concern and including it would needlessly invalidate the
     /// paragraph cache when the palette changes between draws).
-    fn to_layout_span(&self) -> text::Span<'static, (), iced_core::Font> {
+    fn to_layout_span(&self) -> text::Span<'static, ()> {
         let mut font = match self.italic {
             true => Some(iced_core::Font::DEFAULT.style(font::Style::Italic)),
             false => None,
@@ -186,10 +186,7 @@ impl<'a> Span<'a> {
 
     /// Build the iced span used for *drawing*, with `color` resolved
     /// against the active theme.
-    fn to_draw_span(
-        &self,
-        theme: &icedxdy_core::Theme,
-    ) -> text::Span<'static, (), iced_core::Font> {
+    fn to_draw_span(&self, theme: &icedxdy_core::Theme) -> text::Span<'static, ()> {
         let mut span = self.to_layout_span();
         if let Some(token) = self.color {
             let color: Color = token.resolve(theme).into();
@@ -321,9 +318,11 @@ impl<'a> RichText<'a> {
 // reshapes when spans change. We therefore rebuild the paragraph whenever
 // our drawn-span list (which IS palette-dependent) differs.
 struct State<P: text::Paragraph> {
-    spans: Vec<text::Span<'static, (), P::Font>>,
+    spans: Vec<text::Span<'static, ()>>,
     paragraph: P,
 }
+
+impl Meta for RichText<'_> {}
 
 impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
     fn tag(&self) -> tree::Tag {
@@ -333,7 +332,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
     fn state(&self) -> tree::State {
         let paragraph = <<Renderer as text::Renderer>::Paragraph>::default();
         tree::State::new(State {
-            spans: Vec::<text::Span<'static, (), iced_core::Font>>::new(),
+            spans: Vec::<text::Span<'static, ()>>::new(),
             paragraph,
         })
     }
@@ -345,12 +344,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         }
     }
 
-    fn layout(
-        &mut self,
-        tree: &mut Tree,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+    fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
         // We don't have the theme here, so layout uses each span's
         // *layout* shape (no color). Color is rendering-only and gets
         // applied in `draw` by reshaping the paragraph against the live
@@ -360,10 +354,10 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
             .downcast_mut::<State<<Renderer as text::Renderer>::Paragraph>>();
         let layout_spans: Vec<_> = self.spans.iter().map(Span::to_layout_span).collect();
 
-        layout::sized(limits, self.width, self.height, |limits| {
-            let bounds = limits.max();
-            let size = self.size.unwrap_or_else(|| renderer.default_size());
-            let font = renderer.default_font();
+        tree.size = layout::sized(limits, self.width, self.height, |limits| {
+            let bounds = limits.bounds();
+            let size = self.size.unwrap_or_else(|| renderer.text_size());
+            let font = <Renderer as text::Renderer>::font(renderer);
 
             let text = Text {
                 content: layout_spans.as_slice(),
@@ -380,7 +374,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
                 font_features: Vec::<Feature>::new(),
                 font_variations: Vec::<Variation>::new(),
                 weight: None,
-                hint_factor: renderer.scale_factor(),
+                hint_factor: <Renderer as crate::core::Renderer>::hint_factor(renderer),
             };
 
             // Reshape the paragraph if our (color-stripped) layout spans
@@ -422,7 +416,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
             }
 
             state.paragraph.min_bounds()
-        })
+        });
     }
 
     fn draw(
@@ -431,7 +425,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         renderer: &mut Renderer,
         theme: &Theme,
         defaults: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         _cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
@@ -457,8 +451,8 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         let draw_spans: Vec<_> = self.spans.iter().map(|s| s.to_draw_span(theme)).collect();
 
         let bounds = layout.bounds().size();
-        let size = self.size.unwrap_or_else(|| renderer.default_size());
-        let font = renderer.default_font();
+        let size = self.size.unwrap_or_else(|| renderer.text_size());
+        let font = <Renderer as text::Renderer>::font(renderer);
 
         let draw_paragraph = <<Renderer as text::Renderer>::Paragraph>::with_spans(Text {
             content: draw_spans.as_slice(),
@@ -475,7 +469,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
             font_features: Vec::<Feature>::new(),
             font_variations: Vec::<Variation>::new(),
             weight: None,
-            hint_factor: renderer.scale_factor(),
+            hint_factor: <Renderer as crate::core::Renderer>::hint_factor(renderer),
         });
 
         // Match iced's `Rich::draw` underline / strikethrough
@@ -492,6 +486,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
             layout.bounds(),
             &draw_paragraph,
             style,
+            <Theme as Catalog>::selection(theme),
             viewport,
         );
     }
@@ -500,7 +495,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
         &mut self,
         _tree: &mut Tree,
         _event: &Event,
-        _layout: Layout<'_>,
+        _layout: Layout,
         _cursor: mouse::Cursor,
         _renderer: &Renderer,
         _shell: &mut Shell<'_, Message>,
@@ -511,7 +506,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
     fn mouse_interaction(
         &self,
         _tree: &Tree,
-        _layout: Layout<'_>,
+        _layout: Layout,
         _cursor: mouse::Cursor,
         _viewport: &Rectangle,
         _renderer: &Renderer,
@@ -522,7 +517,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for RichText<'a> {
 
 impl<'a, Message: 'a> From<RichText<'a>> for Element<'a, Message, Theme, Renderer> {
     fn from(rich: RichText<'a>) -> Self {
-        Element::new(rich)
+        rich._boxed()
     }
 }
 

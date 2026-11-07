@@ -6,6 +6,7 @@ use crate::container::Container;
 use crate::row::Row;
 use iced_core::Length::Fill;
 use iced_core::Padding;
+use iced_widget::Widget;
 use icedxdy_core::Theme;
 
 /// Create a sidebar submenu.
@@ -25,7 +26,7 @@ pub fn submenu<'a, Message: 'a>(
                 background: Some(theme.neutral.border.into()),
                 ..Default::default()
             })
-            .into();
+            .boxed();
 
     // Items column with padding
     let items = Column::with_children(children)

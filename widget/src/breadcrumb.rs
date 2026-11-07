@@ -48,6 +48,7 @@
 //! widget) via [`Breadcrumb::separator`] for lucide-icon parity.
 
 use iced_core::mouse::Interaction;
+use iced_widget::Widget;
 use iced_widget::container::Style;
 use iced_widget::{Renderer, container, mouse_area};
 use icedxdy_core::Theme;
@@ -182,7 +183,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Breadcrumb<'a, Message> {
         // mechanism for the same. `<BreadcrumbPage>` overrides in `render_page`.
         container(Box::new(row).into_element())
             .style(|t: &Theme| Style::default().color(t.muted.foreground))
-            .into()
+            .boxed()
     }
 }
 

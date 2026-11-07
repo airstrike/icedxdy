@@ -23,6 +23,7 @@ use iced_core::alignment::{Horizontal, Vertical};
 use iced_core::text::IntoFragment;
 use iced_core::{Length::*, Padding, Pixels};
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use icedxdy_core::{Theme, theme};
 
 use crate::Size;
@@ -150,12 +151,13 @@ impl<'a, Message: 'a> IntoElement<Message> for Alert<'a, Message> {
             Variant::Destructive => t.style(theme::text::Destructive + theme::tweak::Alpha(0.9)),
         });
 
-        let mut text_col = iced_widget::Column::new().spacing(2);
+        let mut text_col: iced_widget::Column<iced_core::Element<'a, Message, Theme, Renderer>> =
+            iced_widget::Column::new().spacing(2);
         if let Some(title) = title {
-            text_col = text_col.push(title);
+            text_col = text_col.push(title.into());
         }
         if let Some(desc) = description {
-            text_col = text_col.push(desc);
+            text_col = text_col.push(desc.into());
         }
 
         let body: iced_core::Element<'a, Message, Theme, Renderer> = if let Some(mut icon) = icon {
@@ -167,11 +169,11 @@ impl<'a, Message: 'a> IntoElement<Message> for Alert<'a, Message> {
             iced_widget::Row::new()
                 .spacing(8)
                 .align_y(iced_core::Alignment::Start)
-                .push(icon_wrapper)
-                .push(text_col)
-                .into()
+                .push(icon_wrapper.boxed())
+                .push(text_col.boxed())
+                .boxed()
         } else {
-            text_col.into()
+            text_col.boxed()
         };
 
         let container_style: iced_widget::container::StyleFn<'_, Theme> = match variant {
@@ -201,7 +203,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Alert<'a, Message> {
             .style(container_style);
 
         let outer: iced_core::Element<'a, Message, Theme, Renderer> = match action {
-            None => card.into(),
+            None => card.boxed(),
             Some(action) => {
                 let overlay = iced_widget::container(action.into_iced())
                     .width(Fill)
@@ -214,7 +216,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Alert<'a, Message> {
                         bottom: 0.0,
                         left: 0.0,
                     });
-                iced_widget::stack![card, overlay].into()
+                iced_widget::stack![card, overlay].boxed()
             }
         };
 
@@ -224,9 +226,8 @@ impl<'a, Message: 'a> IntoElement<Message> for Alert<'a, Message> {
         // no cap is set so the alert keeps its natural shrink behavior.
         if max_width.is_finite() {
             iced_widget::container(outer)
-                .width(Fill)
-                .max_width(max_width)
-                .into()
+                .width(Fill.max(max_width))
+                .boxed()
         } else {
             outer
         }

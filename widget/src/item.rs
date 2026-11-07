@@ -8,6 +8,7 @@ use iced_core::alignment::{Horizontal, Vertical};
 use iced_core::text::LineHeight;
 use iced_core::{Alignment, Padding};
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use icedxdy_core::theme::container::Style;
 use icedxdy_core::{Border, Color, Gap, Orientation, Theme, radius};
 
@@ -138,11 +139,11 @@ impl<'a, Message: 'a> IntoElement<Message> for Item<'a, Message> {
                 .spacing(spacing)
                 .align_y(Alignment::Center)
                 .width(Fill)
-                .into(),
+                .boxed(),
             Orientation::Vertical => iced_widget::Column::with_children(elements)
                 .spacing(spacing)
                 .width(Fill)
-                .into(),
+                .boxed(),
         };
 
         crate::container(content)
@@ -216,7 +217,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Content<'a, Message> {
         iced_widget::Column::with_children(elements)
             .spacing(spacing)
             .width(width)
-            .into()
+            .boxed()
     }
 }
 
@@ -323,7 +324,7 @@ pub fn actions<'a, Message: 'a>(
         iced_widget::Row::with_children(elements)
             .spacing(Gap::G2)
             .align_y(Alignment::Center)
-            .into();
+            .boxed();
 
     Component::from(element)
 }
@@ -353,7 +354,7 @@ fn slot_row<'a, Message: 'a>(
             .spacing(Gap::G2)
             .align_y(Alignment::Center)
             .width(Fill)
-            .into();
+            .boxed();
 
     Component::from(element)
 }

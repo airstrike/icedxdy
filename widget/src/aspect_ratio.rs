@@ -36,7 +36,7 @@ use iced_core::layout;
 use iced_core::mouse;
 use iced_core::overlay;
 use iced_core::renderer;
-use iced_core::widget::Tree;
+use iced_core::widget::{Meta, Operation, Tree};
 use iced_core::{Element, Event, Layout, Length, Pixels, Rectangle, Shell, Size, Vector, Widget};
 use iced_widget::Renderer;
 
@@ -67,9 +67,9 @@ where
     Renderer: iced_core::Renderer,
 {
     /// Wrap `content` and constrain it to the given `width / height` ratio.
-    pub fn new(content: impl Into<Element<'a, Message, Theme, Renderer>>, ratio: f32) -> Self {
+    pub fn new(content: Element<'a, Message, Theme, Renderer>, ratio: f32) -> Self {
         Self {
-            content: content.into(),
+            content,
             ratio,
             width: Length::Fill,
             max_width: f32::INFINITY,
@@ -104,16 +104,17 @@ pub fn aspect_ratio<'a, Message: 'a>(
     AspectRatio::new(content.into().into_iced(), ratio)
 }
 
+impl<Message, Renderer> Meta for AspectRatio<'_, Message, Renderer> where
+    Renderer: iced_core::Renderer
+{
+}
+
 impl<Message, Renderer> Widget<Message, Theme, Renderer> for AspectRatio<'_, Message, Renderer>
 where
     Renderer: iced_core::Renderer,
 {
-    fn children(&self) -> Vec<Tree> {
-        vec![Tree::new(&self.content)]
-    }
-
-    fn diff(&self, tree: &mut Tree) {
-        tree.diff_children(std::slice::from_ref(&self.content));
+    fn diff(&mut self, tree: &mut Tree) {
+        tree.diff_children(std::slice::from_mut(&mut self.content));
     }
 
     fn size(&self) -> Size<Length> {
@@ -128,12 +129,7 @@ where
         }
     }
 
-    fn layout(
-        &mut self,
-        tree: &mut Tree,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+    fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
         // Compute the width directly from the limits + the configured
         // width / max_width. We deliberately bypass `Limits::resolve` —
         // when the parent is a `Shrink`-width container (the common
@@ -156,7 +152,7 @@ where
             Length::Fixed(n) => n,
             // Fill / FillPortion / Shrink: use the available max, capped
             // at the user-supplied `max_width` (defaults to INFINITY).
-            _ => limits.max().width,
+            _ => limits.bounds().width,
         };
         let width = width.min(self.max_width).max(0.0);
         // Be defensive against an unbounded parent (no `max_width` and
@@ -170,7 +166,7 @@ where
         // axes proportionally so the box fits — same behavior CSS
         // aspect-ratio gets in a doubly-constrained flex item. Without
         // this, portrait ratios overflow card-shaped previews.
-        let max_height = limits.max().height;
+        let max_height = limits.bounds().height;
         let (width, height) = if max_height.is_finite() && height > max_height {
             let scaled = max_height * safe_ratio;
             (scaled.max(0.0), max_height.max(0.0))
@@ -183,65 +179,55 @@ where
         // Tight-limit the child to the computed box so it has exactly the
         // ratio-constrained space to lay out in.
         let child_limits = layout::Limits::new(child_size, child_size);
-        let child_node =
-            self.content
-                .as_widget_mut()
-                .layout(&mut tree.children[0], renderer, &child_limits);
+        let child = &mut tree.children[0];
+        self.content.layout(child, renderer, &child_limits);
+        child.translation = Vector::ZERO;
 
-        layout::Node::with_children(child_size, vec![child_node])
+        tree.size = child_size;
     }
 
     fn update(
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         renderer: &Renderer,
         shell: &mut Shell<'_, Message>,
         viewport: &Rectangle,
     ) {
-        self.content.as_widget_mut().update(
-            &mut tree.children[0],
-            event,
-            layout.children().next().expect("aspect_ratio child layout"),
-            cursor,
-            renderer,
-            shell,
-            viewport,
-        );
+        let (layout, tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+        self.content
+            .update(tree, event, layout, cursor, renderer, shell, viewport);
     }
 
     fn mouse_interaction(
         &self,
         tree: &Tree,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
-        self.content.as_widget().mouse_interaction(
-            &tree.children[0],
-            layout.children().next().expect("aspect_ratio child layout"),
-            cursor,
-            viewport,
-            renderer,
-        )
+        let (layout, tree) = layout.iter(&tree.children).next().unwrap();
+
+        self.content
+            .mouse_interaction(tree, layout, cursor, viewport, renderer)
     }
 
     fn operate(
         &mut self,
         tree: &mut Tree,
-        layout: Layout<'_>,
+        layout: Layout,
+        viewport: &Rectangle,
         renderer: &Renderer,
-        operation: &mut dyn iced_core::widget::Operation,
+        operation: &mut dyn Operation,
     ) {
-        self.content.as_widget_mut().operate(
-            &mut tree.children[0],
-            layout.children().next().expect("aspect_ratio child layout"),
-            renderer,
-            operation,
-        );
+        let (layout, tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+        self.content
+            .operate(tree, layout, viewport, renderer, operation);
     }
 
     fn draw(
@@ -250,16 +236,18 @@ where
         renderer: &mut Renderer,
         theme: &Theme,
         renderer_style: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
-        self.content.as_widget().draw(
-            &tree.children[0],
+        let (layout, tree) = layout.iter(&tree.children).next().unwrap();
+
+        self.content.draw(
+            tree,
             renderer,
             theme,
             renderer_style,
-            layout.children().next().expect("aspect_ratio child layout"),
+            layout,
             cursor,
             viewport,
         );
@@ -268,18 +256,16 @@ where
     fn overlay<'b>(
         &'b mut self,
         tree: &'b mut Tree,
-        layout: Layout<'b>,
+        layout: Layout,
         renderer: &Renderer,
         viewport: &Rectangle,
         translation: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-        self.content.as_widget_mut().overlay(
-            &mut tree.children[0],
-            layout.children().next().expect("aspect_ratio child layout"),
-            renderer,
-            viewport,
-            translation,
-        )
+        window: Size,
+    ) -> Vec<overlay::Element<'b, Message, Theme, Renderer>> {
+        let (layout, tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+        self.content
+            .overlay(tree, layout, renderer, viewport, translation, window)
     }
 }
 
@@ -287,7 +273,7 @@ impl<'a, Message: 'a> From<AspectRatio<'a, Message, Renderer>>
     for Element<'a, Message, Theme, Renderer>
 {
     fn from(widget: AspectRatio<'a, Message, Renderer>) -> Self {
-        Element::new(widget)
+        widget._boxed()
     }
 }
 

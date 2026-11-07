@@ -17,7 +17,7 @@ use iced_core::Length;
 use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
-use iced_core::widget::Tree;
+use iced_core::widget::{Meta, Tree};
 use iced_core::{Background, Layout, Rectangle, Size, Widget};
 
 use icedxdy_core::Theme;
@@ -57,6 +57,8 @@ impl Separator {
     }
 }
 
+impl Meta for Separator {}
+
 impl<Message, Renderer> Widget<Message, Theme, Renderer> for Separator
 where
     Renderer: iced_core::Renderer,
@@ -83,14 +85,9 @@ where
         }
     }
 
-    fn layout(
-        &mut self,
-        _tree: &mut Tree,
-        _renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+    fn layout(&mut self, tree: &mut Tree, _renderer: &Renderer, limits: &layout::Limits) {
         let size = <Self as Widget<Message, Theme, Renderer>>::size(self);
-        layout::atomic(limits, size.width, size.height)
+        tree.size = layout::atomic(limits, size.width, size.height);
     }
 
     fn draw(
@@ -99,7 +96,7 @@ where
         renderer: &mut Renderer,
         theme: &Theme,
         _style: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         _cursor: mouse::Cursor,
         _viewport: &Rectangle,
     ) {

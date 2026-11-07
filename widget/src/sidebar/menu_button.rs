@@ -20,6 +20,7 @@ use iced_core::Length::{Fill, Shrink};
 use iced_core::Padding;
 use iced_core::mouse::Interaction;
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use iced_widget::button::Status;
 use iced_widget::tooltip::Position;
 
@@ -228,7 +229,7 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
                     Position::Right,
                 )
                 .gap(4.0)
-                .into();
+                .boxed();
             }
         }
 

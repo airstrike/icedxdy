@@ -2,6 +2,7 @@ use crate::Size;
 use crate::component::{Component, IntoElement};
 use iced_core::Length;
 use iced_widget::Renderer;
+use iced_widget::Widget;
 use icedxdy_core::Theme;
 
 /// Create a [`Row`] with the given children.
@@ -124,6 +125,6 @@ impl<'a, Message: 'a> IntoElement<Message> for Row<'a, Message> {
             row = row.push(child.into_iced());
         }
 
-        row.into()
+        row.boxed()
     }
 }

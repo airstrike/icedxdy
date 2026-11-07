@@ -5,7 +5,7 @@ use iced_core::layout::{self, Layout, flex};
 use iced_core::mouse;
 use iced_core::overlay;
 use iced_core::renderer;
-use iced_core::widget::{Operation, Tree, Widget};
+use iced_core::widget::{Meta, Operation, Tree, Widget, tree};
 use iced_core::{Event, Length, Padding, Pixels, Rectangle, Shell, Vector};
 use iced_widget::Renderer;
 use icedxdy_core::Theme;
@@ -164,7 +164,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Column<'a, Message> {
             children: iced_children,
         };
 
-        iced_core::Element::new(widget)
+        widget._boxed()
     }
 }
 
@@ -182,13 +182,19 @@ struct ColumnWidget<'a, Message> {
     children: Vec<iced_core::Element<'a, Message, Theme, Renderer>>,
 }
 
+impl<Message> Meta for ColumnWidget<'_, Message> {}
+
 impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
-    fn children(&self) -> Vec<Tree> {
-        self.children.iter().map(Tree::new).collect()
+    fn tag(&self) -> tree::Tag {
+        tree::Tag::of::<flex::Cache>()
     }
 
-    fn diff(&self, tree: &mut Tree) {
-        tree.diff_children(&self.children);
+    fn state(&self) -> tree::State {
+        tree::State::new(flex::Cache::default())
+    }
+
+    fn diff(&mut self, tree: &mut Tree) {
+        tree.diff_children(&mut self.children);
     }
 
     fn size(&self) -> iced_core::Size<Length> {
@@ -198,15 +204,22 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
         }
     }
 
-    fn layout(
-        &mut self,
-        tree: &mut Tree,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
-        let limits = limits.max_width(self.max_width);
+    fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
+        let mut limits = *limits;
 
-        layout::flex::resolve(
+        if self.max_width.is_finite() {
+            limits.max.width = if limits.infinite.width {
+                self.max_width
+            } else {
+                limits.max.width.min(self.max_width)
+            }
+            .max(limits.min.width);
+            limits.infinite.width = false;
+        }
+
+        let cache = tree.state.downcast_mut::<flex::Cache>();
+
+        tree.size = flex::resolve(
             flex::Axis::Vertical,
             renderer,
             &limits,
@@ -215,27 +228,26 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
             self.padding,
             self.spacing,
             self.align,
-            &mut self.children,
             &mut tree.children,
-        )
+            &mut self.children,
+            cache,
+        );
     }
 
     fn operate(
         &mut self,
         tree: &mut Tree,
-        layout: Layout<'_>,
+        layout: Layout,
+        viewport: &Rectangle,
         renderer: &Renderer,
         operation: &mut dyn Operation,
     ) {
         operation.traverse(&mut |operation| {
             self.children
                 .iter_mut()
-                .zip(&mut tree.children)
-                .zip(layout.children())
-                .for_each(|((child, state), layout)| {
-                    child
-                        .as_widget_mut()
-                        .operate(state, layout, renderer, operation);
+                .zip(layout.iter_mut(&mut tree.children))
+                .for_each(|(child, (layout, state))| {
+                    child.operate(state, layout, viewport, renderer, operation);
                 });
         });
     }
@@ -244,40 +256,34 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         renderer: &Renderer,
         shell: &mut Shell<'_, Message>,
         viewport: &Rectangle,
     ) {
-        for ((child, state), layout) in self
+        for (child, (layout, state)) in self
             .children
             .iter_mut()
-            .zip(&mut tree.children)
-            .zip(layout.children())
+            .zip(layout.iter_mut(&mut tree.children))
         {
-            child
-                .as_widget_mut()
-                .update(state, event, layout, cursor, renderer, shell, viewport);
+            child.update(state, event, layout, cursor, renderer, shell, viewport);
         }
     }
 
     fn mouse_interaction(
         &self,
         tree: &Tree,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
         self.children
             .iter()
-            .zip(&tree.children)
-            .zip(layout.children())
-            .map(|((child, state), layout)| {
-                child
-                    .as_widget()
-                    .mouse_interaction(state, layout, cursor, viewport, renderer)
+            .zip(layout.iter(&tree.children))
+            .map(|(child, (layout, state))| {
+                child.mouse_interaction(state, layout, cursor, viewport, renderer)
             })
             .max()
             .unwrap_or_default()
@@ -289,21 +295,18 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
         renderer: &mut Renderer,
         theme: &Theme,
         defaults: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
         if let Some(clipped_viewport) = layout.bounds().intersection(viewport) {
-            for ((child, state), layout) in self
+            for (child, (layout, state)) in self
                 .children
                 .iter()
-                .zip(&tree.children)
-                .zip(layout.children())
-                .filter(|(_, layout)| layout.bounds().intersects(&clipped_viewport))
+                .zip(layout.iter(&tree.children))
+                .filter(|(_, (layout, _))| layout.bounds().intersects(&clipped_viewport))
             {
-                child
-                    .as_widget()
-                    .draw(state, renderer, theme, defaults, layout, cursor, viewport);
+                child.draw(state, renderer, theme, defaults, layout, cursor, viewport);
             }
         }
     }
@@ -311,11 +314,12 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
     fn overlay<'b>(
         &'b mut self,
         tree: &'b mut Tree,
-        layout: Layout<'b>,
+        layout: Layout,
         renderer: &Renderer,
         viewport: &Rectangle,
         translation: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
+        window: iced_core::Size,
+    ) -> Vec<overlay::Element<'b, Message, Theme, Renderer>> {
         overlay::from_children(
             &mut self.children,
             tree,
@@ -323,6 +327,7 @@ impl<Message> Widget<Message, Theme, Renderer> for ColumnWidget<'_, Message> {
             renderer,
             viewport,
             translation,
+            window,
         )
     }
 }

@@ -1,3 +1,4 @@
+use iced_widget::Widget;
 mod element;
 pub mod widget;
 
@@ -207,6 +208,6 @@ impl<'a, Message: 'a> IntoElement<Message> for Container<'a, Message> {
             c = c.class(bridge);
         }
 
-        c.into()
+        c.boxed()
     }
 }

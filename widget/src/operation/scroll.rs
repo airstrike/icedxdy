@@ -18,14 +18,15 @@
 
 use iced_core::widget::Id;
 use iced_runtime::Task;
-use iced_runtime::widget::operation;
+use iced_runtime::widget::operation::Animation;
+use iced_runtime::widget::operation::scrollable;
 use iced_runtime::widget::selector;
 
 /// Scroll a scrollable to bring a child widget into view.
 ///
 /// Finds the bounds of both the scrollable and the child via
 /// [`selector::find`], computes the vertical offset, then issues
-/// a [`scroll_to`](operation::scroll_to) command.
+/// a [`scroll_to`](scrollable::scroll_to) command.
 pub fn scroll_into_view<T: Send + 'static>(
     scrollable: impl Into<Id>,
     child: impl Into<Id>,
@@ -37,12 +38,13 @@ pub fn scroll_into_view<T: Send + 'static>(
         let scrollable_id = scrollable_id.clone();
         selector::find(child_id.clone()).and_then(move |child_target| {
             let offset_y = child_target.bounds().y - scrollable_target.bounds().y;
-            operation::scroll_to(
+            scrollable::scroll_to(
                 scrollable_id.clone(),
-                operation::AbsoluteOffset {
+                scrollable::AbsoluteOffset {
                     x: None,
                     y: Some(offset_y),
                 },
+                Animation::Instant,
             )
         })
     })

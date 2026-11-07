@@ -51,8 +51,8 @@ use iced_core::overlay;
 use iced_core::renderer;
 use iced_core::time::Instant;
 use iced_core::touch;
-use iced_core::widget::Operation;
 use iced_core::widget::tree::{self, Tree};
+use iced_core::widget::{Meta, Operation};
 use iced_core::window;
 use iced_core::{
     Animation, Background, Color, Element, Event, Layout, Length, Padding, Rectangle, Shell, Size,
@@ -174,6 +174,8 @@ struct State {
     now: Option<Instant>,
 }
 
+impl<Message> Meta for Accordion<'_, Message> {}
+
 impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Message> {
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
@@ -192,39 +194,24 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         tree::State::new(State { items, now: None })
     }
 
-    fn children(&self) -> Vec<Tree> {
-        // For each item we hold four children in this order so layout()
-        // and draw() can index by `(item_index * 4 + slot)`:
+    fn diff(&mut self, tree: &mut Tree) {
+        // One geometry-only tree per item, each holding the item's four
+        // widget trees in this order so layout() and draw() can index by
+        // slot:
         //   0 — trigger
         //   1 — chevron-closed
         //   2 — chevron-open
         //   3 — body
-        let mut out = Vec::with_capacity(self.items.len() * 4);
-        for item in &self.items {
-            out.push(Tree::new(&item.trigger));
-            out.push(Tree::new(&item.chevron_closed));
-            out.push(Tree::new(&item.chevron_open));
-            out.push(Tree::new(&item.body));
-        }
-        out
-    }
+        tree.children.resize_with(self.items.len(), Tree::empty);
 
-    fn diff(&self, tree: &mut Tree) {
-        // Flatten the item-children list in the same shape `children()`
-        // produced and let iced's diff_children walk the lot.
-        let elements: Vec<&Element<'_, Message, Theme, iced_widget::Renderer>> = self
-            .items
-            .iter()
-            .flat_map(|item| {
-                [
-                    &item.trigger,
-                    &item.chevron_closed,
-                    &item.chevron_open,
-                    &item.body,
-                ]
-            })
-            .collect();
-        tree.diff_children(&elements);
+        for (item_tree, item) in tree.children.iter_mut().zip(&mut self.items) {
+            item_tree.diff_children(&mut [
+                &mut item.trigger,
+                &mut item.chevron_closed,
+                &mut item.chevron_open,
+                &mut item.body,
+            ]);
+        }
 
         // Reconcile per-item animation state: items added since the last
         // render get fresh `ItemState`s; items dropped get their state
@@ -255,8 +242,7 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         tree: &mut Tree,
         renderer: &iced_widget::Renderer,
         limits: &layout::Limits,
-    ) -> layout::Node {
-        let state = tree.state.downcast_mut::<State>();
+    ) {
         let limits = limits.width(Fill);
 
         // Outer padding eats into the available width before children lay out.
@@ -264,55 +250,46 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         let pad_v = self.outer_padding.top + self.outer_padding.bottom;
         let inner_limits = limits.shrink(Size::new(pad_h, pad_v));
 
-        let inner_max = inner_limits.max();
-        let mut item_nodes: Vec<layout::Node> = Vec::with_capacity(self.items.len());
+        let inner_max = inner_limits.max;
         let mut cursor_y = 0.0_f32;
         let mut max_width = 0.0_f32;
 
+        let state = tree.state.downcast_mut::<State>();
         let now_ref = state.now;
 
-        for (item_index, item) in self.items.iter_mut().enumerate() {
-            // Tree layout: 4 child nodes per item — trigger, chevron-closed,
+        for (item, item_tree) in self.items.iter_mut().zip(tree.children.iter_mut()) {
+            // Tree layout: 4 child trees per item — trigger, chevron-closed,
             // chevron-open, body.
-            let trigger_tree_idx = item_index * 4;
-            let chevron_closed_idx = trigger_tree_idx + 1;
-            let chevron_open_idx = trigger_tree_idx + 2;
-            let body_idx = trigger_tree_idx + 3;
+            let [
+                trigger_tree,
+                chevron_closed_tree,
+                chevron_open_tree,
+                body_tree,
+            ] = item_tree.children.as_mut_slice()
+            else {
+                unreachable!("diff plants four trees per accordion item");
+            };
 
             // ----- chevrons (laid out first so we know their size for the
             // trigger row's width budget) ------------------------------
             let chevron_limits = layout::Limits::new(Size::ZERO, inner_max).loose();
-            let chevron_closed_node = item.chevron_closed.as_widget_mut().layout(
-                &mut tree.children[chevron_closed_idx],
-                renderer,
-                &chevron_limits,
-            );
-            let chevron_open_node = item.chevron_open.as_widget_mut().layout(
-                &mut tree.children[chevron_open_idx],
-                renderer,
-                &chevron_limits,
-            );
-            let chevron_w = chevron_closed_node
-                .size()
-                .width
-                .max(chevron_open_node.size().width);
-            let chevron_h = chevron_closed_node
-                .size()
-                .height
-                .max(chevron_open_node.size().height);
+            item.chevron_closed
+                .layout(chevron_closed_tree, renderer, &chevron_limits);
+            item.chevron_open
+                .layout(chevron_open_tree, renderer, &chevron_limits);
+            let chevron_closed_size = chevron_closed_tree.size;
+            let chevron_open_size = chevron_open_tree.size;
+            let chevron_w = chevron_closed_size.width.max(chevron_open_size.width);
+            let chevron_h = chevron_closed_size.height.max(chevron_open_size.height);
 
             // ----- trigger label ---------------------------------------
             // Trigger label takes whatever's left after the chevron + gap.
             let trigger_max_w = (inner_max.width - chevron_w - TRIGGER_GAP).max(0.0);
             let trigger_limits =
                 layout::Limits::new(Size::ZERO, Size::new(trigger_max_w, inner_max.height)).loose();
-            let mut trigger_node = item.trigger.as_widget_mut().layout(
-                &mut tree.children[trigger_tree_idx],
-                renderer,
-                &trigger_limits,
-            );
+            item.trigger.layout(trigger_tree, renderer, &trigger_limits);
 
-            let trigger_label_h = trigger_node.size().height;
+            let trigger_label_h = trigger_tree.size.height;
             let trigger_inner_h = trigger_label_h.max(chevron_h);
             let trigger_h = trigger_inner_h + TRIGGER_PADDING_Y * 2.0;
             let trigger_w = inner_max.width;
@@ -320,18 +297,16 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // Center label and chevron vertically inside the trigger row.
             let label_y = TRIGGER_PADDING_Y + (trigger_inner_h - trigger_label_h) / 2.0;
             let chevron_closed_y =
-                TRIGGER_PADDING_Y + (trigger_inner_h - chevron_closed_node.size().height) / 2.0;
+                TRIGGER_PADDING_Y + (trigger_inner_h - chevron_closed_size.height) / 2.0;
             let chevron_open_y =
-                TRIGGER_PADDING_Y + (trigger_inner_h - chevron_open_node.size().height) / 2.0;
+                TRIGGER_PADDING_Y + (trigger_inner_h - chevron_open_size.height) / 2.0;
             // Anchor chevrons to the right edge of the trigger row.
-            let chevron_closed_x = trigger_w - chevron_closed_node.size().width;
-            let chevron_open_x = trigger_w - chevron_open_node.size().width;
+            let chevron_closed_x = trigger_w - chevron_closed_size.width;
+            let chevron_open_x = trigger_w - chevron_open_size.width;
 
-            trigger_node = trigger_node.move_to(iced_core::Point::new(0.0, label_y));
-            let chevron_closed_node = chevron_closed_node
-                .move_to(iced_core::Point::new(chevron_closed_x, chevron_closed_y));
-            let chevron_open_node =
-                chevron_open_node.move_to(iced_core::Point::new(chevron_open_x, chevron_open_y));
+            trigger_tree.translation = Vector::new(0.0, label_y);
+            chevron_closed_tree.translation = Vector::new(chevron_closed_x, chevron_closed_y);
+            chevron_open_tree.translation = Vector::new(chevron_open_x, chevron_open_y);
 
             // ----- body --------------------------------------------------
             // Always lay out the body to capture its natural height. Width is
@@ -339,13 +314,9 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // across open/close transitions.
             let body_limits =
                 layout::Limits::new(Size::ZERO, Size::new(trigger_w, f32::INFINITY)).loose();
-            let body_natural_node = item.body.as_widget_mut().layout(
-                &mut tree.children[body_idx],
-                renderer,
-                &body_limits,
-            );
+            item.body.layout(body_tree, renderer, &body_limits);
 
-            let body_natural_h_inner = body_natural_node.size().height;
+            let body_natural_h_inner = body_tree.size.height;
             let body_natural_h = body_natural_h_inner + BODY_PADDING_BOTTOM;
 
             // Cache for `update`'s redraw math.
@@ -381,72 +352,48 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // body in draw to the same band.
             let body_y = trigger_h;
             // Position content with no top padding — `pt-0` per nova spec.
-            let body_inner_node = body_natural_node.move_to(iced_core::Point::new(0.0, body_y));
+            body_tree.translation = Vector::new(0.0, body_y);
 
             let item_outer_h = trigger_h + displayed_body_h;
             let item_outer_w = trigger_w;
 
-            let item_node = layout::Node::with_children(
-                Size::new(item_outer_w, item_outer_h),
-                vec![
-                    trigger_node,
-                    chevron_closed_node,
-                    chevron_open_node,
-                    body_inner_node,
-                ],
-            )
-            .move_to(iced_core::Point::new(
-                self.outer_padding.left,
-                self.outer_padding.top + cursor_y,
-            ));
+            item_tree.size = Size::new(item_outer_w, item_outer_h);
+            item_tree.translation =
+                Vector::new(self.outer_padding.left, self.outer_padding.top + cursor_y);
 
             cursor_y += item_outer_h;
             max_width = max_width.max(item_outer_w);
-
-            item_nodes.push(item_node);
         }
 
         let total_w = max_width + pad_h;
         let total_h = cursor_y + pad_v;
-        layout::Node::with_children(Size::new(total_w, total_h), item_nodes)
+        tree.size = Size::new(total_w, total_h);
     }
 
     fn operate(
         &mut self,
         tree: &mut Tree,
-        layout: Layout<'_>,
+        layout: Layout,
+        viewport: &Rectangle,
         renderer: &iced_widget::Renderer,
         operation: &mut dyn Operation,
     ) {
-        operation.container(None, layout.bounds());
-        let mut item_layouts = layout.children();
-        for (item_index, item) in self.items.iter_mut().enumerate() {
-            let Some(item_layout) = item_layouts.next() else {
-                break;
-            };
-            let mut child_layouts = item_layout.children();
-            let trigger_layout = child_layouts.next().expect("trigger layout");
-            let _chevron_closed_layout = child_layouts.next();
-            let _chevron_open_layout = child_layouts.next();
-            let body_layout = child_layouts.next().expect("body layout");
-
-            let trigger_tree_idx = item_index * 4;
-            let body_idx = trigger_tree_idx + 3;
-
-            // Split tree.children into two non-overlapping mut borrows
-            // (the trigger lives at `trigger_tree_idx`, the body three
-            // slots later) — we can't take both borrows at once via
-            // direct indexing.
-            let (head, tail) = tree.children.split_at_mut(body_idx);
-            let trigger_tree = &mut head[trigger_tree_idx];
-            let body_tree = &mut tail[0];
+        operation.container(None, layout.bounds(), viewport);
+        for (item, (item_layout, item_tree)) in self
+            .items
+            .iter_mut()
+            .zip(layout.iter_mut(&mut tree.children))
+        {
+            let mut children = item_layout.iter_mut(&mut item_tree.children);
+            let (trigger_layout, trigger_tree) = children.next().expect("trigger layout");
+            let _chevron_closed = children.next();
+            let _chevron_open = children.next();
+            let (body_layout, body_tree) = children.next().expect("body layout");
 
             item.trigger
-                .as_widget_mut()
-                .operate(trigger_tree, trigger_layout, renderer, operation);
+                .operate(trigger_tree, trigger_layout, viewport, renderer, operation);
             item.body
-                .as_widget_mut()
-                .operate(body_tree, body_layout, renderer, operation);
+                .operate(body_tree, body_layout, viewport, renderer, operation);
         }
     }
 
@@ -454,7 +401,7 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         renderer: &iced_widget::Renderer,
         shell: &mut Shell<'_, Message>,
@@ -504,20 +451,20 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         }
 
         // Hover + click handling per item.
-        let mut item_layouts = layout.children();
-        for (item_index, item) in self.items.iter_mut().enumerate() {
-            let Some(item_layout) = item_layouts.next() else {
-                break;
-            };
-            let mut child_layouts = item_layout.children();
-            let trigger_layout = child_layouts.next().expect("trigger layout");
-            let chevron_closed_layout = child_layouts.next().expect("chevron-closed layout");
+        for (item, (item_layout, item_tree)) in self
+            .items
+            .iter_mut()
+            .zip(layout.iter_mut(&mut tree.children))
+        {
+            let mut children = item_layout.iter_mut(&mut item_tree.children);
+            let (trigger_layout, trigger_tree) = children.next().expect("trigger layout");
+            let (chevron_closed_layout, _) = children.next().expect("chevron-closed layout");
             // Skip chevron_open layout slot — events forward to whichever
             // chevron is currently visible (decided in draw); for hit
             // testing the chevron-closed bounds are a sufficient proxy
             // since both chevrons are anchored to the same row band.
-            let _ = child_layouts.next();
-            let body_layout = child_layouts.next().expect("body layout");
+            let _ = children.next();
+            let (body_layout, body_tree) = children.next().expect("body layout");
 
             // The trigger row's clickable bounds = trigger label bounds
             // unioned with the chevron column. We don't want a click at
@@ -585,13 +532,7 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // gets event flow — most child widgets (text) ignore mouse
             // events anyway. If the body is fully closed we skip the
             // forward to avoid clicks landing on hidden content.
-            let trigger_tree_idx = item_index * 4;
-            let body_idx = trigger_tree_idx + 3;
-            let (head, tail) = tree.children.split_at_mut(body_idx);
-            let trigger_tree = &mut head[trigger_tree_idx];
-            let body_tree = &mut tail[0];
-
-            item.trigger.as_widget_mut().update(
+            item.trigger.update(
                 trigger_tree,
                 event,
                 trigger_layout,
@@ -605,7 +546,7 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             // clicks bleeding into hidden content).
             let displayed_body_h = item_layout.bounds().height - trigger_row_height;
             if displayed_body_h > 0.5 {
-                item.body.as_widget_mut().update(
+                item.body.update(
                     body_tree,
                     event,
                     body_layout,
@@ -621,21 +562,17 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
     fn mouse_interaction(
         &self,
         tree: &Tree,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
         renderer: &iced_widget::Renderer,
     ) -> mouse::Interaction {
-        let mut item_layouts = layout.children();
-        for (item_index, item) in self.items.iter().enumerate() {
-            let Some(item_layout) = item_layouts.next() else {
-                break;
-            };
-            let mut child_layouts = item_layout.children();
-            let _trigger_layout = child_layouts.next();
-            let _chevron_closed_layout = child_layouts.next();
-            let _chevron_open_layout = child_layouts.next();
-            let body_layout = child_layouts.next();
+        for (item, (item_layout, item_tree)) in self.items.iter().zip(layout.iter(&tree.children)) {
+            let mut children = item_layout.iter(&item_tree.children);
+            let _trigger = children.next();
+            let _chevron_closed = children.next();
+            let _chevron_open = children.next();
+            let body = children.next();
 
             let trigger_row_bounds = item_layout.bounds();
             // Best-effort trigger hit zone — re-derive from trigger label
@@ -676,17 +613,10 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             }
 
             // Body hover — pass through to body's own interaction.
-            if let Some(body_layout) = body_layout {
-                let trigger_tree_idx = item_index * 4;
-                let body_idx = trigger_tree_idx + 3;
-                let body_tree = &tree.children[body_idx];
-                let interaction = item.body.as_widget().mouse_interaction(
-                    body_tree,
-                    body_layout,
-                    cursor,
-                    viewport,
-                    renderer,
-                );
+            if let Some((body_layout, body_tree)) = body {
+                let interaction =
+                    item.body
+                        .mouse_interaction(body_tree, body_layout, cursor, viewport, renderer);
                 if interaction != mouse::Interaction::default() {
                     return interaction;
                 }
@@ -701,7 +631,7 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
         renderer: &mut iced_widget::Renderer,
         theme: &Theme,
         defaults: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
@@ -728,18 +658,21 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             );
         }
 
-        let mut item_layouts = layout.children();
         let last_index = self.items.len().saturating_sub(1);
 
-        for (item_index, item) in self.items.iter().enumerate() {
-            let Some(item_layout) = item_layouts.next() else {
-                break;
-            };
-            let mut child_layouts = item_layout.children();
-            let trigger_layout = child_layouts.next().expect("trigger layout");
-            let chevron_closed_layout = child_layouts.next().expect("chevron-closed layout");
-            let chevron_open_layout = child_layouts.next().expect("chevron-open layout");
-            let body_layout = child_layouts.next().expect("body layout");
+        for (item_index, (item, (item_layout, item_tree))) in self
+            .items
+            .iter()
+            .zip(layout.iter(&tree.children))
+            .enumerate()
+        {
+            let mut children = item_layout.iter(&item_tree.children);
+            let (trigger_layout, trigger_tree) = children.next().expect("trigger layout");
+            let (chevron_closed_layout, chevron_closed_tree) =
+                children.next().expect("chevron-closed layout");
+            let (chevron_open_layout, chevron_open_tree) =
+                children.next().expect("chevron-open layout");
+            let (body_layout, body_tree) = children.next().expect("body layout");
 
             let item_state = state
                 .items
@@ -824,10 +757,8 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
 
             // ----- trigger label ---------------------------------------
             let label_color = style.trigger_text.scale_alpha(alpha);
-            let trigger_tree_idx = item_index * 4;
-            let body_idx = trigger_tree_idx + 3;
-            item.trigger.as_widget().draw(
-                &tree.children[trigger_tree_idx],
+            item.trigger.draw(
+                trigger_tree,
                 renderer,
                 theme,
                 &renderer::Style {
@@ -843,21 +774,17 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
             let chevron_defaults = renderer::Style {
                 text_color: chevron_color.into(),
             };
-            let (chevron_layout, chevron_tree_idx, chevron_element) = if is_open_now {
-                (
-                    chevron_open_layout,
-                    trigger_tree_idx + 2,
-                    &item.chevron_open,
-                )
+            let (chevron_layout, chevron_tree, chevron_element) = if is_open_now {
+                (chevron_open_layout, chevron_open_tree, &item.chevron_open)
             } else {
                 (
                     chevron_closed_layout,
-                    trigger_tree_idx + 1,
+                    chevron_closed_tree,
                     &item.chevron_closed,
                 )
             };
-            chevron_element.as_widget().draw(
-                &tree.children[chevron_tree_idx],
+            chevron_element.draw(
+                chevron_tree,
                 renderer,
                 theme,
                 &chevron_defaults,
@@ -885,8 +812,8 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
                 };
 
                 renderer.with_layer(intersected, |renderer| {
-                    item.body.as_widget().draw(
-                        &tree.children[body_idx],
+                    item.body.draw(
+                        body_tree,
                         renderer,
                         theme,
                         &body_defaults,
@@ -907,71 +834,46 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
     fn overlay<'b>(
         &'b mut self,
         tree: &'b mut Tree,
-        layout: Layout<'b>,
+        layout: Layout,
         renderer: &iced_widget::Renderer,
         viewport: &Rectangle,
         translation: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, iced_widget::Renderer>> {
-        // Collect overlays from every item (trigger + body) and group
-        // them in a single overlay::Group, matching iced's container
-        // pattern. Iced widgets' `overlay()` returns at most one element;
-        // most return None — the group is a no-op when empty.
-        let mut item_layouts = layout.children();
+        window: Size,
+    ) -> Vec<overlay::Element<'b, Message, Theme, iced_widget::Renderer>> {
+        // Collect overlays from every item (trigger + body).
         let mut overlays: Vec<overlay::Element<'b, Message, Theme, iced_widget::Renderer>> =
             Vec::new();
 
-        // Walk children and layouts in lockstep. Each item owns 4 trees
-        // (trigger / chevron-closed / chevron-open / body), so chunk by 4
-        // for disjoint mut borrows without an intermediate Vec.
-        let mut tree_chunks = tree.children.chunks_mut(4);
+        for (item, (item_layout, item_tree)) in self
+            .items
+            .iter_mut()
+            .zip(layout.iter_mut(&mut tree.children))
+        {
+            let mut children = item_layout.iter_mut(&mut item_tree.children);
+            let (trigger_layout, trigger_tree) = children.next().expect("trigger layout");
+            let _chevron_closed = children.next();
+            let _chevron_open = children.next();
+            let (body_layout, body_tree) = children.next().expect("body layout");
 
-        for item in &mut self.items {
-            let Some(item_layout) = item_layouts.next() else {
-                break;
-            };
-            let mut child_layouts = item_layout.children();
-            let trigger_layout = child_layouts.next().expect("trigger layout");
-            let _chevron_closed_layout = child_layouts.next();
-            let _chevron_open_layout = child_layouts.next();
-            let body_layout = child_layouts.next().expect("body layout");
-
-            let Some(
-                [
-                    trigger_tree,
-                    _chevron_closed_tree,
-                    _chevron_open_tree,
-                    body_tree,
-                ],
-            ) = tree_chunks.next()
-            else {
-                break;
-            };
-
-            if let Some(o) = item.trigger.as_widget_mut().overlay(
+            overlays.extend(item.trigger.overlay(
                 trigger_tree,
                 trigger_layout,
                 renderer,
                 viewport,
                 translation,
-            ) {
-                overlays.push(o);
-            }
-            if let Some(o) = item.body.as_widget_mut().overlay(
+                window,
+            ));
+            overlays.extend(item.body.overlay(
                 body_tree,
                 body_layout,
                 renderer,
                 viewport,
                 translation,
-            ) {
-                overlays.push(o);
-            }
+                window,
+            ));
         }
 
-        if overlays.is_empty() {
-            None
-        } else {
-            Some(overlay::Group::with_children(overlays).overlay())
-        }
+        overlays
     }
 }
 
@@ -979,7 +881,7 @@ impl<'a, Message: 'a> From<Accordion<'a, Message>>
     for Element<'a, Message, Theme, iced_widget::Renderer>
 {
     fn from(a: Accordion<'a, Message>) -> Self {
-        Element::new(a)
+        a._boxed()
     }
 }
 

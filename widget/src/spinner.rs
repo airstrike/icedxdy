@@ -7,6 +7,7 @@
 use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
+use iced_core::widget::Meta;
 use iced_core::widget::tree::{self, Tree};
 use iced_core::{
     Color, Element, Event, Layout, Length, Radians, Rectangle, Shell, Size, Vector, Widget,
@@ -162,6 +163,8 @@ struct State {
 
 // --- Widget impl ---
 
+impl Meta for Spinner<'_> {}
+
 impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State>()
@@ -178,20 +181,15 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
         }
     }
 
-    fn layout(
-        &mut self,
-        _tree: &mut Tree,
-        _renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
-        layout::atomic(limits, self.size, self.size)
+    fn layout(&mut self, tree: &mut Tree, _renderer: &Renderer, limits: &layout::Limits) {
+        tree.size = layout::atomic(limits, self.size, self.size);
     }
 
     fn update(
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        layout: Layout<'_>,
+        layout: Layout,
         _cursor: mouse::Cursor,
         _renderer: &Renderer,
         shell: &mut Shell<'_, Message>,
@@ -229,7 +227,7 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
         renderer: &mut Renderer,
         theme: &Theme,
         style: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         _cursor: mouse::Cursor,
         _viewport: &Rectangle,
     ) {
@@ -282,12 +280,12 @@ impl<'a, Message: 'a> Widget<Message, Theme, Renderer> for Spinner<'a> {
 
 impl<'a, Message: 'a> From<Spinner<'a>> for Element<'a, Message, Theme, Renderer> {
     fn from(spinner: Spinner<'a>) -> Self {
-        Self::new(spinner)
+        spinner._boxed()
     }
 }
 
 impl<'a, Message: 'a> From<Spinner<'a>> for crate::Component<'a, Message> {
     fn from(s: Spinner<'a>) -> Self {
-        crate::Component::new(Element::new(s))
+        crate::Component::new(Element::from(s))
     }
 }

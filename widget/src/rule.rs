@@ -6,7 +6,7 @@ use iced_core::border;
 use iced_core::layout;
 use iced_core::mouse;
 use iced_core::renderer;
-use iced_core::widget::Tree;
+use iced_core::widget::{Meta, Tree};
 use iced_core::{
     Background, Border, Color, Element, Layout, Length, Pixels, Rectangle, Size, Widget,
 };
@@ -55,6 +55,8 @@ impl<'a, Theme: Catalog> Rule<'a, Theme> {
     }
 }
 
+impl<Theme> Meta for Rule<'_, Theme> where Theme: Catalog {}
+
 impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer> for Rule<'_, Theme>
 where
     Renderer: iced_core::Renderer,
@@ -74,14 +76,9 @@ where
         }
     }
 
-    fn layout(
-        &mut self,
-        _tree: &mut Tree,
-        _renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+    fn layout(&mut self, tree: &mut Tree, _renderer: &Renderer, limits: &layout::Limits) {
         let size = <Self as Widget<(), Theme, Renderer>>::size(self);
-        layout::atomic(limits, size.width, size.height)
+        tree.size = layout::atomic(limits, size.width, size.height);
     }
 
     fn draw(
@@ -90,7 +87,7 @@ where
         renderer: &mut Renderer,
         theme: &Theme,
         _style: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         _cursor: mouse::Cursor,
         _viewport: &Rectangle,
     ) {
@@ -183,7 +180,7 @@ where
         }
 
         if style.snap {
-            let unit = 1.0 / renderer.scale_factor().unwrap_or(1.0);
+            let unit = 1.0 / renderer.hint_factor().unwrap_or(1.0);
             bounds.width = bounds.width.max(unit);
             bounds.height = bounds.height.max(unit);
         }
@@ -207,7 +204,7 @@ where
     Renderer: 'a + iced_core::Renderer,
 {
     fn from(rule: Rule<'a, Theme>) -> Element<'a, Message, Theme, Renderer> {
-        Element::new(rule)
+        rule._boxed()
     }
 }
 

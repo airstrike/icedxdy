@@ -7,8 +7,11 @@
 use crate::Size;
 use crate::Weight;
 use iced_core::Color;
-use iced_widget::Renderer;
+use iced_widget::{Renderer, Widget};
 use icedxdy_core::Theme;
+
+/// The boxed child element every icedxdy widget slot carries.
+type El<'a, Message> = iced_core::Element<'a, Message, Theme, Renderer>;
 
 /// Trait for icedxdy widgets.
 ///
@@ -111,13 +114,13 @@ impl<'a, Message: 'a, T: 'a, R: 'a> Component<'a, Message, T, R> {
     }
 
     /// Map the message type, like `iced::Element::map`.
-    pub fn map<B: 'a>(self, f: impl Fn(Message) -> B + 'a) -> Component<'a, B, T, R>
+    pub fn map<B: 'static>(self, f: impl Fn(Message) -> B + 'a) -> Component<'a, B, T, R>
     where
         Message: 'a,
-        T: 'a,
-        R: iced_core::Renderer + 'a,
+        T: 'static,
+        R: iced_core::Renderer + 'static,
     {
-        Component::from(self.into_iced().map(f))
+        Component::from(self.into_iced().map(f).boxed())
     }
 }
 
@@ -169,7 +172,7 @@ macro_rules! into_element {
             where
                 Self: 'b,
             {
-                iced_core::Element::new(*self)
+                (*self).boxed()
             }
         }
 
@@ -181,35 +184,35 @@ macro_rules! into_element {
     };
 }
 
-into_element!(iced_widget::Button<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Button<'a, Message, El<'a, Message>, Theme> where + Clone);
 into_element!(iced_widget::Checkbox<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Column<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Container<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Float<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Grid<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::MouseArea<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Pin<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Column<El<'a, Message>> where + Clone);
+into_element!(iced_widget::Container<'a, El<'a, Message>, Theme> where + Clone);
+into_element!(iced_widget::Float<'a, El<'a, Message>, Theme> where + Clone);
+into_element!(iced_widget::Grid<El<'a, Message>> where + Clone);
+into_element!(iced_widget::MouseArea<'a, Message, El<'a, Message>> where + Clone);
+into_element!(iced_widget::Pin<El<'a, Message>> where + Clone);
 into_element!(iced_widget::ProgressBar<'a, Theme>);
 into_element!(iced_widget::QRCode<'a, Theme>);
-into_element!(iced_widget::Radio<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Row<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Radio<'a, Message, Theme> where + Clone);
+into_element!(iced_widget::Row<El<'a, Message>> where + Clone);
 into_element!(iced_widget::Rule<'a, Theme>);
-into_element!(iced_widget::Scrollable<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Sensor<'a, (), Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Scrollable<'a, Message, El<'a, Message>, Theme> where + Clone);
+into_element!(iced_widget::Sensor<'a, (), Message, El<'a, Message>> where + Clone);
 into_element!(iced_widget::Space);
-into_element!(iced_widget::Stack<'a, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::Stack<El<'a, Message>> where + Clone);
 #[cfg(feature = "svg")]
 into_element!(iced_widget::Svg<'a, Theme>);
-into_element!(iced_widget::TextInput<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Toggler<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::Tooltip<'a, Message, Theme, Renderer> where + Clone);
-into_element!(iced_widget::text::Rich<'a, Message, Message, Theme, Renderer> where + Clone);
+into_element!(iced_widget::TextInput<'a, Message, Theme> where + Clone);
+into_element!(iced_widget::Toggler<'a, Message, Theme> where + Clone);
+into_element!(iced_widget::Tooltip<'a, El<'a, Message>, El<'a, Message>, Theme> where + Clone);
+into_element!(iced_widget::text::Rich<'a, Message, Message, Theme> where + Clone);
 
 // iced's Text gets a manual impl so `foreground_color` overrides its style
 // closure with the supplied color. The macro's blanket impl would no-op the
 // hint, which would silently ignore color pushes onto icon glyphs
 // (`iced_lucide` produces them as iced's Text, not icedxdy's wrapper).
-impl<'a, Message: 'a> IntoElement<Message> for iced_widget::Text<'a, Theme, Renderer> {
+impl<'a, Message: 'a> IntoElement<Message> for iced_widget::Text<'a, Theme> {
     fn foreground_color(&mut self, color: Color) {
         let widget = std::mem::replace(self, iced_widget::text(""));
         *self = widget.color(color);
@@ -219,12 +222,12 @@ impl<'a, Message: 'a> IntoElement<Message> for iced_widget::Text<'a, Theme, Rend
     where
         Self: 'b,
     {
-        iced_core::Element::new(*self)
+        (*self).boxed()
     }
 }
 
-impl<'a, Message: 'a> From<iced_widget::Text<'a, Theme, Renderer>> for Component<'a, Message> {
-    fn from(w: iced_widget::Text<'a, Theme, Renderer>) -> Self {
+impl<'a, Message: 'a> From<iced_widget::Text<'a, Theme>> for Component<'a, Message> {
+    fn from(w: iced_widget::Text<'a, Theme>) -> Self {
         Component::new(w)
     }
 }
@@ -246,20 +249,20 @@ impl<'a, Message: 'a> From<String> for Component<'a, Message> {
 // Slider<T>: T is the value type, not Message
 impl<'a, T, Message> IntoElement<Message> for iced_widget::Slider<'a, T, Message, Theme>
 where
-    T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
+    T: Copy + num_traits::AsPrimitive<f64> + num_traits::FromPrimitive + 'a,
     Message: Clone + 'a,
 {
     fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
-        iced_core::Element::new(*self)
+        (*self).boxed()
     }
 }
 
 impl<'a, T, Message> From<iced_widget::Slider<'a, T, Message, Theme>> for Component<'a, Message>
 where
-    T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
+    T: Copy + num_traits::AsPrimitive<f64> + num_traits::FromPrimitive + 'a,
     Message: Clone + 'a,
 {
     fn from(w: iced_widget::Slider<'a, T, Message, Theme>) -> Self {
@@ -269,20 +272,20 @@ where
 
 impl<'a, T, Message> IntoElement<Message> for crate::slider::Slider<'a, T, Message, Theme>
 where
-    T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
+    T: Copy + num_traits::AsPrimitive<f64> + num_traits::FromPrimitive + 'a,
     Message: Clone + 'a,
 {
     fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
-        iced_core::Element::new(*self)
+        (*self).boxed()
     }
 }
 
 impl<'a, T, Message> From<crate::slider::Slider<'a, T, Message, Theme>> for Component<'a, Message>
 where
-    T: Copy + Into<f64> + num_traits::FromPrimitive + 'a,
+    T: Copy + num_traits::AsPrimitive<f64> + num_traits::FromPrimitive + 'a,
     Message: Clone + 'a,
 {
     fn from(w: crate::slider::Slider<'a, T, Message, Theme>) -> Self {
@@ -292,7 +295,7 @@ where
 
 // PickList<T>
 impl<'a, T, L, V, Message> IntoElement<Message>
-    for iced_widget::PickList<'a, T, L, V, Message, Theme, Renderer>
+    for iced_widget::PickList<'a, T, L, V, Message, Theme>
 where
     T: PartialEq + Clone + 'a,
     L: std::borrow::Borrow<[T]> + 'a,
@@ -303,11 +306,11 @@ where
     where
         Self: 'b,
     {
-        iced_core::Element::new(*self)
+        (*self).boxed()
     }
 }
 
-impl<'a, T, L, V, Message> From<iced_widget::PickList<'a, T, L, V, Message, Theme, Renderer>>
+impl<'a, T, L, V, Message> From<iced_widget::PickList<'a, T, L, V, Message, Theme>>
     for Component<'a, Message>
 where
     T: PartialEq + Clone + 'a,
@@ -315,13 +318,13 @@ where
     V: std::borrow::Borrow<T> + 'a,
     Message: Clone + 'a,
 {
-    fn from(w: iced_widget::PickList<'a, T, L, V, Message, Theme, Renderer>) -> Self {
+    fn from(w: iced_widget::PickList<'a, T, L, V, Message, Theme>) -> Self {
         Component::new(w)
     }
 }
 
 // ComboBox<T>
-impl<'a, T, Message> IntoElement<Message> for iced_widget::ComboBox<'a, T, Message, Theme, Renderer>
+impl<'a, T, Message> IntoElement<Message> for iced_widget::ComboBox<'a, T, Message, Theme>
 where
     T: std::fmt::Display + Clone + 'static,
     Message: Clone + 'a,
@@ -330,17 +333,16 @@ where
     where
         Self: 'b,
     {
-        iced_core::Element::new(*self)
+        (*self).boxed()
     }
 }
 
-impl<'a, T, Message> From<iced_widget::ComboBox<'a, T, Message, Theme, Renderer>>
-    for Component<'a, Message>
+impl<'a, T, Message> From<iced_widget::ComboBox<'a, T, Message, Theme>> for Component<'a, Message>
 where
     T: std::fmt::Display + Clone + 'static,
     Message: Clone + 'a,
 {
-    fn from(w: iced_widget::ComboBox<'a, T, Message, Theme, Renderer>) -> Self {
+    fn from(w: iced_widget::ComboBox<'a, T, Message, Theme>) -> Self {
         Component::new(w)
     }
 }

@@ -136,18 +136,15 @@ where
     Theme: Catalog,
 {
     /// Creates a new [`Button`] with the given content.
-    pub fn new(content: impl Into<Element<'a, Message, Theme, Renderer>>) -> Self {
-        let content = content.into();
-        let size = content.as_widget().size_hint();
-
+    pub fn new(content: impl Widget<Message, Theme, Renderer> + 'a) -> Self {
         Button {
-            content,
+            content: content._boxed(),
             on_press: None,
             on_focus: None,
             on_blur: None,
             id: Some(widget::Id::unique()),
-            width: size.width.fluid(),
-            height: size.height.fluid(),
+            width: Length::Fit,
+            height: Length::Fit,
             padding: DEFAULT_PADDING,
             inset: Padding::ZERO,
             clip: false,
@@ -320,6 +317,13 @@ impl operation::Focusable for State {
     }
 }
 
+impl<'a, Message, Theme, Renderer> widget::Meta for Button<'a, Message, Theme, Renderer>
+where
+    Renderer: crate::core::Renderer,
+    Theme: Catalog,
+{
+}
+
 impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
     for Button<'a, Message, Theme, Renderer>
 where
@@ -335,12 +339,12 @@ where
         tree::State::new(State::default())
     }
 
-    fn children(&self) -> Vec<Tree> {
-        vec![Tree::new(&self.content)]
-    }
+    fn diff(&mut self, tree: &mut Tree) {
+        tree.diff_children(std::slice::from_mut(&mut self.content));
 
-    fn diff(&self, tree: &mut Tree) {
-        tree.diff_children(std::slice::from_ref(&self.content));
+        let size = self.content.size();
+        self.width = self.width.stack(size.width);
+        self.height = self.height.stack(size.height);
     }
 
     fn size(&self) -> Size<Length> {
@@ -350,12 +354,7 @@ where
         }
     }
 
-    fn layout(
-        &mut self,
-        tree: &mut Tree,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+    fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
         // When translate is on: 1px top + 1px bottom for press-down effect.
         // `inset` adds transparent margin around the painted bg/border -
         // bounds grow to include it so hover/hit-test stay continuous.
@@ -371,23 +370,25 @@ where
             right: self.padding.right + self.inset.right,
         };
         layout::positioned(
+            tree,
             limits,
             self.width,
             self.height,
             padding,
-            |limits| {
-                self.content
-                    .as_widget_mut()
-                    .layout(&mut tree.children[0], renderer, limits)
+            |tree, limits| {
+                self.content.layout(tree, renderer, limits);
+
+                tree.size
             },
-            |content, _| content.translate(Vector::new(0.0, -translate)),
-        )
+            |_, _| Vector::new(0.0, -translate),
+        );
     }
 
     fn operate(
         &mut self,
         tree: &mut Tree,
-        layout: Layout<'_>,
+        layout: Layout,
+        viewport: &Rectangle,
         renderer: &Renderer,
         operation: &mut dyn Operation,
     ) {
@@ -396,14 +397,12 @@ where
             operation.focusable(self.id.as_ref(), layout.bounds(), state);
         }
 
-        operation.container(None, layout.bounds());
+        operation.container(None, layout.bounds(), viewport);
         operation.traverse(&mut |operation| {
-            self.content.as_widget_mut().operate(
-                &mut tree.children[0],
-                layout.children().next().unwrap(),
-                renderer,
-                operation,
-            );
+            let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+            self.content
+                .operate(child_tree, child_layout, viewport, renderer, operation);
         });
     }
 
@@ -411,16 +410,18 @@ where
         &mut self,
         tree: &mut Tree,
         event: &Event,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         renderer: &Renderer,
         shell: &mut Shell<'_, Message>,
         viewport: &Rectangle,
     ) {
-        self.content.as_widget_mut().update(
-            &mut tree.children[0],
+        let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+        self.content.update(
+            child_tree,
             event,
-            layout.children().next().unwrap(),
+            child_layout,
             cursor,
             renderer,
             shell,
@@ -554,12 +555,12 @@ where
         renderer: &mut Renderer,
         theme: &Theme,
         _style: &renderer::Style,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
         let bounds = layout.bounds();
-        let content_layout = layout.children().next().unwrap();
+        let (content_layout, content_tree) = layout.iter(&tree.children).next().unwrap();
         let state = tree.state.downcast_ref::<State>();
 
         let status = self.status.unwrap_or(Status::Disabled);
@@ -653,8 +654,8 @@ where
                 *viewport
             };
 
-            self.content.as_widget().draw(
-                &tree.children[0],
+            self.content.draw(
+                content_tree,
                 renderer,
                 theme,
                 &renderer::Style {
@@ -670,7 +671,7 @@ where
     fn mouse_interaction(
         &self,
         _tree: &Tree,
-        layout: Layout<'_>,
+        layout: Layout,
         cursor: mouse::Cursor,
         _viewport: &Rectangle,
         _renderer: &Renderer,
@@ -685,17 +686,21 @@ where
     fn overlay<'b>(
         &'b mut self,
         tree: &'b mut Tree,
-        layout: Layout<'b>,
+        layout: Layout,
         renderer: &Renderer,
         viewport: &Rectangle,
         translation: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
-        self.content.as_widget_mut().overlay(
-            &mut tree.children[0],
-            layout.children().next().unwrap(),
+        window: Size,
+    ) -> Vec<overlay::Element<'b, Message, Theme, Renderer>> {
+        let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+
+        self.content.overlay(
+            child_tree,
+            child_layout,
             renderer,
             viewport,
             translation,
+            window,
         )
     }
 }
@@ -708,7 +713,7 @@ where
     Renderer: crate::core::Renderer + 'a,
 {
     fn from(button: Button<'a, Message, Theme, Renderer>) -> Self {
-        Self::new(button)
+        button._boxed()
     }
 }
 

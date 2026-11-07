@@ -4,6 +4,7 @@ use crate::component::Component;
 use crate::container::Container;
 use iced_core::Length::Fill;
 use iced_core::Padding;
+use iced_widget::Widget;
 use iced_widget::rule;
 use icedxdy_core::Theme;
 
@@ -13,7 +14,7 @@ use icedxdy_core::Theme;
 /// theme's border color.
 pub fn separator<'a, Message: 'a>() -> Container<'a, Message> {
     let rule: iced_core::Element<'a, Message, Theme, iced_widget::Renderer> =
-        rule::horizontal(1).into();
+        rule::horizontal(1).boxed();
     Container::new(Component::from(rule))
         .width(Fill)
         .padding(Padding {
