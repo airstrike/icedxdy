@@ -81,7 +81,8 @@ pub fn typography_card() -> iced::Element<'static, Message, Theme> {
         )
         .size(16.0),
         space::vertical(),
-        button::outline("Share Feedback")
+        button("Share Feedback")
+            .style(button::Outline)
             .size(Size::Sm)
             .width(Fill)
             .style(control_outline_button_style())
@@ -130,14 +131,17 @@ pub fn icon_grid() -> iced::Element<'static, Message, Theme> {
 pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
     let tabs = row![
         button("Button").size(Size::Sm).on_press(Message::Noop),
-        button::secondary("Secondary")
+        button("Secondary")
+            .style(button::Secondary)
             .size(Size::Sm)
             .on_press(Message::Noop),
-        button::outline("Outline")
+        button("Outline")
+            .style(button::Outline)
             .size(Size::Sm)
             .style(control_outline_button_style())
             .on_press(Message::Noop),
-        button::ghost("Ghost")
+        button("Ghost")
+            .style(button::Ghost)
             .size(Size::Sm)
             .on_press(Message::Noop),
     ]
@@ -148,7 +152,8 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
     let field = container(row![
         text::small("Two-factor authentication"),
         space::horizontal(),
-        button::secondary("Enable")
+        button("Enable")
+            .style(button::Secondary)
             .size(Size::Sm)
             .on_press(Message::Noop),
     ])
@@ -159,8 +164,8 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
 
     let badges = row![
         badge("Badge"),
-        badge::secondary("Secondary"),
-        badge::outline("Outline"),
+        badge("Secondary").style(badge::Secondary),
+        badge("Outline").style(badge::Outline),
         space::horizontal(),
         checkbox()
             .checked(state.accept_terms)
@@ -177,11 +182,12 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
     .width(Fill);
 
     let footer = row![
-        button::outline("Alert Dialog")
+        button("Alert Dialog")
+            .style(button::Outline)
             .size(Size::Sm)
             .style(control_outline_button_style())
             .on_press(Message::Noop),
-        button::outline(
+        button(
             row![
                 text::small("Button Group"),
                 space::horizontal(),
@@ -191,6 +197,7 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
             .align_y(Center)
             .width(Fill),
         )
+        .style(button::Outline)
         .size(Size::Sm)
         .width(143.0)
         .style(control_outline_button_style())
@@ -272,7 +279,8 @@ fn swatch(color: Color) -> Slot<'static, Message> {
 }
 
 fn icon_button<'a>(icon: impl Into<Slot<'a, Message>>) -> Button<'a, Message> {
-    button::outline(icon)
+    button(icon)
+        .style(button::Outline)
         .size(Size::Sm)
         .square()
         .style(control_outline_button_style())

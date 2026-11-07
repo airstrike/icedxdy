@@ -1,5 +1,5 @@
 ```rust
 use icedxdy::widget::button;
 
-button::ghost("Ghost")
+button("Ghost").style(button::Ghost)
 ```

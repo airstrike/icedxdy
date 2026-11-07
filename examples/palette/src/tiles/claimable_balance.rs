@@ -14,11 +14,12 @@ use icedxdy::{Slot, Theme, Vertical};
 use crate::{Message, State};
 
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
-    let pending = badge::outline(
+    let pending = badge(
         row![dot(), text::small("Pending Setup")]
             .spacing(6)
             .align_y(Center),
-    );
+    )
+    .style(badge::Outline);
 
     let header_body: Slot<'static, Message> = column![
         card::description("Claimable Balance"),

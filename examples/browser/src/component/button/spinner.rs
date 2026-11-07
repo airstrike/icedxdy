@@ -1,5 +1,4 @@
 use icedxdy::Slot;
-use icedxdy::theme;
 use icedxdy::widget::{button, row, spinner};
 
 use super::Message;
@@ -7,10 +6,10 @@ use super::Message;
 pub fn view<'a>() -> Slot<'a, Message> {
     row![
         button![spinner(), "Generating"]
-            .style(theme::button::Outline)
+            .style(button::Outline)
             .disabled(true),
         button!["Downloading", spinner()]
-            .style(theme::button::Secondary)
+            .style(button::Secondary)
             .disabled(true),
     ]
     .spacing(16)

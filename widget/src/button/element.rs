@@ -2,9 +2,7 @@ use iced_core::Length;
 use iced_core::Length::Fill;
 use iced_core::Padding;
 use iced_core::alignment;
-use iced_core::text::Span;
 use iced_widget::Widget;
-use iced_widget::text::Rich;
 
 use crate::Size;
 use crate::compose::{Compose, Inherited, Slot};
@@ -283,28 +281,5 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Button<'a, Message> {
         Self: 'b,
     {
         (*self).into()
-    }
-}
-
-/// A link widget that looks like a text link with underline on hover
-pub struct Link {
-    label: String,
-}
-
-impl Link {
-    pub fn new(label: impl ToString) -> Self {
-        Self {
-            label: label.to_string(),
-        }
-    }
-
-    pub fn on_press<'a, Message: Clone + 'a>(
-        self,
-        message: Message,
-    ) -> Rich<'a, Message, Message, Theme> {
-        let span: Span<'a, Message> = Span::new(self.label).link(message);
-        Rich::with_spans([span])
-            .on_link_click(|msg| msg)
-            .style(|t| theme::text::link(t).into())
     }
 }

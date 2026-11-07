@@ -83,31 +83,31 @@ fn view(id: &str) -> Slot<'static, Message> {
         // Demo (hero): 4 variants in a row, verbatim shadcn `badge-demo.tsx`.
         "demo" => row![
             badge("Badge"),
-            badge::secondary("Secondary"),
-            badge::destructive("Destructive"),
-            badge::outline("Outline"),
+            badge("Secondary").style(badge::Secondary),
+            badge("Destructive").style(badge::Destructive),
+            badge("Outline").style(badge::Outline),
         ]
         .spacing(8)
         .into(),
         // Variants (full set incl. ghost)
         "variants" => row![
             badge("Default"),
-            badge::secondary("Secondary"),
-            badge::destructive("Destructive"),
-            badge::outline("Outline"),
-            badge::ghost("Ghost"),
+            badge("Secondary").style(badge::Secondary),
+            badge("Destructive").style(badge::Destructive),
+            badge("Outline").style(badge::Outline),
+            badge("Ghost").style(badge::Ghost),
         ]
         .spacing(8)
         .into(),
         "icon" => row![
-            badge::secondary![icon::badge_check().size(12), "Verified"],
-            badge::outline!["Bookmark", icon::bookmark().size(12)],
+            badge![icon::badge_check().size(12), "Verified"].style(badge::Secondary),
+            badge!["Bookmark", icon::bookmark().size(12)].style(badge::Outline),
         ]
         .spacing(8)
         .into(),
         "spinner" => row![
-            badge::destructive![spinner().size(12.0), "Deleting"],
-            badge::secondary!["Generating", spinner().size(12.0)],
+            badge![spinner().size(12.0), "Deleting"].style(badge::Destructive),
+            badge!["Generating", spinner().size(12.0)].style(badge::Secondary),
         ]
         .spacing(8)
         .into(),

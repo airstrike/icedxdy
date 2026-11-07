@@ -1,7 +1,7 @@
 ```rust
 use icedxdy::widget::badge;
 
-badge::secondary![icon::badge_check(), "Verified"]
+badge![icon::badge_check(), "Verified"].style(badge::Secondary)
 
-badge::outline!["Bookmark", icon::bookmark()]
+badge!["Bookmark", icon::bookmark()].style(badge::Outline)
 ```

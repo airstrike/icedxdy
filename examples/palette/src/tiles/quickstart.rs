@@ -22,7 +22,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let title_row = row![
         text::large("Overview"),
         space::horizontal(),
-        badge::secondary("Beta"),
+        badge("Beta").style(badge::Secondary),
     ]
     .spacing(8)
     .width(Fill);

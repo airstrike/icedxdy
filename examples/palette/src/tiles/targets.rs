@@ -47,7 +47,9 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
 
     let footer = row![
         space::horizontal(),
-        button::link("View full report").on_press(Message::Noop),
+        button("View full report")
+            .style(button::Link)
+            .on_press(Message::Noop),
     ]
     .spacing(8)
     .width(Fill);
@@ -90,7 +92,7 @@ fn target_row(t: &'static Target, connected: bool) -> Slot<'static, Message> {
         text::xs(t.sub).style(theme::text::Muted),
         space::horizontal(),
         {
-            let mut b = button::outline("Adjust");
+            let mut b = button("Adjust").style(button::Outline);
             if connected {
                 b = b.on_press(Message::Noop);
             }

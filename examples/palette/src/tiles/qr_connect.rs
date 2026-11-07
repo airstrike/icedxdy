@@ -61,7 +61,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
             ),
             header,
             card::footer(
-                button::secondary("Got it")
+                button("Got it")
+                    .style(button::Secondary)
                     .width(Fill)
                     .on_press(Message::Noop)
             ),

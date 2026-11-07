@@ -69,7 +69,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     };
 
     let secondary_cta = {
-        let mut b = button::secondary("Cancel").width(Fill);
+        let mut b = button("Cancel").style(button::Secondary).width(Fill);
         if state.connected {
             b = b.on_press(Message::CancelForm);
         }

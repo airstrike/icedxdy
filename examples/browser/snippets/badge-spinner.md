@@ -1,7 +1,7 @@
 ```rust
 use icedxdy::widget::{badge, spinner};
 
-badge::destructive![spinner(), "Deleting"]
+badge![spinner(), "Deleting"].style(badge::Destructive)
 
-badge::secondary!["Generating", spinner()]
+badge!["Generating", spinner()].style(badge::Secondary)
 ```

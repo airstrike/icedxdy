@@ -77,7 +77,8 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
             card::header("Recent Transactions")
                 .description("Your latest account activity.")
                 .action(
-                    button::outline("View All")
+                    button("View All")
+                        .style(button::Outline)
                         .size(Size::Sm)
                         .on_press(Message::Noop)
                 ),
@@ -107,7 +108,8 @@ fn transaction_row(transaction: &Transaction) -> table::Row<'static, Message> {
             .width(96.0)
             .align_x(Right),
         table::cell(
-            button::ghost(icon::ellipsis().size(16))
+            button(icon::ellipsis().size(16))
+                .style(button::Ghost)
                 .size(Size::Icon)
                 .square()
                 .on_press(Message::Noop),

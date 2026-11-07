@@ -32,7 +32,8 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .action(
             row![
                 api_gap::marker(),
-                button::ghost(close_icon())
+                button(close_icon())
+                    .style(button::Ghost)
                     .size(Size::Sm)
                     .square()
                     .style(close_button_style())

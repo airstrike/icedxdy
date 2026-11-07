@@ -3,10 +3,10 @@ use icedxdy::widget::badge;
 
 row![
     badge("Default"),
-    badge::secondary("Secondary"),
-    badge::destructive("Destructive"),
-    badge::outline("Outline"),
-    badge::ghost("Ghost"),
+    badge("Secondary").style(badge::Secondary),
+    badge("Destructive").style(badge::Destructive),
+    badge("Outline").style(badge::Outline),
+    badge("Ghost").style(badge::Ghost),
 ]
 .spacing(8)
 ```

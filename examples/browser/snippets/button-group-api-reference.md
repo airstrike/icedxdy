@@ -17,7 +17,7 @@ Children are typed — they must arrive as `Item` values, NOT as `iced::Element`
 | --- | --- | --- |
 | `button_group::button(b)` | `Item::Button` | Wrap any `Button` (or any `Into<Button>`) into an `Item`. Sugar for `Item::Button(b)`. |
 | `button_group::separator()` | `Item::Separator` | A 1px divider perpendicular to the group's orientation. The group patches the orientation onto the separator at iteration time, so callers don't pass an axis. |
-| `button(...).into()` | `Item::Button` | Direct `From<Button> for Item` impl — keeps `button_group([button::outline("Copy").into(), ...])` calls free of `Item::` ceremony. |
+| `button(...).into()` | `Item::Button` | Direct `From<Button> for Item` impl — keeps `button_group([button("Copy").style(button::Outline).into(), ...])` calls free of `Item::` ceremony. |
 
 ### `button_group::Orientation`
 

@@ -32,7 +32,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         text::large("1,234"),
         text::xs("visits").style(theme::text::Muted),
         space::horizontal(),
-        badge::secondary("+47%"),
+        badge("+47%").style(badge::Secondary),
     ]
     .spacing(8)
     .width(Fill);

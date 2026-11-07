@@ -143,8 +143,12 @@ fn demo(pi: usize) -> Slot<'static, crate::Message> {
     //   <Button variant="outline">Button</Button>
     //   <Button variant="outline" size="icon"><ArrowUpIcon /></Button>
     row![
-        button::outline("Button").on_press(crate::Message::Page(pi, page::Message::Noop)),
-        button::icon(crate::icon::arrow_up())
+        button("Button")
+            .style(button::Outline)
+            .on_press(crate::Message::Page(pi, page::Message::Noop)),
+        button(crate::icon::arrow_up())
+            .square()
+            .style(button::Outline)
             .on_press(crate::Message::Page(pi, page::Message::Noop)),
     ]
     .spacing(8)

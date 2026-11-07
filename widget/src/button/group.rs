@@ -16,20 +16,19 @@
 //! - Any [`Button`] — converts to [`Item::Button`] via [`From`].
 //! - [`separator()`] — yields an [`Item::Separator`] that the group renders
 //!   as a 1px divider perpendicular to its orientation.
-//! - The [`button::group!`] macro accepts mixed children and calls `.into()`
+//! - The [`button_group!`](crate::button_group) macro accepts mixed children and calls `.into()`
 //!   on each (matching `row!` / `column!` ergonomics).
 //!
-//! [`button::group!`]: crate::button_group
 //!
 //! # Example
 //!
 //! ```ignore
-//! use icedxdy::widget::button;
+//! use icedxdy::widget::{button, button_group};
 //!
-//! button::group![
-//!     button::outline("Copy"),
+//! button_group![
+//!     button("Copy").style(button::Outline),
 //!     button::group::separator(),
-//!     button::outline("Paste"),
+//!     button("Paste").style(button::Outline),
 //! ]
 //! ```
 //!
@@ -95,13 +94,11 @@ enum Position {
 
 /// One slot in a [`ButtonGroup`]'s child sequence.
 ///
-/// Constructed via the [`button::group!`] macro (which calls `.into()` on
+/// Constructed via the [`button_group!`](crate::button_group) macro (which calls `.into()` on
 /// each child) or directly via [`From`] from a [`Button`] / [`Separator`].
 /// Domain-enum shape per the minimap M2 critique: re-styling children means
 /// calling [`Button::map_style`] BEFORE the conversion to `iced::Element`,
 /// which only the typed enum permits.
-///
-/// [`button::group!`]: crate::button_group
 pub enum Item<'a, Message> {
     /// A button that participates in the cluster — its corners get
     /// collapsed based on neighbors at iteration time.
@@ -133,10 +130,8 @@ pub fn separator() -> Separator {
 /// A horizontally- or vertically-fused cluster of [`Button`]s with optional
 /// [`Separator`] dividers.
 ///
-/// Built via [`group()`] or the [`button::group!`] macro. Configures via
+/// Built via [`group()`] or the [`button_group!`](crate::button_group) macro. Configures via
 /// [`ButtonGroup::orientation`] and [`ButtonGroup::width`].
-///
-/// [`button::group!`]: crate::button_group
 pub struct ButtonGroup<'a, Message> {
     items: Vec<Item<'a, Message>>,
     orientation: Orientation,
@@ -145,19 +140,18 @@ pub struct ButtonGroup<'a, Message> {
 
 /// Build a [`ButtonGroup`] from an ordered sequence of items.
 ///
-/// Prefer the [`button::group!`] macro — it calls `.into()` on each child
+/// Prefer the [`button_group!`](crate::button_group) macro — it calls `.into()` on each child
 /// so callers don't spell `.into()` per item. This function exists for the
 /// macro to delegate to, and for callers building the items vec dynamically.
 ///
-/// [`button::group!`]: crate::button_group
 ///
 /// ```ignore
-/// use icedxdy::widget::button;
+/// use icedxdy::widget::{button, button_group};
 ///
-/// button::group![
-///     button::outline("Archive"),
-///     button::outline("Report"),
-///     button::outline("Snooze"),
+/// button_group![
+///     button("Archive").style(button::Outline),
+///     button("Report").style(button::Outline),
+///     button("Snooze").style(button::Outline),
 /// ]
 /// ```
 pub fn group<'a, Message: Clone + 'a>(
@@ -374,27 +368,24 @@ fn collapse_corners(
 /// don't spell `.into()` per child.
 ///
 /// ```ignore
-/// use icedxdy::widget::button;
+/// use icedxdy::widget::{button, button_group};
 ///
-/// button::group![
-///     button::outline("Archive"),
-///     button::outline("Report"),
-///     button::outline("Snooze"),
+/// button_group![
+///     button("Archive").style(button::Outline),
+///     button("Report").style(button::Outline),
+///     button("Snooze").style(button::Outline),
 /// ]
 ///
 /// // With a separator in the middle — the separator value is `Into<Item>`.
-/// button::group![
-///     button::secondary("Copy"),
+/// button_group![
+///     button("Copy").style(button::Secondary),
 ///     button::group::separator(),
-///     button::secondary("Paste"),
+///     button("Paste").style(button::Secondary),
 /// ]
 /// ```
 ///
 /// `#[macro_export]` is crate-root-scoped (Rust limitation on macros), so
-/// the macro name at the consuming crate is `button_group!` — re-aliased
-/// to `button::group!` via `pub use crate::button_group as group;` in
-/// `widget/src/button.rs` (file-based exemption in the pre-commit hook,
-/// matching the same trick `button::secondary!` / `button::outline!` use).
+/// the macro is `button_group!` rather than `button::group!`.
 #[macro_export]
 macro_rules! button_group {
     () => (

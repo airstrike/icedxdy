@@ -9,7 +9,7 @@ use icedxdy::Gap;
 let password_label = row![
     text::label("Password"),
     space::horizontal(),
-    button::link("Forgot your password?").on_press(Message::Forgot),
+    button("Forgot your password?").style(button::Link).on_press(Message::Forgot),
 ]
 .align_y(Center)
 .width(Fill);
@@ -18,7 +18,7 @@ card(column![
     card::header("Login to your account")
         .description("Enter your email below to login to your account")
         .action(card::action(
-            button::link("Sign Up").on_press(Message::SignUp),
+            button("Sign Up").style(button::Link).on_press(Message::SignUp),
         )),
     card::content(
         column![
@@ -41,7 +41,7 @@ card(column![
     card::footer(
         column![
             button("Login").on_press(Message::Login).width(Fill),
-            button::outline("Login with Google")
+            button("Login with Google").style(button::Outline)
                 .on_press(Message::Google)
                 .width(Fill),
         ]

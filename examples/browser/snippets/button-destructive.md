@@ -1,5 +1,5 @@
 ```rust
 use icedxdy::widget::button;
 
-button::destructive("Destructive")
+button("Destructive").style(button::Destructive)
 ```

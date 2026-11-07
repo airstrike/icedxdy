@@ -482,7 +482,8 @@ pub fn code_panel<'a>(
         .style(code_block_panel);
 
     if expanded {
-        let copy_btn: Slot<'_, super::Message> = button::ghost(icon::copy().size(14))
+        let copy_btn: Slot<'_, super::Message> = button(icon::copy().size(14))
+            .style(button::Ghost)
             .size(Sm)
             .square()
             .on_press(super::Message::Page(
@@ -503,7 +504,7 @@ pub fn code_panel<'a>(
         let truncated = inner.max_height(COLLAPSED_CODE_HEIGHT).clip(true);
 
         let view_code_btn: Slot<'_, super::Message> = button("View Code")
-            .style(theme::button::Outline + Opaque + radius(Lg))
+            .style(button::Outline + Opaque + radius(Lg))
             .on_press(super::Message::Page(
                 page_index,
                 Message::ExpandCode(block_pos),

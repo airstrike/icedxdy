@@ -43,7 +43,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let nav_items: Vec<Slot<'_, Message>> = NAV_LABELS
         .iter()
         .map(|label| {
-            button::ghost(*label)
+            button(*label)
+                .style(button::Ghost)
                 .size(Size::Sm)
                 .on_press(Message::Noop)
                 .into()
@@ -61,11 +62,13 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .max_width(SEARCH_WIDTH);
 
     let mode_button = match state.mode {
-        Mode::Light => button::ghost(icon::moon().size(16))
+        Mode::Light => button(icon::moon().size(16))
+            .style(button::Ghost)
             .size(Size::Sm)
             .square()
             .on_press(Message::SetMode(Mode::Dark)),
-        Mode::Dark => button::ghost(icon::sun().size(16))
+        Mode::Dark => button(icon::sun().size(16))
+            .style(button::Ghost)
             .size(Size::Sm)
             .square()
             .on_press(Message::SetMode(Mode::Light)),
@@ -80,11 +83,15 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
 
     let auth = row![
         separator(),
-        button::ghost(github).size(Size::Sm).on_press(Message::Noop),
+        button(github)
+            .style(button::Ghost)
+            .size(Size::Sm)
+            .on_press(Message::Noop),
         separator(),
         mode_button,
         separator(),
-        button::outline("Open in v0")
+        button("Open in v0")
+            .style(button::Outline)
             .size(Size::Sm)
             .style(chrome_outline_button_style())
             .on_press(Message::Noop),

@@ -1,5 +1,5 @@
 ```rust
 use icedxdy::widget::button;
 
-button::secondary("Secondary")
+button("Secondary").style(button::Secondary)
 ```

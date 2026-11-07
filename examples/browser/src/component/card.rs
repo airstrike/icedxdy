@@ -197,7 +197,7 @@ impl page::Page for CardPage {
                 let password_label: Slot<'_, Message> = row![
                     text::label("Password"),
                     space::horizontal(),
-                    button::link("Forgot your password?")
+                    button("Forgot your password?").style(button::Link)
                         .on_press(Message::Page(pi, page::Message::Noop)),
                 ]
                 .align_y(Center)
@@ -218,7 +218,7 @@ impl page::Page for CardPage {
                     card::header("Login to your account")
                         .description("Enter your email below to login to your account")
                         .action(card::action(
-                            button::link("Sign Up")
+                            button("Sign Up").style(button::Link)
                                 .on_press(Message::Page(pi, page::Message::Noop))
                         )),
                     card::content(
@@ -233,7 +233,7 @@ impl page::Page for CardPage {
                             button("Login")
                                 .on_press(Message::Page(pi, page::Message::Noop))
                                 .width(Fill),
-                            button::outline("Login with Google")
+                            button("Login with Google").style(button::Outline)
                                 .on_press(Message::Page(pi, page::Message::Noop))
                                 .width(Fill),
                         ]
@@ -259,7 +259,7 @@ impl page::Page for CardPage {
                     "The card component supports a size prop that can be set to \"sm\" for a more compact appearance."
                 )),
                 card::footer(
-                    button::outline("Action")
+                    button("Action").style(button::Outline)
                         .size(Size::Sm)
                         .on_press(Message::Page(pi, page::Message::Noop))
                         .width(Fill)
@@ -279,7 +279,7 @@ impl page::Page for CardPage {
                     .description(
                         "A practical talk on component APIs, accessibility, and shipping faster.",
                     )
-                    .action(card::action(badge::secondary("Featured")))
+                    .action(card::action(badge("Featured").style(badge::Secondary)))
                     .into();
 
                 card(column![

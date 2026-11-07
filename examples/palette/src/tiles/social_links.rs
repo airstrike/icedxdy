@@ -43,7 +43,9 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
             card::footer(
                 row![
                     space::horizontal(),
-                    button::secondary("Discard").on_press(Message::Noop),
+                    button("Discard")
+                        .style(button::Secondary)
+                        .on_press(Message::Noop),
                     button("Save Changes").on_press(Message::Noop),
                 ]
                 .spacing(8)

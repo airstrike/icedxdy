@@ -50,7 +50,7 @@
 use iced::Task;
 
 use icedxdy::widget::button::group;
-use icedxdy::widget::{button, column, container, row};
+use icedxdy::widget::{button, button_group, column, container, row};
 use icedxdy::{Slot, Theme};
 
 use crate::Message;
@@ -174,14 +174,22 @@ fn view(id: &str, pi: usize) -> Slot<'static, Message> {
         // render the icon button without the menu since DropdownMenu isn't
         // ported yet (see module docstring for the deferred-examples list).
         "demo" => row![
-            button::group![button::icon![arrow_left].on_press(noop())],
-            button::group![
-                button::outline("Archive").on_press(noop()),
-                button::outline("Report").on_press(noop()),
+            button_group![
+                button(icon::arrow_left())
+                    .square()
+                    .style(button::Outline)
+                    .on_press(noop())
             ],
-            button::group![
-                button::outline("Snooze").on_press(noop()),
-                button::icon![ellipsis].on_press(noop()),
+            button_group![
+                button("Archive").style(button::Outline).on_press(noop()),
+                button("Report").style(button::Outline).on_press(noop()),
+            ],
+            button_group![
+                button("Snooze").style(button::Outline).on_press(noop()),
+                button(icon::ellipsis())
+                    .square()
+                    .style(button::Outline)
+                    .on_press(noop()),
             ],
         ]
         .spacing(8)
@@ -190,9 +198,15 @@ fn view(id: &str, pi: usize) -> Slot<'static, Message> {
 
         // Orientation. shadcn `button-group-orientation.tsx`: vertical
         // group of two icon buttons (plus, minus).
-        "orientation" => button::group![
-            button::icon![plus].on_press(noop()),
-            button::icon![minus].on_press(noop()),
+        "orientation" => button_group![
+            button(icon::plus())
+                .square()
+                .style(button::Outline)
+                .on_press(noop()),
+            button(icon::minus())
+                .square()
+                .style(button::Outline)
+                .on_press(noop()),
         ]
         .orientation(group::Vertical)
         .into(),
@@ -207,27 +221,56 @@ fn view(id: &str, pi: usize) -> Slot<'static, Message> {
         // clusters align on a center line rather than a left edge — gives
         // the column a balanced, calibrated look in the preview card.
         "size" => column([
-            container(button::group![
-                button::outline("Small").size(Sm).on_press(noop()),
-                button::outline("Button").size(Sm).on_press(noop()),
-                button::outline("Group").size(Sm).on_press(noop()),
-                button::icon![plus].size(Sm).on_press(noop()),
+            container(button_group![
+                button("Small")
+                    .style(button::Outline)
+                    .size(Sm)
+                    .on_press(noop()),
+                button("Button")
+                    .style(button::Outline)
+                    .size(Sm)
+                    .on_press(noop()),
+                button("Group")
+                    .style(button::Outline)
+                    .size(Sm)
+                    .on_press(noop()),
+                button(icon::plus())
+                    .square()
+                    .style(button::Outline)
+                    .size(Sm)
+                    .on_press(noop()),
             ])
             .center_x(Fill)
             .into(),
-            container(button::group![
-                button::outline("Default").on_press(noop()),
-                button::outline("Button").on_press(noop()),
-                button::outline("Group").on_press(noop()),
-                button::icon![plus].on_press(noop()),
+            container(button_group![
+                button("Default").style(button::Outline).on_press(noop()),
+                button("Button").style(button::Outline).on_press(noop()),
+                button("Group").style(button::Outline).on_press(noop()),
+                button(icon::plus())
+                    .square()
+                    .style(button::Outline)
+                    .on_press(noop()),
             ])
             .center_x(Fill)
             .into(),
-            container(button::group![
-                button::outline("Large").size(Lg).on_press(noop()),
-                button::outline("Button").size(Lg).on_press(noop()),
-                button::outline("Group").size(Lg).on_press(noop()),
-                button::icon![plus].size(Lg).on_press(noop()),
+            container(button_group![
+                button("Large")
+                    .style(button::Outline)
+                    .size(Lg)
+                    .on_press(noop()),
+                button("Button")
+                    .style(button::Outline)
+                    .size(Lg)
+                    .on_press(noop()),
+                button("Group")
+                    .style(button::Outline)
+                    .size(Lg)
+                    .on_press(noop()),
+                button(icon::plus())
+                    .square()
+                    .style(button::Outline)
+                    .size(Lg)
+                    .on_press(noop()),
             ])
             .center_x(Fill)
             .into(),
@@ -242,10 +285,15 @@ fn view(id: &str, pi: usize) -> Slot<'static, Message> {
         // has no equivalent selector. See module docstring for the
         // `InputGroup` degradation in the second sub-group.
         "nested" => row![
-            button::group![button::icon![plus].on_press(noop())],
-            button::group![
-                button::outline("Add").on_press(noop()),
-                button::outline("Remove").on_press(noop()),
+            button_group![
+                button(icon::plus())
+                    .square()
+                    .style(button::Outline)
+                    .on_press(noop())
+            ],
+            button_group![
+                button("Add").style(button::Outline).on_press(noop()),
+                button("Remove").style(button::Outline).on_press(noop()),
             ],
         ]
         .spacing(8)
@@ -254,10 +302,16 @@ fn view(id: &str, pi: usize) -> Slot<'static, Message> {
 
         // Separator. shadcn `button-group-separator.tsx`: two secondary
         // buttons with a `ButtonGroupSeparator` between them.
-        "separator" => button::group![
-            button::secondary("Copy").size(Sm).on_press(noop()),
+        "separator" => button_group![
+            button("Copy")
+                .style(button::Secondary)
+                .size(Sm)
+                .on_press(noop()),
             group::separator(),
-            button::secondary("Paste").size(Sm).on_press(noop()),
+            button("Paste")
+                .style(button::Secondary)
+                .size(Sm)
+                .on_press(noop()),
         ]
         .into(),
 

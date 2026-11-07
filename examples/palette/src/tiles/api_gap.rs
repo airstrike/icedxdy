@@ -14,7 +14,7 @@ use icedxdy::{Slot, Theme, card};
 use crate::Message;
 
 pub fn marker() -> Slot<'static, Message> {
-    badge::destructive("GAP").into()
+    badge("GAP").style(badge::Destructive).into()
 }
 
 pub fn inline(gaps: &'static [&'static str]) -> Slot<'static, Message> {
@@ -94,10 +94,13 @@ pub fn missing(
 }
 
 fn gap_row(gap: &'static str) -> Slot<'static, Message> {
-    row![badge::outline("missing"), text::muted(gap).width(Fill),]
-        .spacing(8)
-        .width(Fill)
-        .into()
+    row![
+        badge("missing").style(badge::Outline),
+        text::muted(gap).width(Fill),
+    ]
+    .spacing(8)
+    .width(Fill)
+    .into()
 }
 
 fn inline_style(theme: &Theme) -> Style {

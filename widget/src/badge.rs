@@ -6,43 +6,43 @@
 //! use icedxdy::widget::badge;
 //!
 //! badge("Badge")
-//! badge::secondary("Secondary")
-//! badge::destructive("Destructive")
-//! badge::outline("Outline")
-//! badge::ghost("Ghost")
-//! badge::secondary("Open Link").on_press(Message::Open)
+//! badge("Secondary").style(badge::Secondary)
+//! badge("Destructive").style(badge::Destructive)
+//! badge("Outline").style(badge::Outline)
+//! badge("Ghost").style(badge::Ghost)
+//! badge("Open Link").style(badge::Secondary).on_press(Message::Open)
 //!
-//! // Macro form: single-arg defers to the default variant fn; multi-arg
-//! // wraps children in a `row::Row::with_children([...]).spacing(4)` to
-//! // land the nova `gap-1` (4px) icon-text gap automatically.
+//! // Macro form: single-arg defers to [`badge`]; multi-arg wraps children
+//! // in a `row::Row::with_children([...]).spacing(4)` to land the nova
+//! // `gap-1` (4px) icon-text gap automatically.
 //! badge!["Verified", icon::badge_check()]
-//! badge::secondary!["Verified", icon::badge_check()]
-//! badge::outline!["Bookmark", icon::bookmark()]
+//! badge!["Verified", icon::badge_check()].style(badge::Secondary)
+//! badge!["Bookmark", icon::bookmark()].style(badge::Outline)
 //! ```
+//!
+//! # Variants
+//!
+//! shadcn's `variant` prop is a style: `.style(badge::Outline)`.
 
 use iced_widget::Widget;
-/// Create a badge with one or more children using the default variant.
+/// Create a badge with one or more children.
 ///
 /// Two forms:
 /// - `badge!("Badge")` — single child, defers to [`badge`].
 /// - `badge![child1, child2, ...]` — multiple children, wrapped in a
 ///   row with `spacing(4)` (nova `gap-1`) and passed to [`badge`].
 ///
-/// For non-default variants, use the per-variant macros at the module
-/// path: [`badge::secondary!`], [`badge::outline!`], [`badge::destructive!`],
-/// [`badge::ghost!`]. They share the same single-arg / multi-arg arms.
+/// The variant is a style, set after the macro:
 ///
 /// ```ignore
 /// badge!["Verified", icon::badge_check()]
-/// badge::secondary!["Verified", icon::badge_check()]
-/// badge::outline![icon::bookmark(), "Bookmark"]
-/// badge::destructive![spinner(), "Deleting"]
+/// badge!["Verified", icon::badge_check()].style(badge::Secondary)
+/// badge![spinner(), "Deleting"].style(badge::Destructive)
 /// badge![badge_check, "Verified"]                    // leading-ident sugar
-/// badge::secondary![badge_check, "Verified"]         // leading-ident sugar on variant
 /// ```
 #[macro_export]
 macro_rules! badge {
-    // Default-variant single-arg arm
+    // Single-arg arm
     ($single:expr $(,)?) => {
         $crate::badge::badge($single)
     };
@@ -50,7 +50,7 @@ macro_rules! badge {
     // to `icon::$first()`. Requires `use crate::icon;` (or equivalent path
     // to an `icon` module exposing `fn $first() -> Text`) in scope at the
     // call site. Macro hygiene: `icon` here resolves at the call site, not
-    // the def site — matches `button_icon!`'s existing single-arg arm.
+    // the def site, as in `button!`.
     //
     // `badge![badge_check, "Verified"]` => badge(row![icon::badge_check(), "Verified"].spacing(4))
     ($first:ident, $($rest:expr),+ $(,)?) => {
@@ -64,7 +64,7 @@ macro_rules! badge {
             )
         )
     };
-    // Default-variant multi-arg arm — wraps children in a row with 4px gap.
+    // Multi-arg arm — wraps children in a row with 4px gap.
     ($($child:expr),+ $(,)?) => {
         $crate::badge::badge(
             $crate::compose::Slot::new(
@@ -77,210 +77,35 @@ macro_rules! badge {
     };
 }
 
-/// Secondary-variant badge macro. See [`badge!`] for the arm shapes.
-#[macro_export]
-macro_rules! badge_secondary {
-    ($single:expr $(,)?) => {
-        $crate::badge::secondary($single)
-    };
-    // Leading-ident icon sugar — see [`badge!`] for details.
-    ($first:ident, $($rest:expr),+ $(,)?) => {
-        $crate::badge::secondary(
-            $crate::compose::Slot::new(
-                $crate::row::Row::with_children([
-                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
-                ])
-                .spacing(4)
-            )
-        )
-    };
-    ($($child:expr),+ $(,)?) => {
-        $crate::badge::secondary(
-            $crate::compose::Slot::new(
-                $crate::row::Row::with_children([
-                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
-                ])
-                .spacing(4)
-            )
-        )
-    };
-}
-
-/// Outline-variant badge macro. See [`badge!`] for the arm shapes.
-#[macro_export]
-macro_rules! badge_outline {
-    ($single:expr $(,)?) => {
-        $crate::badge::outline($single)
-    };
-    // Leading-ident icon sugar — see [`badge!`] for details.
-    ($first:ident, $($rest:expr),+ $(,)?) => {
-        $crate::badge::outline(
-            $crate::compose::Slot::new(
-                $crate::row::Row::with_children([
-                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
-                ])
-                .spacing(4)
-            )
-        )
-    };
-    ($($child:expr),+ $(,)?) => {
-        $crate::badge::outline(
-            $crate::compose::Slot::new(
-                $crate::row::Row::with_children([
-                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
-                ])
-                .spacing(4)
-            )
-        )
-    };
-}
-
-/// Destructive-variant badge macro. See [`badge!`] for the arm shapes.
-#[macro_export]
-macro_rules! badge_destructive {
-    ($single:expr $(,)?) => {
-        $crate::badge::destructive($single)
-    };
-    // Leading-ident icon sugar — see [`badge!`] for details.
-    ($first:ident, $($rest:expr),+ $(,)?) => {
-        $crate::badge::destructive(
-            $crate::compose::Slot::new(
-                $crate::row::Row::with_children([
-                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
-                ])
-                .spacing(4)
-            )
-        )
-    };
-    ($($child:expr),+ $(,)?) => {
-        $crate::badge::destructive(
-            $crate::compose::Slot::new(
-                $crate::row::Row::with_children([
-                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
-                ])
-                .spacing(4)
-            )
-        )
-    };
-}
-
-/// Ghost-variant badge macro. See [`badge!`] for the arm shapes.
-#[macro_export]
-macro_rules! badge_ghost {
-    ($single:expr $(,)?) => {
-        $crate::badge::ghost($single)
-    };
-    // Leading-ident icon sugar — see [`badge!`] for details.
-    ($first:ident, $($rest:expr),+ $(,)?) => {
-        $crate::badge::ghost(
-            $crate::compose::Slot::new(
-                $crate::row::Row::with_children([
-                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
-                ])
-                .spacing(4)
-            )
-        )
-    };
-    ($($child:expr),+ $(,)?) => {
-        $crate::badge::ghost(
-            $crate::compose::Slot::new(
-                $crate::row::Row::with_children([
-                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
-                ])
-                .spacing(4)
-            )
-        )
-    };
-}
-
-// `#[macro_export]` always lands at the consuming crate's root, so two
-// widgets can't both claim a name like `secondary!` there. The fix: the
-// real macros above are exported with a `badge_` prefix, then we re-alias
-// each to its idiomatic name at the module path (`badge::secondary!`,
-// `badge::outline!`, ...) right here. This is the carved exception in
-// CLAUDE.md hard rule #3 — the file-based exemption in the pre-commit
-// hook permits these aliased re-exports (and matching ones in
-// `widget/src/button.rs`). iced uses the same trick for `column!` /
-// `column()` coexisting in the `column` module.
-#[doc(inline)]
-pub use crate::badge_destructive as destructive;
-#[doc(inline)]
-pub use crate::badge_ghost as ghost;
-#[doc(inline)]
-pub use crate::badge_outline as outline;
-#[doc(inline)]
-pub use crate::badge_secondary as secondary;
-
 use crate::Weight;
 use crate::compose::{Compose, Inherited, Slot};
 use iced_core::mouse::Interaction;
 use iced_widget::{Renderer, mouse_area};
 use icedxdy_core::Theme;
-use icedxdy_core::theme;
 
-/// Badge variant matching shadcn/ui
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum Variant {
-    #[default]
-    Default,
-    Secondary,
-    Destructive,
-    Outline,
-    Ghost,
-}
+pub use icedxdy_core::theme::badge::{Default, Destructive, Ghost, Outline, Secondary};
 
 /// A small inline pill label.
 pub struct Badge<'a, Message> {
     content: Slot<'a, Message>,
-    variant: Variant,
+    style: iced_widget::container::StyleFn<'a, Theme>,
     on_press: Option<Message>,
 }
 
-/// Create a [`Badge`] with default variant.
+/// Create a [`Badge`] with the default variant.
 pub fn badge<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
     Badge {
         content: content.into(),
-        variant: Variant::Default,
+        style: Default.into(),
         on_press: None,
     }
 }
 
-/// Create a [`Badge`] with the default variant.
-///
-/// Equivalent to [`badge`]; provided for symmetry with the other variant
-/// helpers.
-pub fn default<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
-    badge(content).variant(Variant::Default)
-}
-
-/// Create a [`Badge`] with the secondary variant.
-pub fn secondary<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
-    badge(content).variant(Variant::Secondary)
-}
-
-/// Create a [`Badge`] with the outline variant.
-pub fn outline<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
-    badge(content).variant(Variant::Outline)
-}
-
-/// Create a [`Badge`] with the destructive variant.
-pub fn destructive<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
-    badge(content).variant(Variant::Destructive)
-}
-
-/// Create a [`Badge`] with the ghost variant.
-pub fn ghost<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
-    badge(content).variant(Variant::Ghost)
-}
-
 impl<'a, Message: 'a> Badge<'a, Message> {
-    /// Set the badge variant.
-    pub fn variant(mut self, variant: Variant) -> Self {
-        self.variant = variant;
+    /// Set the style: a variant (`badge::Secondary`, `badge::Outline`, ...)
+    /// or a tweaked `Spec`.
+    pub fn style(mut self, style: impl Into<iced_widget::container::StyleFn<'a, Theme>>) -> Self {
+        self.style = style.into();
         self
     }
 }
@@ -326,13 +151,7 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Badge<'a, Message> {
                 .with_line_height(16.0),
         );
 
-        let style_fn: iced_widget::container::StyleFn<'_, Theme> = match self.variant {
-            Variant::Default => theme::badge::Default.into(),
-            Variant::Secondary => theme::badge::Secondary.into(),
-            Variant::Destructive => theme::badge::Destructive.into(),
-            Variant::Outline => theme::badge::Outline.into(),
-            Variant::Ghost => theme::badge::Ghost.into(),
-        };
+        let style_fn = self.style;
 
         // py-0.5 = 2px, px-2 = 8px (nova `px-2 py-0.5`).
         //
@@ -359,40 +178,24 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Badge<'a, Message> {
 
 #[cfg(test)]
 mod macro_smoke {
-    //! Compile-only smoke tests: invoke each variant macro both single-arg
-    //! and multi-arg, and verify the result is a [`Badge`].
+    //! Compile-only smoke tests: invoke the macro single-arg, multi-arg and
+    //! with the leading-ident sugar, and verify the result is a [`Badge`].
 
-    use crate::badge::Badge;
+    use crate::badge::{self, Badge};
 
     #[derive(Clone)]
     enum Msg {}
 
-    #[allow(dead_code)]
-    fn assert_badge<M: Clone>(_: &Badge<'_, M>) {}
-
     #[test]
     fn macro_arms_compile() {
-        // Default variant — single + multi.
         let _: Badge<'_, Msg> = crate::badge!("default");
-        let _: Badge<'_, Msg> = crate::badge!["a", "b"];
-
-        // Variant macros at module path — single-arg arm.
-        let _: Badge<'_, Msg> = crate::badge::secondary!("s");
-        let _: Badge<'_, Msg> = crate::badge::destructive!("d");
-        let _: Badge<'_, Msg> = crate::badge::outline!("o");
-        let _: Badge<'_, Msg> = crate::badge::ghost!("g");
-
-        // Variant macros at module path — multi-arg arm.
-        let _: Badge<'_, Msg> = crate::badge::secondary!["s1", "s2"];
-        let _: Badge<'_, Msg> = crate::badge::destructive!["d1", "d2"];
-        let _: Badge<'_, Msg> = crate::badge::outline!["o1", "o2"];
-        let _: Badge<'_, Msg> = crate::badge::ghost!["g1", "g2"];
+        let _: Badge<'_, Msg> = crate::badge!["a", "b"].style(badge::Secondary);
+        let _: Badge<'_, Msg> = crate::badge!("o").style(badge::Outline);
     }
 
     /// Leading-ident sugar: `badge![my_icon, "Tag"]` rewrites the bare
-    /// ident to `icon::my_icon()` at the call site, then prepends it
-    /// to the row of remaining children. Same arm exists on every
-    /// variant macro.
+    /// ident to `icon::my_icon()` at the call site, then prepends it to the
+    /// row of remaining children.
     #[test]
     fn leading_ident_sugar_arm() {
         // Local `icon` module — name load-bearing because the sugar arm
@@ -407,9 +210,6 @@ mod macro_smoke {
         }
 
         let _: Badge<'_, Msg> = crate::badge![my_icon, "Tag"];
-        let _: Badge<'_, Msg> = crate::badge::secondary![my_icon, "Verified"];
-        let _: Badge<'_, Msg> = crate::badge::destructive![my_icon, "Deleting"];
-        let _: Badge<'_, Msg> = crate::badge::outline![my_icon, "Bookmark"];
-        let _: Badge<'_, Msg> = crate::badge::ghost![my_icon, "Ghost"];
+        let _: Badge<'_, Msg> = crate::badge![my_icon, "Deleting"].style(badge::Destructive);
     }
 }

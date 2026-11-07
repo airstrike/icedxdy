@@ -12,7 +12,7 @@ card(column![
         .description(
             "A practical talk on component APIs, accessibility, and shipping faster.",
         )
-        .action(card::action(badge::secondary("Featured"))),
+        .action(card::action(badge("Featured").style(badge::Secondary))),
     card::footer(
         button("View Event")
             .on_press(Message::View)

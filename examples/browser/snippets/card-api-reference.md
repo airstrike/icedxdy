@@ -10,11 +10,11 @@ Wraps any content with shadcn's card surface (`bg-card` + ring + rounded corners
 card(column![
     card::header("Login to your account")
         .description("Enter your email below to login to your account")
-        .action(card::action(button::link("Sign Up").on_press(Message::SignUp))),
+        .action(card::action(button("Sign Up").style(button::Link).on_press(Message::SignUp))),
     card::content(my_form),
     card::footer_row([
         button("Login").on_press(Message::Submit).into(),
-        button::outline("Login with Google").into(),
+        button("Login with Google").style(button::Outline).into(),
     ]),
 ])
 .width(384.0)

@@ -8,29 +8,47 @@ use crate::icon;
 pub fn view<'a>() -> Slot<'a, Message> {
     row![
         row![
-            button::outline("Extra Small")
+            button("Extra Small")
+                .style(button::Outline)
                 .size(Xs)
                 .on_press(Message::Pressed),
-            button::icon(icon::arrow_up_right())
+            button(icon::arrow_up_right())
+                .square()
+                .style(button::Outline)
                 .size(Xs)
                 .on_press(Message::Pressed),
         ]
         .spacing(8),
         row![
-            button::outline("Small").size(Sm).on_press(Message::Pressed),
-            button::icon(icon::arrow_up_right())
+            button("Small")
+                .style(button::Outline)
+                .size(Sm)
+                .on_press(Message::Pressed),
+            button(icon::arrow_up_right())
+                .square()
+                .style(button::Outline)
                 .size(Sm)
                 .on_press(Message::Pressed),
         ]
         .spacing(8),
         row![
-            button::outline("Default").on_press(Message::Pressed),
-            button::icon(icon::arrow_up_right()).on_press(Message::Pressed),
+            button("Default")
+                .style(button::Outline)
+                .on_press(Message::Pressed),
+            button(icon::arrow_up_right())
+                .square()
+                .style(button::Outline)
+                .on_press(Message::Pressed),
         ]
         .spacing(8),
         row![
-            button::outline("Large").size(Lg).on_press(Message::Pressed),
-            button::icon(icon::arrow_up_right())
+            button("Large")
+                .style(button::Outline)
+                .size(Lg)
+                .on_press(Message::Pressed),
+            button(icon::arrow_up_right())
+                .square()
+                .style(button::Outline)
                 .size(Lg)
                 .on_press(Message::Pressed),
         ]

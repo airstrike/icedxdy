@@ -51,7 +51,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
             card::footer(
                 column![
                     button("Create Goal").width(Fill).on_press(Message::Noop),
-                    button::outline("Cancel")
+                    button("Cancel")
+                        .style(button::Outline)
                         .width(Fill)
                         .on_press(Message::Noop),
                 ]

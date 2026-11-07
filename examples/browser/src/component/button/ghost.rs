@@ -4,5 +4,8 @@ use icedxdy::widget::button;
 use super::Message;
 
 pub fn view<'a>() -> Slot<'a, Message> {
-    button::ghost("Ghost").on_press(Message::Pressed).into()
+    button("Ghost")
+        .style(button::Ghost)
+        .on_press(Message::Pressed)
+        .into()
 }

@@ -32,7 +32,11 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
 
     let header = card::header("Contribution history")
         .description("Last 6 months of activity")
-        .action(button::ghost("View Full Report").on_press(Message::Noop));
+        .action(
+            button("View Full Report")
+                .style(button::Ghost)
+                .on_press(Message::Noop),
+        );
 
     card::card(
         column([header.into(), card::content(body).into()])

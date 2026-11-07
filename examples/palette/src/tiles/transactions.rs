@@ -97,9 +97,11 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let header = card::header("Recent activity")
         .description("Filtered view: most-recent entries.")
         .action(if state.connected {
-            button::ghost("View all").on_press(Message::Noop)
+            button("View all")
+                .style(button::Ghost)
+                .on_press(Message::Noop)
         } else {
-            button::ghost("View all")
+            button("View all").style(button::Ghost)
         });
 
     let rows: Vec<Slot<'_, Message>> = ROWS
@@ -138,8 +140,8 @@ fn tx_row(tx: &Tx) -> Slot<'_, Message> {
 
     let badge_chip: Slot<'_, Message> = match tx.badge_kind {
         BadgeKind::Default => badge(tx.category).into(),
-        BadgeKind::Secondary => badge::secondary(tx.category).into(),
-        BadgeKind::Outline => badge::outline(tx.category).into(),
+        BadgeKind::Secondary => badge(tx.category).style(badge::Secondary).into(),
+        BadgeKind::Outline => badge(tx.category).style(badge::Outline).into(),
     };
 
     let merchant_col: Column<'_, Message> = column([

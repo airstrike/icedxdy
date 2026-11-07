@@ -22,7 +22,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
 
     let camera = container(
         column![
-            row![space::horizontal(), badge::destructive("Live"),]
+            row![space::horizontal(), badge("Live").style(badge::Destructive),]
                 .width(Fill)
                 .align_y(iced::Center),
             space::vertical(),

@@ -26,7 +26,11 @@ fn targets_card() -> Slot<'static, Message> {
         column![
             card::header("Savings Targets")
                 .description("Active milestones for 2024")
-                .action(button::outline("New Goal").on_press(Message::Noop)),
+                .action(
+                    button("New Goal")
+                        .style(button::Outline)
+                        .on_press(Message::Noop)
+                ),
             card::content(
                 column![
                     target("RETIREMENT", "$420,000", 65.0, "65% achieved", "$273,000"),

@@ -209,17 +209,20 @@ fn menu_header_icon() -> Slot<'static, Message> {
 
 fn preset_actions() -> Slot<'static, Message> {
     let content = column![
-        button::outline("--preset b0")
+        button("--preset b0")
+            .style(button::Outline)
             .size(Size::Sm)
             .width(Fill)
             .style(rail_button_style())
             .on_press(Message::Noop),
-        button::outline("Open Preset")
+        button("Open Preset")
+            .style(button::Outline)
             .size(Size::Sm)
             .width(Fill)
             .style(rail_button_style())
             .on_press(Message::Noop),
-        button::outline("Shuffle")
+        button("Shuffle")
+            .style(button::Outline)
             .size(Size::Sm)
             .width(Fill)
             .style(rail_button_style())

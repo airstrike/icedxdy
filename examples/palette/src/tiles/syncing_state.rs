@@ -19,7 +19,11 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
             "We're pulling in your latest transactions. This usually takes\n\
              a few seconds.",
         )
-        .content(button::outline("Cancel").on_press(Message::Noop));
+        .content(
+            button("Cancel")
+                .style(button::Outline)
+                .on_press(Message::Noop),
+        );
 
     card::card(column![content].padding([16, 0]).width(Fill))
         .width(Fill)

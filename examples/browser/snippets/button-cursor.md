@@ -8,7 +8,7 @@ If you want the pointer cursor at a specific call site (links, sidebar nav entri
 use iced::mouse::Interaction;
 use icedxdy::widget::button;
 
-button::ghost("Docs")
+button("Docs").style(button::Ghost)
     .interaction(Interaction::Pointer)
     .on_press(Message::OpenDocs)
 ```

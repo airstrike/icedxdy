@@ -33,7 +33,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let footer = row![
         button("Create Query  +").on_press(Message::Noop),
         space::horizontal(),
-        badge::secondary("Warning"),
+        badge("Warning").style(badge::Secondary),
     ]
     .align_y(iced::Center)
     .width(Fill);

@@ -12,7 +12,7 @@ card(column![
         "The card component supports a size prop that can be set to \"sm\" for a more compact appearance."
     )),
     card::footer(
-        button::outline("Action")
+        button("Action").style(button::Outline)
             .size(Size::Sm)
             .on_press(Message::Action)
             .width(Fill)

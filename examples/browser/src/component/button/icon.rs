@@ -5,7 +5,9 @@ use super::Message;
 use crate::icon;
 
 pub fn view<'a>() -> Slot<'a, Message> {
-    button::icon(icon::arrow_up_right())
+    button(icon::arrow_up_right())
+        .square()
+        .style(button::Outline)
         .on_press(Message::Pressed)
         .into()
 }

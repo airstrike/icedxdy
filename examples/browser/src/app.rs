@@ -276,13 +276,15 @@ impl App {
         } else {
             icon::moon().size(16)
         };
-        let theme_toggle = button::ghost(theme_icon)
+        let theme_toggle = button(theme_icon)
+            .style(button::Ghost)
             .square()
             .on_press(Message::ToggleTheme);
 
         let nav = row(NavSection::ALL.iter().copied().map(|section| {
             Element::from(
-                button::ghost(section.label())
+                button(section.label())
+                    .style(button::Ghost)
                     .size(Size::Sm)
                     .on_press(Message::NavSelect(section)),
             )
@@ -380,13 +382,15 @@ impl App {
         // TODO: Copy Page button (needs DropdownMenu + clipboard write).
         let total = self.pages.len();
         let curr = self.current_page;
-        let prev_btn = button::secondary(icon::arrow_left())
+        let prev_btn = button(icon::arrow_left())
+            .style(button::Secondary)
             .size(Size::Sm)
             .square()
             .translate(false)
             .interaction(Interaction::Pointer)
             .on_press(Message::SelectPage(curr.saturating_sub(1)));
-        let next_btn = button::secondary(icon::arrow_right())
+        let next_btn = button(icon::arrow_right())
+            .style(button::Secondary)
             .size(Size::Sm)
             .square()
             .translate(false)

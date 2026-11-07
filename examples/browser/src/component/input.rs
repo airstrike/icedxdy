@@ -276,7 +276,7 @@ impl page::Page for InputPage {
                 row![
                     text::label("Webhook URL"),
                     space::horizontal(),
-                    badge::secondary("Beta"),
+                    badge("Beta").style(badge::Secondary),
                 ]
                 .width(Fill),
             ))

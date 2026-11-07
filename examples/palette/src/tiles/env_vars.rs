@@ -25,9 +25,13 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     ];
 
     let footer = row![
-        button::outline("Edit").on_press(Message::Noop),
+        button("Edit")
+            .style(button::Outline)
+            .on_press(Message::Noop),
         space::horizontal(),
-        button::secondary("Deploy").on_press(Message::Noop),
+        button("Deploy")
+            .style(button::Secondary)
+            .on_press(Message::Noop),
     ]
     .spacing(8)
     .width(Fill);

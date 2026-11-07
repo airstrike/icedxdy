@@ -487,7 +487,8 @@ fn page_button(
     page: PreviewPage,
     active: bool,
 ) -> iced::Element<'static, Message, Theme> {
-    let button = button::ghost(label)
+    let button = button(label)
+        .style(button::Ghost)
         .size(Size::Sm)
         .width(36.0)
         .style(page_button_style(active))

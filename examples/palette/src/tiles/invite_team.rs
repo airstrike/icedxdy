@@ -40,7 +40,9 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
             .width(Fill)
             .on_input(Message::InviteEmailChanged)
             .on_submit(Message::Noop),
-        button::outline("Viewer  \u{25BE}").on_press(Message::Noop),
+        button("Viewer  \u{25BE}")
+            .style(button::Outline)
+            .on_press(Message::Noop),
         button("Invite").on_press(Message::Noop),
     ]
     .spacing(8)
@@ -79,7 +81,7 @@ fn member_row(m: &Member) -> Slot<'static, Message> {
         Slot::from(avatar(None).fallback(m.initials).size(avatar::Default)),
         identity,
         space::horizontal(),
-        badge::secondary(m.role),
+        badge(m.role).style(badge::Secondary),
     ]
     .spacing(12)
     .width(Fill)

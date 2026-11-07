@@ -48,14 +48,16 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
                 .action(
                     row![
                         api_gap::marker(),
-                        button::ghost("x").on_press(Message::Noop),
+                        button("x").style(button::Ghost).on_press(Message::Noop),
                     ]
                     .spacing(Space::U2)
                 ),
             card::content(column![currency, public, email].spacing(16).width(Fill)),
             card::footer(
                 row![
-                    button::outline("Reset").on_press(Message::Noop),
+                    button("Reset")
+                        .style(button::Outline)
+                        .on_press(Message::Noop),
                     space::horizontal(),
                     button("Save Preferences").on_press(Message::Noop),
                 ]

@@ -1,5 +1,5 @@
 ```rust
 use icedxdy::widget::button;
 
-button::icon(icon::arrow_up_right())
+button(icon::arrow_up_right()).square().style(button::Outline)
 ```
