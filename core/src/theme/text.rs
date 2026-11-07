@@ -31,6 +31,7 @@ impl From<Style> for iced_widget::text::Style {
     fn from(s: Style) -> Self {
         iced_widget::text::Style {
             color: s.color.map(Into::into),
+            selection: None,
         }
     }
 }
@@ -52,6 +53,10 @@ impl iced_widget::text::Catalog for Theme {
 
     fn style(&self, class: &Self::Class<'_>) -> iced_widget::text::Style {
         class(self)
+    }
+
+    fn selection(&self) -> iced_core::Color {
+        self.selection()
     }
 }
 
@@ -282,6 +287,7 @@ pub fn intrinsic_default(_theme: &Theme) -> style::Style {
 pub fn project_text(univ: style::Style) -> iced_widget::text::Style {
     iced_widget::text::Style {
         color: univ.text_color.map(Into::into),
+        selection: None,
     }
 }
 

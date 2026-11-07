@@ -41,7 +41,7 @@ use crate::palette::Palette;
 use crate::style::Tint;
 
 /// Theme for icedxdy components.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Theme {
     design: Design,
 }
@@ -81,6 +81,12 @@ impl Theme {
 
     pub fn iced_theme(&self) -> &iced_core::Theme {
         &self.design.theme
+    }
+
+    /// The global text-selection highlight (nova `selection:bg-primary`,
+    /// softened to the same 30% wash text inputs use).
+    pub fn selection(&self) -> iced_core::Color {
+        self.design.primary.base.alpha(0.3).into()
     }
 }
 

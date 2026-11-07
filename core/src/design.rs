@@ -11,7 +11,7 @@ use crate::color::{Color, oklch, oklch_alpha};
 use crate::palette::{Palette, SidebarPair, SidebarPalette};
 
 /// Font family with weight variants
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FontFamily {
     pub regular: Font,
     pub medium: Font,
@@ -38,7 +38,7 @@ impl Default for FontFamily {
 
 /// Complete design configuration — per-role palettes, surfaces, sidebar,
 /// fonts, and the derived iced Theme.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Design {
     pub name: String,
 

@@ -160,6 +160,10 @@ impl iced_widget::toggler::Catalog for Theme {
     fn style(&self, class: &Self::Class<'_>, status: Status) -> iced_widget::toggler::Style {
         class(self, status)
     }
+
+    fn selection(&self) -> iced_core::Color {
+        self.selection()
+    }
 }
 
 fn is_dark(theme: &Theme) -> bool {

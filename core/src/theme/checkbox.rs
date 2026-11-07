@@ -121,6 +121,10 @@ impl iced_widget::checkbox::Catalog for Theme {
     fn style(&self, class: &Self::Class<'_>, status: Status) -> iced_widget::checkbox::Style {
         class(self, status)
     }
+
+    fn selection(&self) -> iced_core::Color {
+        self.selection()
+    }
 }
 
 fn is_dark(theme: &Theme) -> bool {

@@ -112,14 +112,15 @@ impl std::default::Default for Style {
 /// A styling closure that returns our OKLCH-native `Style`.
 pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 
-/// Convert from iced's stock `text_input::Style` into ours. Lossless in this
-/// direction (iced has no `ring` field, so we set `ring: None`).
+/// Convert from iced's stock `text_input::Style` into ours. iced has no
+/// `ring` (set to `None`) and no longer styles icons, so the icon inherits
+/// the value color.
 impl From<iced_widget::text_input::Style> for Style {
     fn from(s: iced_widget::text_input::Style) -> Self {
         Style {
             background: s.background.into(),
             border: s.border.into(),
-            icon: s.icon.into(),
+            icon: s.value.into(),
             placeholder: s.placeholder.into(),
             value: s.value.into(),
             selection: s.selection.into(),
@@ -128,8 +129,9 @@ impl From<iced_widget::text_input::Style> for Style {
     }
 }
 
-/// The inverse: converting our `Style` to iced's silently drops `ring`. We
-/// keep this impl because stock iced widgets that compose a text input (e.g.
+/// The inverse: converting our `Style` to iced's silently drops `ring` and
+/// `icon` (stock iced text inputs have no icons). We keep this impl because
+/// stock iced widgets that compose a text input (e.g.
 /// `iced_widget::combo_box`) require `Theme: iced_widget::text_input::Catalog`,
 /// and that Catalog impl needs to return iced's `Style`. New code in our
 /// crate should prefer the vendored `widget::text_input` widget instead — it
@@ -139,7 +141,6 @@ impl From<Style> for iced_widget::text_input::Style {
         iced_widget::text_input::Style {
             background: s.background.into(),
             border: s.border.into(),
-            icon: s.icon.into(),
             placeholder: s.placeholder.into(),
             value: s.value.into(),
             selection: s.selection.into(),

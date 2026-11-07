@@ -34,6 +34,10 @@ impl iced_widget::radio::Catalog for Theme {
     fn style(&self, class: &Self::Class<'_>, status: Status) -> iced_widget::radio::Style {
         class(self, status)
     }
+
+    fn selection(&self) -> iced_core::Color {
+        self.selection()
+    }
 }
 
 fn is_dark(theme: &Theme) -> bool {
