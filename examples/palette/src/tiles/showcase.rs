@@ -162,9 +162,15 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
         badge::secondary("Secondary"),
         badge::outline("Outline"),
         space::horizontal(),
-        checkbox(state.accept_terms).on_toggle(Message::AcceptTerms),
-        checkbox(state.showcase_middle_checkbox).on_toggle(Message::SetShowcaseMiddleCheckbox),
-        checkbox(state.showcase_trailing_checkbox).on_toggle(Message::SetShowcaseTrailingCheckbox),
+        checkbox()
+            .checked(state.accept_terms)
+            .on_checked_change(Message::AcceptTerms),
+        checkbox()
+            .checked(state.showcase_middle_checkbox)
+            .on_checked_change(Message::SetShowcaseMiddleCheckbox),
+        checkbox()
+            .checked(state.showcase_trailing_checkbox)
+            .on_checked_change(Message::SetShowcaseTrailingCheckbox),
     ]
     .spacing(10)
     .align_y(Center)
@@ -190,7 +196,9 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
         .style(control_outline_button_style())
         .on_press(Message::Noop),
         space::horizontal(),
-        switch(state.connected).on_toggle(Message::ToggleConnection),
+        switch()
+            .checked(state.connected)
+            .on_checked_change(Message::ToggleConnection),
     ]
     .spacing(8)
     .align_y(Center)

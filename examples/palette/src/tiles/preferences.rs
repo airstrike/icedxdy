@@ -24,15 +24,18 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill);
 
     let public = field::field(
-        switch(state.preferences_public_stats).on_toggle(Message::PreferencesPublicStatsChanged),
+        switch()
+            .checked(state.preferences_public_stats)
+            .on_checked_change(Message::PreferencesPublicStatsChanged),
     )
     .orientation(field::Horizontal)
     .label("Public Statistics")
     .description("Allow others to see your total stream count and listening activity");
 
     let email = field::field(
-        switch(state.preferences_email_notifications)
-            .on_toggle(Message::PreferencesEmailNotificationsChanged),
+        switch()
+            .checked(state.preferences_email_notifications)
+            .on_checked_change(Message::PreferencesEmailNotificationsChanged),
     )
     .orientation(field::Horizontal)
     .label("Email Notifications")

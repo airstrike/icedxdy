@@ -195,9 +195,13 @@ impl page::Page for FieldPage {
             // — that example uses orientation="horizontal" which the MVP
             // doesn't ship; here the slots stack vertically.
             "checkbox" => container(
-                field(checkbox(self.checkbox_on).on_toggle(move |v| {
-                    Message::Page(pi, page::Message::BoolChanged(F_CHECKBOX, v))
-                }))
+                field(
+                    checkbox()
+                        .checked(self.checkbox_on)
+                        .on_checked_change(move |v| {
+                            Message::Page(pi, page::Message::BoolChanged(F_CHECKBOX, v))
+                        }),
+                )
                 .label("Sync Desktop & Documents folders")
                 .description(
                     "Your Desktop & Documents folders are being synced with iCloud Drive.",
@@ -211,9 +215,13 @@ impl page::Page for FieldPage {
             // — that example uses orientation="horizontal" which the MVP
             // doesn't ship; vertical stack here.
             "switch" => container(
-                field(switch(self.switch_on).on_toggle(move |v| {
-                    Message::Page(pi, page::Message::BoolChanged(F_SWITCH, v))
-                }))
+                field(
+                    switch()
+                        .checked(self.switch_on)
+                        .on_checked_change(move |v| {
+                            Message::Page(pi, page::Message::BoolChanged(F_SWITCH, v))
+                        }),
+                )
                 .label("Multi-factor authentication")
                 .description("Require a second verification step at sign-in."),
             )

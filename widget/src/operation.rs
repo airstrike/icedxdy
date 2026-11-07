@@ -16,6 +16,7 @@
 //! # }
 //! ```
 
+pub mod control;
 pub mod position;
 pub mod scroll;
 

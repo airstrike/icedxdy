@@ -40,9 +40,13 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         b
     };
 
-    let armed_check = field(checkbox(state.armed).on_toggle(|_| Message::ArmDelete))
-        .label("Acknowledge this is irreversible")
-        .description("Required before the delete fires.");
+    let armed_check = field(
+        checkbox()
+            .checked(state.armed)
+            .on_checked_change(|_| Message::ArmDelete),
+    )
+    .label("Acknowledge this is irreversible")
+    .description("Required before the delete fires.");
 
     // shadcn's `<code>` chip: bg-muted + small padding + radius. The
     // `text::inline_code` helper sets only the font/size/weight; the

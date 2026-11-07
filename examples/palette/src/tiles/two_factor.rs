@@ -22,7 +22,9 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let body = row![
         label,
         space::horizontal(),
-        switch::switch(state.connected).on_toggle(Message::ToggleConnection),
+        switch::switch()
+            .checked(state.connected)
+            .on_checked_change(Message::ToggleConnection),
     ]
     .spacing(16)
     .width(Fill);

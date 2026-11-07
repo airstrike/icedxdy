@@ -10,9 +10,13 @@
 //! ```ignore
 //! use icedxdy::widget::switch;
 //!
-//! switch(self.is_on)
-//!     .label("Airplane mode")
-//!     .on_toggle(Message::ToggleAirplane)
+//! // Uncontrolled: the switch keeps its own value.
+//! switch().label("Airplane mode")
+//!
+//! // Controlled: the app owns the value.
+//! switch()
+//!     .checked(self.is_on)
+//!     .on_checked_change(Message::ToggleAirplane)
 //! ```
 
 pub(crate) mod element;
@@ -20,7 +24,7 @@ pub mod widget;
 
 pub use widget::{Catalog, Ring, Status, Style, StyleFn};
 
-use crate::compose::{Compose, Slot};
+use crate::compose::{Compose, Inherited, Slot};
 use iced_core::Length;
 use iced_core::text::IntoFragment;
 use iced_widget::Renderer;
@@ -31,43 +35,64 @@ use self::element::from_core;
 
 /// A styled switch matching shadcn/ui's Switch component.
 ///
-/// Disabled state follows iced's convention: a switch with no
-/// `.on_toggle(...)` is disabled.
+/// Radix state: uncontrolled with [`default_checked`](Self::default_checked)
+/// (the value lives in the widget tree), or controlled with
+/// [`checked`](Self::checked) plus
+/// [`on_checked_change`](Self::on_checked_change). It is enabled unless
+/// [`disabled`](Self::disabled) or a disabled ancestor says otherwise.
 pub struct Switch<'a, Message> {
-    is_toggled: bool,
+    checked: Option<bool>,
+    default_checked: bool,
+    disabled: bool,
     label: Option<iced_core::text::Fragment<'a>>,
     width: Length,
-    on_toggle: Option<Box<dyn Fn(bool) -> Message + 'a>>,
+    on_checked_change: Option<Box<dyn Fn(bool) -> Message + 'a>>,
     style: Option<theme::switch::StyleFn<'a, Theme>>,
 }
 
-/// Create a [`Switch`] with the given on/off state.
-pub fn switch<'a, Message: 'a>(is_toggled: bool) -> Switch<'a, Message> {
+/// Create an off, uncontrolled [`Switch`].
+pub fn switch<'a, Message: 'a>() -> Switch<'a, Message> {
     Switch {
-        is_toggled,
+        checked: None,
+        default_checked: false,
+        disabled: false,
         label: None,
         width: Length::Shrink,
-        on_toggle: None,
+        on_checked_change: None,
         style: None,
     }
 }
 
 impl<'a, Message: 'a> Switch<'a, Message> {
+    /// Control the switch: it always shows `checked`, and a click only
+    /// publishes [`on_checked_change`](Self::on_checked_change).
+    pub fn checked(mut self, checked: bool) -> Self {
+        self.checked = Some(checked);
+        self
+    }
+
+    /// The initial state of an uncontrolled switch. Later rebuilds keep the
+    /// value the user toggled to.
+    pub fn default_checked(mut self, checked: bool) -> Self {
+        self.default_checked = checked;
+        self
+    }
+
+    /// Set the message published with the new checked state on every toggle.
+    pub fn on_checked_change(mut self, on_change: impl Fn(bool) -> Message + 'a) -> Self {
+        self.on_checked_change = Some(Box::new(on_change));
+        self
+    }
+
+    /// Disable the switch.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
     /// Set the optional inline label.
     pub fn label(mut self, label: impl IntoFragment<'a>) -> Self {
         self.label = Some(label.into_fragment());
-        self
-    }
-
-    /// Set the toggle callback. Without this call, the switch is disabled.
-    pub fn on_toggle<F: Fn(bool) -> Message + 'a>(mut self, on_toggle: F) -> Self {
-        self.on_toggle = Some(Box::new(on_toggle));
-        self
-    }
-
-    /// Set the toggle callback, if `Some`. `None` disables the switch.
-    pub fn on_toggle_maybe<F: Fn(bool) -> Message + 'a>(mut self, on_toggle: Option<F>) -> Self {
-        self.on_toggle = on_toggle.map(|f| Box::new(f) as _);
         self
     }
 
@@ -91,8 +116,11 @@ impl<'a, Message: 'a> From<Switch<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(s: Switch<'a, Message>) -> Self {
-        let mut tg: widget::Toggler<'a, Message, Theme, Renderer> =
-            widget::Toggler::new(s.is_toggled).width(s.width);
+        let tg: widget::Toggler<'a, Message, Theme, Renderer> = match s.checked {
+            Some(checked) => widget::Toggler::new(checked),
+            None => widget::Toggler::new(false).uncontrolled(s.default_checked),
+        };
+        let mut tg = tg.width(s.width).disabled(s.disabled);
 
         if let Some(label) = s.label {
             tg = tg.label(label);
@@ -107,8 +135,8 @@ impl<'a, Message: 'a> From<Switch<'a, Message>>
             tg = tg.class(bridge);
         }
 
-        if let Some(on_toggle) = s.on_toggle {
-            tg = tg.on_toggle(on_toggle);
+        if let Some(on_change) = s.on_checked_change {
+            tg = tg.on_toggle(on_change);
         }
 
         tg.into()
@@ -122,6 +150,10 @@ impl<'a, Message: 'a> From<Switch<'a, Message>> for Slot<'a, Message> {
 }
 
 impl<'a, Message: 'a> Compose<Message> for Switch<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.disabled |= from.is_disabled();
+    }
+
     fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,

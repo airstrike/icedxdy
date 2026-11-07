@@ -138,7 +138,9 @@ impl page::Page for SwitchPage {
             // Demo (hero): switch + plain inline label. Verbatim from
             // `.nova/apps/v4/examples/radix/switch-demo.tsx`.
             "demo" => row![
-                switch(self.demo).on_toggle(toggle(F_DEMO)),
+                switch()
+                    .checked(self.demo)
+                    .on_checked_change(toggle(F_DEMO)),
                 text::label("Airplane Mode"),
             ]
             .spacing(8)
@@ -162,7 +164,9 @@ impl page::Page for SwitchPage {
                 ]
                 .spacing(2)
                 .width(iced::Fill),
-                switch(self.desc).on_toggle(toggle(F_DESC)),
+                switch()
+                    .checked(self.desc)
+                    .on_checked_change(toggle(F_DESC)),
             ]
             .spacing(8)
             .width(384)
@@ -172,9 +176,12 @@ impl page::Page for SwitchPage {
             // Disabled label: nova cascades opacity-50 via data-disabled on Field.
             // text::muted approximates the dimming today; text::label (Phase 3)
             // + a proper opacity tweak (Phase 4) will land the exact spec.
-            "disabled" => row![switch(false), text::muted("Disabled").medium(),]
-                .spacing(8)
-                .into(),
+            "disabled" => row![
+                switch().checked(false).disabled(true),
+                text::muted("Disabled").medium(),
+            ]
+            .spacing(8)
+            .into(),
 
             // Invalid: destructive border via the `theme::switch::Invalid`
             // variant, matching shadcn's `aria-invalid` styling. Layout
@@ -190,8 +197,9 @@ impl page::Page for SwitchPage {
                 ]
                 .spacing(2)
                 .width(iced::Fill),
-                switch(self.invalid)
-                    .on_toggle(toggle(F_INVALID))
+                switch()
+                    .checked(self.invalid)
+                    .on_checked_change(toggle(F_INVALID))
                     .style(theme::switch::Invalid),
             ]
             .spacing(8)

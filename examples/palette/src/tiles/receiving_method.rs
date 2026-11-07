@@ -75,7 +75,6 @@ fn method_card(
     title: &'static str,
     description: &'static str,
 ) -> Slot<'static, Message> {
-    let selected = state.receiving_method == method;
     let control = radio(
         "",
         method,
@@ -93,8 +92,7 @@ fn method_card(
     field::field(control)
         .orientation(field::Horizontal)
         .label(label)
-        .card(selected)
-        .on_press(Message::SetReceivingMethod(method))
+        .card()
         .width(Fill)
         .into()
 }

@@ -22,15 +22,20 @@
 //!     .error(text::error("This email is already taken."));
 //!
 //! // Horizontal card — checkbox with label + description in a bordered card.
-//! // Active tint tracks the checkbox state (caller wires both on_toggle and
-//! // on_press, see `.on_press` docs).
-//! field::field(checkbox(state).on_toggle(Message::Toggle))
+//! // Pressing the label toggles the checkbox; the card tints while it is
+//! // checked.
+//! field::field(checkbox().default_checked(true))
 //!     .orientation(field::Orientation::Horizontal)
 //!     .label("Enable notifications")
 //!     .description("You can enable or disable notifications at any time.")
-//!     .card(state)
-//!     .on_press(Message::Toggle(!state));
+//!     .card();
 //! ```
+//!
+//! # Label and control
+//!
+//! Like shadcn's `<FieldLabel htmlFor>`, pressing the label activates the
+//! field's control through the [`control`](crate::operation::control)
+//! operations: a checkbox, switch or radio toggles, an input takes focus.
 //!
 //! # Slot order — Vertical (default)
 //!
@@ -56,7 +61,7 @@
 //! pair.
 
 use iced_widget::Widget;
-mod animated_card;
+pub mod widget;
 
 use iced_core::Length;
 use iced_widget::Renderer;
@@ -64,8 +69,8 @@ use icedxdy_core::Theme;
 use icedxdy_core::theme::field::Card;
 use icedxdy_core::theme::field::CardActive;
 
-use crate::compose::{Compose, Slot};
-use animated_card::AnimatedCard;
+use crate::compose::{Compose, Inherited, Slot};
+use crate::marker::{self, Press};
 
 // Re-export the crate-root [`icedxdy::Orientation`] (and its bare variants)
 // at this module path. The underlying type is shared across widgets — a
@@ -81,7 +86,7 @@ pub use icedxdy_core::Horizontal;
 pub use icedxdy_core::Orientation;
 pub use icedxdy_core::Vertical;
 
-/// A labeled-input wrapper with optional card chrome and click-anywhere handling.
+/// A labeled control with optional description, error and card chrome.
 ///
 /// Shape: `transformation-method` (per the OPAQUE guide) — the constructor
 /// is born from the inner content widget; builder methods carry forward state;
@@ -92,10 +97,7 @@ pub struct Field<'a, Message> {
     description: Option<Slot<'a, Message>>,
     error: Option<Slot<'a, Message>>,
     orientation: Orientation,
-    /// `Some(true)` = card + active tint; `Some(false)` = card + inactive border;
-    /// `None` = no card wrapper.
-    card: Option<bool>,
-    on_press: Option<Message>,
+    card: bool,
     width: Option<Length>,
 }
 
@@ -121,8 +123,7 @@ pub fn field<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Field<'a
         description: None,
         error: None,
         orientation: Orientation::Vertical,
-        card: None,
-        on_press: None,
+        card: false,
         width: None,
     }
 }
@@ -182,17 +183,17 @@ impl<'a, Message: 'a> Field<'a, Message> {
 
     /// Wrap the entire field in a bordered card container.
     ///
-    /// `is_active = true` → primary-tinted border + bg (`border-primary/30`,
-    /// `bg-primary/5`). Matches shadcn's `has-data-checked:border-primary/30
-    /// has-data-checked:bg-primary/5` on `FieldLabel`.
-    ///
-    /// `is_active = false` → 1px `border-border`, transparent bg.
+    /// While the field's control is checked the card takes a primary-tinted
+    /// border and background (`border-primary/30`, `bg-primary/5`), shadcn's
+    /// `has-data-checked:` cascade on `FieldLabel`; otherwise a 1px
+    /// `border-border` on a transparent background. The control's state is
+    /// read through the `checked` operation
+    /// ([`control`](crate::operation::control)), so the card needs no flag of its own.
     ///
     /// The card adds 10px padding (`p-2.5`) on all sides and `rounded-lg`
-    /// corners. Caller drives the active/inactive choice — iced has no
-    /// `data-checked` CSS cascade.
-    pub fn card(mut self, is_active: bool) -> Self {
-        self.card = Some(is_active);
+    /// corners.
+    pub fn card(mut self) -> Self {
+        self.card = true;
         self
     }
 
@@ -254,33 +255,6 @@ impl<'a, Message: 'a> Compose<Message> for Group<'a, Message> {
     }
 }
 
-impl<'a, Message: Clone + 'a> Field<'a, Message> {
-    /// Fire `message` when the user clicks anywhere in the field area.
-    ///
-    /// The inner content widget (e.g. a `Checkbox`) retains its own
-    /// `.on_toggle(...)` handler. Iced's `mouse_area` propagates the press
-    /// event up without consuming it from children, so clicking the checkbox
-    /// itself fires the checkbox toggle; clicking the surrounding card area
-    /// fires `on_press`. Wire both for full click-anywhere coverage:
-    ///
-    /// ```ignore
-    /// field::field(checkbox(state).on_toggle(Message::Toggle(true)))
-    ///     .on_press(Message::Toggle(!state))
-    /// ```
-    ///
-    /// Callers should use idempotent state-set messages (set `true`/`false`)
-    /// rather than flip-flop toggles when both handlers fire on the same
-    /// click, since iced's mouse_area may fire on_press for clicks that also
-    /// reach child widgets.
-    ///
-    /// Requires `Message: Clone` (iced's `mouse_area` clones the message
-    /// for each press event).
-    pub fn on_press(mut self, message: Message) -> Self {
-        self.on_press = Some(message);
-        self
-    }
-}
-
 impl<'a, Message: Clone + 'a> From<Field<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
@@ -296,6 +270,16 @@ impl<'a, Message: Clone + 'a> From<Field<'a, Message>> for Slot<'a, Message> {
 }
 
 impl<'a, Message: Clone + 'a> Compose<Message> for Field<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.content.inherit(from);
+        for slot in [&mut self.label, &mut self.description, &mut self.error]
+            .into_iter()
+            .flatten()
+        {
+            slot.inherit(from);
+        }
+    }
+
     fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
@@ -307,9 +291,21 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Field<'a, Message> {
             error,
             orientation,
             card,
-            on_press,
             width,
         } = *self;
+
+        // The label records presses for the field to activate its control.
+        // A card is a label as a whole (shadcn wraps the field in its
+        // `FieldLabel`), so it marks the entire field below instead.
+        let label = label.map(
+            |label| -> iced_core::Element<'a, Message, Theme, Renderer> {
+                if card {
+                    label.compose()
+                } else {
+                    marker::marker(label.compose(), widget::Label, Press::Any).into()
+                }
+            },
+        );
 
         // Build the inner layout depending on orientation.
         let inner: iced_core::Element<'a, Message, Theme, Renderer> = match orientation {
@@ -319,7 +315,7 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Field<'a, Message> {
                 // pattern `alert::Alert::compose` uses.
                 let mut col = iced_widget::Column::new().spacing(8);
                 if let Some(label) = label {
-                    col = col.push(label.compose());
+                    col = col.push(label);
                 }
                 col = col.push(content.compose());
                 if let Some(description) = description {
@@ -354,7 +350,7 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Field<'a, Message> {
                     let content_element = content.compose();
                     let mut right = iced_widget::Column::new().spacing(2);
                     if let Some(label) = label {
-                        right = right.push(label.compose());
+                        right = right.push(label);
                     }
                     if let Some(description) = description {
                         right = right.push(description.compose());
@@ -379,35 +375,19 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Field<'a, Message> {
             }
         };
 
-        // Optionally wrap in a card container.
-        // shadcn FieldLabel: `has-[>[data-slot=field]]:rounded-lg
-        //   has-[>[data-slot=field]]:border
-        //   *:data-[slot=field]:p-2.5
-        //   has-data-checked:border-primary/30
-        //   has-data-checked:bg-primary/5`
-        //
-        // We swap stock `iced_widget::container` for an [`AnimatedCard`]
-        // when card mode is on — the card chrome (border + bg) cross-fades
-        // in lockstep with the inner checkbox / switch when `is_active`
-        // toggles, matching shadcn's `transition-colors` cascade. The
-        // bezier curve and easing match the inner checkbox + switch
-        // widgets exactly so a card + its inner control animate as one
-        // synchronized state change.
-        let carded: iced_core::Element<'a, Message, Theme, Renderer> = match card {
-            Some(is_active) => {
-                let inactive: iced_widget::container::StyleFn<'_, Theme> = Card.into();
-                let active: iced_widget::container::StyleFn<'_, Theme> = CardActive.into();
-                AnimatedCard::new(inner, is_active, inactive, active)
-                    .padding(10)
-                    .into()
-            }
-            None => inner,
+        let inner = if card {
+            marker::marker(inner, widget::Label, Press::Any).into()
+        } else {
+            inner
         };
-
-        // Optionally wrap in a mouse_area for click-anywhere handling.
-        let pressed: iced_core::Element<'a, Message, Theme, Renderer> = match on_press {
-            Some(message) => iced_widget::mouse_area(carded).on_press(message).boxed(),
-            None => carded,
+        let field = widget::Field::new(inner);
+        let field: iced_core::Element<'a, Message, Theme, Renderer> = if card {
+            // shadcn FieldLabel: `has-[>[data-slot=field]]:rounded-lg
+            //   has-[>[data-slot=field]]:border *:data-[slot=field]:p-2.5
+            //   has-data-checked:border-primary/30 has-data-checked:bg-primary/5`
+            field.card(Card.into(), CardActive.into(), 10).into()
+        } else {
+            field.into()
         };
 
         // Optionally apply the outer width via a thin container wrapper.
@@ -415,8 +395,8 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Field<'a, Message> {
         // AnimatedCard, mouse_area), and matches the convention of similar
         // wrapper widgets.
         match width {
-            Some(w) => iced_widget::container(pressed).width(w).boxed(),
-            None => pressed,
+            Some(w) => iced_widget::container(field).width(w).boxed(),
+            None => field,
         }
     }
 }
@@ -642,25 +622,12 @@ mod tests {
         assert_eq!(f.orientation, field::Orientation::Horizontal);
         assert!(f.label.is_some());
         assert!(f.description.is_some());
-        assert!(f.card.is_none(), "no card set by default");
+        assert!(!f.card, "no card set by default");
     }
 
-    /// `.card(false)` populates the card slot with `Some(false)` (inactive).
     #[test]
-    fn card_inactive_is_set() {
-        let f: field::Field<'_, Msg> = field::field("content").card(false);
-        assert_eq!(
-            f.card,
-            Some(false),
-            "card(false) must set card = Some(false)"
-        );
-        assert!(f.on_press.is_none());
-    }
-
-    /// `.card(true)` populates the card slot with `Some(true)` (active).
-    #[test]
-    fn card_active_is_set() {
-        let f: field::Field<'_, Msg> = field::field("content").card(true);
-        assert_eq!(f.card, Some(true), "card(true) must set card = Some(true)");
+    fn card_is_set() {
+        let f: field::Field<'_, Msg> = field::field("content").card();
+        assert!(f.card);
     }
 }

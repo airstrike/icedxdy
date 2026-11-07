@@ -34,8 +34,9 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
                         .width(Fill),
                         column![
                             text::small("Auto Schedule").style(theme::text::Muted),
-                            switch(state.shade_auto_schedule)
-                                .on_toggle(Message::ToggleShadeSchedule),
+                            switch()
+                                .checked(state.shade_auto_schedule)
+                                .on_checked_change(Message::ToggleShadeSchedule),
                         ]
                         .spacing(Space::U2),
                     ]

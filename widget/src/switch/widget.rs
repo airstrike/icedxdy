@@ -30,6 +30,7 @@ use crate::core::{
     Animation, Background, Border, Color, Element, Em, Event, Font, Layout, Length, Pixels,
     Rectangle, Shell, Size, Theme, Widget,
 };
+use crate::operation::control::Control;
 
 use std::marker::PhantomData;
 
@@ -50,6 +51,8 @@ where
     Renderer: text::Renderer,
 {
     is_toggled: bool,
+    is_controlled: bool,
+    is_disabled: bool,
     on_toggle: Option<Box<dyn Fn(bool) -> Message + 'a>>,
     label: Option<text::Fragment<'a>>,
     width: Length,
@@ -86,10 +89,12 @@ where
     /// Sweeten uses 16; we use 18.4 to match the nova spec exactly.
     pub const DEFAULT_SIZE: f32 = 18.4;
 
-    /// Creates a new [`Toggler`].
+    /// Creates a new controlled [`Toggler`] showing `is_toggled`.
     pub fn new(is_toggled: bool) -> Self {
         Toggler {
             is_toggled,
+            is_controlled: true,
+            is_disabled: false,
             on_toggle: None,
             label: None,
             width: Length::Shrink,
@@ -119,10 +124,22 @@ where
         self
     }
 
+    /// Makes the [`Toggler`] uncontrolled: it starts at `is_toggled` and
+    /// keeps its own value in the widget tree from then on.
+    pub fn uncontrolled(mut self, is_toggled: bool) -> Self {
+        self.is_toggled = is_toggled;
+        self.is_controlled = false;
+        self
+    }
+
+    /// Sets whether the [`Toggler`] is disabled.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.is_disabled = disabled;
+        self
+    }
+
     /// Sets the message that should be produced when a user toggles
     /// the [`Toggler`].
-    ///
-    /// If this method is not called, the [`Toggler`] will be disabled.
     pub fn on_toggle(mut self, on_toggle: impl Fn(bool) -> Message + 'a) -> Self {
         self.on_toggle = Some(Box::new(on_toggle));
         self
@@ -130,8 +147,6 @@ where
 
     /// Sets the message that should be produced when a user toggles
     /// the [`Toggler`], if `Some`.
-    ///
-    /// If `None`, the [`Toggler`] will be disabled.
     pub fn on_toggle_maybe(mut self, on_toggle: Option<impl Fn(bool) -> Message + 'a>) -> Self {
         self.on_toggle = on_toggle.map(|on_toggle| Box::new(on_toggle) as _);
         self
@@ -244,9 +259,37 @@ where
 /// Internal state for the animated [`Toggler`].
 struct State<P: text::Paragraph> {
     paragraph: paragraph::Plain<P>,
+    /// The value an uncontrolled toggler keeps across rebuilds; a
+    /// controlled one mirrors its prop here.
+    value: bool,
+    control: Control,
     animation: Animation<bool>,
     now: Option<Instant>,
     last_is_toggled: bool,
+}
+
+impl<Message, Theme, Renderer> Toggler<'_, Message, Theme, Renderer>
+where
+    Theme: Catalog,
+    Renderer: text::Renderer,
+{
+    /// Flip the toggler as a click does: an uncontrolled toggler stores the
+    /// new value, and the change message is published either way.
+    fn toggle(&mut self, state: &mut State<Renderer::Paragraph>, shell: &mut Shell<'_, Message>) {
+        let next = !self.is_toggled;
+
+        if !self.is_controlled {
+            self.is_toggled = next;
+            state.value = next;
+            shell.request_redraw();
+        }
+
+        if let Some(on_toggle) = &self.on_toggle {
+            shell.publish(on_toggle(next));
+        }
+
+        shell.capture_event();
+    }
 }
 
 impl<Message, Theme, Renderer> widget::Meta for Toggler<'_, Message, Theme, Renderer>
@@ -269,6 +312,8 @@ where
     fn state(&self) -> tree::State {
         tree::State::new(State::<Renderer::Paragraph> {
             paragraph: paragraph::Plain::default(),
+            value: self.is_toggled,
+            control: Control::new(self.is_toggled),
             animation: Animation::new(self.is_toggled)
                 .very_quick()
                 .easing(Easing::EaseOut),
@@ -288,6 +333,28 @@ where
         // The children of the tree are the track and the label; they only
         // carry their geometry, so no state is needed.
         tree.children.resize_with(2, Tree::empty);
+
+        let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
+
+        if self.is_controlled {
+            state.value = self.is_toggled;
+        } else {
+            self.is_toggled = state.value;
+        }
+    }
+
+    fn operate(
+        &mut self,
+        tree: &mut Tree,
+        layout: Layout,
+        _viewport: &Rectangle,
+        _renderer: &Renderer,
+        operation: &mut dyn widget::Operation,
+    ) {
+        let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
+
+        state.control.set_checked(self.is_toggled);
+        operation.custom(None, layout.bounds(), &mut state.control);
     }
 
     fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
@@ -359,6 +426,12 @@ where
     ) {
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
+        // A linked label (Field) pressed this toggler through the `activate`
+        // operation; act on it like a click.
+        if state.control.take_activation() && !self.is_disabled {
+            self.toggle(state, shell);
+        }
+
         // Animation bookkeeping — runs regardless of whether the widget is
         // enabled, so that in-flight animations complete even if the toggler
         // becomes disabled.
@@ -379,22 +452,15 @@ where
             }
         }
 
-        if let Some(on_toggle) = &self.on_toggle {
-            match event {
-                Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-                | Event::Touch(touch::Event::FingerPressed { .. }) => {
-                    let mouse_over = cursor.is_over(layout.bounds());
-
-                    if mouse_over {
-                        shell.publish(on_toggle(!self.is_toggled));
-                        shell.capture_event();
-                    }
-                }
-                _ => {}
-            }
+        if !self.is_disabled
+            && let Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
+            | Event::Touch(touch::Event::FingerPressed { .. }) = event
+            && cursor.is_over(layout.bounds())
+        {
+            self.toggle(state, shell);
         }
 
-        let current_status = if self.on_toggle.is_none() {
+        let current_status = if self.is_disabled {
             Status::Disabled {
                 is_toggled: self.is_toggled,
             }
@@ -427,7 +493,7 @@ where
         _renderer: &Renderer,
     ) -> mouse::Interaction {
         if cursor.is_over(layout.bounds()) {
-            if self.on_toggle.is_none() {
+            if self.is_disabled {
                 mouse::Interaction::NotAllowed
             } else {
                 self.interaction.unwrap_or_default()

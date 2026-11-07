@@ -18,8 +18,10 @@ pub mod input;
 pub mod item;
 #[cfg(feature = "markdown")]
 pub mod markdown;
+pub mod marker;
 pub mod operation;
 pub mod progress;
+pub mod radio;
 pub mod rich_text;
 pub mod row;
 pub mod rule;
@@ -38,7 +40,6 @@ pub mod text_input;
 pub mod toggle_group;
 pub mod weight;
 
-pub use iced_widget::Radio;
 pub use iced_widget::space;
 pub use iced_widget::{QRCode, qr_code};
 
@@ -58,6 +59,7 @@ pub use field::Field;
 pub use input::Input;
 pub use item::{Item, Media};
 pub use progress::Progress;
+pub use radio::Radio;
 pub use rich_text::{RichText, Span, rich_text, span};
 pub use row::Row;
 pub use size::Size;
@@ -148,18 +150,18 @@ pub fn skeleton<'a, Message: 'a>() -> Skeleton<'a, Message> {
     skeleton::skeleton()
 }
 
-/// Create a stock iced [`Radio`] styled by the icedxdy [`Theme`].
+/// Create a [`Radio`] for `value`, selected when `selected` holds it.
 pub fn radio<'a, Message, V>(
     label: impl Into<String>,
     value: V,
     selected: Option<V>,
-    on_click: impl FnOnce(V) -> Message,
-) -> Radio<'a, Message, icedxdy_core::Theme>
+    on_click: impl Fn(V) -> Message,
+) -> Radio<'a, Message>
 where
     Message: Clone + 'a,
     V: Eq + Copy,
 {
-    iced_widget::radio(label, value, selected, on_click)
+    radio::radio(label, value, selected, on_click)
 }
 
 /// Create a [`ToggleGroup`] from toggle-group items.
@@ -215,9 +217,9 @@ pub fn input<'a, Message: Clone + 'a>(
     input::input(placeholder)
 }
 
-/// Create a [`Checkbox`] in the given state.
-pub fn checkbox<'a, Message: 'a>(state: impl Into<checkbox::State>) -> Checkbox<'a, Message> {
-    checkbox::checkbox(state)
+/// Create an unchecked, uncontrolled [`Checkbox`].
+pub fn checkbox<'a, Message: 'a>() -> Checkbox<'a, Message> {
+    checkbox::checkbox()
 }
 
 /// Create a [`Progress`] bar with the given value (0..=100).
@@ -242,9 +244,9 @@ pub fn item<'a, Message: 'a>(
     item::item(children)
 }
 
-/// Create a [`Switch`] with the given on/off state.
-pub fn switch<'a, Message: 'a>(is_toggled: bool) -> Switch<'a, Message> {
-    switch::switch(is_toggled)
+/// Create an off, uncontrolled [`Switch`].
+pub fn switch<'a, Message: 'a>() -> Switch<'a, Message> {
+    switch::switch()
 }
 
 /// Create a [`Spinner`].

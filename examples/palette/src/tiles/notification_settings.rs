@@ -47,7 +47,9 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     };
 
     let select_all = field::field(
-        checkbox::checkbox(select_all_state).on_toggle(Message::SetAllNotificationSettings),
+        checkbox::checkbox()
+            .checked(select_all_state)
+            .on_checked_change(Message::SetAllNotificationSettings),
     )
     .orientation(field::Horizontal)
     .label("Select all");
@@ -76,8 +78,9 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
 fn notification_field(state: &State, n: &Notification) -> icedxdy::Slot<'static, Message> {
     let id = n.id;
     field::field(
-        checkbox::checkbox(state.notification_settings.contains(id))
-            .on_toggle(move |_| Message::ToggleNotificationSetting(id.to_owned())),
+        checkbox::checkbox()
+            .checked(state.notification_settings.contains(id))
+            .on_checked_change(move |_| Message::ToggleNotificationSetting(id.to_owned())),
     )
     .orientation(field::Horizontal)
     .label(n.label)

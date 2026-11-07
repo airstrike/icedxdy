@@ -1,23 +1,19 @@
-//! Animated container for [`Field`]'s card mode.
+//! The widget behind [`Field`](super::Field): it links the field's label to
+//! its control and paints the optional card chrome.
 //!
-//! Wraps a single child with a fade-on-toggle border + bg, driven by an
-//! `is_active: bool` flag. When the flag flips, both the border color and
-//! the background color cross-fade between two `iced::container::Style`
-//! values along the same `cubic-bezier(0.0, 0.0, 0.2, 1.0)` curve as the
-//! checkbox + switch, so the card reads as one synchronized state change
-//! when an inner control toggles.
+//! - **Label to control.** The label sits in a [`marker`] recording a
+//!   [`Label`] signal. After every event the field drains those signals and,
+//!   when its label was pressed, runs [`control::activate`] over its content:
+//!   a checkbox, switch or radio toggles as if clicked, an input takes focus.
+//!   This is shadcn's `<FieldLabel htmlFor>`.
+//! - **Card.** In card mode the border and background cross-fade between an
+//!   inactive and an active style, following [`control::checked`] read from
+//!   the content after every event (shadcn's `has-data-checked:` tint). The
+//!   fade runs on the same `cubic-bezier(0.0, 0.0, 0.2, 1.0)` curve as the
+//!   checkbox and switch, so card and control animate as one change.
 //!
-//! Stock `iced_widget::container` has no animation hook — its `Catalog` is
-//! a pure `Theme -> Style` lookup with no time/`Animation` input. This
-//! mini-widget is the smallest scope add-on that gives us the parity:
-//! Field stays structural; we only reach for a vendored Widget impl when
-//! the catalog can't carry the time signal.
-//!
-//! Style sources are kept as catalog `StyleFn`s (not pre-resolved values)
-//! so palette swaps + variant rewrites still flow through the closure
-//! every frame.
-//!
-//! [`Field`]: super::field::Field
+//! Style sources stay catalog `StyleFn`s, resolved every frame, so palette
+//! swaps flow through.
 
 use crate::animation::cubic_bezier;
 use crate::core::animation::Easing;
@@ -32,71 +28,93 @@ use crate::core::{
     Animation, Background, Border, Color, Element, Event, Layout, Length, Padding, Rectangle,
     Shell, Size, Vector, Widget, overlay,
 };
+use crate::marker;
+use crate::operation::control;
 
 use iced_widget::container::StyleFn;
 use icedxdy_core::Theme;
 
-/// A container that fades its border + background between two
-/// `container::Style` resolutions when `is_active` toggles.
-///
-/// Generic over `Renderer` so we don't bake in the active iced-renderer
-/// fallback type — `iced_widget::Renderer` is a feature-gated alias whose
-/// concrete type changes with build features (and is `()` with no
-/// renderer feature). The bound `core::Renderer` is enough for our
-/// `fill_quad` painter and child draw forwarding.
-pub struct AnimatedCard<'a, Message, Renderer = iced_widget::Renderer>
-where
-    Renderer: crate::core::Renderer,
-{
-    content: Element<'a, Message, Theme, Renderer>,
-    is_active: bool,
+/// The signal a field's label marker records when pressed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Label;
+
+/// The card chrome: the inactive and active styles to cross-fade between.
+struct Card<'a> {
     inactive: StyleFn<'a, Theme>,
     active: StyleFn<'a, Theme>,
     padding: Padding,
 }
 
-impl<'a, Message: 'a, Renderer> AnimatedCard<'a, Message, Renderer>
+/// A laid-out field: label, control, description and error, composed by
+/// the [`Field`](super::Field) builder.
+///
+/// Generic over `Renderer` so we don't bake in the active iced-renderer
+/// fallback type — `iced_widget::Renderer` is a feature-gated alias whose
+/// concrete type changes with build features (and is `()` with no
+/// renderer feature).
+pub struct Field<'a, Message, Renderer = iced_widget::Renderer>
 where
     Renderer: crate::core::Renderer,
 {
-    /// Create an animated card. `inactive` and `active` resolve to the
-    /// container styles to cross-fade between as `is_active` flips.
-    pub fn new(
-        content: Element<'a, Message, Theme, Renderer>,
-        is_active: bool,
-        inactive: StyleFn<'a, Theme>,
-        active: StyleFn<'a, Theme>,
-    ) -> Self {
+    content: Element<'a, Message, Theme, Renderer>,
+    card: Option<Card<'a>>,
+}
+
+impl<'a, Message: 'a, Renderer> Field<'a, Message, Renderer>
+where
+    Renderer: crate::core::Renderer,
+{
+    /// Wrap the composed field. Its label must sit in a [`marker`] recording
+    /// [`Label`].
+    pub fn new(content: Element<'a, Message, Theme, Renderer>) -> Self {
         Self {
             content,
-            is_active,
-            inactive,
-            active,
-            padding: Padding::ZERO,
+            card: None,
         }
     }
 
-    /// Sets the padding of the card.
-    pub fn padding(mut self, padding: impl Into<icedxdy_core::Padding>) -> Self {
+    /// Paint card chrome around the field, cross-fading from `inactive` to
+    /// `active` while its control is checked.
+    pub fn card(
+        mut self,
+        inactive: StyleFn<'a, Theme>,
+        active: StyleFn<'a, Theme>,
+        padding: impl Into<icedxdy_core::Padding>,
+    ) -> Self {
         let padding: icedxdy_core::Padding = padding.into();
-        self.padding = padding.into();
+        self.card = Some(Card {
+            inactive,
+            active,
+            padding: padding.into(),
+        });
         self
+    }
+
+    fn padding(&self) -> Padding {
+        self.card
+            .as_ref()
+            .map_or(Padding::ZERO, |card| card.padding)
     }
 }
 
-/// Widget-tree state — animation bookkeeping driven off `is_active`.
+/// Widget-tree state: the card tint, read from the control.
 struct State {
     animation: Animation<bool>,
     now: Option<Instant>,
-    last_is_active: bool,
+    /// Whether the control was checked at the last probe; `None` before the
+    /// first one, which snaps instead of fading.
+    is_active: Option<bool>,
 }
 
-impl<Message, Renderer> Meta for AnimatedCard<'_, Message, Renderer> where
-    Renderer: crate::core::Renderer
-{
+impl State {
+    fn is_active(&self) -> bool {
+        self.is_active.unwrap_or(false)
+    }
 }
 
-impl<Message, Renderer> Widget<Message, Theme, Renderer> for AnimatedCard<'_, Message, Renderer>
+impl<Message, Renderer> Meta for Field<'_, Message, Renderer> where Renderer: crate::core::Renderer {}
+
+impl<Message, Renderer> Widget<Message, Theme, Renderer> for Field<'_, Message, Renderer>
 where
     Renderer: crate::core::Renderer,
 {
@@ -108,11 +126,11 @@ where
         tree::State::new(State {
             // Match the inner checkbox / switch curve:
             // cubic-bezier(0, 0, 0.2, 1) — Tailwind v4's `--ease-out`.
-            animation: Animation::new(self.is_active)
+            animation: Animation::new(false)
                 .very_quick()
                 .easing(Easing::Custom(|t| cubic_bezier(0.0, 0.0, 0.2, 1.0, t))),
             now: None,
-            last_is_active: self.is_active,
+            is_active: None,
         })
     }
 
@@ -125,16 +143,14 @@ where
     }
 
     fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
-        let limits = limits.shrink(self.padding);
+        let padding = self.padding();
+        let limits = limits.shrink(padding);
         let child = &mut tree.children[0];
         self.content.layout(child, renderer, &limits);
-        child.translation = Vector::new(self.padding.left, self.padding.top);
+        child.translation = Vector::new(padding.left, padding.top);
 
         let size = child.size;
-        tree.size = Size::new(
-            size.width + self.padding.x(),
-            size.height + self.padding.y(),
-        );
+        tree.size = Size::new(size.width + padding.x(), size.height + padding.y());
     }
 
     fn update(
@@ -147,28 +163,22 @@ where
         shell: &mut Shell<'_, Message>,
         viewport: &Rectangle,
     ) {
-        let state = tree.state.downcast_mut::<State>();
+        {
+            let state = tree.state.downcast_mut::<State>();
 
-        if let Event::Window(window::Event::RedrawRequested(now)) = event {
-            state.now = Some(*now);
+            if let Event::Window(window::Event::RedrawRequested(now)) = event {
+                state.now = Some(*now);
 
-            if state.animation.is_animating(*now) {
-                shell.request_redraw();
+                if state.animation.is_animating(*now) {
+                    shell.request_redraw();
+                }
             }
         }
 
-        if self.is_active != state.last_is_active {
-            state.last_is_active = self.is_active;
-
-            if let Some(now) = state.now {
-                state.animation.go_mut(self.is_active, now);
-                shell.request_redraw();
-            }
-        }
-
-        // Always pass the event through to the child — the card chrome is
-        // purely visual; toggling logic lives on the inner widget.
-        let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+        let (child_layout, child_tree) = layout
+            .iter_mut(&mut tree.children)
+            .next()
+            .expect("a field has one child");
 
         self.content.update(
             child_tree,
@@ -179,6 +189,50 @@ where
             shell,
             viewport,
         );
+
+        let mut labels = marker::drain::<Label>();
+        self.content
+            .operate(child_tree, child_layout, viewport, renderer, &mut labels);
+
+        if !labels.into_signals().is_empty() {
+            // The control acts on the activation at its next event.
+            let mut activate = control::activate();
+            self.content
+                .operate(child_tree, child_layout, viewport, renderer, &mut activate);
+
+            if activate.is_done() {
+                shell.request_redraw();
+            }
+        }
+
+        if self.card.is_none() {
+            return;
+        }
+
+        let mut checked = control::checked();
+        self.content
+            .operate(child_tree, child_layout, viewport, renderer, &mut checked);
+        let is_active = checked.get().unwrap_or(false);
+
+        let state = tree.state.downcast_mut::<State>();
+
+        match state.is_active {
+            Some(was_active) if was_active == is_active => {}
+            Some(_) => {
+                state.is_active = Some(is_active);
+
+                if let Some(now) = state.now {
+                    state.animation.go_mut(is_active, now);
+                    shell.request_redraw();
+                }
+            }
+            None => {
+                state.is_active = Some(is_active);
+                state.animation = Animation::new(is_active)
+                    .very_quick()
+                    .easing(Easing::Custom(|t| cubic_bezier(0.0, 0.0, 0.2, 1.0, t)));
+            }
+        }
     }
 
     fn mouse_interaction(
@@ -189,7 +243,10 @@ where
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
-        let (child_layout, child_tree) = layout.iter(&tree.children).next().unwrap();
+        let (child_layout, child_tree) = layout
+            .iter(&tree.children)
+            .next()
+            .expect("a field has one child");
 
         self.content
             .mouse_interaction(child_tree, child_layout, cursor, viewport, renderer)
@@ -205,7 +262,10 @@ where
     ) {
         operation.container(None, layout.bounds(), viewport);
         operation.traverse(&mut |operation| {
-            let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+            let (child_layout, child_tree) = layout
+                .iter_mut(&mut tree.children)
+                .next()
+                .expect("a field has one child");
 
             self.content
                 .operate(child_tree, child_layout, viewport, renderer, operation);
@@ -225,10 +285,28 @@ where
         let state = tree.state.downcast_ref::<State>();
         let bounds = layout.bounds();
 
+        let Some(card) = &self.card else {
+            let (child_layout, child_tree) = layout
+                .iter(&tree.children)
+                .next()
+                .expect("a field has one child");
+
+            self.content.draw(
+                child_tree,
+                renderer,
+                theme,
+                renderer_style,
+                child_layout,
+                cursor,
+                viewport,
+            );
+            return;
+        };
+
         // Resolve both endpoints every frame so palette swaps land
         // immediately without an animation bookkeeping rebuild.
-        let off = (self.inactive)(theme);
-        let on = (self.active)(theme);
+        let off = (card.inactive)(theme);
+        let on = (card.active)(theme);
 
         // Cross-fade only `background` and `border.color` — the same
         // contract the inner checkbox / switch follow. Border width +
@@ -267,7 +345,7 @@ where
                 }
             }
             _ => {
-                if self.is_active {
+                if state.is_active() {
                     on
                 } else {
                     off
@@ -302,7 +380,10 @@ where
                 );
             }
 
-            let (child_layout, child_tree) = layout.iter(&tree.children).next().unwrap();
+            let (child_layout, child_tree) = layout
+                .iter(&tree.children)
+                .next()
+                .expect("a field has one child");
 
             self.content.draw(
                 child_tree,
@@ -327,7 +408,10 @@ where
         translation: Vector,
         window: Size,
     ) -> Vec<overlay::Element<'b, Message, Theme, Renderer>> {
-        let (child_layout, child_tree) = layout.iter_mut(&mut tree.children).next().unwrap();
+        let (child_layout, child_tree) = layout
+            .iter_mut(&mut tree.children)
+            .next()
+            .expect("a field has one child");
 
         self.content.overlay(
             child_tree,
@@ -340,12 +424,12 @@ where
     }
 }
 
-impl<'a, Message: 'a, Renderer> From<AnimatedCard<'a, Message, Renderer>>
+impl<'a, Message: 'a, Renderer> From<Field<'a, Message, Renderer>>
     for Element<'a, Message, Theme, Renderer>
 where
     Renderer: crate::core::Renderer + 'a,
 {
-    fn from(card: AnimatedCard<'a, Message, Renderer>) -> Self {
-        card._boxed()
+    fn from(field: Field<'a, Message, Renderer>) -> Self {
+        field._boxed()
     }
 }

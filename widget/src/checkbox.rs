@@ -9,9 +9,13 @@
 //! ```ignore
 //! use icedxdy::widget::checkbox;
 //!
-//! checkbox(self.is_checked)
-//!     .label("Accept terms and conditions")
-//!     .on_toggle(Message::ToggleTerms)
+//! // Uncontrolled: the checkbox keeps its own value.
+//! checkbox().default_checked(true)
+//!
+//! // Controlled: the app owns the value.
+//! checkbox()
+//!     .checked(self.is_checked)
+//!     .on_checked_change(Message::ToggleTerms)
 //! ```
 
 pub(crate) mod element;
@@ -19,7 +23,7 @@ pub mod widget;
 
 pub use widget::{Catalog, Ring, State, Status, Style, StyleFn};
 
-use crate::compose::{Compose, Slot};
+use crate::compose::{Compose, Inherited, Slot};
 use iced_core::Length;
 use iced_core::text::IntoFragment;
 use iced_widget::Renderer;
@@ -30,46 +34,67 @@ use self::element::from_core;
 
 /// A styled checkbox matching shadcn/ui's Checkbox component.
 ///
-/// Disabled state follows iced's convention: a checkbox with no
-/// `.on_toggle(...)` is disabled.
+/// Radix state: uncontrolled with [`default_checked`](Self::default_checked)
+/// (the value lives in the widget tree), or controlled with
+/// [`checked`](Self::checked) plus
+/// [`on_checked_change`](Self::on_checked_change). It is enabled unless
+/// [`disabled`](Self::disabled) or a disabled ancestor says otherwise.
 pub struct Checkbox<'a, Message> {
-    state: State,
+    checked: Option<State>,
+    default_checked: State,
+    disabled: bool,
     label: Option<iced_core::text::Fragment<'a>>,
     width: Length,
-    on_toggle: Option<Box<dyn Fn(bool) -> Message + 'a>>,
+    on_checked_change: Option<Box<dyn Fn(bool) -> Message + 'a>>,
     style: Option<theme::checkbox::StyleFn<'a, Theme>>,
 }
 
-/// Create a [`Checkbox`] in the given state.
-///
-/// Accepts a [`State`] (`Checked` / `Unchecked` / `Indeterminate`) or a
-/// `bool` via the `From<bool> for State` impl.
-pub fn checkbox<'a, Message: 'a>(state: impl Into<State>) -> Checkbox<'a, Message> {
+/// Create an unchecked, uncontrolled [`Checkbox`].
+pub fn checkbox<'a, Message: 'a>() -> Checkbox<'a, Message> {
     Checkbox {
-        state: state.into(),
+        checked: None,
+        default_checked: State::Unchecked,
+        disabled: false,
         label: None,
         width: Length::Shrink,
-        on_toggle: None,
+        on_checked_change: None,
         style: None,
     }
 }
 
 impl<'a, Message: 'a> Checkbox<'a, Message> {
+    /// Control the checkbox: it always shows `checked`, and a click only
+    /// publishes [`on_checked_change`](Self::on_checked_change).
+    ///
+    /// Accepts a [`State`] (`Checked` / `Unchecked` / `Indeterminate`) or a
+    /// `bool`.
+    pub fn checked(mut self, checked: impl Into<State>) -> Self {
+        self.checked = Some(checked.into());
+        self
+    }
+
+    /// The initial state of an uncontrolled checkbox. Later rebuilds keep the
+    /// value the user toggled to.
+    pub fn default_checked(mut self, checked: impl Into<State>) -> Self {
+        self.default_checked = checked.into();
+        self
+    }
+
+    /// Set the message published with the new checked state on every toggle.
+    pub fn on_checked_change(mut self, on_change: impl Fn(bool) -> Message + 'a) -> Self {
+        self.on_checked_change = Some(Box::new(on_change));
+        self
+    }
+
+    /// Disable the checkbox.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
     /// Set the optional inline label.
     pub fn label(mut self, label: impl IntoFragment<'a>) -> Self {
         self.label = Some(label.into_fragment());
-        self
-    }
-
-    /// Set the toggle callback. Without this call, the checkbox is disabled.
-    pub fn on_toggle<F: Fn(bool) -> Message + 'a>(mut self, on_toggle: F) -> Self {
-        self.on_toggle = Some(Box::new(on_toggle));
-        self
-    }
-
-    /// Set the toggle callback, if `Some`. `None` disables the checkbox.
-    pub fn on_toggle_maybe<F: Fn(bool) -> Message + 'a>(mut self, on_toggle: Option<F>) -> Self {
-        self.on_toggle = on_toggle.map(|f| Box::new(f) as _);
         self
     }
 
@@ -93,8 +118,11 @@ impl<'a, Message: 'a> From<Checkbox<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(c: Checkbox<'a, Message>) -> Self {
-        let mut cb: widget::Checkbox<'a, Message, Theme, Renderer> =
-            widget::Checkbox::new(c.state).width(c.width);
+        let cb: widget::Checkbox<'a, Message, Theme, Renderer> = match c.checked {
+            Some(checked) => widget::Checkbox::new(checked),
+            None => widget::Checkbox::new(State::Unchecked).uncontrolled(c.default_checked),
+        };
+        let mut cb = cb.width(c.width).disabled(c.disabled);
 
         if let Some(label) = c.label {
             cb = cb.label(label);
@@ -109,8 +137,8 @@ impl<'a, Message: 'a> From<Checkbox<'a, Message>>
             cb = cb.class(bridge);
         }
 
-        if let Some(on_toggle) = c.on_toggle {
-            cb = cb.on_toggle(on_toggle);
+        if let Some(on_change) = c.on_checked_change {
+            cb = cb.on_toggle(on_change);
         }
 
         cb.into()
@@ -124,6 +152,10 @@ impl<'a, Message: 'a> From<Checkbox<'a, Message>> for Slot<'a, Message> {
 }
 
 impl<'a, Message: 'a> Compose<Message> for Checkbox<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.disabled |= from.is_disabled();
+    }
+
     fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,

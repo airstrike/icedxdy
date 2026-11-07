@@ -44,13 +44,21 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .description("Shown in transactions and notifications.")
     .width(Fill);
 
-    let terms = field(checkbox(state.accept_terms).on_toggle(Message::AcceptTerms))
-        .label("Accept terms")
-        .description("Required before we can save your preferences.");
+    let terms = field(
+        checkbox()
+            .checked(state.accept_terms)
+            .on_checked_change(Message::AcceptTerms),
+    )
+    .label("Accept terms")
+    .description("Required before we can save your preferences.");
 
-    let emails = field(switch::switch(state.subscribe_emails).on_toggle(Message::SubscribeEmails))
-        .label("Weekly digest")
-        .description("Sundays at 6pm UTC. Unsubscribe in one click.");
+    let emails = field(
+        switch::switch()
+            .checked(state.subscribe_emails)
+            .on_checked_change(Message::SubscribeEmails),
+    )
+    .label("Weekly digest")
+    .description("Sundays at 6pm UTC. Unsubscribe in one click.");
 
     let primary_cta = {
         let mut b = button("Save preferences").width(Fill);

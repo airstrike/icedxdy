@@ -31,6 +31,7 @@ use crate::core::{
     Animation, Background, Border, Color, Element, Em, Event, Font, Layout, Length, Pixels,
     Rectangle, Shell, Size, Theme, Widget,
 };
+use crate::operation::control::Control;
 
 use std::marker::PhantomData;
 
@@ -56,6 +57,8 @@ where
     Theme: Catalog,
 {
     state: State,
+    is_controlled: bool,
+    is_disabled: bool,
     on_toggle: Option<Box<dyn Fn(bool) -> Message + 'a>>,
     label: Option<text::Fragment<'a>>,
     width: Length,
@@ -82,7 +85,7 @@ where
     /// The default size of a [`Checkbox`].
     const DEFAULT_SIZE: f32 = 16.0;
 
-    /// Creates a new [`Checkbox`].
+    /// Creates a new controlled [`Checkbox`] showing `state`.
     ///
     /// Accepts a [`State`] (the domain enum with `Checked`, `Unchecked`, and
     /// `Indeterminate` variants) — or a `bool`, via the
@@ -90,6 +93,8 @@ where
     pub fn new(state: impl Into<State>) -> Self {
         Checkbox {
             state: state.into(),
+            is_controlled: true,
+            is_disabled: false,
             on_toggle: None,
             label: None,
             width: Length::Shrink,
@@ -121,11 +126,23 @@ where
         self
     }
 
+    /// Makes the [`Checkbox`] uncontrolled: it starts in `state` and keeps
+    /// its own value in the widget tree from then on.
+    pub fn uncontrolled(mut self, state: impl Into<State>) -> Self {
+        self.state = state.into();
+        self.is_controlled = false;
+        self
+    }
+
+    /// Sets whether the [`Checkbox`] is disabled.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.is_disabled = disabled;
+        self
+    }
+
     /// Sets the function that will be called when the [`Checkbox`] is toggled.
     /// It will receive the new state of the [`Checkbox`] and must produce a
     /// `Message`.
-    ///
-    /// Unless `on_toggle` is called, the [`Checkbox`] will be disabled.
     pub fn on_toggle<F>(mut self, f: F) -> Self
     where
         F: 'a + Fn(bool) -> Message,
@@ -136,8 +153,6 @@ where
 
     /// Sets the function that will be called when the [`Checkbox`] is toggled,
     /// if `Some`.
-    ///
-    /// If `None`, the checkbox will be disabled.
     pub fn on_toggle_maybe<F>(mut self, f: Option<F>) -> Self
     where
         F: Fn(bool) -> Message + 'a,
@@ -253,6 +268,10 @@ where
 /// fade fires identically when toggling between any two states.
 struct Internal<P: text::Paragraph> {
     paragraph: paragraph::Plain<P>,
+    /// The value an uncontrolled checkbox keeps across rebuilds; a
+    /// controlled one mirrors its prop here.
+    value: State,
+    control: Control,
     animation: Animation<bool>,
     now: Option<Instant>,
     last_is_marked: bool,
@@ -262,6 +281,40 @@ struct Internal<P: text::Paragraph> {
     /// outside and dragging in (or pressing in and dragging out before
     /// release) must not toggle.
     is_pressed: bool,
+}
+
+impl<Message, Theme, Renderer> Checkbox<'_, Message, Theme, Renderer>
+where
+    Renderer: text::Renderer,
+    Theme: Catalog,
+{
+    /// Flip the checkbox as a click does: an uncontrolled checkbox stores
+    /// the new value, and the change message is published either way.
+    ///
+    /// Indeterminate resolves to checked (the Radix convention: clicking a
+    /// tri-state checkbox commits to the on state).
+    fn toggle(
+        &mut self,
+        internal: &mut Internal<Renderer::Paragraph>,
+        shell: &mut Shell<'_, Message>,
+    ) {
+        let next = match self.state {
+            State::Checked => false,
+            State::Unchecked | State::Indeterminate => true,
+        };
+
+        if !self.is_controlled {
+            self.state = State::from(next);
+            internal.value = self.state;
+            shell.request_redraw();
+        }
+
+        if let Some(on_toggle) = &self.on_toggle {
+            shell.publish((on_toggle)(next));
+        }
+
+        shell.capture_event();
+    }
 }
 
 impl<Message, Theme, Renderer> widget::Meta for Checkbox<'_, Message, Theme, Renderer>
@@ -284,6 +337,8 @@ where
     fn state(&self) -> tree::State {
         tree::State::new(Internal::<Renderer::Paragraph> {
             paragraph: paragraph::Plain::default(),
+            value: self.state,
+            control: Control::new(self.state.is_marked()),
             animation: Animation::new(self.state.is_marked())
                 .very_quick()
                 // cubic-bezier(0, 0, 0.2, 1) — Tailwind v4's
@@ -306,6 +361,14 @@ where
         // The children of the tree are the box and the label; they only
         // carry their geometry, so no state is needed.
         tree.children.resize_with(2, Tree::empty);
+
+        let internal = tree.state.downcast_mut::<Internal<Renderer::Paragraph>>();
+
+        if self.is_controlled {
+            internal.value = self.state;
+        } else {
+            self.state = internal.value;
+        }
     }
 
     fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
@@ -362,6 +425,12 @@ where
     ) {
         let internal = tree.state.downcast_mut::<Internal<Renderer::Paragraph>>();
 
+        // A linked label (Field) pressed this checkbox through the
+        // `activate` operation; act on it like a click.
+        if internal.control.take_activation() && !self.is_disabled {
+            self.toggle(internal, shell);
+        }
+
         // Animation bookkeeping — runs regardless of whether the widget is
         // enabled, so that in-flight animations complete even if the
         // checkbox becomes disabled.
@@ -397,7 +466,7 @@ where
         match event {
             Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
             | Event::Touch(touch::Event::FingerPressed { .. })
-                if self.on_toggle.is_some() && cursor.is_over(layout.bounds()) =>
+                if !self.is_disabled && cursor.is_over(layout.bounds()) =>
             {
                 internal.is_pressed = true;
                 shell.capture_event();
@@ -407,19 +476,8 @@ where
             | Event::Touch(touch::Event::FingerLost { .. }) => {
                 let was_pressed = std::mem::replace(&mut internal.is_pressed, false);
 
-                if was_pressed
-                    && cursor.is_over(layout.bounds())
-                    && let Some(on_toggle) = &self.on_toggle
-                {
-                    // Indeterminate clicks resolve to "checked" (matches the
-                    // shadcn / radix convention: clicking a tri-state checkbox
-                    // commits to the on state). True/False simply flip.
-                    let next = match self.state {
-                        State::Checked => false,
-                        State::Unchecked | State::Indeterminate => true,
-                    };
-                    shell.publish((on_toggle)(next));
-                    shell.capture_event();
+                if was_pressed && cursor.is_over(layout.bounds()) {
+                    self.toggle(internal, shell);
                 }
             }
             _ => {}
@@ -427,7 +485,7 @@ where
 
         let current_status = {
             let is_mouse_over = cursor.is_over(layout.bounds());
-            let is_disabled = self.on_toggle.is_none();
+            let is_disabled = self.is_disabled;
             // For status purposes, Indeterminate paints with the "checked"
             // surface (the icon shows; nova styles `data-state=indeterminate`
             // and `data-state=checked` identically).
@@ -460,7 +518,7 @@ where
         _viewport: &Rectangle,
         _renderer: &Renderer,
     ) -> mouse::Interaction {
-        if cursor.is_over(layout.bounds()) && self.on_toggle.is_some() {
+        if cursor.is_over(layout.bounds()) && !self.is_disabled {
             mouse::Interaction::Pointer
         } else {
             mouse::Interaction::default()
@@ -671,14 +729,16 @@ where
         _renderer: &Renderer,
         operation: &mut dyn widget::Operation,
     ) {
+        let internal = tree.state.downcast_mut::<Internal<Renderer::Paragraph>>();
+
+        internal.control.set_checked(self.state.is_marked());
+        operation.custom(None, layout.bounds(), &mut internal.control);
+
         if self.label.is_none() {
             return;
         }
 
-        let paragraph = &mut tree
-            .state
-            .downcast_mut::<Internal<Renderer::Paragraph>>()
-            .paragraph;
+        let paragraph = &mut internal.paragraph;
 
         let mut children = layout.iter(&tree.children);
         let (layout, _) = children.next().unwrap();
