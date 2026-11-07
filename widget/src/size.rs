@@ -12,20 +12,15 @@ use iced_core::Padding;
 /// - `Default`: h-8  (32px), px-2.5 (10px), text-sm (14px),         gap-1.5 (6px)
 /// - `Lg`:      h-9  (36px), px-2.5 (10px), text-sm (14px),         gap-1.5 (6px)
 /// - `Icon`:    size-8 (32×32)
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Size {
     Xs,
     Sm,
+    #[default]
     Default,
     Lg,
     Icon,
     Custom(f32),
-}
-
-impl std::default::Default for Size {
-    fn default() -> Self {
-        Size::Default
-    }
 }
 
 impl Size {

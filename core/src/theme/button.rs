@@ -1153,7 +1153,7 @@ mod tests {
     #[test]
     fn outline_plus_opaque_dark_active_opaque_and_lifted() {
         let theme = Theme::dark();
-        let spec: Spec = (Outline + Opaque).into();
+        let spec: Spec = Outline + Opaque;
         let resolved = spec.resolve(&theme, Status::Active);
         let bg = bg_color(&resolved);
 
@@ -1180,7 +1180,7 @@ mod tests {
     #[test]
     fn outline_plus_opaque_light_active_remains_near_white() {
         let theme = Theme::light();
-        let spec: Spec = (Outline + Opaque).into();
+        let spec: Spec = Outline + Opaque;
         let resolved = spec.resolve(&theme, Status::Active);
         let bg = bg_color(&resolved);
 
@@ -1194,7 +1194,7 @@ mod tests {
     #[test]
     fn ghost_plus_opaque_remains_backgroundless() {
         let theme = Theme::dark();
-        let spec: Spec = (Ghost + Opaque).into();
+        let spec: Spec = Ghost + Opaque;
         let resolved = spec.resolve(&theme, Status::Active);
         assert!(
             resolved.background.is_none(),
@@ -1207,7 +1207,7 @@ mod tests {
     #[test]
     fn bg_atom_overrides_variant_background() {
         let theme = Theme::dark();
-        let spec: Spec = (Outline + Bg(Token::Primary)).into();
+        let spec: Spec = Outline + Bg(Token::Primary);
         let resolved = spec.resolve(&theme, Status::Active);
 
         let expected = theme.primary.base;
@@ -1227,7 +1227,7 @@ mod tests {
     #[test]
     fn outline_plus_opaque_preserves_state_lift() {
         let theme = Theme::dark();
-        let spec: Spec = (Outline + Opaque).into();
+        let spec: Spec = Outline + Opaque;
 
         let active = bg_color(&spec.resolve(&theme, Status::Active));
         let hovered = bg_color(&spec.resolve(&theme, Status::Hovered));

@@ -172,7 +172,7 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
             style.border.width = *w;
         }
         Tweak::Radius(r) => {
-            style.border.radius = (*r).into();
+            style.border.radius = *r;
         }
         Tweak::Opaque => {
             // Same OKLCH alpha-compositing as container — bake any translucent

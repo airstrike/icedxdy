@@ -5,7 +5,7 @@
 //! - [`Card`] — inactive border (`palette.border`) + transparent background.
 //!   Matches shadcn FieldLabel's `has-[>[data-slot=field]]:border` rule.
 //! - [`CardActive`] — primary-tinted border (`palette.primary` @ 30% alpha)
-//!   + primary-tinted background (`palette.primary` @ 5% alpha).
+//!   and a primary-tinted background (`palette.primary` @ 5% alpha).
 //!   Matches `has-data-checked:border-primary/30` and `has-data-checked:bg-primary/5`.
 //!
 //! Both carry 8px corner radius (`rounded-lg` per nova) and 1px border width.

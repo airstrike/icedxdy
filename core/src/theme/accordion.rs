@@ -530,7 +530,7 @@ mod tests {
     fn border_color_atom_overrides_divider() {
         let theme = Theme::light();
         let border_color = tweak::border::Color(Token::Foreground);
-        let spec: Spec = (Default + border_color).into();
+        let spec: Spec = Default + border_color;
         let resolved = spec.resolve(&theme, Status::Active { is_open: false });
         assert!(close(resolved.divider, theme.neutral.foreground));
     }

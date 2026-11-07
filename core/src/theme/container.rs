@@ -17,7 +17,7 @@ use crate::{Background, Border, Color, Shadow, radius};
 
 /// OKLCH-native container style. Mirrors `iced_widget::container::Style`
 /// field-for-field, but the color-bearing fields use our types.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Style {
     /// Optional text color cascaded into descendants.
     pub text_color: Option<Color>,
@@ -29,18 +29,6 @@ pub struct Style {
     pub shadow: Shadow,
     /// Whether the container should be snapped to the pixel grid.
     pub snap: bool,
-}
-
-impl std::default::Default for Style {
-    fn default() -> Self {
-        Self {
-            text_color: None,
-            background: None,
-            border: Border::default(),
-            shadow: Shadow::default(),
-            snap: false,
-        }
-    }
 }
 
 /// A styling closure that returns our OKLCH-native `Style`.
@@ -408,10 +396,10 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
             style.border.width = *w;
         }
         Tweak::Radius(r) => {
-            style.border.radius = (*r).into();
+            style.border.radius = *r;
         }
         Tweak::Shadow(s) => {
-            style.shadow = (*s).into();
+            style.shadow = *s;
         }
         Tweak::Opaque => {
             // Same OKLCH alpha-compositing as button — bake any translucent
@@ -862,7 +850,7 @@ mod tests {
     #[test]
     fn alpha_scales_card_background_alpha() {
         let theme = Theme::dark();
-        let spec: Spec = (Card + Alpha(0.5)).into();
+        let spec: Spec = Card + Alpha(0.5);
         let resolved = spec.resolve(&theme);
         let bg = bg_color(&resolved);
         let expected = theme.card.base.a * 0.5;
@@ -877,7 +865,7 @@ mod tests {
     #[test]
     fn alpha_on_transparent_is_noop() {
         let theme = Theme::dark();
-        let spec: Spec = (Transparent + Alpha(0.5)).into();
+        let spec: Spec = Transparent + Alpha(0.5);
         let resolved = spec.resolve(&theme);
         assert!(
             resolved.background.is_none(),

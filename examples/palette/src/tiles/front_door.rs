@@ -57,7 +57,7 @@ fn camera_style(theme: &Theme) -> Style {
         border: Border {
             radius: 10.0.into(),
             width: 1.0,
-            color: theme.neutral.border.into(),
+            color: theme.neutral.border,
         },
         ..Style::default()
     }

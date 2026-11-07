@@ -148,10 +148,10 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
             style.border.width = *w;
         }
         Tweak::Radius(r) => {
-            style.border.radius = (*r).into();
+            style.border.radius = *r;
         }
         Tweak::Shadow(s) => {
-            style.shadow = (*s).into();
+            style.shadow = *s;
         }
         Tweak::Opaque => {
             if let Some(Background::Color(src)) = style.background {
@@ -294,7 +294,7 @@ mod tests {
     #[test]
     fn bg_atom_overrides_default_variant() {
         let theme = Theme::dark();
-        let spec: Spec = (Default + Bg(Token::Primary)).into();
+        let spec: Spec = Default + Bg(Token::Primary);
         let resolved = spec.resolve(&theme);
         let bg = bg_color(&resolved);
         let expected = theme.primary.base;

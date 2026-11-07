@@ -168,7 +168,7 @@ mod tests {
     fn fallback_style_radius_is_pill() {
         let theme = Theme::dark();
         let s = fallback_style(&theme, false);
-        assert!(matches!(s.background, Some(_)));
+        assert!(s.background.is_some());
         // The radius is a `Radius` of 4 corners; the absolute value is
         // PILL_RADIUS but we only need to confirm it's the pill clamp,
         // not a fractional/rounded-rectangle radius.

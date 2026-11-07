@@ -223,10 +223,10 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme) {
             style.border.width = *w;
         }
         Tweak::Radius(r) => {
-            style.border.radius = (*r).into();
+            style.border.radius = *r;
         }
         Tweak::Shadow(s) => {
-            style.shadow = (*s).into();
+            style.shadow = *s;
         }
         Tweak::Opaque => {
             if let Some(Background::Color(src)) = style.background {

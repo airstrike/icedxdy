@@ -38,7 +38,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
 
 fn index_card_style(theme: &Theme) -> iced_widget::container::Style {
     Style {
-        text_color: Some(theme.muted.foreground.into()),
+        text_color: Some(theme.muted.foreground),
         background: Some(theme.card.base.into()),
         border: Border {
             radius: radius::XL.into(),

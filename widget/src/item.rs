@@ -383,7 +383,7 @@ fn style(variant: Variant) -> impl Fn(&Theme) -> Style + 'static {
         match variant {
             Variant::Default => {}
             Variant::Outline => {
-                style.border.color = theme.neutral.border.into();
+                style.border.color = theme.neutral.border;
             }
             Variant::Muted => {
                 style.background = Some(theme.muted.base.alpha(0.5).into());

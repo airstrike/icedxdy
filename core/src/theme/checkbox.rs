@@ -396,7 +396,7 @@ fn apply(tweak: &Tweak, style: &mut Style, theme: &Theme, status: Status) {
             style.border.width = *w;
         }
         Tweak::Radius(r) => {
-            style.border.radius = (*r).into();
+            style.border.radius = *r;
         }
         Tweak::Opaque => {
             // OKLCH alpha-composite the variant's bg over palette.background
@@ -528,7 +528,7 @@ impl From<Disabled> for style::StyleFn<fn(Palette, status::Status) -> style::Sty
 /// fields (icon_color) come from the intrinsic and are preserved.
 fn overlay_universal(univ: style::Style, base: Style) -> Style {
     Style {
-        background: univ.fill.map(Into::into).unwrap_or(base.background),
+        background: univ.fill.unwrap_or(base.background),
         icon_color: base.icon_color,
         border: Border {
             width: univ.border_width.unwrap_or(base.border.width),
@@ -540,6 +540,7 @@ fn overlay_universal(univ: style::Style, base: Style) -> Style {
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn bridge_with<F, D, Out: 'static>(
     sf: style::StyleFn<F>,
     defaults: D,
@@ -732,7 +733,7 @@ mod tests {
     #[test]
     fn bg_atom_overrides_default_variant() {
         let theme = Theme::dark();
-        let spec: Spec = (Default + Bg(Token::Primary)).into();
+        let spec: Spec = Default + Bg(Token::Primary);
         let resolved = spec.resolve(&theme, Status::Active { is_checked: false });
         let bg = bg_color(&resolved);
         let expected = theme.primary.base;
@@ -747,13 +748,12 @@ mod tests {
     #[test]
     fn ring_atom_writes_to_style_ring() {
         let theme = Theme::light();
-        let spec: Spec = (Default
+        let spec: Spec = Default
             + tweak::Ring {
                 color: Token::Ring,
                 width: 3.0,
                 offset: 2.0,
-            })
-        .into();
+            };
         let resolved = spec.resolve(&theme, Status::Active { is_checked: false });
         let ring = resolved.ring.expect("ring should be set");
         assert_eq!(ring.width, 3.0);

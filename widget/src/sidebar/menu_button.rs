@@ -221,16 +221,16 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
             raw_btn = raw_btn.on_press(on_press);
         }
 
-        if btn.collapsed {
-            if let Some(tooltip_text) = btn.tooltip {
-                return iced_widget::tooltip(
-                    raw_btn,
-                    iced_widget::text(tooltip_text).size(12.0),
-                    Position::Right,
-                )
-                .gap(4.0)
-                .boxed();
-            }
+        if btn.collapsed
+            && let Some(tooltip_text) = btn.tooltip
+        {
+            return iced_widget::tooltip(
+                raw_btn,
+                iced_widget::text(tooltip_text).size(12.0),
+                Position::Right,
+            )
+            .gap(4.0)
+            .boxed();
         }
 
         raw_btn.into()

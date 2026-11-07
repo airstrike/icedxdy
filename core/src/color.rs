@@ -124,6 +124,8 @@ impl Color {
     ///   for perceptual consistency across themes), but it means an
     ///   `iced::Color::into() -> Color::into() -> iced::Color` round trip
     ///   isn't bit-stable for those tokens. Don't rely on it.
+    // OKLab matrix constants are kept at the precision the spec publishes.
+    #[allow(clippy::excessive_precision)]
     pub fn from_srgb(c: iced_core::Color) -> Self {
         // sRGB to linear sRGB (inverse gamma)
         fn srgb_to_linear(x: f32) -> f32 {
@@ -171,6 +173,8 @@ impl Color {
 
     /// Convert OKLCH to sRGB
     /// Based on the CSS Color Level 4 specification
+    // OKLab matrix constants are kept at the precision the spec publishes.
+    #[allow(clippy::excessive_precision)]
     fn to_srgb(self) -> (f32, f32, f32) {
         let l = self.l;
         let c = self.c;

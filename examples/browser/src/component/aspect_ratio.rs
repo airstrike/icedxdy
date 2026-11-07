@@ -141,7 +141,7 @@ impl page::Page for AspectRatioPage {
 
             // Square (1:1). shadcn `aspect-ratio-square.tsx`:
             // max-w-[12rem] = 192px.
-            "square" => aspect_ratio(image_placeholder(), 1.0 / 1.0)
+            "square" => aspect_ratio(image_placeholder(), 1.0)
                 .max_width(192.0)
                 .into(),
 

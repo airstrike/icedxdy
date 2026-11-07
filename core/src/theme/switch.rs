@@ -507,7 +507,7 @@ impl From<Disabled> for style::StyleFn<fn(Palette, status::Status) -> style::Sty
 
 fn overlay_universal(univ: style::Style, base: Style) -> Style {
     Style {
-        background: univ.fill.map(Into::into).unwrap_or(base.background),
+        background: univ.fill.unwrap_or(base.background),
         background_border_width: univ.border_width.unwrap_or(base.background_border_width),
         background_border_color: univ.border_color.unwrap_or(base.background_border_color),
         foreground: base.foreground,
@@ -520,6 +520,7 @@ fn overlay_universal(univ: style::Style, base: Style) -> Style {
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn bridge_with<F, D, Out: 'static>(
     sf: style::StyleFn<F>,
     defaults: D,
@@ -760,7 +761,7 @@ mod tests {
     #[test]
     fn bg_atom_overrides_track() {
         let theme = Theme::dark();
-        let spec: Spec = (Default + Bg(Token::Primary)).into();
+        let spec: Spec = Default + Bg(Token::Primary);
         let resolved = spec.resolve(&theme, Status::Active { is_toggled: false });
         let track = bg_color(resolved.background);
         let expected = theme.primary.base;
@@ -776,7 +777,7 @@ mod tests {
     #[test]
     fn fg_atom_overrides_thumb() {
         let theme = Theme::dark();
-        let spec: Spec = (Default + tweak::Fg(Token::Primary)).into();
+        let spec: Spec = Default + tweak::Fg(Token::Primary);
         let resolved = spec.resolve(&theme, Status::Active { is_toggled: false });
         let thumb = bg_color(resolved.foreground);
         let expected = theme.primary.base;
@@ -791,13 +792,12 @@ mod tests {
     #[test]
     fn switch_ring_atom_writes_to_style_ring() {
         let theme = Theme::light();
-        let spec: Spec = (Default
+        let spec: Spec = Default
             + tweak::Ring {
                 color: Token::Ring,
                 width: 3.0,
                 offset: 2.0,
-            })
-        .into();
+            };
         let resolved = spec.resolve(&theme, Status::Active { is_toggled: false });
         let ring = resolved.ring.expect("ring should be set");
         assert_eq!(ring.width, 3.0);

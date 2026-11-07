@@ -316,7 +316,7 @@ fn empty_style(_theme: &Theme) -> Style {
 
 fn media_icon_style(theme: &Theme) -> Style {
     Style {
-        text_color: Some(theme.neutral.foreground.into()),
+        text_color: Some(theme.neutral.foreground),
         background: Some(theme.muted.base.into()),
         border: Border {
             radius: radius::MD.into(),

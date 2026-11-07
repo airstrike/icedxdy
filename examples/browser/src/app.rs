@@ -183,10 +183,10 @@ impl App {
                 Task::none()
             }
             Message::SelectPage(page) => {
-                if page != self.current_page {
-                    if let Some(prev) = self.pages.get_mut(self.current_page) {
-                        prev.reset_volatile();
-                    }
+                if page != self.current_page
+                    && let Some(prev) = self.pages.get_mut(self.current_page)
+                {
+                    prev.reset_volatile();
                 }
                 self.current_page = page;
                 self.pages

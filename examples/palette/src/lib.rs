@@ -529,7 +529,7 @@ fn section_soft(theme: &Theme) -> Style {
 
 fn switcher_style(theme: &Theme) -> Style {
     Style {
-        text_color: Some(theme.neutral.foreground.into()),
+        text_color: Some(theme.neutral.foreground),
         background: Some(theme.card.base.scale_alpha(0.90).into()),
         border: Border {
             radius: 14.0.into(),

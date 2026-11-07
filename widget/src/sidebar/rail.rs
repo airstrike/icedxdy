@@ -89,7 +89,7 @@ impl<'a, Message: Clone + 'a> From<SidebarRail<Message>> for crate::Component<'a
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for SidebarRail<Message> {
+impl<Message: Clone> IntoElement<Message> for SidebarRail<Message> {
     fn size(&mut self, _size: Size) {
         // Fixed-width rail, ignore parent hints.
     }

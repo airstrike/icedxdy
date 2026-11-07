@@ -8,6 +8,9 @@
 //! `app::App` owns the actual UI. Everything else lives in `lib.rs` only
 //! to keep startup state out of the runtime path.
 
+// Page constructors return `Box<dyn page::Page>` for the page registry.
+#![allow(clippy::new_ret_no_self)]
+
 pub mod app;
 pub mod component;
 pub mod font;

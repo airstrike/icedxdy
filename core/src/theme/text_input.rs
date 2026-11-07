@@ -527,6 +527,7 @@ impl From<Status> for iced_widget::text_input::Status {
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn bridge_with<F, D, Out: 'static>(
     sf: style::StyleFn<F>,
     defaults: D,
@@ -657,7 +658,7 @@ mod tests {
     #[test]
     fn bg_atom_overrides_default_variant() {
         let theme = Theme::dark();
-        let spec: Spec = (Default + Bg(Token::Primary)).into();
+        let spec: Spec = Default + Bg(Token::Primary);
         let resolved = spec.resolve(&theme, Status::Active);
         let actual = bg_color(&resolved);
         let expected = theme.primary.base;
@@ -672,13 +673,12 @@ mod tests {
     #[test]
     fn ring_atom_writes_to_style_ring() {
         let theme = Theme::light();
-        let spec: Spec = (Default
+        let spec: Spec = Default
             + tweak::Ring {
                 color: Token::Ring,
                 width: 3.0,
                 offset: 2.0,
-            })
-        .into();
+            };
         let resolved = spec.resolve(&theme, Status::Active);
         let ring = resolved.ring.expect("ring should be set");
         assert_eq!(ring.width, 3.0);
@@ -690,13 +690,12 @@ mod tests {
     #[test]
     fn focus_trigger_gates_ring() {
         let theme = Theme::light();
-        let spec: Spec = (Default
+        let spec: Spec = Default
             + tweak::focus(tweak::Ring {
                 color: Token::Ring,
                 width: 3.0,
                 offset: 0.0,
-            }))
-        .into();
+            });
         for status in [Status::Active, Status::Hovered, Status::Disabled] {
             let resolved = spec.resolve(&theme, status);
             assert!(

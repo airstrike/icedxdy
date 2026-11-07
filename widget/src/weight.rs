@@ -1,7 +1,7 @@
 //! Font weight for icedxdy components.
 
 /// Font weight, matching CSS/shadcn conventions.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Weight {
     /// 100
     Thin,
@@ -10,6 +10,7 @@ pub enum Weight {
     /// 300
     Light,
     /// 400
+    #[default]
     Normal,
     /// 500
     Medium,
@@ -23,12 +24,6 @@ pub enum Weight {
     Black,
     /// Arbitrary weight (1–999)
     Custom(u16),
-}
-
-impl Default for Weight {
-    fn default() -> Self {
-        Weight::Normal
-    }
 }
 
 impl From<u16> for Weight {

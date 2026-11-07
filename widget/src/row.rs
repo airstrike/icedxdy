@@ -79,6 +79,12 @@ impl<'a, Message: 'a> Row<'a, Message> {
     }
 }
 
+impl<'a, Message: 'a> Default for Row<'a, Message> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // Our Row → iced Element (so it can be used in iced's column![], container, etc.)
 impl<'a, Message: 'a> From<Row<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(row: Row<'a, Message>) -> Self {

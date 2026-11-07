@@ -423,7 +423,7 @@ mod tests {
     #[test]
     fn alpha_scales_resolved_text_color_alpha() {
         let theme = Theme::dark();
-        let spec: Spec = (Foreground + Alpha(0.5)).into();
+        let spec: Spec = Foreground + Alpha(0.5);
         let resolved = spec.resolve(&theme);
         let color = resolved.color.expect("foreground sets color");
         let expected = theme.neutral.foreground.a * 0.5;
@@ -437,7 +437,7 @@ mod tests {
     #[test]
     fn fg_overrides_variant_color() {
         let theme = Theme::dark();
-        let spec: Spec = (Default + Fg(Token::Primary)).into();
+        let spec: Spec = Default + Fg(Token::Primary);
         let resolved = spec.resolve(&theme);
         let expected = theme.primary.base;
         let actual = resolved.color.expect("Fg sets color");

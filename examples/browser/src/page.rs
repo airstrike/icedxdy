@@ -311,7 +311,7 @@ fn walk_blocks<'a>(
         let block_id = st.block_ids[i].clone();
 
         let body: iced::Element<'_, super::Message, Theme> = match block {
-            Block::Md(path) => render_md(pi, depth, *path, st, viewer),
+            Block::Md(path) => render_md(pi, depth, path, st, viewer),
             Block::Example {
                 id,
                 title,

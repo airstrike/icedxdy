@@ -82,7 +82,7 @@ impl<'a, Message: 'a> From<Progress<'a, Message>>
             .girth(HEIGHT)
             .style(move |t| style(t));
         if let Some(on_idle) = p.on_idle {
-            bar = bar.on_idle(move |v| on_idle(v));
+            bar = bar.on_idle(on_idle);
         }
         bar.into()
     }

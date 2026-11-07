@@ -256,7 +256,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for ButtonGroup<'a, Message> 
         // corners zeroed; separators get their group_orientation patched.
         let elements: Vec<iced_core::Element<'a, Message, Theme, Renderer>> = items
             .into_iter()
-            .zip(positions.into_iter())
+            .zip(positions)
             .map(
                 |(item, pos)| -> iced_core::Element<'a, Message, Theme, Renderer> {
                     match item {

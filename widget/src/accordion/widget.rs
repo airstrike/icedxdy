@@ -499,29 +499,30 @@ impl<Message> Widget<Message, Theme, iced_widget::Renderer> for Accordion<'_, Me
                         event,
                         Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
                     ) || matches!(event, Event::Touch(touch::Event::FingerPressed { .. }));
-                if pressed && cursor.is_over(trigger_hit) {
-                    if let Some(on_toggle) = self.on_toggle.as_ref() {
-                        // Mode-aware refusal: Single { collapsible: false }
-                        // refuses a close click on the currently-open item.
-                        // Inline is_externally_open to avoid &self while
-                        // self.items is borrowed mut by the surrounding loop.
-                        let is_open_now = self.open.iter().any(|s| s == &item.id);
-                        let allow = match (self.mode, is_open_now) {
-                            // The one refusal case: single + non-collapsible
-                            // forbids closing the currently-open item
-                            // because there must always be one open.
-                            (Mode::Single { collapsible: false }, true) => false,
-                            // All three remaining (Mode, is_open) shapes
-                            // accept the click; the parent state mutation
-                            // and re-render will reflect the new open-set.
-                            (Mode::Single { collapsible: false }, false)
-                            | (Mode::Single { collapsible: true }, _)
-                            | (Mode::Multiple, _) => true,
-                        };
-                        if allow {
-                            shell.publish(on_toggle(item.id.clone()));
-                            shell.capture_event();
-                        }
+                if pressed
+                    && cursor.is_over(trigger_hit)
+                    && let Some(on_toggle) = self.on_toggle.as_ref()
+                {
+                    // Mode-aware refusal: Single { collapsible: false }
+                    // refuses a close click on the currently-open item.
+                    // Inline is_externally_open to avoid &self while
+                    // self.items is borrowed mut by the surrounding loop.
+                    let is_open_now = self.open.iter().any(|s| s == &item.id);
+                    let allow = match (self.mode, is_open_now) {
+                        // The one refusal case: single + non-collapsible
+                        // forbids closing the currently-open item
+                        // because there must always be one open.
+                        (Mode::Single { collapsible: false }, true) => false,
+                        // All three remaining (Mode, is_open) shapes
+                        // accept the click; the parent state mutation
+                        // and re-render will reflect the new open-set.
+                        (Mode::Single { collapsible: false }, false)
+                        | (Mode::Single { collapsible: true }, _)
+                        | (Mode::Multiple, _) => true,
+                    };
+                    if allow {
+                        shell.publish(on_toggle(item.id.clone()));
+                        shell.capture_event();
                     }
                 }
             }
