@@ -13,9 +13,9 @@
 use iced::widget::column;
 use iced::{Fill, Task};
 use icedxdy::Size::Sm;
-use icedxdy::widget::table;
 use icedxdy::widget::{container, rule, text};
 use icedxdy::{Theme, radius, theme};
+use sweeten::widget::table;
 
 use crate::Message;
 use crate::page;

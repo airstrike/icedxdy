@@ -502,6 +502,7 @@ dependencies = [
  "iced_lucide",
  "iced_widget",
  "icedxdy",
+ "sweeten",
  "tokio",
 ]
 
