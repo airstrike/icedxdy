@@ -13,9 +13,9 @@
 //!
 //! # Example
 //! ```no_run
-//! # mod iced { pub mod widget { pub use iced_widget::*; } }
+//! # mod iced { pub mod widget { pub use iced_widget::*; } pub use iced_widget::Renderer; pub use iced_widget::core::*; }
+//! # use iced::widget::Widget;
 //! # pub type State = ();
-//! # pub type Element<'a, Message> = iced_widget::core::Element<'a, Message, iced_widget::Theme, iced_widget::Renderer>;
 //! use iced::widget::button;
 //!
 //! #[derive(Clone)]
@@ -23,8 +23,8 @@
 //!     ButtonPressed,
 //! }
 //!
-//! fn view(state: &State) -> Element<'_, Message> {
-//!     button("Press me!").on_press(Message::ButtonPressed).into()
+//! fn view(state: &State) -> impl Widget<Message> {
+//!     button("Press me!").on_press(Message::ButtonPressed)
 //! }
 //! ```
 use crate::core::border::{self, Border};
@@ -58,9 +58,9 @@ use crate::core::{
 ///
 /// # Example
 /// ```no_run
-/// # mod iced { pub mod widget { pub use iced_widget::*; } }
+/// # mod iced { pub mod widget { pub use iced_widget::*; } pub use iced_widget::Renderer; pub use iced_widget::core::*; }
+/// # use iced::widget::Widget;
 /// # pub type State = ();
-/// # pub type Element<'a, Message> = iced_widget::core::Element<'a, Message, iced_widget::Theme, iced_widget::Renderer>;
 /// use iced::widget::button;
 ///
 /// #[derive(Clone)]
@@ -68,8 +68,8 @@ use crate::core::{
 ///     ButtonPressed,
 /// }
 ///
-/// fn view(state: &State) -> Element<'_, Message> {
-///     button("Press me!").on_press(Message::ButtonPressed).into()
+/// fn view(state: &State) -> impl Widget<Message> {
+///     button("Press me!").on_press(Message::ButtonPressed)
 /// }
 /// ```
 ///
@@ -77,9 +77,9 @@ use crate::core::{
 /// be disabled:
 ///
 /// ```no_run
-/// # mod iced { pub mod widget { pub use iced_widget::*; } }
+/// # mod iced { pub mod widget { pub use iced_widget::*; } pub use iced_widget::Renderer; pub use iced_widget::core::*; }
+/// # use iced::widget::Widget;
 /// # pub type State = ();
-/// # pub type Element<'a, Message> = iced_widget::core::Element<'a, Message, iced_widget::Theme, iced_widget::Renderer>;
 /// use iced::widget::button;
 ///
 /// #[derive(Clone)]
@@ -87,8 +87,8 @@ use crate::core::{
 ///     ButtonPressed,
 /// }
 ///
-/// fn view(state: &State) -> Element<'_, Message> {
-///     button("I am disabled!").into()
+/// fn view(state: &State) -> impl Widget<Message> {
+///     button("I am disabled!")
 /// }
 /// ```
 pub struct Button<'a, Message, Theme = iced_widget::Theme, Renderer = iced_widget::Renderer>
@@ -105,7 +105,7 @@ where
     height: Length,
     padding: Padding,
     /// Transparent margin between the button's bounds (used for hit testing
-    /// + hover detection) and the painted bg/border. Lets a parent column
+    /// and hover detection) and the painted bg/border. Lets a parent column
     /// keep `spacing(0)` so adjacent buttons share boundaries (continuous
     /// hover) while the visible fills sit apart by `inset.top + inset.bottom`.
     inset: Padding,
