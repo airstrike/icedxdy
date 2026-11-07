@@ -57,8 +57,7 @@ use iced_widget::Widget;
 use icedxdy_core::Theme;
 
 use crate::Button;
-use crate::Component;
-use crate::component::IntoElement;
+use crate::compose::Compose;
 
 pub mod separator;
 
@@ -109,7 +108,7 @@ pub enum Item<'a, Message> {
     Button(Button<'a, Message>),
     /// A vertical-or-horizontal divider drawn between buttons. The
     /// separator's own axis is set to be perpendicular to the group's
-    /// orientation when [`ButtonGroup::into_element`] runs.
+    /// orientation when `ButtonGroup::compose` runs.
     Separator(Separator),
 }
 
@@ -200,18 +199,18 @@ impl<'a, Message: Clone + 'a> From<ButtonGroup<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(g: ButtonGroup<'a, Message>) -> Self {
-        Box::new(g).into_element()
+        Box::new(g).compose()
     }
 }
 
-impl<'a, Message: Clone + 'a> From<ButtonGroup<'a, Message>> for Component<'a, Message> {
-    fn from(g: ButtonGroup<'a, Message>) -> Self {
-        Component::new(g)
+impl<'a, Message: Clone + 'a> From<ButtonGroup<'a, Message>> for crate::Slot<'a, Message> {
+    fn from(widget: ButtonGroup<'a, Message>) -> Self {
+        crate::Slot::new(widget)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for ButtonGroup<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: Clone + 'a> Compose<Message> for ButtonGroup<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -410,7 +409,7 @@ macro_rules! button_group {
 
 #[cfg(test)]
 mod tests {
-    //! Position + corner-collapse coverage. The group's `into_element`
+    //! Position + corner-collapse coverage. The group's `compose`
     //! pipeline can't easily be inspected after the fact (style closures
     //! are erased into iced's catalog), so the reachable surface here is
     //! the pure helpers that compute child position and zero corner radii.

@@ -17,7 +17,7 @@
 use iced::Task;
 
 use icedxdy::widget::{column, sidebar, text};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::page;
 
@@ -77,7 +77,7 @@ impl SidebarPage {
     }
 }
 
-fn demo<'a>(selected: usize) -> Component<'a, Message> {
+fn demo<'a>(selected: usize) -> Slot<'a, Message> {
     // Mirrors `sidebar-menu.tsx`: a floating sidebar with a "Projects" group
     // and five menu items, the active one highlighted.
     let items: &[&'static str] = &[
@@ -88,7 +88,7 @@ fn demo<'a>(selected: usize) -> Component<'a, Message> {
         "Feedback",
     ];
 
-    let menu_items: Vec<Component<'a, Message>> = items
+    let menu_items: Vec<Slot<'a, Message>> = items
         .iter()
         .enumerate()
         .map(|(i, label)| {
@@ -110,7 +110,7 @@ fn demo<'a>(selected: usize) -> Component<'a, Message> {
     .into()
 }
 
-fn group_example<'a>() -> Component<'a, Message> {
+fn group_example<'a>() -> Slot<'a, Message> {
     // Mirrors `sidebar-group.tsx`: a floating sidebar with a "Help" group.
     sidebar::floating(sidebar::content([sidebar::group([
         sidebar::group_label("Help").into(),
@@ -127,7 +127,7 @@ fn group_example<'a>() -> Component<'a, Message> {
     .into()
 }
 
-fn header_example<'a>() -> Component<'a, Message> {
+fn header_example<'a>() -> Slot<'a, Message> {
     // Mirrors `sidebar-header.tsx`: a floating sidebar with a workspace
     // switcher in the header.
     sidebar::floating(
@@ -184,7 +184,7 @@ impl page::Page for SidebarPage {
     fn preview(&self, id: &str) -> iced::Element<'_, crate::Message, Theme> {
         let pi = self.state.page_index;
         let selected = self.selected;
-        let view: Component<'_, Message> = match id {
+        let view: Slot<'_, Message> = match id {
             "demo" => demo(selected),
             "group" => group_example(),
             "header" => header_example(),

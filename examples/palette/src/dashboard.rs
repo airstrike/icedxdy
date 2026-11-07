@@ -6,7 +6,7 @@
 
 use iced::{Alignment, Fill};
 use icedxdy::widget::{Column, container, row};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::tiles::{
     account_access, banner, card_overview, chart, claimable_balance, codespaces,
@@ -143,15 +143,15 @@ fn view_two(state: &State) -> iced::Element<'_, Message, Theme> {
 
 fn stack<'a>(
     tiles: impl IntoIterator<Item = iced::Element<'a, Message, Theme>>,
-) -> Component<'a, Message> {
+) -> Slot<'a, Message> {
     stack_width(COLUMN_WIDTH, tiles)
 }
 
 fn stack_width<'a>(
     width: f32,
     tiles: impl IntoIterator<Item = iced::Element<'a, Message, Theme>>,
-) -> Component<'a, Message> {
-    let column: Column<'a, Message> = Column::with_children(tiles.into_iter().map(Component::from))
+) -> Slot<'a, Message> {
+    let column: Column<'a, Message> = Column::with_children(tiles.into_iter().map(Slot::from))
         .spacing(ROW_GAP)
         .width(width);
 

@@ -8,12 +8,12 @@ use icedxdy::card;
 use icedxdy::core::{Border, oklch};
 use icedxdy::theme::container::Style;
 use icedxdy::widget::{button, column, container, qr_code, text};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::{Message, State};
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    let qr: Component<'_, Message> = match &state.qr_connect {
+    let qr: Slot<'_, Message> = match &state.qr_connect {
         Some(data) => container(qr_code(data).total_size(160.0).style(|_| qr_code::Style {
             cell: Color::BLACK,
             background: Color::WHITE,
@@ -30,7 +30,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
             .into(),
     };
 
-    let description: Component<'static, Message> = column![
+    let description: Slot<'static, Message> = column![
         card::description("Open the Ledger mobile app and scan this"),
         card::description("code to link your device."),
     ]
@@ -38,7 +38,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .align_x(Center)
     .into();
 
-    let header_body: Component<'static, Message> = column![
+    let header_body: Slot<'static, Message> = column![
         card::title("Scan to connect your mobile device"),
         description,
     ]
@@ -46,7 +46,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .align_x(Center)
     .width(Fill)
     .into();
-    let header: Component<'static, Message> = card::header(header_body).into();
+    let header: Slot<'static, Message> = card::header(header_body).into();
 
     card::card(
         column![

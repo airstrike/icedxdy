@@ -1,5 +1,4 @@
-use crate::Size;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use iced_core::Length;
 use iced_widget::Renderer;
 use iced_widget::Widget;
@@ -17,14 +16,14 @@ macro_rules! row {
     };
     ($($child:expr),+ $(,)?) => {
         $crate::row::Row::with_children([
-            $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+            $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
         ])
     };
 }
 
 /// A row of icedxdy elements that participates in size propagation.
 pub struct Row<'a, Message> {
-    children: Vec<Component<'a, Message>>,
+    children: Vec<Slot<'a, Message>>,
     spacing: Option<f32>,
     width: Length,
     height: Length,
@@ -42,7 +41,7 @@ impl<'a, Message: 'a> Row<'a, Message> {
         }
     }
 
-    pub fn with_children(children: impl IntoIterator<Item = Component<'a, Message>>) -> Self {
+    pub fn with_children(children: impl IntoIterator<Item = Slot<'a, Message>>) -> Self {
         Self {
             children: children.into_iter().collect(),
             spacing: None,
@@ -53,7 +52,7 @@ impl<'a, Message: 'a> Row<'a, Message> {
     }
 
     /// Push our own Element.
-    pub fn push(mut self, child: Component<'a, Message>) -> Self {
+    pub fn push(mut self, child: Slot<'a, Message>) -> Self {
         self.children.push(child);
         self
     }
@@ -88,36 +87,24 @@ impl<'a, Message: 'a> Default for Row<'a, Message> {
 // Our Row → iced Element (so it can be used in iced's column![], container, etc.)
 impl<'a, Message: 'a> From<Row<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(row: Row<'a, Message>) -> Self {
-        Box::new(row).into_element()
+        Box::new(row).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Row<'a, Message>> for crate::Component<'a, Message> {
-    fn from(r: Row<'a, Message>) -> Self {
-        crate::Component::new(r)
+impl<'a, Message: 'a> From<Row<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Row<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Row<'a, Message> {
-    fn size(&mut self, size: Size) {
+impl<'a, Message: 'a> Compose<Message> for Row<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
         for child in &mut self.children {
-            child.size(size);
+            child.inherit(from);
         }
     }
 
-    fn weight(&mut self, weight: crate::Weight) {
-        for child in &mut self.children {
-            child.weight(weight);
-        }
-    }
-
-    fn line_height(&mut self, line_height: f32) {
-        for child in &mut self.children {
-            child.line_height(line_height);
-        }
-    }
-
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -128,7 +115,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Row<'a, Message> {
             .align_y(self.align_y);
 
         for child in self.children {
-            row = row.push(child.into_iced());
+            row = row.push(child.compose());
         }
 
         row.boxed()

@@ -55,10 +55,10 @@ macro_rules! badge {
     // `badge![badge_check, "Verified"]` => badge(row![icon::badge_check(), "Verified"].spacing(4))
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::badge::badge(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
                 .spacing(4)
             )
@@ -67,9 +67,9 @@ macro_rules! badge {
     // Default-variant multi-arg arm — wraps children in a row with 4px gap.
     ($($child:expr),+ $(,)?) => {
         $crate::badge::badge(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
                 .spacing(4)
             )
@@ -86,10 +86,10 @@ macro_rules! badge_secondary {
     // Leading-ident icon sugar — see [`badge!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::badge::secondary(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
                 .spacing(4)
             )
@@ -97,9 +97,9 @@ macro_rules! badge_secondary {
     };
     ($($child:expr),+ $(,)?) => {
         $crate::badge::secondary(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
                 .spacing(4)
             )
@@ -116,10 +116,10 @@ macro_rules! badge_outline {
     // Leading-ident icon sugar — see [`badge!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::badge::outline(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
                 .spacing(4)
             )
@@ -127,9 +127,9 @@ macro_rules! badge_outline {
     };
     ($($child:expr),+ $(,)?) => {
         $crate::badge::outline(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
                 .spacing(4)
             )
@@ -146,10 +146,10 @@ macro_rules! badge_destructive {
     // Leading-ident icon sugar — see [`badge!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::badge::destructive(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
                 .spacing(4)
             )
@@ -157,9 +157,9 @@ macro_rules! badge_destructive {
     };
     ($($child:expr),+ $(,)?) => {
         $crate::badge::destructive(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
                 .spacing(4)
             )
@@ -176,10 +176,10 @@ macro_rules! badge_ghost {
     // Leading-ident icon sugar — see [`badge!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::badge::ghost(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
                 .spacing(4)
             )
@@ -187,9 +187,9 @@ macro_rules! badge_ghost {
     };
     ($($child:expr),+ $(,)?) => {
         $crate::badge::ghost(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
                 .spacing(4)
             )
@@ -216,7 +216,7 @@ pub use crate::badge_outline as outline;
 pub use crate::badge_secondary as secondary;
 
 use crate::Weight;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use iced_core::mouse::Interaction;
 use iced_widget::{Renderer, mouse_area};
 use icedxdy_core::Theme;
@@ -235,13 +235,13 @@ pub enum Variant {
 
 /// A small inline pill label.
 pub struct Badge<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     variant: Variant,
     on_press: Option<Message>,
 }
 
 /// Create a [`Badge`] with default variant.
-pub fn badge<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
+pub fn badge<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
     Badge {
         content: content.into(),
         variant: Variant::Default,
@@ -253,31 +253,27 @@ pub fn badge<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Bad
 ///
 /// Equivalent to [`badge`]; provided for symmetry with the other variant
 /// helpers.
-pub fn default<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
+pub fn default<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
     badge(content).variant(Variant::Default)
 }
 
 /// Create a [`Badge`] with the secondary variant.
-pub fn secondary<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Badge<'a, Message> {
+pub fn secondary<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
     badge(content).variant(Variant::Secondary)
 }
 
 /// Create a [`Badge`] with the outline variant.
-pub fn outline<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
+pub fn outline<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
     badge(content).variant(Variant::Outline)
 }
 
 /// Create a [`Badge`] with the destructive variant.
-pub fn destructive<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Badge<'a, Message> {
+pub fn destructive<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
     badge(content).variant(Variant::Destructive)
 }
 
 /// Create a [`Badge`] with the ghost variant.
-pub fn ghost<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
+pub fn ghost<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
     badge(content).variant(Variant::Ghost)
 }
 
@@ -304,30 +300,18 @@ impl<'a, Message: Clone + 'a> From<Badge<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(badge: Badge<'a, Message>) -> Self {
-        Box::new(badge).into_element()
+        Box::new(badge).compose()
     }
 }
 
-impl<'a, Message: Clone + 'a> From<Badge<'a, Message>> for Component<'a, Message> {
-    fn from(b: Badge<'a, Message>) -> Self {
-        Component::new(b)
+impl<'a, Message: Clone + 'a> From<Badge<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Badge<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for Badge<'a, Message> {
-    fn size(&mut self, size: crate::Size) {
-        self.content.size(size);
-    }
-
-    fn weight(&mut self, weight: Weight) {
-        self.content.weight(weight);
-    }
-
-    fn line_height(&mut self, line_height: f32) {
-        self.content.line_height(line_height);
-    }
-
-    fn into_element<'b>(mut self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: Clone + 'a> Compose<Message> for Badge<'a, Message> {
+    fn compose<'b>(mut self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -335,9 +319,12 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Badge<'a, Message> {
         // (nova `font-medium text-xs leading-none` — the badge wrapper supplies
         // the explicit `leading-4` parent so the rendered pill height matches
         // shadcn's 22px vertical extent rather than iced's default 1.3 ratio).
-        self.content.size(crate::Size::Xs);
-        self.content.weight(Weight::Medium);
-        self.content.line_height(16.0);
+        self.content.inherit(
+            &Inherited::default()
+                .with_size(crate::Size::Xs)
+                .with_weight(Weight::Medium)
+                .with_line_height(16.0),
+        );
 
         let style_fn: iced_widget::container::StyleFn<'_, Theme> = match self.variant {
             Variant::Default => theme::badge::Default.into(),
@@ -355,7 +342,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Badge<'a, Message> {
         // don't yet have an icon-side hint on the builder so this remains
         // a uniform 8px on both sides — minor visual drift when an icon
         // sits flush on either edge. Acceptable for this audit pass.
-        let pill = iced_widget::container(self.content.into_iced())
+        let pill = iced_widget::container(self.content.compose())
             .padding([2, 8])
             .center_y(iced_core::Length::Shrink)
             .style(style_fn);

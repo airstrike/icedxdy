@@ -2,8 +2,7 @@ use iced_widget::Widget;
 mod element;
 pub mod widget;
 
-use crate::Size;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use iced_core::alignment::{Horizontal, Vertical};
 use iced_core::widget::Id;
 use iced_core::{Length, Padding, Pixels};
@@ -18,7 +17,7 @@ use icedxdy_core::theme::container::Style;
 /// container(text::h1("Hello")).padding(16).center_x(Fill)
 /// ```
 pub struct Container<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     id: Option<Id>,
     width: Length,
     height: Length,
@@ -30,7 +29,7 @@ pub struct Container<'a, Message> {
 }
 
 impl<'a, Message: 'a> Container<'a, Message> {
-    pub fn new(content: impl Into<Component<'a, Message>>) -> Self {
+    pub fn new(content: impl Into<Slot<'a, Message>>) -> Self {
         Self {
             content: content.into(),
             id: None,
@@ -163,30 +162,26 @@ impl<'a, Message: 'a> From<Container<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(c: Container<'a, Message>) -> Self {
-        Box::new(c).into_element()
+        Box::new(c).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Container<'a, Message>> for crate::Component<'a, Message> {
-    fn from(c: Container<'a, Message>) -> Self {
-        crate::Component::new(c)
+impl<'a, Message: 'a> From<Container<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Container<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Container<'a, Message> {
-    fn size(&mut self, size: Size) {
-        self.content.size(size);
+impl<'a, Message: 'a> Compose<Message> for Container<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.content.inherit(from);
     }
 
-    fn weight(&mut self, weight: crate::Weight) {
-        self.content.weight(weight);
-    }
-
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
-        let mut c = widget::Container::new(self.content.into_iced())
+        let mut c = widget::Container::new(self.content.compose())
             .width(self.width)
             .height(self.height)
             .padding(self.padding)

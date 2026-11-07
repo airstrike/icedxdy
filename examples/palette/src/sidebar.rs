@@ -6,7 +6,7 @@ use iced_widget::button::Status;
 use icedxdy::Theme;
 use icedxdy::core::Border;
 use icedxdy::theme::container::Style;
-use icedxdy::widget::{Component, Size, button, column, container, row, rule, scrollable, text};
+use icedxdy::widget::{Size, Slot, button, column, container, row, rule, scrollable, text};
 
 use crate::{Message, State, icon};
 
@@ -102,7 +102,7 @@ pub fn view(_state: &State) -> iced::Element<'_, Message, Theme> {
         .into()
 }
 
-fn menu_header() -> Component<'static, Message> {
+fn menu_header() -> Slot<'static, Message> {
     let trigger = row![
         text::small("Menu").medium().style(foreground_text_style()),
         space::horizontal(),
@@ -124,20 +124,14 @@ fn menu_header() -> Component<'static, Message> {
     .into()
 }
 
-fn section(
-    fields: impl IntoIterator<Item = Component<'static, Message>>,
-) -> Component<'static, Message> {
+fn section(fields: impl IntoIterator<Item = Slot<'static, Message>>) -> Slot<'static, Message> {
     container(column(fields).spacing(13).width(Fill))
         .padding([SECTION_PAD_Y, SECTION_PAD_X])
         .width(Fill)
         .into()
 }
 
-fn picker(
-    label: &'static str,
-    value: &'static str,
-    trailing: Trailing,
-) -> Component<'static, Message> {
+fn picker(label: &'static str, value: &'static str, trailing: Trailing) -> Slot<'static, Message> {
     let copy = column![
         text::xs(label).style(muted_text_style()),
         text::small(value).medium().style(foreground_text_style()),
@@ -158,7 +152,7 @@ fn picker(
         .into()
 }
 
-fn trailing_view(trailing: Trailing) -> Component<'static, Message> {
+fn trailing_view(trailing: Trailing) -> Slot<'static, Message> {
     match trailing {
         Trailing::Dot => container(space::vertical())
             .width(TRAILING_ICON_SIZE)
@@ -174,15 +168,15 @@ fn trailing_view(trailing: Trailing) -> Component<'static, Message> {
     }
 }
 
-fn text_icon(label: &'static str) -> Component<'static, Message> {
+fn text_icon(label: &'static str) -> Slot<'static, Message> {
     icon_slot(text::p(label).style(foreground_text_style()))
 }
 
-fn lucide(icon: impl Into<Component<'static, Message>>) -> Component<'static, Message> {
+fn lucide(icon: impl Into<Slot<'static, Message>>) -> Slot<'static, Message> {
     icon_slot(icon)
 }
 
-fn svg_icon(bytes: &'static [u8]) -> Component<'static, Message> {
+fn svg_icon(bytes: &'static [u8]) -> Slot<'static, Message> {
     let icon = svg(svg::Handle::from_memory(bytes))
         .width(TRAILING_ICON_SIZE)
         .height(TRAILING_ICON_SIZE)
@@ -193,7 +187,7 @@ fn svg_icon(bytes: &'static [u8]) -> Component<'static, Message> {
     icon_slot(icon)
 }
 
-fn icon_slot(icon: impl Into<Component<'static, Message>>) -> Component<'static, Message> {
+fn icon_slot(icon: impl Into<Slot<'static, Message>>) -> Slot<'static, Message> {
     container(icon)
         .width(TRAILING_ICON_SIZE)
         .height(TRAILING_ICON_SIZE)
@@ -202,7 +196,7 @@ fn icon_slot(icon: impl Into<Component<'static, Message>>) -> Component<'static,
         .into()
 }
 
-fn menu_header_icon() -> Component<'static, Message> {
+fn menu_header_icon() -> Slot<'static, Message> {
     let icon = icon::menu().size(20);
 
     container(icon)
@@ -213,7 +207,7 @@ fn menu_header_icon() -> Component<'static, Message> {
         .into()
 }
 
-fn preset_actions() -> Component<'static, Message> {
+fn preset_actions() -> Slot<'static, Message> {
     let content = column![
         button::outline("--preset b0")
             .size(Size::Sm)
@@ -240,7 +234,7 @@ fn preset_actions() -> Component<'static, Message> {
         .into()
 }
 
-fn get_code() -> Component<'static, Message> {
+fn get_code() -> Slot<'static, Message> {
     container(
         button("Get Code")
             .size(Size::Sm)
@@ -253,7 +247,7 @@ fn get_code() -> Component<'static, Message> {
     .into()
 }
 
-fn divider() -> Component<'static, Message> {
+fn divider() -> Slot<'static, Message> {
     let line: iced::Element<'static, Message, Theme> =
         rule::horizontal(1).style(divider_style()).into();
 

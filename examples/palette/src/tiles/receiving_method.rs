@@ -5,7 +5,7 @@
 use iced::Fill;
 use iced::Widget;
 use icedxdy::widget::{button, column, field, input, radio, text};
-use icedxdy::{Component, Theme, card};
+use icedxdy::{Slot, Theme, card};
 
 use super::api_gap;
 use crate::{Message, ReceivingMethod, State};
@@ -74,7 +74,7 @@ fn method_card(
     method: ReceivingMethod,
     title: &'static str,
     description: &'static str,
-) -> Component<'static, Message> {
+) -> Slot<'static, Message> {
     let selected = state.receiving_method == method;
     let control = radio(
         "",
@@ -83,7 +83,7 @@ fn method_card(
         Message::SetReceivingMethod,
     )
     .spacing(0.0);
-    let label: Component<'static, Message> = column![
+    let label: Slot<'static, Message> = column![
         text::small(title).medium(),
         text::muted(description).size(13.0),
     ]

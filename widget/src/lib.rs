@@ -10,7 +10,7 @@ pub mod breadcrumb;
 pub mod button;
 pub mod checkbox;
 pub mod column;
-pub mod component;
+pub mod compose;
 pub mod container;
 pub mod empty;
 pub mod field;
@@ -52,7 +52,7 @@ pub use button::Button;
 pub use button::ButtonGroup;
 pub use checkbox::Checkbox;
 pub use column::Column;
-pub use component::{Component, IntoElement};
+pub use compose::{Compose, Inherited, Slot};
 pub use empty::Empty;
 pub use field::Field;
 pub use input::Input;
@@ -71,7 +71,7 @@ pub use weight::Weight;
 
 /// Create a [`Button`] with the given content and default style.
 pub fn button<'a, Message: Clone + 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
 ) -> Button<'a, Message> {
     button::button(content)
 }
@@ -85,14 +85,14 @@ pub fn text<'a>(content: impl iced_core::text::IntoFragment<'a>) -> Text<'a> {
 
 /// Create a [`Column`] with the given children.
 pub fn column<'a, Message: 'a>(
-    children: impl IntoIterator<Item = component::Component<'a, Message>>,
+    children: impl IntoIterator<Item = compose::Slot<'a, Message>>,
 ) -> Column<'a, Message> {
     Column::with_children(children)
 }
 
 /// Create a [`Container`] wrapping the given content.
 pub fn container<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
 ) -> container::Container<'a, Message> {
     container::Container::new(content)
 }
@@ -101,7 +101,7 @@ pub fn container<'a, Message: 'a>(
 /// the available space. Mirrors `iced::widget::center` but returns our
 /// wrapped Container so the tweak-aware `.style()` is available.
 pub fn center<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
 ) -> container::Container<'a, Message> {
     container::Container::new(content).center(iced_core::Length::Fill)
 }
@@ -130,7 +130,7 @@ where
 /// 2px scroller at faint `palette.muted.foreground` alpha. Variant
 /// overrides via `.class(theme::scrollable::Hidden)` and friends.
 pub fn scrollable<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
 ) -> scrollable::Scrollable<'a, Message> {
     scrollable::scrollable(content)
 }
@@ -138,7 +138,7 @@ pub fn scrollable<'a, Message: 'a>(
 /// Create a [`Table`] with the given table child slots.
 pub fn table<'a, Message: 'a, C>(children: impl IntoIterator<Item = C>) -> Table<'a, Message>
 where
-    C: Into<Component<'a, Message>>,
+    C: Into<Slot<'a, Message>>,
 {
     table::table(children)
 }
@@ -170,7 +170,7 @@ pub fn toggle_group<'a, Message: Clone + 'a>(
 }
 
 /// Create a [`Badge`] with the given content.
-pub fn badge<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Badge<'a, Message> {
+pub fn badge<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Badge<'a, Message> {
     badge::badge(content)
 }
 
@@ -193,7 +193,7 @@ pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
 /// Create an [`AspectRatio`] wrapper that constrains `content` to a
 /// `width / height` ratio. Mirrors shadcn's `<AspectRatio ratio={...}>`.
 pub fn aspect_ratio<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
     ratio: f32,
 ) -> AspectRatio<'a, Message> {
     aspect_ratio::aspect_ratio(content, ratio)
@@ -226,7 +226,7 @@ pub fn progress<'a, Message: 'a>(value: f32) -> Progress<'a, Message> {
 }
 
 /// Create a [`Field`] wrapping the given input content.
-pub fn field<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Field<'a, Message> {
+pub fn field<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Field<'a, Message> {
     field::field(content)
 }
 
@@ -237,7 +237,7 @@ pub fn empty<'a, Message: 'a>() -> Empty<'a, Message> {
 
 /// Create an [`Item`] from children.
 pub fn item<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
 ) -> Item<'a, Message> {
     item::item(children)
 }

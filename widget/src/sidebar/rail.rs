@@ -25,9 +25,8 @@ use iced_widget::Renderer;
 use iced_widget::button::Status;
 use iced_widget::space;
 
-use crate::Size;
 use crate::button::widget;
-use crate::component::IntoElement;
+use crate::compose::Compose;
 use icedxdy_core::Theme;
 use icedxdy_core::theme::button;
 
@@ -83,18 +82,14 @@ impl<'a, Message: Clone + 'a> From<SidebarRail<Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> From<SidebarRail<Message>> for crate::Component<'a, Message> {
-    fn from(r: SidebarRail<Message>) -> Self {
-        crate::Component::new(r)
+impl<'a, Message: Clone + 'a> From<SidebarRail<Message>> for crate::Slot<'a, Message> {
+    fn from(widget: SidebarRail<Message>) -> Self {
+        crate::Slot::new(widget)
     }
 }
 
-impl<Message: Clone> IntoElement<Message> for SidebarRail<Message> {
-    fn size(&mut self, _size: Size) {
-        // Fixed-width rail, ignore parent hints.
-    }
-
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<Message: Clone> Compose<Message> for SidebarRail<Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

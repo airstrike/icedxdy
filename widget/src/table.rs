@@ -1,7 +1,7 @@
 //! Table component slots.
 //!
 //! Mirrors shadcn's `Table` primitive shape while keeping icedxdy children
-//! as arbitrary [`Component`] values.
+//! as arbitrary [`Slot`](crate::Slot) values.
 
 use iced_core::Length::{Fill, Shrink};
 use iced_core::alignment::{Horizontal, Vertical};
@@ -10,12 +10,12 @@ use iced_widget::Renderer;
 use icedxdy_core::theme::container::Style;
 use icedxdy_core::{Border, Theme};
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use crate::{Size, Weight, column, container, rule};
 
 /// Root table slot.
 pub struct Table<'a, Message> {
-    children: Vec<Component<'a, Message>>,
+    children: Vec<Slot<'a, Message>>,
     width: Length,
 }
 
@@ -42,7 +42,7 @@ pub struct Row<'a, Message> {
 
 /// A table cell.
 pub struct Cell<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     kind: cell::Kind,
     width: Length,
     height: Length,
@@ -53,7 +53,7 @@ pub struct Cell<'a, Message> {
 
 /// Caption slot.
 pub struct Caption<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
 }
 
 /// Cell internals.
@@ -71,7 +71,7 @@ pub mod cell {
 /// Create a [`Table`] from table child slots.
 pub fn table<'a, Message: 'a, C>(children: impl IntoIterator<Item = C>) -> Table<'a, Message>
 where
-    C: Into<Component<'a, Message>>,
+    C: Into<Slot<'a, Message>>,
 {
     Table::new(children)
 }
@@ -114,7 +114,7 @@ pub fn row<'a, Message: 'a>(
 }
 
 /// Create a body [`Cell`].
-pub fn cell<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Cell<'a, Message> {
+pub fn cell<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Cell<'a, Message> {
     Cell {
         content: content.into(),
         kind: cell::Kind::Body,
@@ -127,14 +127,12 @@ pub fn cell<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Cell
 }
 
 /// Create a header [`Cell`].
-pub fn head<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Cell<'a, Message> {
+pub fn head<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Cell<'a, Message> {
     cell(content).kind(cell::Kind::Head).height(40.0)
 }
 
 /// Create a [`Caption`].
-pub fn caption<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Caption<'a, Message> {
+pub fn caption<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Caption<'a, Message> {
     Caption {
         content: content.into(),
     }
@@ -144,7 +142,7 @@ impl<'a, Message: 'a> Table<'a, Message> {
     /// Create a table from table child slots.
     pub fn new<C>(children: impl IntoIterator<Item = C>) -> Self
     where
-        C: Into<Component<'a, Message>>,
+        C: Into<Slot<'a, Message>>,
     {
         Self {
             children: children.into_iter().map(Into::into).collect(),
@@ -209,18 +207,18 @@ impl<'a, Message: 'a> From<Table<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(table: Table<'a, Message>) -> Self {
-        Box::new(table).into_element()
+        Box::new(table).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Table<'a, Message>> for Component<'a, Message> {
-    fn from(table: Table<'a, Message>) -> Self {
-        Component::new(table)
+impl<'a, Message: 'a> From<Table<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Table<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Table<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Table<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -234,23 +232,23 @@ impl<'a, Message: 'a> From<Header<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(header: Header<'a, Message>) -> Self {
-        Box::new(header).into_element()
+        Box::new(header).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Header<'a, Message>> for Component<'a, Message> {
-    fn from(header: Header<'a, Message>) -> Self {
-        Component::new(header)
+impl<'a, Message: 'a> From<Header<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Header<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Header<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Header<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
         let Header { rows } = *self;
-        let rows = rows.into_iter().map(Component::from);
+        let rows = rows.into_iter().map(Slot::from);
 
         column(rows).spacing(0).width(Fill).into()
     }
@@ -258,18 +256,18 @@ impl<'a, Message: 'a> IntoElement<Message> for Header<'a, Message> {
 
 impl<'a, Message: 'a> From<Body<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(body: Body<'a, Message>) -> Self {
-        Box::new(body).into_element()
+        Box::new(body).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Body<'a, Message>> for Component<'a, Message> {
-    fn from(body: Body<'a, Message>) -> Self {
-        Component::new(body)
+impl<'a, Message: 'a> From<Body<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Body<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Body<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Body<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -279,7 +277,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Body<'a, Message> {
             last.border = false;
         }
 
-        let rows = rows.into_iter().map(Component::from);
+        let rows = rows.into_iter().map(Slot::from);
 
         column(rows).spacing(0).width(Fill).into()
     }
@@ -289,18 +287,18 @@ impl<'a, Message: 'a> From<Footer<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(footer: Footer<'a, Message>) -> Self {
-        Box::new(footer).into_element()
+        Box::new(footer).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Footer<'a, Message>> for Component<'a, Message> {
-    fn from(footer: Footer<'a, Message>) -> Self {
-        Component::new(footer)
+impl<'a, Message: 'a> From<Footer<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Footer<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Footer<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Footer<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -310,12 +308,12 @@ impl<'a, Message: 'a> IntoElement<Message> for Footer<'a, Message> {
             last.border = false;
         }
 
-        let rows = rows.into_iter().map(Component::from);
+        let rows = rows.into_iter().map(Slot::from);
         let content = column(rows).spacing(0).width(Fill);
 
         column([
             separator(),
-            Component::from(container(content).width(Fill).style(footer_style)),
+            Slot::from(container(content).width(Fill).style(footer_style)),
         ])
         .spacing(0)
         .width(Fill)
@@ -325,29 +323,29 @@ impl<'a, Message: 'a> IntoElement<Message> for Footer<'a, Message> {
 
 impl<'a, Message: 'a> From<Row<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(row: Row<'a, Message>) -> Self {
-        Box::new(row).into_element()
+        Box::new(row).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Row<'a, Message>> for Component<'a, Message> {
-    fn from(row: Row<'a, Message>) -> Self {
-        Component::new(row)
+impl<'a, Message: 'a> From<Row<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Row<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Row<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Row<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
         let Row { cells, border } = *self;
-        let cells = cells.into_iter().map(Component::from);
+        let cells = cells.into_iter().map(Slot::from);
         let row = crate::Row::with_children(cells)
             .align_y(iced_core::Alignment::Center)
             .width(Fill);
 
         if border {
-            column([Component::from(row), separator()])
+            column([Slot::from(row), separator()])
                 .spacing(0)
                 .width(Fill)
                 .into()
@@ -359,18 +357,18 @@ impl<'a, Message: 'a> IntoElement<Message> for Row<'a, Message> {
 
 impl<'a, Message: 'a> From<Cell<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(cell: Cell<'a, Message>) -> Self {
-        Box::new(cell).into_element()
+        Box::new(cell).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Cell<'a, Message>> for Component<'a, Message> {
-    fn from(cell: Cell<'a, Message>) -> Self {
-        Component::new(cell)
+impl<'a, Message: 'a> From<Cell<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Cell<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Cell<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Cell<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -384,10 +382,11 @@ impl<'a, Message: 'a> IntoElement<Message> for Cell<'a, Message> {
             align_y,
         } = *self;
 
-        content.size(Size::Default);
+        let mut inherited = Inherited::default().with_size(Size::Default);
         if kind == cell::Kind::Head {
-            content.weight(Weight::Medium);
+            inherited = inherited.with_weight(Weight::Medium);
         }
+        content.inherit(&inherited);
 
         container(content)
             .padding(padding)
@@ -403,23 +402,23 @@ impl<'a, Message: 'a> From<Caption<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(caption: Caption<'a, Message>) -> Self {
-        Box::new(caption).into_element()
+        Box::new(caption).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Caption<'a, Message>> for Component<'a, Message> {
-    fn from(caption: Caption<'a, Message>) -> Self {
-        Component::new(caption)
+impl<'a, Message: 'a> From<Caption<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Caption<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Caption<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Caption<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
         let Caption { mut content } = *self;
-        content.size(Size::Default);
+        content.inherit(&Inherited::default().with_size(Size::Default));
 
         container(content)
             .padding(Padding::ZERO.top(16.0))
@@ -437,11 +436,11 @@ fn separator_style() -> rule::StyleFn<'static, Theme> {
     })
 }
 
-fn separator<'a, Message: 'a>() -> Component<'a, Message> {
+fn separator<'a, Message: 'a>() -> Slot<'a, Message> {
     let line: iced_core::Element<'a, Message, Theme, Renderer> =
         rule::horizontal(1).style(separator_style()).into();
 
-    Component::from(line)
+    Slot::from(line)
 }
 
 fn footer_style(theme: &Theme) -> Style {

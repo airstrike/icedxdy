@@ -7,7 +7,7 @@ use iced::widget::{space, svg};
 use iced::{Bottom, Center, Fill, Padding};
 use icedxdy::card;
 use icedxdy::core::Border;
-use icedxdy::widget::{Component, button, column, container, field, row, slider, text};
+use icedxdy::widget::{Slot, button, column, container, field, row, slider, text};
 use icedxdy::{Size, Space, Theme, font_size, radius};
 
 use super::{api_gap, select};
@@ -96,7 +96,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn close_icon() -> Component<'static, Message> {
+fn close_icon() -> Slot<'static, Message> {
     let icon = svg(svg::Handle::from_memory(X_ICON))
         .width(16.0)
         .height(16.0)

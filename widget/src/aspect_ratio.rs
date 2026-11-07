@@ -42,7 +42,7 @@ use iced_widget::Renderer;
 
 use icedxdy_core::Theme;
 
-use crate::component::Component;
+use crate::compose::Slot;
 
 /// A widget that constrains its child to a `width : height` ratio.
 ///
@@ -98,10 +98,10 @@ where
 /// Mirrors shadcn's `<AspectRatio ratio={...}>` — pass the ratio as
 /// `width / height` (e.g. `16.0 / 9.0` for widescreen).
 pub fn aspect_ratio<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
     ratio: f32,
 ) -> AspectRatio<'a, Message> {
-    AspectRatio::new(content.into().into_iced(), ratio)
+    AspectRatio::new(content.into().compose(), ratio)
 }
 
 impl<Message, Renderer> Meta for AspectRatio<'_, Message, Renderer> where
@@ -277,8 +277,8 @@ impl<'a, Message: 'a> From<AspectRatio<'a, Message, Renderer>>
     }
 }
 
-impl<'a, Message: 'a> From<AspectRatio<'a, Message, Renderer>> for Component<'a, Message> {
+impl<'a, Message: 'a> From<AspectRatio<'a, Message, Renderer>> for Slot<'a, Message> {
     fn from(widget: AspectRatio<'a, Message, Renderer>) -> Self {
-        Component::new(Element::from(widget))
+        Slot::from(Element::from(widget))
     }
 }

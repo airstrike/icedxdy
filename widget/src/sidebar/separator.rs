@@ -1,6 +1,6 @@
 //! SidebarSeparator: horizontal rule with mx-2 (8px horizontal margin)
 
-use crate::component::Component;
+use crate::compose::Slot;
 use crate::container::Container;
 use iced_core::Length::Fill;
 use iced_core::Padding;
@@ -15,7 +15,7 @@ use icedxdy_core::Theme;
 pub fn separator<'a, Message: 'a>() -> Container<'a, Message> {
     let rule: iced_core::Element<'a, Message, Theme, iced_widget::Renderer> =
         rule::horizontal(1).boxed();
-    Container::new(Component::from(rule))
+    Container::new(Slot::from(rule))
         .width(Fill)
         .padding(Padding {
             top: 0.0,

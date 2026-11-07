@@ -14,8 +14,8 @@ use icedxdy::theme::text_input;
 use icedxdy::widget::button::Button;
 use icedxdy::widget::row::Row;
 use icedxdy::widget::{
-    Component, Size, Skeleton, badge, button, checkbox, column, container, input, row, skeleton,
-    slider, switch, text,
+    Size, Skeleton, Slot, badge, button, checkbox, column, container, input, row, skeleton, slider,
+    switch, text,
 };
 
 use crate::{Message, State, icon};
@@ -234,7 +234,7 @@ pub fn skeleton_card() -> iced::Element<'static, Message, Theme> {
     panel(lines, CARD_SKELETON_HEIGHT)
 }
 
-fn swatch_row(items: [(&'static str, Color); 6]) -> Component<'static, Message> {
+fn swatch_row(items: [(&'static str, Color); 6]) -> Slot<'static, Message> {
     Row::with_children(items.into_iter().map(|(label, color)| {
         column![
             swatch(color),
@@ -249,7 +249,7 @@ fn swatch_row(items: [(&'static str, Color); 6]) -> Component<'static, Message> 
     .into()
 }
 
-fn swatch(color: Color) -> Component<'static, Message> {
+fn swatch(color: Color) -> Slot<'static, Message> {
     container(space::vertical())
         .width(48.0)
         .height(48.0)
@@ -265,7 +265,7 @@ fn swatch(color: Color) -> Component<'static, Message> {
         .into()
 }
 
-fn icon_button<'a>(icon: impl Into<Component<'a, Message>>) -> Button<'a, Message> {
+fn icon_button<'a>(icon: impl Into<Slot<'a, Message>>) -> Button<'a, Message> {
     button::outline(icon)
         .size(Size::Sm)
         .square()
@@ -273,10 +273,7 @@ fn icon_button<'a>(icon: impl Into<Component<'a, Message>>) -> Button<'a, Messag
         .on_press(Message::Noop)
 }
 
-fn panel<'a>(
-    body: impl Into<Component<'a, Message>>,
-    height: f32,
-) -> iced::Element<'a, Message, Theme> {
+fn panel<'a>(body: impl Into<Slot<'a, Message>>, height: f32) -> iced::Element<'a, Message, Theme> {
     card::card(container(body.into()).padding(16).width(Fill).height(Fill))
         .width(Fill)
         .height(height)
@@ -287,7 +284,7 @@ fn skeleton_line(width: f32, height: f32) -> Skeleton<'static, Message> {
     skeleton().width(width).height(height)
 }
 
-fn name_input(state: &State) -> Component<'_, Message> {
+fn name_input(state: &State) -> Slot<'_, Message> {
     let input = input("Name")
         .value(&state.showcase_name)
         .width(Fill)
@@ -308,7 +305,7 @@ fn name_input(state: &State) -> Component<'_, Message> {
         .into()
 }
 
-fn textarea_placeholder() -> Component<'static, Message> {
+fn textarea_placeholder() -> Slot<'static, Message> {
     container(text::muted("Message").size(14.0))
         .width(Fill)
         .height(64.0)

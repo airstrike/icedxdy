@@ -40,7 +40,7 @@ use crate::radius;
 use crate::theme;
 use crate::theme::container;
 use crate::theme::container::Style;
-use crate::widget::Component;
+use crate::widget::Slot;
 use crate::widget::rule;
 use crate::widget::space;
 use crate::widget::text;
@@ -88,9 +88,7 @@ pub fn description<'a>(content: impl IntoFragment<'a>) -> text::Text<'a> {
 /// read symmetrically (`card::action(...)` next to `card::title(...)` /
 /// `card::description(...)`), and reserves a hook for any future
 /// action-specific styling.
-pub fn action<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Component<'a, Message> {
+pub fn action<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Slot<'a, Message> {
     content.into()
 }
 
@@ -102,14 +100,14 @@ pub fn action<'a, Message: 'a>(
 /// present) with `px-4` horizontal padding and `gap-1` (4px) between title
 /// and description, matching nova's `CardHeader` cascade.
 pub struct Header<'a, Message> {
-    title: Component<'a, Message>,
-    description: Option<Component<'a, Message>>,
-    action: Option<Component<'a, Message>>,
+    title: Slot<'a, Message>,
+    description: Option<Slot<'a, Message>>,
+    action: Option<Slot<'a, Message>>,
 }
 
 /// Build a header from a title.
 ///
-/// Plain strings auto-style as [`title`]. Pre-styled `Text` or `Component`
+/// Plain strings auto-style as [`title`]. Pre-styled `Text` or `Slot`
 /// values pass through unchanged — useful when the title needs custom
 /// styling (rich text, icon, etc.).
 ///
@@ -139,7 +137,7 @@ impl<'a, Message: 'a> Header<'a, Message> {
     /// shadcn pins the action via `col-start-2 row-span-2 self-start
     /// justify-self-end`; the rendered Header pushes it flush-right with
     /// [`space::horizontal`] inside a row.
-    pub fn action(mut self, action: impl Into<Component<'a, Message>>) -> Self {
+    pub fn action(mut self, action: impl Into<Slot<'a, Message>>) -> Self {
         self.action = Some(action.into());
         self
     }
@@ -156,9 +154,9 @@ impl<'a, Message: 'a> From<Header<'a, Message>> for Element<'a, Message> {
         // Stack title above (optional) description in a column with gap-1.
         let mut text_col: Column<Element<'a, Message>> =
             Column::new().spacing(Gap::G1).width(Length::Fill);
-        text_col = text_col.push(title.into_iced());
+        text_col = text_col.push(title.compose());
         if let Some(d) = description {
-            text_col = text_col.push(d.into_iced());
+            text_col = text_col.push(d.compose());
         }
 
         // When an action is present, place it at the end of a row so it sits
@@ -168,7 +166,7 @@ impl<'a, Message: 'a> From<Header<'a, Message>> for Element<'a, Message> {
             Some(a) => Row::new()
                 .push(text_col.boxed())
                 .push(space::horizontal().boxed())
-                .push(a.into_iced())
+                .push(a.compose())
                 .align_y(iced_core::Alignment::Start)
                 .width(Length::Fill)
                 .boxed(),
@@ -182,41 +180,40 @@ impl<'a, Message: 'a> From<Header<'a, Message>> for Element<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> From<Header<'a, Message>> for Component<'a, Message> {
+impl<'a, Message: 'a> From<Header<'a, Message>> for Slot<'a, Message> {
     fn from(h: Header<'a, Message>) -> Self {
-        let element: Element<'a, Message> = h.into();
-        Component::from(element)
+        Slot::from(Element::from(h))
     }
 }
 
 /// Convert a value into a card title. Plain strings auto-style as [`title`];
-/// pre-styled `Text` and `Component` values pass through. Mirrors
+/// pre-styled `Text` and `Slot` values pass through. Mirrors
 /// `field::IntoLabel` — name lives under the `card` module so it's read as
 /// `card::IntoTitle` (no composite name).
 pub trait IntoTitle<'a, Message> {
-    fn into_title(self) -> Component<'a, Message>;
+    fn into_title(self) -> Slot<'a, Message>;
 }
 
 impl<'a, Message: 'a> IntoTitle<'a, Message> for &'a str {
-    fn into_title(self) -> Component<'a, Message> {
+    fn into_title(self) -> Slot<'a, Message> {
         title(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoTitle<'a, Message> for String {
-    fn into_title(self) -> Component<'a, Message> {
+    fn into_title(self) -> Slot<'a, Message> {
         title(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoTitle<'a, Message> for text::Text<'a> {
-    fn into_title(self) -> Component<'a, Message> {
+    fn into_title(self) -> Slot<'a, Message> {
         self.into()
     }
 }
 
-impl<'a, Message: 'a> IntoTitle<'a, Message> for Component<'a, Message> {
-    fn into_title(self) -> Component<'a, Message> {
+impl<'a, Message: 'a> IntoTitle<'a, Message> for Slot<'a, Message> {
+    fn into_title(self) -> Slot<'a, Message> {
         self
     }
 }
@@ -224,29 +221,29 @@ impl<'a, Message: 'a> IntoTitle<'a, Message> for Component<'a, Message> {
 /// Convert a value into a card description. Plain strings auto-style as
 /// [`description`]; pre-styled values pass through.
 pub trait IntoDescription<'a, Message> {
-    fn into_description(self) -> Component<'a, Message>;
+    fn into_description(self) -> Slot<'a, Message>;
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for &'a str {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         description(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for String {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         description(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for text::Text<'a> {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         self.into()
     }
 }
 
-impl<'a, Message: 'a> IntoDescription<'a, Message> for Component<'a, Message> {
-    fn into_description(self) -> Component<'a, Message> {
+impl<'a, Message: 'a> IntoDescription<'a, Message> for Slot<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         self
     }
 }
@@ -272,7 +269,7 @@ pub fn content<'a, Message: 'a>(
 
 /// Card footer section. Caller composes the inner shape (row of buttons,
 /// stacked column, etc.); `footer` applies nova's muted footer surface.
-pub fn footer<'a, Message: 'a>(child: impl Into<Element<'a, Message>>) -> Component<'a, Message> {
+pub fn footer<'a, Message: 'a>(child: impl Into<Element<'a, Message>>) -> Slot<'a, Message> {
     let line: Element<'a, Message> = rule::horizontal(1).style(footer_rule_style()).boxed();
 
     let body = Container::new(child.into())
@@ -286,13 +283,13 @@ pub fn footer<'a, Message: 'a>(child: impl Into<Element<'a, Message>>) -> Compon
         .width(Length::Fill)
         .boxed();
 
-    Component::from(footer)
+    Slot::from(footer)
 }
 
 /// Card footer as a row of children with 8px (`gap-2`) spacing.
 pub fn footer_row<'a, Message: 'a>(
     children: impl IntoIterator<Item = Element<'a, Message>>,
-) -> Component<'a, Message> {
+) -> Slot<'a, Message> {
     let row = Row::with_children(children).spacing(Gap::G2);
     footer(row.boxed())
 }

@@ -59,10 +59,10 @@ macro_rules! button {
     // `button![arrow_up, "Submit"]` => button(row![icon::arrow_up(), "Submit"])
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::button::button(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
             )
         )
@@ -70,9 +70,9 @@ macro_rules! button {
     // Default-variant multi-arg arm — wraps children in a row.
     ($($child:expr),+ $(,)?) => {
         $crate::button::button(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
             )
         )
@@ -88,19 +88,19 @@ macro_rules! button_primary {
     // Leading-ident icon sugar — see [`button!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::button::primary(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
             )
         )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::primary(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
             )
         )
@@ -116,19 +116,19 @@ macro_rules! button_secondary {
     // Leading-ident icon sugar — see [`button!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::button::secondary(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
             )
         )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::secondary(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
             )
         )
@@ -144,19 +144,19 @@ macro_rules! button_outline {
     // Leading-ident icon sugar — see [`button!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::button::outline(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
             )
         )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::outline(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
             )
         )
@@ -172,19 +172,19 @@ macro_rules! button_ghost {
     // Leading-ident icon sugar — see [`button!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::button::ghost(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
             )
         )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::ghost(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
             )
         )
@@ -200,19 +200,19 @@ macro_rules! button_destructive {
     // Leading-ident icon sugar — see [`button!`] for details.
     ($first:ident, $($rest:expr),+ $(,)?) => {
         $crate::button::destructive(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    Into::<$crate::component::Component<'_, _>>::into(icon::$first()),
-                    $(Into::<$crate::component::Component<'_, _>>::into($rest)),+
+                    Into::<$crate::compose::Slot<'_, _>>::into(icon::$first()),
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($rest)),+
                 ])
             )
         )
     };
     ($($child:expr),+ $(,)?) => {
         $crate::button::destructive(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
             )
         )
@@ -245,9 +245,9 @@ macro_rules! button_icon {
     // Multi-child fallback.
     ($($child:expr),+ $(,)?) => {
         $crate::button::icon(
-            $crate::component::Component::new(
+            $crate::compose::Slot::new(
                 $crate::row::Row::with_children([
-                    $(Into::<$crate::component::Component<'_, _>>::into($child)),+
+                    $(Into::<$crate::compose::Slot<'_, _>>::into($child)),+
                 ])
             )
         )

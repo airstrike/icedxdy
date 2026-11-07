@@ -6,7 +6,7 @@ use iced::widget::space;
 use iced::{Center, Fill};
 use icedxdy::theme;
 use icedxdy::widget::{button, column, container, field, input, item, progress, row, text};
-use icedxdy::{Component, Theme, Vertical, card};
+use icedxdy::{Slot, Theme, Vertical, card};
 
 use super::{api_gap, select};
 use crate::{Message, State};
@@ -21,7 +21,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .into()
 }
 
-fn targets_card() -> Component<'static, Message> {
+fn targets_card() -> Slot<'static, Message> {
     card::card(
         column![
             card::header("Savings Targets")
@@ -48,7 +48,7 @@ fn targets_card() -> Component<'static, Message> {
     .into()
 }
 
-fn buy_card(state: &State) -> Component<'_, Message> {
+fn buy_card(state: &State) -> Slot<'_, Message> {
     let amount = field::field(
         input("")
             .value(&state.buy_investment_amount)
@@ -103,7 +103,7 @@ fn target(
     value: f32,
     status: &'static str,
     amount: &'static str,
-) -> Component<'static, Message> {
+) -> Slot<'static, Message> {
     item::muted([
         item::content([
             text::xs(label)
@@ -125,7 +125,7 @@ fn target(
     .into()
 }
 
-fn info_row(label: &'static str, value: &'static str) -> Component<'static, Message> {
+fn info_row(label: &'static str, value: &'static str) -> Slot<'static, Message> {
     row![
         text::muted(label),
         space::horizontal(),

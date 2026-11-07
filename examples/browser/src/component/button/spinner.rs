@@ -1,10 +1,10 @@
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::theme;
 use icedxdy::widget::{button, row, spinner};
 
 use super::Message;
 
-pub fn view<'a>() -> Component<'a, Message> {
+pub fn view<'a>() -> Slot<'a, Message> {
     row![
         button![spinner(), "Generating"]
             .style(theme::button::Outline)

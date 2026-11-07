@@ -2,15 +2,12 @@
 
 use iced::{Fill, Padding};
 use iced_widget::pick_list;
-use icedxdy::widget::Component;
+use icedxdy::widget::Slot;
 use icedxdy::{Space, Theme, font_size};
 
 use crate::Message;
 
-pub fn trigger(
-    selected: &'static str,
-    options: &'static [&'static str],
-) -> Component<'static, Message> {
+pub fn trigger(selected: &'static str, options: &'static [&'static str]) -> Slot<'static, Message> {
     pick_list(Some(selected), options, |value| (*value).to_owned())
         .on_select(|_| Message::Noop)
         .width(Fill)

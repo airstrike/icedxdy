@@ -1,10 +1,10 @@
-use icedxdy::Component;
 use icedxdy::Size;
+use icedxdy::Slot;
 use icedxdy::widget::{alert, button};
 
 use super::Message;
 
-pub fn view<'a>() -> Component<'a, Message> {
+pub fn view<'a>() -> Slot<'a, Message> {
     // shadcn `alert-action.tsx` caps the alert at `max-w-md` (448px).
     alert()
         .title("Dark mode is now available")

@@ -9,7 +9,7 @@ use icedxdy::card;
 use icedxdy::core::{Border, oklch};
 use icedxdy::theme::container::Style;
 use icedxdy::widget::{badge, column, container, item, row, rule, text};
-use icedxdy::{Component, Theme, Vertical};
+use icedxdy::{Slot, Theme, Vertical};
 
 use crate::{Message, State};
 
@@ -20,7 +20,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
             .align_y(Center),
     );
 
-    let header_body: Component<'static, Message> = column![
+    let header_body: Slot<'static, Message> = column![
         card::description("Claimable Balance"),
         text::p("$0.00").size(48.0).semibold(),
         pending,
@@ -28,7 +28,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .spacing(4)
     .width(Fill)
     .into();
-    let header: Component<'static, Message> = card::header(header_body).into();
+    let header: Slot<'static, Message> = card::header(header_body).into();
 
     let totals = item::muted([item::content([
         money_row("Net Royalties", "$0.00", false),
@@ -61,11 +61,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn money_row(
-    label: &'static str,
-    amount: &'static str,
-    strong: bool,
-) -> Component<'static, Message> {
+fn money_row(label: &'static str, amount: &'static str, strong: bool) -> Slot<'static, Message> {
     let amount = if strong {
         text::small(amount).semibold()
     } else {
@@ -78,14 +74,14 @@ fn money_row(
         .into()
 }
 
-fn divider() -> Component<'static, Message> {
+fn divider() -> Slot<'static, Message> {
     let line: iced::Element<'static, Message, Theme> =
         rule::horizontal(1).style(divider_style()).into();
 
     container(line).height(1.0).width(Fill).into()
 }
 
-fn dot() -> Component<'static, Message> {
+fn dot() -> Slot<'static, Message> {
     container(space::vertical())
         .width(10.0)
         .height(10.0)

@@ -23,7 +23,7 @@ use iced_widget::Renderer;
 use iced_widget::text::StyleFn;
 
 use crate::Size;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use crate::rule;
 use icedxdy_core::Theme;
 use icedxdy_core::theme;
@@ -179,44 +179,24 @@ impl<'a, Message: 'a> From<Text<'a>> for iced_core::Element<'a, Message, Theme, 
     }
 }
 
-impl<'a, Message: 'a> From<Text<'a>> for crate::Component<'a, Message> {
-    fn from(t: Text<'a>) -> Self {
-        crate::Component::new(t)
+impl<'a, Message: 'a> From<Text<'a>> for Slot<'a, Message> {
+    fn from(widget: Text<'a>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Text<'a> {
-    fn size(&mut self, size: Size) {
-        if self.size.is_none() {
-            self.size = Some(size.text_size());
-        }
+impl<'a, Message: 'a> Compose<Message> for Text<'a> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.size = self.size.or(from.size().map(Size::text_size));
+        self.weight = self.weight.or(from.weight().map(Into::into));
+        // The inherited value is absolute logical pixels (nova `leading-4` is
+        // 16px); `From<f32> for LineHeight` would read it as a relative factor.
+        self.line_height = self.line_height.or(from
+            .line_height()
+            .map(|pixels| LineHeight::Absolute(iced_core::Pixels(pixels))));
     }
 
-    fn weight(&mut self, weight: crate::Weight) {
-        if self.weight.is_none() {
-            self.weight = Some(weight.into());
-        }
-    }
-
-    fn line_height(&mut self, line_height: f32) {
-        // Treat the pushed value as absolute logical pixels (matches nova's
-        // `leading-4` = 16px semantic). `From<f32> for LineHeight` would
-        // interpret it as a relative factor, so build `Absolute` explicitly.
-        if self.line_height.is_none() {
-            self.line_height = Some(LineHeight::Absolute(iced_core::Pixels(line_height)));
-        }
-    }
-
-    fn foreground_color(&mut self, color: iced_core::Color) {
-        if self.style.is_none() {
-            self.style = Some(Box::new(move |_| iced_widget::text::Style {
-                color: Some(color),
-                selection: None,
-            }));
-        }
-    }
-
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -350,18 +330,18 @@ pub fn blockquote<'a>(content: impl IntoFragment<'a>) -> Blockquote<'a> {
 
 impl<'a, Message: 'a> From<Blockquote<'a>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(b: Blockquote<'a>) -> Self {
-        Box::new(b).into_element()
+        Box::new(b).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Blockquote<'a>> for Component<'a, Message> {
-    fn from(b: Blockquote<'a>) -> Self {
-        Component::new(b)
+impl<'a, Message: 'a> From<Blockquote<'a>> for Slot<'a, Message> {
+    fn from(widget: Blockquote<'a>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Blockquote<'a> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Blockquote<'a> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -429,18 +409,18 @@ where
 
 impl<'a, Message: 'a> From<List<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(list: List<'a, Message>) -> Self {
-        Box::new(list).into_element()
+        Box::new(list).compose()
     }
 }
 
-impl<'a, Message: 'a> From<List<'a, Message>> for Component<'a, Message> {
-    fn from(list: List<'a, Message>) -> Self {
-        Component::new(list)
+impl<'a, Message: 'a> From<List<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: List<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for List<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for List<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

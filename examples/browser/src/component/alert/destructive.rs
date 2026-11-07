@@ -1,10 +1,10 @@
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::widget::alert;
 
 use super::Message;
 use crate::icon;
 
-pub fn view<'a>() -> Component<'a, Message> {
+pub fn view<'a>() -> Slot<'a, Message> {
     // shadcn `alert-destructive.tsx` caps the alert at `max-w-md` (448px).
     alert::destructive()
         .icon(icon::circle_alert())

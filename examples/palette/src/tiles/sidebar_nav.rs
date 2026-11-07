@@ -4,7 +4,7 @@
 
 use iced::Fill;
 use icedxdy::widget::{column, row, sidebar, text};
-use icedxdy::{Component, Theme, card};
+use icedxdy::{Slot, Theme, card};
 
 use crate::{Message, State, icon};
 
@@ -56,9 +56,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .into()
 }
 
-fn nav_card<const N: usize>(
-    children: [Component<'static, Message>; N],
-) -> Component<'static, Message> {
+fn nav_card<const N: usize>(children: [Slot<'static, Message>; N]) -> Slot<'static, Message> {
     card::card(column(children).spacing(0).width(Fill))
         .width(Fill)
         .into()
@@ -66,8 +64,8 @@ fn nav_card<const N: usize>(
 
 fn group<const N: usize>(
     label: &'static str,
-    items: [Component<'static, Message>; N],
-) -> Component<'static, Message> {
+    items: [Slot<'static, Message>; N],
+) -> Slot<'static, Message> {
     sidebar::group([
         sidebar::group_label(label).into(),
         sidebar::group_content(items).into(),
@@ -77,9 +75,9 @@ fn group<const N: usize>(
 
 fn nav_item(
     label: &'static str,
-    icon: Component<'static, Message>,
+    icon: Slot<'static, Message>,
     active: bool,
-) -> Component<'static, Message> {
+) -> Slot<'static, Message> {
     let content = row![icon, text::small(label)].spacing(8).width(Fill);
     let button = sidebar::menu_button(content)
         .active(active)

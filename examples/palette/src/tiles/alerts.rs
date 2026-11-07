@@ -8,7 +8,7 @@
 
 use iced::Fill;
 use iced::Widget;
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::card;
 use icedxdy::core::{Border, Color, Palette};
 use icedxdy::theme;
@@ -38,7 +38,7 @@ pub fn view() -> iced::Element<'static, Message, Theme> {
         "We couldn't charge the card on file. Update billing to keep this account active.",
     );
 
-    let body: Column<'_, Message> = column([info, success, warning, Component::from(destructive)])
+    let body: Column<'_, Message> = column([info, success, warning, Slot::from(destructive)])
         .spacing(12)
         .width(Fill);
 
@@ -65,7 +65,7 @@ fn tinted_alert(
     getter: fn(&Theme) -> Palette,
     title: &'static str,
     description: &'static str,
-) -> Component<'static, Message> {
+) -> Slot<'static, Message> {
     let body: Column<'static, Message> = column([
         text::small(title)
             .medium()

@@ -32,7 +32,7 @@ use icedxdy::theme::container::Style;
 use icedxdy::widget::{
     aspect_ratio, badge, button, column, container, field, input, row, space, text,
 };
-use icedxdy::{Component, Gap, Size, Theme};
+use icedxdy::{Gap, Size, Slot, Theme};
 
 use crate::Message;
 use crate::page;
@@ -181,7 +181,7 @@ impl page::Page for CardPage {
             // (Login + "Login with Google" buttons stacked column, full-width).
             // max-w-sm = 24rem = 384px.
             "demo" => {
-                let email_field: Component<'_, Message> = field(
+                let email_field: Slot<'_, Message> = field(
                     input("m@example.com").value(&self.demo_email)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_DEMO_EMAIL, v))
@@ -194,7 +194,7 @@ impl page::Page for CardPage {
                 // shadcn pairs the Password label with the "Forgot your
                 // password?" link in a flex row, separated by `ml-auto`.
                 // Rendered as a row inside the Field's label slot.
-                let password_label: Component<'_, Message> = row![
+                let password_label: Slot<'_, Message> = row![
                     text::label("Password"),
                     space::horizontal(),
                     button::link("Forgot your password?")
@@ -204,7 +204,7 @@ impl page::Page for CardPage {
                 .width(Fill)
                 .into();
 
-                let password_field: Component<'_, Message> = field(
+                let password_field: Slot<'_, Message> = field(
                     input("").value(&self.demo_password)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_DEMO_PASSWORD, v))
@@ -275,7 +275,7 @@ impl page::Page for CardPage {
             // header (Featured badge action + title + description) + footer
             // (full-width "View Event" button). max-w-sm = 384px.
             "image" => {
-                let header: Component<'_, Message> = card::header("Design systems meetup")
+                let header: Slot<'_, Message> = card::header("Design systems meetup")
                     .description(
                         "A practical talk on component APIs, accessibility, and shipping faster.",
                     )

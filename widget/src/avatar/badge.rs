@@ -15,7 +15,7 @@ use iced_widget::stack;
 use icedxdy_core::Theme;
 use icedxdy_core::theme::avatar::badge_style;
 
-use crate::component::Component;
+use crate::compose::{Inherited, Slot};
 use crate::container::Container;
 
 use super::Avatar;
@@ -36,8 +36,8 @@ use super::Avatar;
 /// ```
 pub fn badge<'a, Message: 'a>(
     avatar: Avatar<'a, Message>,
-    inner: impl Into<Component<'a, Message>>,
-) -> Component<'a, Message> {
+    inner: impl Into<Slot<'a, Message>>,
+) -> Slot<'a, Message> {
     let geometry = avatar.geometry();
     let badge_diameter = geometry.badge_diameter;
     let icon_size = geometry.badge_icon_size;
@@ -52,14 +52,14 @@ pub fn badge<'a, Message: 'a>(
     // signals that intent — drop the inner content into the void.
     let mut inner_component = inner.into();
     if icon_size > 0.0 {
-        inner_component.size(crate::Size::Custom(icon_size));
+        inner_component.inherit(&Inherited::default().with_size(crate::Size::Custom(icon_size)));
     }
 
-    let chip_inner: Component<'a, Message> = if icon_size > 0.0 {
+    let chip_inner: Slot<'a, Message> = if icon_size > 0.0 {
         inner_component
     } else {
         // Drop the caller's content but reserve the (shrunk) chip body.
-        Component::from("")
+        Slot::from("")
     };
 
     let chip = Container::new(chip_inner)
@@ -81,12 +81,12 @@ pub fn badge<'a, Message: 'a>(
 
     let composed: iced_core::Element<'a, Message, Theme, Renderer> =
         stack![avatar_el, overlay].boxed();
-    Component::from(composed)
+    Slot::from(composed)
 }
 
 /// A presence dot for use as the inner content of [`badge`] — renders as
 /// nothing, leaving just the chip surface (matches shadcn's empty
 /// `<AvatarBadge className="bg-green-600" />`).
-pub fn dot<'a, Message: 'a>() -> Component<'a, Message> {
-    Component::from("")
+pub fn dot<'a, Message: 'a>() -> Slot<'a, Message> {
+    Slot::from("")
 }

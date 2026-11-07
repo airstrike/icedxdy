@@ -21,7 +21,7 @@ use iced_widget::{Renderer, row};
 use icedxdy_core::Theme;
 use icedxdy_core::theme::avatar::group_count_style;
 
-use crate::component::Component;
+use crate::compose::{Inherited, Slot};
 use crate::container::Container;
 
 use super::{Avatar, Geometry, Size};
@@ -37,7 +37,7 @@ const OVERLAP_PX: f32 = -8.0;
 /// ring colored to the page background.
 pub struct Group<'a, Message> {
     avatars: Vec<Avatar<'a, Message>>,
-    count: Option<Component<'a, Message>>,
+    count: Option<Slot<'a, Message>>,
 }
 
 /// Compose N avatars into a horizontal group with negative-space overlap.
@@ -63,11 +63,11 @@ pub fn group<'a, Message: 'a>(
 impl<'a, Message: 'a> Group<'a, Message> {
     /// Append a trailing count chip after the avatars.
     ///
-    /// Accepts any `Component` — pass a string like `"+3"` for the
+    /// Accepts any `Slot` — pass a string like `"+3"` for the
     /// numeric form, or `icon::plus()` for the icon form.
     /// Mirrors shadcn's `<AvatarGroupCount>` slot at the tail of the
     /// group.
-    pub fn count(mut self, content: impl Into<Component<'a, Message>>) -> Self {
+    pub fn count(mut self, content: impl Into<Slot<'a, Message>>) -> Self {
         self.count = Some(content.into());
         self
     }
@@ -101,7 +101,9 @@ impl<'a, Message: 'a> From<Group<'a, Message>>
         let count_element: Option<iced_core::Element<'a, Message, Theme, Renderer>> =
             count.map(|inner| {
                 let mut sized = inner;
-                sized.size(crate::Size::Custom(count_geometry.font_size));
+                sized.inherit(
+                    &Inherited::default().with_size(crate::Size::Custom(count_geometry.font_size)),
+                );
                 let chip = Container::new(sized)
                     .center(Length::from(count_geometry.diameter))
                     .clip(true)
@@ -120,8 +122,8 @@ impl<'a, Message: 'a> From<Group<'a, Message>>
     }
 }
 
-impl<'a, Message: 'a> From<Group<'a, Message>> for Component<'a, Message> {
+impl<'a, Message: 'a> From<Group<'a, Message>> for Slot<'a, Message> {
     fn from(group: Group<'a, Message>) -> Self {
-        Component::from(iced_core::Element::from(group))
+        Slot::from(iced_core::Element::from(group))
     }
 }

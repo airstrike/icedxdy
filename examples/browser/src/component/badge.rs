@@ -11,7 +11,7 @@
 use iced::Task;
 
 use icedxdy::widget::{badge, row, spinner};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::icon;
 use crate::page;
@@ -78,7 +78,7 @@ impl BadgePage {
     }
 }
 
-fn view(id: &str) -> Component<'static, Message> {
+fn view(id: &str) -> Slot<'static, Message> {
     match id {
         // Demo (hero): 4 variants in a row, verbatim shadcn `badge-demo.tsx`.
         "demo" => row![

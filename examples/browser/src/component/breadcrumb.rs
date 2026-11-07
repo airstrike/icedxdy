@@ -22,7 +22,7 @@
 use iced::Task;
 
 use icedxdy::widget::breadcrumb;
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::icon;
 use crate::page;
@@ -99,11 +99,11 @@ impl BreadcrumbPage {
     }
 }
 
-fn chevron<'a>() -> Component<'a, Message> {
+fn chevron<'a>() -> Slot<'a, Message> {
     icon::chevron_right().size(14).into()
 }
 
-fn view(id: &str) -> Component<'static, Message> {
+fn view(id: &str) -> Slot<'static, Message> {
     match id {
         // Hero / `breadcrumb-demo.tsx`. shadcn's demo wires the ellipsis up
         // as a DropdownMenu trigger (Documentation / Themes / GitHub items).

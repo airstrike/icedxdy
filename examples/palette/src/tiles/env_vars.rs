@@ -5,12 +5,12 @@ use iced::Widget;
 use iced::widget::space;
 use icedxdy::card;
 use icedxdy::widget::{button, column, container, input, row};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::{Message, State};
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    let rows: Vec<Component<'_, Message>> = vec![
+    let rows: Vec<Slot<'_, Message>> = vec![
         env_row(
             "DATABASE_URL",
             &state.env_database,
@@ -56,18 +56,18 @@ fn env_row<'a>(
     key: &'static str,
     value: &'a str,
     on_input: fn(String) -> Message,
-) -> Component<'a, Message> {
+) -> Slot<'a, Message> {
     row![readonly_input(key), active_input(value, on_input),]
         .spacing(8)
         .width(Fill)
         .into()
 }
 
-fn readonly_input(value: &'static str) -> Component<'static, Message> {
+fn readonly_input(value: &'static str) -> Slot<'static, Message> {
     input("").value(value).width(Fill).into()
 }
 
-fn active_input<'a>(value: &'a str, on_input: fn(String) -> Message) -> Component<'a, Message> {
+fn active_input<'a>(value: &'a str, on_input: fn(String) -> Message) -> Slot<'a, Message> {
     input("")
         .value(value)
         .width(Fill)

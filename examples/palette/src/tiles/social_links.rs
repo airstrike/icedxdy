@@ -62,7 +62,7 @@ fn link_field<'a>(
     label: &'static str,
     value: &'a str,
     on_input: fn(String) -> Message,
-) -> icedxdy::Component<'a, Message> {
+) -> icedxdy::Slot<'a, Message> {
     field::field(input("").value(value).on_input(on_input).width(Fill))
         .label(label)
         .width(Fill)

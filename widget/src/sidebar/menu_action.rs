@@ -16,7 +16,7 @@ use iced_widget::Renderer;
 
 use crate::Size;
 use crate::button::widget;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use icedxdy_core::Theme;
 use icedxdy_core::theme::button;
 
@@ -24,13 +24,13 @@ use icedxdy_core::theme::button;
 ///
 /// Small (24x24), ghost styling, centered content.
 pub struct SidebarMenuAction<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     on_press: Option<Message>,
 }
 
 /// Create a sidebar menu action button (ghost-style, 24x24).
 pub fn menu_action<'a, Message: Clone + 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
 ) -> SidebarMenuAction<'a, Message> {
     SidebarMenuAction {
         content: content.into(),
@@ -50,8 +50,10 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(mut action: SidebarMenuAction<'a, Message>) -> Self {
-        action.content.size(Size::Xs);
-        let content_iced = action.content.into_iced();
+        action
+            .content
+            .inherit(&Inherited::default().with_size(Size::Xs));
+        let content_iced = action.content.compose();
 
         // 24x24, our raw button with translate(false) and ghost style
         let style: widget::StyleFn<'a, Theme> = Box::new(|t, s: widget::Status| {
@@ -74,20 +76,14 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>>
-    for crate::Component<'a, Message>
-{
+impl<'a, Message: Clone + 'a> From<SidebarMenuAction<'a, Message>> for crate::Slot<'a, Message> {
     fn from(a: SidebarMenuAction<'a, Message>) -> Self {
-        crate::Component::new(a)
+        crate::Slot::new(a)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for SidebarMenuAction<'a, Message> {
-    fn size(&mut self, _size: Size) {
-        // Fixed size, ignore parent hints
-    }
-
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: Clone + 'a> Compose<Message> for SidebarMenuAction<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

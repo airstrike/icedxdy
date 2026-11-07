@@ -12,7 +12,7 @@
 //! ```
 
 use crate::Size;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use crate::text_input;
 use crate::text_input::element::from_core;
 use iced_core::text::{Fragment, IntoFragment};
@@ -32,7 +32,7 @@ use icedxdy_core::theme;
 pub struct Input<'a, Message> {
     placeholder: Fragment<'a>,
     value: Fragment<'a>,
-    size: Size,
+    size: Option<Size>,
     width: Length,
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
     on_submit: Option<Message>,
@@ -50,7 +50,7 @@ pub fn input<'a, Message: Clone + 'a>(placeholder: impl IntoFragment<'a>) -> Inp
     Input {
         placeholder: placeholder.into_fragment(),
         value: Fragment::Borrowed(""),
-        size: Size::Default,
+        size: None,
         width: Length::Shrink,
         on_input: None,
         on_submit: None,
@@ -69,7 +69,7 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
 
     /// Set the size variant.
     pub fn size(mut self, size: impl Into<Size>) -> Self {
-        self.size = size.into();
+        self.size = Some(size.into());
         self
     }
 
@@ -119,13 +119,13 @@ impl<'a, Message: Clone + 'a> Input<'a, Message> {
     /// Input height — delegates to `Size::height` so size variants stay in
     /// sync with buttons. Nova `h-8` (32px) is `Size::Default`.
     fn height(&self) -> f32 {
-        self.size.height()
+        self.size.unwrap_or_default().height()
     }
 
     /// Text size based on size variant.
     /// Default/Sm: 14px (text-sm), Lg: 16px (text-base)
     fn text_size(&self) -> f32 {
-        match self.size {
+        match self.size.unwrap_or_default() {
             Size::Lg => 16.0,
             _ => 14.0,
         }
@@ -183,21 +183,18 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> From<Input<'a, Message>> for Component<'a, Message> {
-    fn from(input: Input<'a, Message>) -> Self {
-        Component::new(input)
+impl<'a, Message: Clone + 'a> From<Input<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Input<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for Input<'a, Message> {
-    fn size(&mut self, size: Size) {
-        // Only override if user didn't explicitly set
-        if self.size == Size::Default {
-            self.size = size;
-        }
+impl<'a, Message: Clone + 'a> Compose<Message> for Input<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.size = self.size.or(from.size());
     }
 
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

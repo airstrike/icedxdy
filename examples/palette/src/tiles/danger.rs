@@ -9,7 +9,7 @@
 
 use iced::Fill;
 use iced::Widget;
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::core::style::{destructive, outline};
@@ -52,7 +52,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .style(code_block);
 
     let footnote = row![
-        Component::from(code_chip),
+        Slot::from(code_chip),
         text::xs("propagates across replicas in ~30s.").style(theme::text::Muted),
     ]
     .spacing(8)
@@ -62,13 +62,9 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .spacing(8)
         .width(Fill);
 
-    let body = column([
-        Component::from(armed_check),
-        footnote.into(),
-        actions.into(),
-    ])
-    .spacing(12)
-    .width(Fill);
+    let body = column([Slot::from(armed_check), footnote.into(), actions.into()])
+        .spacing(12)
+        .width(Fill);
 
     card::card(
         column([

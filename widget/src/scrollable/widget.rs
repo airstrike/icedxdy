@@ -14,7 +14,7 @@
 //! 2. Wrapper stores an `scrollable::StyleFn` so existing
 //!    `From<Variant> for iced::scrollable::StyleFn` impls in `core::theme`
 //!    flow through unchanged.
-//! 3. At `IntoElement::into_element` time the wrapper builds a per-call
+//! 3. At `Compose::compose` time the wrapper builds a per-call
 //!    bridge closure that lands iced's `Style` in our local [`Style`]
 //!    via the field-by-field [`From`] impl below.
 //!

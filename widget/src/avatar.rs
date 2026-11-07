@@ -57,7 +57,7 @@ use iced_widget::{Renderer, Widget};
 use icedxdy_core::Theme;
 use icedxdy_core::theme::avatar::fallback_style;
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use crate::container::Container;
 
 #[doc(inline)]
@@ -119,7 +119,7 @@ impl std::default::Default for Size {
 /// runtime-load-failure caveat.
 pub struct Avatar<'a, Message> {
     image: Option<Handle>,
-    fallback: Option<Component<'a, Message>>,
+    fallback: Option<Slot<'a, Message>>,
     size: Size,
     /// 2px outer ring colored to the page background. Set by
     /// [`group`](crate::avatar::group) on every avatar it composes so
@@ -146,8 +146,8 @@ impl<'a, Message: 'a> Avatar<'a, Message> {
     /// Set the fallback content rendered when no image handle is provided.
     ///
     /// Typically the user's initials (`"CN"`, `"ER"`) but accepts any
-    /// `Component` — an icon, a single character, etc.
-    pub fn fallback(mut self, content: impl Into<Component<'a, Message>>) -> Self {
+    /// `Slot` — an icon, a single character, etc.
+    pub fn fallback(mut self, content: impl Into<Slot<'a, Message>>) -> Self {
         self.fallback = Some(content.into());
         self
     }
@@ -178,18 +178,18 @@ impl<'a, Message: 'a> From<Avatar<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(avatar: Avatar<'a, Message>) -> Self {
-        Box::new(avatar).into_element()
+        Box::new(avatar).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Avatar<'a, Message>> for Component<'a, Message> {
-    fn from(avatar: Avatar<'a, Message>) -> Self {
-        Component::new(avatar)
+impl<'a, Message: 'a> From<Avatar<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Avatar<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Avatar<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Avatar<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -211,8 +211,8 @@ impl<'a, Message: 'a> IntoElement<Message> for Avatar<'a, Message> {
         // Inner content: image clipped to the circle if Some, fallback
         // text otherwise. iced's Image widget supports `border_radius`
         // directly — the pill clamp matches the surrounding container.
-        let inner: Component<'_, Message> = if let Some(handle) = handle {
-            Component::from(
+        let inner: Slot<'_, Message> = if let Some(handle) = handle {
+            Slot::from(
                 iced_widget::Image::new(handle)
                     .width(Fill)
                     .height(Fill)
@@ -225,12 +225,12 @@ impl<'a, Message: 'a> IntoElement<Message> for Avatar<'a, Message> {
             // through the standard size-propagation channel so a bare
             // string flows into `text::Text` and picks up the variant's
             // font size automatically.
-            let body: Component<'_, Message> = match fallback {
+            let body: Slot<'_, Message> = match fallback {
                 Some(content) => content,
-                None => Component::from(""),
+                None => Slot::from(""),
             };
             let mut sized = body;
-            sized.size(crate::Size::Custom(geometry.font_size));
+            sized.inherit(&Inherited::default().with_size(crate::Size::Custom(geometry.font_size)));
             sized
         };
 

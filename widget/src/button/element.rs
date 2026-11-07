@@ -7,7 +7,7 @@ use iced_widget::Widget;
 use iced_widget::text::Rich;
 
 use crate::Size;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use icedxdy_core::Theme;
 use icedxdy_core::theme;
 
@@ -42,8 +42,8 @@ where
     Renderer: iced_core::Renderer,
     Theme: iced_widget::button::Catalog,
 {
-    content: Component<'a, Message, Theme, Renderer>,
-    size: Size,
+    content: Slot<'a, Message, Theme, Renderer>,
+    size: Option<Size>,
     weight: crate::Weight,
     square: bool,
     rounded: bool,
@@ -58,11 +58,11 @@ where
 
 /// Create a button with default size and style
 pub fn button<'a, Message: Clone + 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
 ) -> Button<'a, Message> {
     Button {
         content: content.into(),
-        size: Size::Default,
+        size: None,
         weight: crate::Weight::Medium,
         square: false,
         rounded: false,
@@ -79,7 +79,7 @@ pub fn button<'a, Message: Clone + 'a>(
 impl<'a, Message: Clone + 'a> Button<'a, Message> {
     /// Set the size variant
     pub fn size(mut self, size: impl Into<Size>) -> Self {
-        self.size = size.into();
+        self.size = Some(size.into());
         self
     }
 
@@ -148,7 +148,7 @@ impl<'a, Message: Clone + 'a> Button<'a, Message> {
     ///
     /// [`button::group`]: crate::button::group
     pub fn size_height(&self) -> f32 {
-        self.size.height()
+        self.size.unwrap_or_default().height()
     }
 
     /// Wrap the existing style fn with a post-processor that gets to mutate
@@ -196,11 +196,11 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
     for iced_core::Element<'a, Message, Theme, iced_widget::Renderer>
 {
     fn from(mut btn: Button<'a, Message>) -> Self {
-        btn.content.size(btn.size);
-        btn.content.weight(btn.weight);
+        let size = btn.size.unwrap_or_default();
+        btn.content
+            .inherit(&Inherited::default().with_size(size).with_weight(btn.weight));
 
-        let size = btn.size;
-        let content = btn.content.into_iced();
+        let content = btn.content.compose();
 
         let h = size.height();
         let mut iced_btn = if btn.square {
@@ -266,20 +266,19 @@ impl<'a, Message: Clone + 'a> From<Button<'a, Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> From<Button<'a, Message>> for crate::Component<'a, Message> {
-    fn from(b: Button<'a, Message>) -> Self {
-        crate::Component::new(b)
+impl<'a, Message: Clone + 'a> From<Button<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Button<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for Button<'a, Message> {
-    fn size(&mut self, size: Size) {
-        self.size = size;
+impl<'a, Message: Clone + 'a> Compose<Message> for Button<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.size = self.size.or(from.size());
+        self.disabled |= from.is_disabled();
     }
 
-    fn into_element<'b>(
-        self: Box<Self>,
-    ) -> iced_core::Element<'b, Message, Theme, iced_widget::Renderer>
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, iced_widget::Renderer>
     where
         Self: 'b,
     {

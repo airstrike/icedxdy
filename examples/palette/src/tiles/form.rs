@@ -7,7 +7,7 @@
 
 use iced::Fill;
 use iced::Widget;
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme;
@@ -77,11 +77,11 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .style(theme::text::Muted);
 
     let body: Column<'_, Message> = column([
-        Component::from(email_field),
-        Component::from(name_field),
-        Component::from(terms),
-        Component::from(emails),
-        Component::from(footer),
+        Slot::from(email_field),
+        Slot::from(name_field),
+        Slot::from(terms),
+        Slot::from(emails),
+        Slot::from(footer),
         footnote.into(),
     ])
     .spacing(16)

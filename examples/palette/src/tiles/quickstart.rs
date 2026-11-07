@@ -7,7 +7,7 @@
 
 use iced::Fill;
 use iced::Widget;
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme::container::card_muted;
@@ -43,7 +43,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
             .color(Token::MutedForeground),
     ];
 
-    let deploy_label: Component<'_, Message> = if state.deploying {
+    let deploy_label: Slot<'_, Message> = if state.deploying {
         row![spinner(), "Deploying"].spacing(8).into()
     } else {
         "Deploy".into()
@@ -68,8 +68,8 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
 
     let body = column([
         title_row.into(),
-        Component::from(teaser),
-        Component::from(banner),
+        Slot::from(teaser),
+        Slot::from(banner),
         quote.into(),
         deploy.into(),
     ])

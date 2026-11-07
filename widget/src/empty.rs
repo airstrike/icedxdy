@@ -12,7 +12,7 @@ use iced_widget::Widget;
 use icedxdy_core::theme::container::Style;
 use icedxdy_core::{Border, Gap, Theme, radius};
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use crate::{Size, text};
 
 /// Empty media variants.
@@ -25,10 +25,10 @@ pub enum Variant {
 
 /// Empty-state root.
 pub struct Empty<'a, Message> {
-    media: Option<Component<'a, Message>>,
-    title: Option<Component<'a, Message>>,
-    description: Option<Component<'a, Message>>,
-    content: Option<Component<'a, Message>>,
+    media: Option<Slot<'a, Message>>,
+    title: Option<Slot<'a, Message>>,
+    description: Option<Slot<'a, Message>>,
+    content: Option<Slot<'a, Message>>,
     padding: Padding,
 }
 
@@ -45,7 +45,7 @@ pub fn empty<'a, Message: 'a>() -> Empty<'a, Message> {
 
 impl<'a, Message: 'a> Empty<'a, Message> {
     /// Set the media slot.
-    pub fn media(mut self, media: impl Into<Component<'a, Message>>) -> Self {
+    pub fn media(mut self, media: impl Into<Slot<'a, Message>>) -> Self {
         self.media = Some(media.into());
         self
     }
@@ -63,7 +63,7 @@ impl<'a, Message: 'a> Empty<'a, Message> {
     }
 
     /// Set the content slot.
-    pub fn content(mut self, content: impl Into<Component<'a, Message>>) -> Self {
+    pub fn content(mut self, content: impl Into<Slot<'a, Message>>) -> Self {
         self.content = Some(content.into());
         self
     }
@@ -81,18 +81,18 @@ impl<'a, Message: 'a> From<Empty<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(empty: Empty<'a, Message>) -> Self {
-        Box::new(empty).into_element()
+        Box::new(empty).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Empty<'a, Message>> for Component<'a, Message> {
-    fn from(empty: Empty<'a, Message>) -> Self {
-        Component::new(empty)
+impl<'a, Message: 'a> From<Empty<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Empty<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Empty<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Empty<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -110,7 +110,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Empty<'a, Message> {
             .width(Fill);
 
         if let Some(media) = media {
-            body = body.push(media.into_iced());
+            body = body.push(media.compose());
         }
 
         if title.is_some() || description.is_some() {
@@ -119,7 +119,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Empty<'a, Message> {
 
         if let Some(content) = content {
             let element: iced_core::Element<'a, Message, Theme, Renderer> =
-                iced_widget::container(content.into_iced())
+                iced_widget::container(content.compose())
                     .center_x(Fill.max(384.0))
                     .boxed();
             body = body.push(element);
@@ -136,12 +136,12 @@ impl<'a, Message: 'a> IntoElement<Message> for Empty<'a, Message> {
 
 /// Empty media slot.
 pub struct Media<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     variant: Variant,
 }
 
 /// Create an empty media slot.
-pub fn media<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Media<'a, Message> {
+pub fn media<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
     Media {
         content: content.into(),
         variant: Variant::Default,
@@ -149,9 +149,7 @@ pub fn media<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Med
 }
 
 /// Create an icon-styled empty media slot.
-pub fn media_icon<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Media<'a, Message> {
+pub fn media_icon<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
     media(content).variant(Variant::Icon)
 }
 
@@ -167,22 +165,22 @@ impl<'a, Message: 'a> From<Media<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(media: Media<'a, Message>) -> Self {
-        Box::new(media).into_element()
+        Box::new(media).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Media<'a, Message>> for Component<'a, Message> {
-    fn from(media: Media<'a, Message>) -> Self {
-        Component::new(media)
+impl<'a, Message: 'a> From<Media<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Media<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Media<'a, Message> {
-    fn size(&mut self, size: Size) {
-        self.content.size(size);
+impl<'a, Message: 'a> Compose<Message> for Media<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.content.inherit(from);
     }
 
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -192,10 +190,10 @@ impl<'a, Message: 'a> IntoElement<Message> for Media<'a, Message> {
         } = *self;
 
         if matches!(variant, Variant::Icon) {
-            content.size(Size::Default);
+            content.inherit(&Inherited::default().with_size(Size::Default));
         }
 
-        let mut inner = iced_widget::container(content.into_iced())
+        let mut inner = iced_widget::container(content.compose())
             .align_x(Horizontal::Center)
             .align_y(Vertical::Center);
 
@@ -217,58 +215,58 @@ impl<'a, Message: 'a> IntoElement<Message> for Media<'a, Message> {
 
 /// Convert a value into an empty title.
 pub trait IntoTitle<'a, Message> {
-    fn into_title(self) -> Component<'a, Message>;
+    fn into_title(self) -> Slot<'a, Message>;
 }
 
 impl<'a, Message: 'a> IntoTitle<'a, Message> for &'a str {
-    fn into_title(self) -> Component<'a, Message> {
+    fn into_title(self) -> Slot<'a, Message> {
         title(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoTitle<'a, Message> for String {
-    fn into_title(self) -> Component<'a, Message> {
+    fn into_title(self) -> Slot<'a, Message> {
         title(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoTitle<'a, Message> for text::Text<'a> {
-    fn into_title(self) -> Component<'a, Message> {
+    fn into_title(self) -> Slot<'a, Message> {
         self.into()
     }
 }
 
-impl<'a, Message: 'a> IntoTitle<'a, Message> for Component<'a, Message> {
-    fn into_title(self) -> Component<'a, Message> {
+impl<'a, Message: 'a> IntoTitle<'a, Message> for Slot<'a, Message> {
+    fn into_title(self) -> Slot<'a, Message> {
         self
     }
 }
 
 /// Convert a value into an empty description.
 pub trait IntoDescription<'a, Message> {
-    fn into_description(self) -> Component<'a, Message>;
+    fn into_description(self) -> Slot<'a, Message>;
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for &'a str {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         description(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for String {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         description(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for text::Text<'a> {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         self.into()
     }
 }
 
-impl<'a, Message: 'a> IntoDescription<'a, Message> for Component<'a, Message> {
-    fn into_description(self) -> Component<'a, Message> {
+impl<'a, Message: 'a> IntoDescription<'a, Message> for Slot<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         self
     }
 }
@@ -284,8 +282,8 @@ pub fn description<'a>(content: impl iced_core::text::IntoFragment<'a>) -> text:
 }
 
 fn header<'a, Message: 'a>(
-    title: Option<Component<'a, Message>>,
-    description: Option<Component<'a, Message>>,
+    title: Option<Slot<'a, Message>>,
+    description: Option<Slot<'a, Message>>,
 ) -> iced_core::Element<'a, Message, Theme, Renderer> {
     let mut column = iced_widget::Column::new()
         .spacing(Gap::G2)
@@ -293,10 +291,10 @@ fn header<'a, Message: 'a>(
         .width(Fill);
 
     if let Some(title) = title {
-        column = column.push(title.into_iced());
+        column = column.push(title.compose());
     }
     if let Some(description) = description {
-        column = column.push(description.into_iced());
+        column = column.push(description.compose());
     }
 
     iced_widget::container(column)

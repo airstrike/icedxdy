@@ -27,7 +27,7 @@ use iced_widget::Widget;
 use icedxdy_core::{Theme, theme};
 
 use crate::Size;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use crate::text;
 
 /// Alert variant.
@@ -40,10 +40,10 @@ pub enum Variant {
 
 /// A callout box with optional icon, title, description, and action.
 pub struct Alert<'a, Message> {
-    icon: Option<Component<'a, Message>>,
+    icon: Option<Slot<'a, Message>>,
     title: Option<text::Text<'a>>,
     description: Option<text::Text<'a>>,
-    action: Option<Component<'a, Message>>,
+    action: Option<Slot<'a, Message>>,
     variant: Variant,
     max_width: f32,
 }
@@ -74,7 +74,7 @@ pub fn destructive<'a, Message: 'a>() -> Alert<'a, Message> {
 
 impl<'a, Message: 'a> Alert<'a, Message> {
     /// Set the icon element.
-    pub fn icon(mut self, icon: impl Into<Component<'a, Message>>) -> Self {
+    pub fn icon(mut self, icon: impl Into<Slot<'a, Message>>) -> Self {
         self.icon = Some(icon.into());
         self
     }
@@ -93,7 +93,7 @@ impl<'a, Message: 'a> Alert<'a, Message> {
     }
 
     /// Add an action element (typically a button) shown at the top-right.
-    pub fn action(mut self, action: impl Into<Component<'a, Message>>) -> Self {
+    pub fn action(mut self, action: impl Into<Slot<'a, Message>>) -> Self {
         self.action = Some(action.into());
         self
     }
@@ -122,18 +122,18 @@ impl<'a, Message: 'a> From<Alert<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(a: Alert<'a, Message>) -> Self {
-        Box::new(a).into_element()
+        Box::new(a).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Alert<'a, Message>> for Component<'a, Message> {
-    fn from(a: Alert<'a, Message>) -> Self {
-        Component::new(a)
+impl<'a, Message: 'a> From<Alert<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Alert<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Alert<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Alert<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -161,8 +161,8 @@ impl<'a, Message: 'a> IntoElement<Message> for Alert<'a, Message> {
         }
 
         let body: iced_core::Element<'a, Message, Theme, Renderer> = if let Some(mut icon) = icon {
-            icon.size(Size::Custom(16.0));
-            let icon_wrapper = iced_widget::container(icon.into_iced()).padding(Padding {
+            icon.inherit(&Inherited::default().with_size(Size::Custom(16.0)));
+            let icon_wrapper = iced_widget::container(icon.compose()).padding(Padding {
                 top: 2.0,
                 ..Padding::ZERO
             });
@@ -205,7 +205,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Alert<'a, Message> {
         let outer: iced_core::Element<'a, Message, Theme, Renderer> = match action {
             None => card.boxed(),
             Some(action) => {
-                let overlay = iced_widget::container(action.into_iced())
+                let overlay = iced_widget::container(action.compose())
                     .width(Fill)
                     .height(Fill)
                     .align_x(Horizontal::Right)

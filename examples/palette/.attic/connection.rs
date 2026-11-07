@@ -5,7 +5,7 @@
 //! switch (echo of the header toggle), text (xs / muted), container, row.
 
 use iced::Fill;
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::card;
 use icedxdy::theme;
 use icedxdy::widget::{alert, button, column, row, space, switch, text};
@@ -37,8 +37,8 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .width(Fill);
 
     let body = column([
-        Component::from(alert_body),
-        Component::from(mirror_row),
+        Slot::from(alert_body),
+        Slot::from(mirror_row),
     ])
     .spacing(16);
 

@@ -9,7 +9,7 @@ use icedxdy::theme;
 use icedxdy::theme::container::Style;
 use icedxdy::widget::row::Row;
 use icedxdy::widget::{badge, column, container, row, text};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::{Message, State};
 
@@ -20,7 +20,7 @@ const BAR_WIDTH: f32 = 20.0;
 const CHART_HEIGHT: f32 = 156.0;
 
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
-    let bars: Vec<Component<'static, Message>> = BARS.iter().map(|h| bar(*h)).collect();
+    let bars: Vec<Slot<'static, Message>> = BARS.iter().map(|h| bar(*h)).collect();
 
     let chart = Row::with_children(bars)
         .spacing(6)
@@ -37,7 +37,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .spacing(8)
     .width(Fill);
 
-    let body = column([Component::from(chart), footer.into()])
+    let body = column([Slot::from(chart), footer.into()])
         .spacing(16)
         .width(Fill);
 
@@ -60,7 +60,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn bar(height: f32) -> Component<'static, Message> {
+fn bar(height: f32) -> Slot<'static, Message> {
     container(space::vertical())
         .width(BAR_WIDTH)
         .height(height)

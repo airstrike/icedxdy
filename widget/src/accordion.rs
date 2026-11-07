@@ -45,15 +45,15 @@ use iced_widget::Renderer;
 use icedxdy_core::Theme;
 use icedxdy_core::theme;
 
-use crate::Component;
+use crate::Slot;
 
 /// Builder for one disclosure item. Constructed via [`item`].
 pub struct Item<'a, Message> {
     id: String,
-    trigger: Component<'a, Message>,
-    chevron_closed: Option<Component<'a, Message>>,
-    chevron_open: Option<Component<'a, Message>>,
-    body: Option<Component<'a, Message>>,
+    trigger: Slot<'a, Message>,
+    chevron_closed: Option<Slot<'a, Message>>,
+    chevron_open: Option<Slot<'a, Message>>,
+    body: Option<Slot<'a, Message>>,
     disabled: bool,
 }
 
@@ -61,7 +61,7 @@ impl<'a, Message: 'a> Item<'a, Message> {
     /// Set the body content. Required for the item to render anything
     /// useful below the trigger; an item with no body still toggles but
     /// has nothing to reveal.
-    pub fn content(mut self, content: impl Into<Component<'a, Message>>) -> Self {
+    pub fn content(mut self, content: impl Into<Slot<'a, Message>>) -> Self {
         self.body = Some(content.into());
         self
     }
@@ -69,7 +69,7 @@ impl<'a, Message: 'a> Item<'a, Message> {
     /// Override the closed-state chevron icon. Defaults to a small text
     /// glyph (`>`) when unset; browser callers wire this to
     /// `icon::chevron_down()`.
-    pub fn chevron_closed(mut self, icon: impl Into<Component<'a, Message>>) -> Self {
+    pub fn chevron_closed(mut self, icon: impl Into<Slot<'a, Message>>) -> Self {
         self.chevron_closed = Some(icon.into());
         self
     }
@@ -77,7 +77,7 @@ impl<'a, Message: 'a> Item<'a, Message> {
     /// Override the open-state chevron icon. Defaults to a small text
     /// glyph (`v`) when unset; browser callers wire this to
     /// `icon::chevron_up()`.
-    pub fn chevron_open(mut self, icon: impl Into<Component<'a, Message>>) -> Self {
+    pub fn chevron_open(mut self, icon: impl Into<Slot<'a, Message>>) -> Self {
         self.chevron_open = Some(icon.into());
         self
     }
@@ -100,7 +100,7 @@ impl<'a, Message: 'a> Item<'a, Message> {
 /// in-flight transitions.
 pub fn item<'a, Message: 'a>(
     id: impl Into<String>,
-    trigger: impl Into<Component<'a, Message>>,
+    trigger: impl Into<Slot<'a, Message>>,
 ) -> Item<'a, Message> {
     Item {
         id: id.into(),
@@ -211,16 +211,16 @@ impl<'a, Message: 'a> From<Accordion<'a, Message>>
             .into_iter()
             .map(|it| widget::Item {
                 id: it.id,
-                trigger: it.trigger.into_iced(),
+                trigger: it.trigger.compose(),
                 chevron_closed: it
                     .chevron_closed
-                    .unwrap_or_else(|| Component::from(text::Text::new(">")))
-                    .into_iced(),
+                    .unwrap_or_else(|| Slot::from(text::Text::new(">")))
+                    .compose(),
                 chevron_open: it
                     .chevron_open
-                    .unwrap_or_else(|| Component::from(text::Text::new("v")))
-                    .into_iced(),
-                body: it.body.unwrap_or_else(|| Component::from("")).into_iced(),
+                    .unwrap_or_else(|| Slot::from(text::Text::new("v")))
+                    .compose(),
+                body: it.body.unwrap_or_else(|| Slot::from("")).compose(),
                 disabled: it.disabled,
             })
             .collect();
@@ -245,14 +245,14 @@ impl<'a, Message: 'a> From<Accordion<'a, Message>>
     }
 }
 
-impl<'a, Message: 'a> From<Accordion<'a, Message>> for Component<'a, Message> {
-    fn from(a: Accordion<'a, Message>) -> Self {
-        Component::new(a)
+impl<'a, Message: 'a> From<Accordion<'a, Message>> for crate::Slot<'a, Message> {
+    fn from(widget: Accordion<'a, Message>) -> Self {
+        crate::Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> crate::component::IntoElement<Message> for Accordion<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> crate::compose::Compose<Message> for Accordion<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

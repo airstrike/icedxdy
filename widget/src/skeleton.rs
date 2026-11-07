@@ -11,7 +11,7 @@ use iced_widget::Renderer;
 use icedxdy_core::theme::container::Style;
 use icedxdy_core::{Border, Radius, Theme, radius};
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Slot};
 use crate::space;
 
 pub struct Skeleton<'a, Message> {
@@ -49,18 +49,18 @@ impl<'a, Message: 'a> Skeleton<'a, Message> {
 
 impl<'a, Message: 'a> From<Skeleton<'a, Message>> for Element<'a, Message, Theme, Renderer> {
     fn from(skeleton: Skeleton<'a, Message>) -> Self {
-        Box::new(skeleton).into_element()
+        Box::new(skeleton).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Skeleton<'a, Message>> for Component<'a, Message> {
-    fn from(skeleton: Skeleton<'a, Message>) -> Self {
-        Component::new(skeleton)
+impl<'a, Message: 'a> From<Skeleton<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Skeleton<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Skeleton<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Skeleton<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

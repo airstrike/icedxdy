@@ -1,6 +1,6 @@
 //! SidebarInput: h-8 text input with sidebar styling
 
-use crate::component::Component;
+use crate::compose::Slot;
 use crate::container::Container;
 use iced_core::Length::Fill;
 use iced_widget::Widget;
@@ -20,7 +20,7 @@ pub fn input<'a, Message: Clone + 'a>(
             .on_input(on_input)
             .size(14.0)
             .boxed();
-    Container::new(Component::from(text_input))
+    Container::new(Slot::from(text_input))
         .width(Fill)
         .height(32)
 }

@@ -29,7 +29,7 @@ mod with_icon;
 use iced::Task;
 
 use icedxdy::widget::{button, row};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::page;
 
@@ -138,7 +138,7 @@ impl ButtonPage {
     }
 }
 
-fn demo(pi: usize) -> Component<'static, crate::Message> {
+fn demo(pi: usize) -> Slot<'static, crate::Message> {
     // Verbatim shadcn `button-demo.tsx`:
     //   <Button variant="outline">Button</Button>
     //   <Button variant="outline" size="icon"><ArrowUpIcon /></Button>
@@ -151,7 +151,7 @@ fn demo(pi: usize) -> Component<'static, crate::Message> {
     .into()
 }
 
-fn view(id: &str) -> Component<'static, Message> {
+fn view(id: &str) -> Slot<'static, Message> {
     match id {
         "size" => size::view(),
         "default" => default::view(),

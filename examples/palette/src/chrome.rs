@@ -7,7 +7,7 @@ use icedxdy::core::{Border, Color, oklch};
 use icedxdy::theme::container::background;
 use icedxdy::widget::input::{Input, input};
 use icedxdy::widget::row::Row;
-use icedxdy::widget::{Component, Size, button, container, row, rule, text};
+use icedxdy::widget::{Size, Slot, button, container, row, rule, text};
 use icedxdy::{Theme, theme};
 
 use crate::{Message, Mode, State, icon};
@@ -40,7 +40,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .align_x(Center)
     .align_y(Center);
 
-    let nav_items: Vec<Component<'_, Message>> = NAV_LABELS
+    let nav_items: Vec<Slot<'_, Message>> = NAV_LABELS
         .iter()
         .map(|label| {
             button::ghost(*label)
@@ -109,7 +109,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .into()
 }
 
-fn separator<'a>() -> Component<'a, Message> {
+fn separator<'a>() -> Slot<'a, Message> {
     let line: iced::Element<'a, Message, Theme> = rule::vertical(1).into();
     container(line).height(16.0).into()
 }

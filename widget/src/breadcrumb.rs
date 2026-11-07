@@ -54,7 +54,7 @@ use iced_widget::{Renderer, container, mouse_area};
 use icedxdy_core::Theme;
 use icedxdy_core::theme;
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Slot};
 use crate::row::Row;
 use crate::text;
 use crate::text::Text;
@@ -67,9 +67,9 @@ use crate::text::Text;
 /// helpers rather than the variants directly.
 pub enum Item<'a, Message> {
     /// A clickable crumb. Mirrors `<BreadcrumbLink>`.
-    Link(Component<'a, Message>, Message),
+    Link(Slot<'a, Message>, Message),
     /// The current page. Mirrors `<BreadcrumbPage>`.
-    Page(Component<'a, Message>),
+    Page(Slot<'a, Message>),
     /// An "..." indicator standing in for elided intermediate crumbs.
     /// Mirrors `<BreadcrumbEllipsis>`.
     Ellipsis(Option<Message>),
@@ -77,14 +77,14 @@ pub enum Item<'a, Message> {
 
 /// Build a clickable [`Item::Link`] crumb.
 pub fn link<'a, Message: 'a>(
-    text: impl Into<Component<'a, Message>>,
+    text: impl Into<Slot<'a, Message>>,
     on_press: Message,
 ) -> Item<'a, Message> {
     Item::Link(text.into(), on_press)
 }
 
 /// Build a non-clickable [`Item::Page`] crumb (the current page).
-pub fn page<'a, Message: 'a>(text: impl Into<Component<'a, Message>>) -> Item<'a, Message> {
+pub fn page<'a, Message: 'a>(text: impl Into<Slot<'a, Message>>) -> Item<'a, Message> {
     Item::Page(text.into())
 }
 
@@ -104,10 +104,10 @@ pub fn breadcrumb<'a, Message: 'a>(
 
 /// Lazily-evaluated separator factory.
 ///
-/// `Component` is not `Clone`, so the separator must be re-built once per
+/// `Slot` is not `Clone`, so the separator must be re-built once per
 /// gap rather than stored once and copied. The factory closure is invoked
-/// `items.len() - 1` times at `into_element` time.
-type SeparatorFn<'a, Message> = Box<dyn Fn() -> Component<'a, Message> + 'a>;
+/// `items.len() - 1` times at `compose` time.
+type SeparatorFn<'a, Message> = Box<dyn Fn() -> Slot<'a, Message> + 'a>;
 
 /// A breadcrumb trail. Build via [`breadcrumb`].
 pub struct Breadcrumb<'a, Message> {
@@ -126,7 +126,7 @@ impl<'a, Message: 'a> Breadcrumb<'a, Message> {
     }
 
     /// Override the default separator. The closure is called once per gap
-    /// between adjacent items (Component values are not `Clone`, so a fresh
+    /// between adjacent items (Slot values are not `Clone`, so a fresh
     /// instance is built for each insertion).
     ///
     /// ```ignore
@@ -135,7 +135,7 @@ impl<'a, Message: 'a> Breadcrumb<'a, Message> {
     /// ```
     pub fn separator<F>(mut self, factory: F) -> Self
     where
-        F: Fn() -> Component<'a, Message> + 'a,
+        F: Fn() -> Slot<'a, Message> + 'a,
     {
         self.separator = Some(Box::new(factory));
         self
@@ -146,18 +146,18 @@ impl<'a, Message: Clone + 'a> From<Breadcrumb<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(b: Breadcrumb<'a, Message>) -> Self {
-        Box::new(b).into_element()
+        Box::new(b).compose()
     }
 }
 
-impl<'a, Message: Clone + 'a> From<Breadcrumb<'a, Message>> for Component<'a, Message> {
-    fn from(b: Breadcrumb<'a, Message>) -> Self {
-        Component::new(b)
+impl<'a, Message: Clone + 'a> From<Breadcrumb<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Breadcrumb<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for Breadcrumb<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: Clone + 'a> Compose<Message> for Breadcrumb<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -181,15 +181,15 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Breadcrumb<'a, Message> {
         // shadcn `<BreadcrumbList>` cascades `text-muted-foreground` to
         // unstyled descendants; Container's text_color is iced's only
         // mechanism for the same. `<BreadcrumbPage>` overrides in `render_page`.
-        container(Box::new(row).into_element())
+        container(Box::new(row).compose())
             .style(|t: &Theme| Style::default().color(t.muted.foreground))
             .boxed()
     }
 }
 
-/// Render a single [`Item`] to a [`Component`]. Extracted so the dispatch
+/// Render a single [`Item`] to a [`Slot`]. Extracted so the dispatch
 /// reads as a flat match in one place.
-fn render_item<'a, Message: Clone + 'a>(item: Item<'a, Message>) -> Component<'a, Message> {
+fn render_item<'a, Message: Clone + 'a>(item: Item<'a, Message>) -> Slot<'a, Message> {
     match item {
         Item::Link(content, on_press) => render_link(content, on_press),
         Item::Page(content) => render_page(content),
@@ -199,8 +199,8 @@ fn render_item<'a, Message: Clone + 'a>(item: Item<'a, Message>) -> Component<'a
 
 /// Render the current-page crumb. shadcn's `<BreadcrumbPage>` wraps the
 /// label in `text-foreground` to override the list's muted cascade.
-fn render_page<'a, Message: Clone + 'a>(content: Component<'a, Message>) -> Component<'a, Message> {
-    container(content.into_iced())
+fn render_page<'a, Message: Clone + 'a>(content: Slot<'a, Message>) -> Slot<'a, Message> {
+    container(content.compose())
         .style(|t: &Theme| Style::default().color(t.neutral.foreground))
         .into()
 }
@@ -209,10 +209,10 @@ fn render_page<'a, Message: Clone + 'a>(content: Component<'a, Message>) -> Comp
 /// the Pointer cursor + click dispatch — matches the sidebar nav precedent
 /// and shadcn's `<a>` semantics.
 fn render_link<'a, Message: Clone + 'a>(
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     on_press: Message,
-) -> Component<'a, Message> {
-    mouse_area(content.into_iced())
+) -> Slot<'a, Message> {
+    mouse_area(content.compose())
         .interaction(Interaction::Pointer)
         .on_press(on_press)
         .into()
@@ -224,14 +224,14 @@ fn render_link<'a, Message: Clone + 'a>(
 /// `flex size-5 items-center justify-center` box. Using Unicode `…`
 /// (U+2026) keeps the widget crate font-free while reading as "more" at
 /// body sizes.
-fn render_ellipsis<'a, Message: Clone + 'a>(on_press: Option<Message>) -> Component<'a, Message> {
-    let glyph: Component<'a, Message> = Text::new("\u{2026}")
+fn render_ellipsis<'a, Message: Clone + 'a>(on_press: Option<Message>) -> Slot<'a, Message> {
+    let glyph: Slot<'a, Message> = Text::new("\u{2026}")
         .size(text::size::SM)
         .style(theme::text::Muted)
         .into();
 
     match on_press {
-        Some(message) => mouse_area(glyph.into_iced())
+        Some(message) => mouse_area(glyph.compose())
             .interaction(Interaction::Pointer)
             .on_press(message)
             .into(),
@@ -242,6 +242,6 @@ fn render_ellipsis<'a, Message: Clone + 'a>(on_press: Option<Message>) -> Compon
 /// Default separator factory: a `›` glyph at body size. Override with
 /// [`Breadcrumb::separator`] for icon-based parity (e.g. `icon::chevron_right`).
 /// Color comes from the parent container's muted text_color cascade.
-fn default_separator<'a, Message: 'a>() -> Component<'a, Message> {
+fn default_separator<'a, Message: 'a>() -> Slot<'a, Message> {
     Text::new("\u{203A}").size(text::size::SM).into()
 }

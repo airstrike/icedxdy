@@ -6,7 +6,7 @@ use iced::Widget;
 use iced::widget::space;
 use iced::{Center, Fill};
 use icedxdy::widget::{button, column, container, field, input, item, row, rule, text};
-use icedxdy::{Component, Space, Theme, Vertical, card};
+use icedxdy::{Slot, Space, Theme, Vertical, card};
 
 use super::{api_gap, select};
 use crate::{Message, State};
@@ -81,7 +81,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .boxed()
 }
 
-fn money_row<'a>(label: &'static str, value: &'a str, strong: bool) -> Component<'a, Message> {
+fn money_row<'a>(label: &'static str, value: &'a str, strong: bool) -> Slot<'a, Message> {
     let value = if strong {
         text::small(value).semibold()
     } else {
@@ -94,7 +94,7 @@ fn money_row<'a>(label: &'static str, value: &'a str, strong: bool) -> Component
         .into()
 }
 
-fn divider() -> Component<'static, Message> {
+fn divider() -> Slot<'static, Message> {
     let line: iced::Element<'static, Message, Theme> = rule::horizontal(1).into();
     container(line).height(1.0).width(Fill).into()
 }

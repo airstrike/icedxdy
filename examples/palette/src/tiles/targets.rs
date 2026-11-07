@@ -5,7 +5,7 @@
 
 use iced::Fill;
 use iced::Widget;
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme;
@@ -40,7 +40,7 @@ const TARGETS: &[Target] = &[
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let lead = text::lead("Three goals, three trajectories.").width(Fill);
 
-    let rows: Vec<Component<'static, Message>> = TARGETS
+    let rows: Vec<Slot<'static, Message>> = TARGETS
         .iter()
         .map(|t| target_row(t, state.connected))
         .collect();
@@ -75,7 +75,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn target_row(t: &'static Target, connected: bool) -> Component<'static, Message> {
+fn target_row(t: &'static Target, connected: bool) -> Slot<'static, Message> {
     let head = row![
         text::small(t.label).medium(),
         space::horizontal(),
@@ -100,7 +100,7 @@ fn target_row(t: &'static Target, connected: bool) -> Component<'static, Message
     .spacing(8)
     .width(Fill);
 
-    column([head.into(), Component::from(bar), footer.into()])
+    column([head.into(), Slot::from(bar), footer.into()])
         .spacing(8)
         .width(Fill)
         .into()

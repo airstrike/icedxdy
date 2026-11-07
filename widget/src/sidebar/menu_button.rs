@@ -26,7 +26,7 @@ use iced_widget::tooltip::Position;
 
 use crate::Size;
 use crate::button::widget;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use icedxdy_core::Theme;
 use icedxdy_core::theme::button;
 
@@ -78,7 +78,7 @@ impl MenuButtonSize {
 /// Uses our raw button widget with `translate(false)` so there is no
 /// 1px press-down effect. Supports active state, collapsed mode, and tooltips.
 pub struct SidebarMenuButton<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     size: MenuButtonSize,
     active: bool,
     collapsed: bool,
@@ -89,7 +89,7 @@ pub struct SidebarMenuButton<'a, Message> {
 
 /// Create a sidebar menu button with default size.
 pub fn menu_button<'a, Message: Clone + 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
 ) -> SidebarMenuButton<'a, Message> {
     SidebarMenuButton {
         content: content.into(),
@@ -153,8 +153,6 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
 {
     fn from(mut btn: SidebarMenuButton<'a, Message>) -> Self {
         let text_size = btn.size.text_size();
-        btn.content.size(Size::Custom(text_size));
-        btn.content.weight(crate::Weight::Medium);
         // Collapse the line-box to the Docs content area (16px = 32px -
         // 8/8 padding). Default 1.3 leading on text-13 produces a ~17px
         // box that overflows by 1px DOWN — iced's `padded` layout puts
@@ -162,9 +160,14 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
         // ~1px below center. Pin to 16 so the baseline lands at the
         // midpoint without spilling. Other sizes have ample content slack;
         // `center_y(Fill)` below handles them.
-        btn.content.line_height(16.0);
+        btn.content.inherit(
+            &Inherited::default()
+                .with_size(Size::Custom(text_size))
+                .with_weight(crate::Weight::Medium)
+                .with_line_height(16.0),
+        );
 
-        let content_iced = btn.content.into_iced();
+        let content_iced = btn.content.compose();
         let height = btn.size.height();
 
         // Use our raw button widget with translate(false) — no press-down
@@ -237,21 +240,14 @@ impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
     }
 }
 
-impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>>
-    for crate::Component<'a, Message>
-{
+impl<'a, Message: Clone + 'a> From<SidebarMenuButton<'a, Message>> for crate::Slot<'a, Message> {
     fn from(b: SidebarMenuButton<'a, Message>) -> Self {
-        crate::Component::new(b)
+        crate::Slot::new(b)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for SidebarMenuButton<'a, Message> {
-    fn size(&mut self, _size: Size) {
-        // SidebarMenuButton has its own size system (MenuButtonSize),
-        // so we ignore parent size hints.
-    }
-
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: Clone + 'a> Compose<Message> for SidebarMenuButton<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

@@ -11,7 +11,7 @@ use icedxdy_core::theme::button;
 use icedxdy_core::{Orientation, Theme};
 
 use crate::button::group;
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Slot};
 use crate::{Button, Size};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -22,15 +22,13 @@ pub enum Variant {
 }
 
 pub struct Item<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     selected: bool,
     on_press: Option<Message>,
     variant: Option<Variant>,
 }
 
-pub fn item<'a, Message: Clone + 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Item<'a, Message> {
+pub fn item<'a, Message: Clone + 'a>(content: impl Into<Slot<'a, Message>>) -> Item<'a, Message> {
     Item {
         content: content.into(),
         selected: false,
@@ -109,18 +107,18 @@ impl<'a, Message: Clone + 'a> From<ToggleGroup<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(group: ToggleGroup<'a, Message>) -> Self {
-        Box::new(group).into_element()
+        Box::new(group).compose()
     }
 }
 
-impl<'a, Message: Clone + 'a> From<ToggleGroup<'a, Message>> for Component<'a, Message> {
-    fn from(group: ToggleGroup<'a, Message>) -> Self {
-        Component::new(group)
+impl<'a, Message: Clone + 'a> From<ToggleGroup<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: ToggleGroup<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for ToggleGroup<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: Clone + 'a> Compose<Message> for ToggleGroup<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

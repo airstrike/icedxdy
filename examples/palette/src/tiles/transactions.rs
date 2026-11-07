@@ -11,7 +11,7 @@
 use iced::Widget;
 use iced::widget::space;
 use iced::{Center, Fill};
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::theme;
@@ -102,13 +102,13 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
             button::ghost("View all")
         });
 
-    let rows: Vec<Component<'_, Message>> = ROWS
+    let rows: Vec<Slot<'_, Message>> = ROWS
         .iter()
         .enumerate()
         .flat_map(|(i, tx)| {
-            let mut items: Vec<Component<'_, Message>> = Vec::new();
+            let mut items: Vec<Slot<'_, Message>> = Vec::new();
             if i > 0 {
-                items.push(Component::from(separator::horizontal().boxed()));
+                items.push(Slot::from(separator::horizontal().boxed()));
             }
             items.push(tx_row(tx));
             items
@@ -133,10 +133,10 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn tx_row(tx: &Tx) -> Component<'_, Message> {
+fn tx_row(tx: &Tx) -> Slot<'_, Message> {
     let avatar_chip = avatar(None).fallback(tx.initials).size(avatar::Default);
 
-    let badge_chip: Component<'_, Message> = match tx.badge_kind {
+    let badge_chip: Slot<'_, Message> = match tx.badge_kind {
         BadgeKind::Default => badge(tx.category).into(),
         BadgeKind::Secondary => badge::secondary(tx.category).into(),
         BadgeKind::Outline => badge::outline(tx.category).into(),
@@ -168,8 +168,8 @@ fn tx_row(tx: &Tx) -> Component<'_, Message> {
     let divider: iced::Element<'_, Message, icedxdy::Theme> = rule::vertical(1).into();
 
     let inner = row![
-        Component::from(avatar_chip),
-        Component::from(container(divider).height(28)),
+        Slot::from(avatar_chip),
+        Slot::from(container(divider).height(28)),
         merchant_col,
         badge_chip,
         space::horizontal(),

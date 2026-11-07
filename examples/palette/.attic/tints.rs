@@ -7,7 +7,7 @@
 //! (label), row, column.
 
 use iced::Fill;
-use icedxdy::Component;
+use icedxdy::Slot;
 use icedxdy::card;
 use icedxdy::core::style::{
     Tint, accent, destructive, info, muted, neutral, outline, primary, secondary, success, warning,
@@ -70,7 +70,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .into()
 }
 
-fn tint_rows(connected: bool, is_outline: bool) -> Vec<Component<'static, Message>> {
+fn tint_rows(connected: bool, is_outline: bool) -> Vec<Slot<'static, Message>> {
     TINTS
         .chunks(BUTTONS_PER_ROW)
         .map(|chunk| {

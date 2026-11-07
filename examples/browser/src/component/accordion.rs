@@ -146,12 +146,12 @@ const F_CARD: usize = 5;
 /// Helper: build a chevron-down icon at 16px, sized to nova's `size-4`.
 /// Lives here rather than in the page state because the icon is used at
 /// view time only (no per-frame allocation).
-fn chevron_closed<'a>() -> icedxdy::Component<'a, Message> {
+fn chevron_closed<'a>() -> icedxdy::Slot<'a, Message> {
     icon::chevron_down().size(16).into()
 }
 
 /// Helper: build a chevron-up icon at 16px.
-fn chevron_open<'a>() -> icedxdy::Component<'a, Message> {
+fn chevron_open<'a>() -> icedxdy::Slot<'a, Message> {
     icon::chevron_up().size(16).into()
 }
 
@@ -168,7 +168,7 @@ fn build_accordion<'a>(
     mode: accordion::Mode,
     open: &HashSet<String>,
     items: impl IntoIterator<Item = (&'a str, &'a str, &'a str, bool)>,
-) -> icedxdy::Component<'a, Message> {
+) -> icedxdy::Slot<'a, Message> {
     let items: Vec<_> = items
         .into_iter()
         .map(|(id, trigger, body, disabled)| {

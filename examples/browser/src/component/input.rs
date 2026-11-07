@@ -20,7 +20,7 @@ use icedxdy::rich_text;
 use icedxdy::theme;
 use icedxdy::theme::tweak::Token;
 use icedxdy::widget::rich_text::span;
-use icedxdy::widget::{Component, badge, button, field, input, row, space, text};
+use icedxdy::widget::{Slot, badge, button, field, input, row, space, text};
 
 use crate::Message;
 use crate::page;
@@ -256,7 +256,7 @@ impl page::Page for InputPage {
                     })
                     .width(Fill),
             )
-            .label(Component::from(rich_text![
+            .label(Slot::from(rich_text![
                 span("Required Field ").size(text::size::SM).medium(),
                 span("*").size(text::size::SM).color(Token::Destructive),
             ]))
@@ -272,7 +272,7 @@ impl page::Page for InputPage {
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_BADGE, v)))
                     .width(Fill),
             )
-            .label(Component::from(
+            .label(Slot::from(
                 row![
                     text::label("Webhook URL"),
                     space::horizontal(),

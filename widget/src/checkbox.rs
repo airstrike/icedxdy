@@ -19,7 +19,7 @@ pub mod widget;
 
 pub use widget::{Catalog, Ring, State, Status, Style, StyleFn};
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Slot};
 use iced_core::Length;
 use iced_core::text::IntoFragment;
 use iced_widget::Renderer;
@@ -117,19 +117,14 @@ impl<'a, Message: 'a> From<Checkbox<'a, Message>>
     }
 }
 
-impl<'a, Message: 'a> From<Checkbox<'a, Message>> for Component<'a, Message> {
-    fn from(c: Checkbox<'a, Message>) -> Self {
-        // Materialize the toggle message for !current_state BEFORE moving `c`
-        // into Component::new. Field reads this via `toggle_target()` to wrap
-        // the rendered label in mouse_area — matching shadcn's `<label for>`
-        // semantic without any caller change.
-        let toggle_target = c.on_toggle.as_ref().map(|f| f(!c.state.is_marked()));
-        Component::new(c).with_toggle_target(toggle_target)
+impl<'a, Message: 'a> From<Checkbox<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Checkbox<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Checkbox<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Checkbox<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

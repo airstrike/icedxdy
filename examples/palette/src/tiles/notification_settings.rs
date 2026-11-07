@@ -73,7 +73,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn notification_field(state: &State, n: &Notification) -> icedxdy::Component<'static, Message> {
+fn notification_field(state: &State, n: &Notification) -> icedxdy::Slot<'static, Message> {
     let id = n.id;
     field::field(
         checkbox::checkbox(state.notification_settings.contains(id))

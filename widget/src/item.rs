@@ -12,7 +12,7 @@ use iced_widget::Widget;
 use icedxdy_core::theme::container::Style;
 use icedxdy_core::{Border, Color, Gap, Orientation, Theme, radius};
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Slot};
 use crate::text;
 
 /// Item variants.
@@ -35,7 +35,7 @@ pub enum Size {
 
 /// Item root.
 pub struct Item<'a, Message> {
-    children: Vec<Component<'a, Message>>,
+    children: Vec<Slot<'a, Message>>,
     variant: Variant,
     size: Size,
     orientation: Orientation,
@@ -43,7 +43,7 @@ pub struct Item<'a, Message> {
 
 /// Create an item from children.
 pub fn item<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
 ) -> Item<'a, Message> {
     Item {
         children: children.into_iter().collect(),
@@ -55,14 +55,14 @@ pub fn item<'a, Message: 'a>(
 
 /// Create a muted item from children.
 pub fn muted<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
 ) -> Item<'a, Message> {
     item(children).variant(Variant::Muted)
 }
 
 /// Create an outline item from children.
 pub fn outline<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
 ) -> Item<'a, Message> {
     item(children).variant(Variant::Outline)
 }
@@ -89,18 +89,18 @@ impl<'a, Message: 'a> Item<'a, Message> {
 
 impl<'a, Message: 'a> From<Item<'a, Message>> for iced_core::Element<'a, Message, Theme, Renderer> {
     fn from(item: Item<'a, Message>) -> Self {
-        Box::new(item).into_element()
+        Box::new(item).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Item<'a, Message>> for Component<'a, Message> {
-    fn from(item: Item<'a, Message>) -> Self {
-        Component::new(item)
+impl<'a, Message: 'a> From<Item<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Item<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Item<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Item<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -132,7 +132,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Item<'a, Message> {
         };
 
         let elements: Vec<iced_core::Element<'a, Message, Theme, Renderer>> =
-            children.into_iter().map(Component::into_iced).collect();
+            children.into_iter().map(Slot::compose).collect();
 
         let content: iced_core::Element<'a, Message, Theme, Renderer> = match orientation {
             Orientation::Horizontal => iced_widget::Row::with_children(elements)
@@ -156,14 +156,14 @@ impl<'a, Message: 'a> IntoElement<Message> for Item<'a, Message> {
 
 /// Item content slot.
 pub struct Content<'a, Message> {
-    children: Vec<Component<'a, Message>>,
+    children: Vec<Slot<'a, Message>>,
     spacing: f32,
     width: Length,
 }
 
 /// Create an item content slot.
 pub fn content<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
 ) -> Content<'a, Message> {
     Content {
         children: children.into_iter().collect(),
@@ -190,18 +190,18 @@ impl<'a, Message: 'a> From<Content<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(content: Content<'a, Message>) -> Self {
-        Box::new(content).into_element()
+        Box::new(content).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Content<'a, Message>> for Component<'a, Message> {
-    fn from(content: Content<'a, Message>) -> Self {
-        Component::new(content)
+impl<'a, Message: 'a> From<Content<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Content<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Content<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Content<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -212,7 +212,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Content<'a, Message> {
         } = *self;
 
         let elements: Vec<iced_core::Element<'a, Message, Theme, Renderer>> =
-            children.into_iter().map(Component::into_iced).collect();
+            children.into_iter().map(Slot::compose).collect();
 
         iced_widget::Column::with_children(elements)
             .spacing(spacing)
@@ -243,12 +243,12 @@ pub enum MediaVariant {
 
 /// Item media slot.
 pub struct Media<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     variant: MediaVariant,
 }
 
 /// Create an item media slot.
-pub fn media<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Media<'a, Message> {
+pub fn media<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
     Media {
         content: content.into(),
         variant: MediaVariant::Default,
@@ -256,16 +256,12 @@ pub fn media<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Med
 }
 
 /// Create an icon item media slot.
-pub fn media_icon<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Media<'a, Message> {
+pub fn media_icon<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
     media(content).variant(MediaVariant::Icon)
 }
 
 /// Create an image item media slot.
-pub fn media_image<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Media<'a, Message> {
+pub fn media_image<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
     media(content).variant(MediaVariant::Image)
 }
 
@@ -280,23 +276,23 @@ impl<'a, Message: 'a> From<Media<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(media: Media<'a, Message>) -> Self {
-        Box::new(media).into_element()
+        Box::new(media).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Media<'a, Message>> for Component<'a, Message> {
-    fn from(media: Media<'a, Message>) -> Self {
-        Component::new(media)
+impl<'a, Message: 'a> From<Media<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Media<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Media<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Media<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
         let Media { content, variant } = *self;
-        let content = content.into_iced();
+        let content = content.compose();
 
         match variant {
             MediaVariant::Default | MediaVariant::Icon => crate::container(content)
@@ -315,10 +311,10 @@ impl<'a, Message: 'a> IntoElement<Message> for Media<'a, Message> {
 
 /// Item actions row.
 pub fn actions<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
-) -> Component<'a, Message> {
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
+) -> Slot<'a, Message> {
     let elements: Vec<iced_core::Element<'a, Message, Theme, Renderer>> =
-        children.into_iter().map(Component::into_iced).collect();
+        children.into_iter().map(Slot::compose).collect();
 
     let element: iced_core::Element<'a, Message, Theme, Renderer> =
         iced_widget::Row::with_children(elements)
@@ -326,28 +322,28 @@ pub fn actions<'a, Message: 'a>(
             .align_y(Alignment::Center)
             .boxed();
 
-    Component::from(element)
+    Slot::from(element)
 }
 
 /// Item header row.
 pub fn header<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
-) -> Component<'a, Message> {
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
+) -> Slot<'a, Message> {
     slot_row(children)
 }
 
 /// Item footer row.
 pub fn footer<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
-) -> Component<'a, Message> {
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
+) -> Slot<'a, Message> {
     slot_row(children)
 }
 
 fn slot_row<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
-) -> Component<'a, Message> {
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
+) -> Slot<'a, Message> {
     let elements: Vec<iced_core::Element<'a, Message, Theme, Renderer>> =
-        children.into_iter().map(Component::into_iced).collect();
+        children.into_iter().map(Slot::compose).collect();
 
     let element: iced_core::Element<'a, Message, Theme, Renderer> =
         iced_widget::Row::with_children(elements)
@@ -356,7 +352,7 @@ fn slot_row<'a, Message: 'a>(
             .width(Fill)
             .boxed();
 
-    Component::from(element)
+    Slot::from(element)
 }
 
 fn media_image_style(_theme: &Theme) -> Style {

@@ -15,7 +15,7 @@ mod destructive;
 use iced::Task;
 
 use icedxdy::widget::{alert, column};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::icon;
 use crate::page;
@@ -78,7 +78,7 @@ impl AlertPage {
     }
 }
 
-fn demo<'a>() -> Component<'a, Message> {
+fn demo<'a>() -> Slot<'a, Message> {
     // Verbatim shadcn `alert-demo.tsx`: two stacked alerts capped at
     // max-w-md (448px). Each alert self-caps via `.max_width(448)`.
     column![
@@ -135,7 +135,7 @@ impl page::Page for AlertPage {
 
     fn preview(&self, id: &str) -> iced::Element<'_, crate::Message, Theme> {
         let pi = self.state.page_index;
-        let view: Component<'_, Message> = match id {
+        let view: Slot<'_, Message> = match id {
             "demo" => demo(),
             "basic" => default::view(),
             "destructive" => destructive::view(),

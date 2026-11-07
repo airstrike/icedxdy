@@ -51,7 +51,7 @@ use iced::Task;
 
 use icedxdy::widget::button::group;
 use icedxdy::widget::{button, column, container, row};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::Message;
 use crate::icon;
@@ -153,11 +153,11 @@ impl page::Page for ButtonGroupPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
-        view(id, self.state.page_index).into_iced()
+        view(id, self.state.page_index).compose()
     }
 }
 
-fn view(id: &str, pi: usize) -> Component<'static, Message> {
+fn view(id: &str, pi: usize) -> Slot<'static, Message> {
     use iced::Fill;
     use icedxdy::Size::{Lg, Sm};
 

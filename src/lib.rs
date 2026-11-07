@@ -39,9 +39,9 @@ pub mod widget {
 #[doc(inline)]
 pub use icedxdy_widget::rich_text;
 
-pub use widget::Component;
 pub use widget::Size;
 pub use widget::Weight;
+pub use widget::{Compose, Inherited, Slot};
 
 /// Raw iced widgets with modifications (centering, focus/blur, etc.)
 pub mod raw {

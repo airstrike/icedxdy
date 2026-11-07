@@ -34,28 +34,22 @@ pub use state::{Collapsible, Side, State, WIDTH, WIDTH_ICON, WIDTH_MOBILE};
 pub use submenu::{submenu, submenu_button, submenu_item};
 pub use trigger::trigger;
 
-use crate::component::Component;
+use crate::compose::Slot;
 use crate::container::Container;
 use icedxdy_core::theme::sidebar;
 
 /// A sidebar flush against the window edge.
-pub fn fixed<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Container<'a, Message> {
+pub fn fixed<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Container<'a, Message> {
     Container::new(content).style(sidebar::default)
 }
 
 /// A sidebar floating with margin, rounded corners, border, and shadow.
-pub fn floating<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Container<'a, Message> {
+pub fn floating<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Container<'a, Message> {
     Container::new(content).style(sidebar::floating)
 }
 
 /// An inset sidebar — no border on the sidebar itself; the content area
 /// (paired via [`main_styled`]) carries the rounded/border/shadow chrome.
-pub fn inset<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
-) -> Container<'a, Message> {
+pub fn inset<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Container<'a, Message> {
     Container::new(content).style(sidebar::inset)
 }

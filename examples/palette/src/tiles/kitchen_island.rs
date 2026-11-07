@@ -8,7 +8,7 @@ use icedxdy::card;
 use icedxdy::core::{Border, Color, oklch};
 use icedxdy::theme;
 use icedxdy::widget::{Size, column, container, item, slider, space, text, toggle_group};
-use icedxdy::{Component, Space, Theme};
+use icedxdy::{Slot, Space, Theme};
 
 use crate::{KitchenMode, KitchenScene, Message, State};
 
@@ -95,7 +95,7 @@ fn slider_row(
     label: &'static str,
     value: f32,
     on_change: fn(f32) -> Message,
-) -> Component<'static, Message> {
+) -> Slot<'static, Message> {
     column![
         text::small(label).style(theme::text::Muted),
         slider(0.0..=100.0, value, on_change).width(Fill),
@@ -105,7 +105,7 @@ fn slider_row(
     .into()
 }
 
-fn color_tile(color: Color) -> Component<'static, Message> {
+fn color_tile(color: Color) -> Slot<'static, Message> {
     container(space::vertical())
         .width(Fill)
         .height(Fill)

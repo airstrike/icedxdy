@@ -10,7 +10,7 @@ use icedxdy::core::Border;
 use icedxdy::theme;
 use icedxdy::theme::container::Style;
 use icedxdy::widget::{button, column, container, row, text};
-use icedxdy::{Component, Space};
+use icedxdy::{Slot, Space};
 
 use super::api_gap;
 use crate::{Message, State};
@@ -60,7 +60,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn month(label: &'static str) -> Component<'static, Message> {
+fn month(label: &'static str) -> Slot<'static, Message> {
     container(text::muted(label).size(12.0))
         .width(Fill)
         .align_x(Center)
@@ -71,7 +71,7 @@ fn detail(
     label: &'static str,
     title: &'static str,
     description: &'static str,
-) -> Component<'static, Message> {
+) -> Slot<'static, Message> {
     container(
         column![
             text::xs(label)

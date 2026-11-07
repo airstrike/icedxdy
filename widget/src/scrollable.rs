@@ -7,7 +7,7 @@ pub use widget::{
     Status, Style, StyleFn, Viewport,
 };
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 use iced_core::Length;
 use iced_core::widget::Id;
 use iced_widget::Renderer;
@@ -22,7 +22,7 @@ pub fn thin_scrollbar() -> Scrollbar {
 }
 
 /// Create a [`Scrollable`] wrapping the given content. Mirrors
-/// [`iced_widget::scrollable`] but flows through our [`Component`] system
+/// [`iced_widget::scrollable`] but flows through our [`Compose`](crate::Compose) system
 /// so size/weight propagation and the project-wide thin invisible-rail
 /// default are picked up automatically.
 ///
@@ -31,7 +31,7 @@ pub fn thin_scrollbar() -> Scrollbar {
 /// dragged). See the `default` fn in icedxdy_core's `theme/scrollable.rs`
 /// for the exact spec.
 pub fn scrollable<'a, Message: 'a>(
-    content: impl Into<Component<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
 ) -> Scrollable<'a, Message> {
     Scrollable::new(content)
 }
@@ -41,9 +41,9 @@ pub fn scrollable<'a, Message: 'a>(
 /// auto_scroll / anchor_x / anchor_y) but stores style as
 /// `iced_widget::scrollable::StyleFn` so `core::theme::scrollable::*`
 /// variants flow through unchanged. Bridge laundering to the vendored
-/// widget happens at [`IntoElement::into_element`] time.
+/// widget happens at [`Compose::compose`](crate::Compose::compose) time.
 pub struct Scrollable<'a, Message> {
-    content: Component<'a, Message>,
+    content: Slot<'a, Message>,
     id: Option<Id>,
     width: Length,
     height: Length,
@@ -59,7 +59,7 @@ impl<'a, Message: 'a> Scrollable<'a, Message> {
     /// the project's thin invisible-rail spec, replacing iced's stock
     /// 10px default. Pair with the default theme style and the result
     /// is a faint hairline that fades up under hover/drag.
-    pub fn new(content: impl Into<Component<'a, Message>>) -> Self {
+    pub fn new(content: impl Into<Slot<'a, Message>>) -> Self {
         Self {
             content: content.into(),
             id: None,
@@ -191,30 +191,26 @@ impl<'a, Message: 'a> From<Scrollable<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(s: Scrollable<'a, Message>) -> Self {
-        Box::new(s).into_element()
+        Box::new(s).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Scrollable<'a, Message>> for crate::Component<'a, Message> {
-    fn from(s: Scrollable<'a, Message>) -> Self {
-        crate::Component::new(s)
+impl<'a, Message: 'a> From<Scrollable<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Scrollable<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Scrollable<'a, Message> {
-    fn size(&mut self, size: crate::Size) {
-        self.content.size(size);
+impl<'a, Message: 'a> Compose<Message> for Scrollable<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.content.inherit(from);
     }
 
-    fn weight(&mut self, weight: crate::Weight) {
-        self.content.weight(weight);
-    }
-
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
-        let mut s = widget::Scrollable::with_direction(self.content.into_iced(), self.direction)
+        let mut s = widget::Scrollable::with_direction(self.content.compose(), self.direction)
             .width(self.width)
             .height(self.height)
             .auto_scroll(self.auto_scroll);

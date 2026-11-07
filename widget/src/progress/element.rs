@@ -1,5 +1,5 @@
 //! Public-facing builder for [`Progress`] — wraps the forked
-//! [`super::widget::ProgressBar`] in our `IntoElement` system.
+//! [`super::widget::ProgressBar`] in our [`Compose`](crate::Compose) system.
 
 use iced_core::Length;
 use iced_widget::Renderer;
@@ -7,7 +7,7 @@ use iced_widget::Renderer;
 use icedxdy_core::Theme;
 use icedxdy_core::theme::progress_bar;
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Slot};
 
 use super::widget;
 
@@ -88,14 +88,14 @@ impl<'a, Message: 'a> From<Progress<'a, Message>>
     }
 }
 
-impl<'a, Message: 'a> From<Progress<'a, Message>> for Component<'a, Message> {
-    fn from(p: Progress<'a, Message>) -> Self {
-        Component::new(p)
+impl<'a, Message: 'a> From<Progress<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Progress<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Progress<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Progress<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

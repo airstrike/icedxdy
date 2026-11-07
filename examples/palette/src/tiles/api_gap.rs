@@ -9,15 +9,15 @@ use icedxdy::core::Border;
 use icedxdy::theme;
 use icedxdy::theme::container::Style;
 use icedxdy::widget::{badge, column, container, row, text};
-use icedxdy::{Component, Theme, card};
+use icedxdy::{Slot, Theme, card};
 
 use crate::Message;
 
-pub fn marker() -> Component<'static, Message> {
+pub fn marker() -> Slot<'static, Message> {
     badge::destructive("GAP").into()
 }
 
-pub fn inline(gaps: &'static [&'static str]) -> Component<'static, Message> {
+pub fn inline(gaps: &'static [&'static str]) -> Slot<'static, Message> {
     let rows = gap_rows(gaps);
 
     container(column(rows).spacing(8).width(Fill))
@@ -27,7 +27,7 @@ pub fn inline(gaps: &'static [&'static str]) -> Component<'static, Message> {
         .into()
 }
 
-pub fn panel(gaps: &'static [&'static str], height: f32) -> Component<'static, Message> {
+pub fn panel(gaps: &'static [&'static str], height: f32) -> Slot<'static, Message> {
     let rows = gap_rows(gaps);
 
     container(column(rows).spacing(8).width(Fill))
@@ -39,8 +39,8 @@ pub fn panel(gaps: &'static [&'static str], height: f32) -> Component<'static, M
         .into()
 }
 
-fn gap_rows(gaps: &'static [&'static str]) -> Vec<Component<'static, Message>> {
-    let mut rows: Vec<Component<'static, Message>> = vec![
+fn gap_rows(gaps: &'static [&'static str]) -> Vec<Slot<'static, Message>> {
+    let mut rows: Vec<Slot<'static, Message>> = vec![
         row![
             marker(),
             text::small("Missing primitive blocks LPP")
@@ -62,7 +62,7 @@ pub fn missing(
     source: &'static str,
     gaps: &'static [&'static str],
 ) -> iced::Element<'static, Message, Theme> {
-    let mut rows: Vec<Component<'static, Message>> = vec![
+    let mut rows: Vec<Slot<'static, Message>> = vec![
         text::xs("SOURCE")
             .medium()
             .letter_spacing(0.08)
@@ -93,7 +93,7 @@ pub fn missing(
     .boxed()
 }
 
-fn gap_row(gap: &'static str) -> Component<'static, Message> {
+fn gap_row(gap: &'static str) -> Slot<'static, Message> {
     row![badge::outline("missing"), text::muted(gap).width(Fill),]
         .spacing(8)
         .width(Fill)

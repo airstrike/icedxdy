@@ -20,7 +20,7 @@ use icedxdy::widget::container;
 use icedxdy::widget::markdown;
 use icedxdy::widget::markdown::widget::Highlight;
 use icedxdy::widget::{button, rule, text};
-use icedxdy::{Component, Theme, Weight, radius, theme};
+use icedxdy::{Slot, Theme, Weight, radius, theme};
 
 use crate::font;
 use crate::icon;
@@ -244,10 +244,7 @@ pub trait Page: Send {
 pub fn view<'a>(
     page: &'a dyn Page,
     viewer: &'a SnippetViewer,
-) -> (
-    Component<'a, super::Message>,
-    Option<Component<'a, super::Message>>,
-) {
+) -> (Slot<'a, super::Message>, Option<Slot<'a, super::Message>>) {
     let body = render_blocks(page, viewer);
     let st = page.state();
     let toc_count = flatten(page.blocks())
@@ -273,10 +270,7 @@ fn heading_for<'a>(
     }
 }
 
-fn render_blocks<'a>(
-    page: &'a dyn Page,
-    viewer: &'a SnippetViewer,
-) -> Component<'a, super::Message> {
+fn render_blocks<'a>(page: &'a dyn Page, viewer: &'a SnippetViewer) -> Slot<'a, super::Message> {
     let pi = page.page_index();
     let st = page.state();
     let mut items: Vec<iced::Element<'_, super::Message, Theme>> = Vec::new();
@@ -369,7 +363,7 @@ fn render_md<'a>(
     }
     match st.md_items.get(path) {
         Some(Some(items)) if !items.is_empty() => {
-            col = col.push(snippet(page_index, items, viewer).into_iced());
+            col = col.push(snippet(page_index, items, viewer).compose());
         }
         Some(Some(_)) => {
             // Body is empty (heading-only file) — nothing to render below.
@@ -479,7 +473,7 @@ pub fn example_card<'a>(
 pub fn code_panel<'a>(
     page_index: usize,
     block_pos: usize,
-    body: Component<'a, super::Message>,
+    body: Slot<'a, super::Message>,
     expanded: bool,
 ) -> iced::Element<'a, super::Message, Theme> {
     let inner = container(body)
@@ -488,7 +482,7 @@ pub fn code_panel<'a>(
         .style(code_block_panel);
 
     if expanded {
-        let copy_btn: Component<'_, super::Message> = button::ghost(icon::copy().size(14))
+        let copy_btn: Slot<'_, super::Message> = button::ghost(icon::copy().size(14))
             .size(Sm)
             .square()
             .on_press(super::Message::Page(
@@ -508,7 +502,7 @@ pub fn code_panel<'a>(
     } else {
         let truncated = inner.max_height(COLLAPSED_CODE_HEIGHT).clip(true);
 
-        let view_code_btn: Component<'_, super::Message> = button("View Code")
+        let view_code_btn: Slot<'_, super::Message> = button("View Code")
             .style(theme::button::Outline + Opaque + radius(Lg))
             .on_press(super::Message::Page(
                 page_index,
@@ -546,7 +540,7 @@ pub fn code_panel<'a>(
 /// full `foreground` + `Weight::Medium`, mirroring shadcn's active-state
 /// promotion. "Active" is still computed from the rank-center of the
 /// sensor-visible set so it tracks the reader's scroll position.
-fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
+fn toc<'a>(page: &'a dyn Page) -> Slot<'a, super::Message> {
     /// Minimum alpha applied to off-screen / edge-of-visible entries.
     /// Higher = more legible; lower = more visual emphasis on the
     /// rank-center. shadcn ships no fade (1.0 floor); 0.6 keeps a clear
@@ -630,7 +624,7 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
         } else {
             Weight::Normal
         };
-        let entry: Component<'_, super::Message> = button(title)
+        let entry: Slot<'_, super::Message> = button(title)
             .size(Sm)
             .weight(weight)
             .translate(false)
@@ -663,7 +657,7 @@ pub fn snippet<'a>(
     page_index: usize,
     items: &'a Vec<markdown::Item>,
     viewer: &'a SnippetViewer,
-) -> Component<'a, super::Message> {
+) -> Slot<'a, super::Message> {
     let mut settings = markdown::Settings {
         code_size: Pixels(13.0),
         // shadcn's `prose` body uses `leading-7` (28px on 16px body) — match

@@ -49,7 +49,7 @@ use iced_widget::Renderer;
 use icedxdy_core::Theme;
 use icedxdy_core::theme::tweak::Token;
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Inherited, Slot};
 
 /// Local alias for iced's text fragment so callers don't have to type
 /// the iced-core path inline.
@@ -521,34 +521,34 @@ impl<'a, Message: 'a> From<RichText<'a>> for Element<'a, Message, Theme, Rendere
     }
 }
 
-impl<'a, Message: 'a> From<RichText<'a>> for Component<'a, Message> {
-    fn from(rich: RichText<'a>) -> Self {
-        Component::new(rich)
+impl<'a, Message: 'a> From<RichText<'a>> for Slot<'a, Message> {
+    fn from(widget: RichText<'a>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for RichText<'a> {
-    fn size(&mut self, size: crate::Size) {
-        if self.size.is_none() {
-            self.size = Some(Pixels(size.text_size()));
+impl<'a, Message: 'a> Compose<Message> for RichText<'a> {
+    fn inherit(&mut self, from: &Inherited) {
+        // Spans that set no size or weight of their own take the inherited
+        // one, so `.size(Sm)` on an enclosing button cascades into them.
+        if let Some(size) = from.size() {
+            let pixels = size.text_size();
+            if self.size.is_none() {
+                self.size = Some(Pixels(pixels));
+            }
+            for s in self.spans.iter_mut() {
+                *s = std::mem::replace(s, span("")).fallback_size(pixels);
+            }
         }
-        // Push the size hint into spans that haven't set one — matches
-        // `Row` / `Column` propagation semantics so e.g. `.size(Sm)` on
-        // an enclosing button cascades into rich-text spans.
-        let pixels = size.text_size();
-        for s in self.spans.iter_mut() {
-            *s = std::mem::replace(s, span("")).fallback_size(pixels);
+        if let Some(weight) = from.weight() {
+            let w: font::Weight = weight.into();
+            for s in self.spans.iter_mut() {
+                *s = std::mem::replace(s, span("")).fallback_weight(w);
+            }
         }
     }
 
-    fn weight(&mut self, weight: crate::Weight) {
-        let w: font::Weight = weight.into();
-        for s in self.spans.iter_mut() {
-            *s = std::mem::replace(s, span("")).fallback_weight(w);
-        }
-    }
-
-    fn into_element<'b>(self: Box<Self>) -> Element<'b, Message, Theme, Renderer>
+    fn compose<'b>(self: Box<Self>) -> Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {

@@ -1,11 +1,11 @@
-use icedxdy::Component;
 use icedxdy::Size::*;
+use icedxdy::Slot;
 use icedxdy::widget::{button, row};
 
 use super::Message;
 use crate::icon;
 
-pub fn view<'a>() -> Component<'a, Message> {
+pub fn view<'a>() -> Slot<'a, Message> {
     row![
         row![
             button::outline("Extra Small")

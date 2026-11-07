@@ -7,7 +7,7 @@ use icedxdy::card;
 use icedxdy::theme;
 use icedxdy::widget::column::Column;
 use icedxdy::widget::{avatar, badge, button, column, container, input, row, text};
-use icedxdy::{Component, Theme};
+use icedxdy::{Slot, Theme};
 
 use crate::{Message, State};
 
@@ -46,12 +46,11 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .spacing(8)
     .width(Fill);
 
-    let members: Vec<Component<'_, Message>> = MEMBERS.iter().map(member_row).collect();
+    let members: Vec<Slot<'_, Message>> = MEMBERS.iter().map(member_row).collect();
 
-    let body: Column<'_, Message> =
-        column(std::iter::once(Component::from(invite_row)).chain(members))
-            .spacing(12)
-            .width(Fill);
+    let body: Column<'_, Message> = column(std::iter::once(Slot::from(invite_row)).chain(members))
+        .spacing(12)
+        .width(Fill);
 
     card::card(
         column([
@@ -69,7 +68,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .boxed()
 }
 
-fn member_row(m: &Member) -> Component<'static, Message> {
+fn member_row(m: &Member) -> Slot<'static, Message> {
     let identity: Column<'static, Message> = column([
         text::small(m.name).medium().into(),
         text::xs(m.email).style(theme::text::Muted).into(),
@@ -77,7 +76,7 @@ fn member_row(m: &Member) -> Component<'static, Message> {
     .spacing(2);
 
     row![
-        Component::from(avatar(None).fallback(m.initials).size(avatar::Default)),
+        Slot::from(avatar(None).fallback(m.initials).size(avatar::Default)),
         identity,
         space::horizontal(),
         badge::secondary(m.role),

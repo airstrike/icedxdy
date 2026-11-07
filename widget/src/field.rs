@@ -16,7 +16,7 @@
 //!     .label("Username")
 //!     .description("Choose a unique username for your account.");
 //!
-//! // Explicit — pass any pre-styled `Text` (or `Component`) through unchanged.
+//! // Explicit — pass any pre-styled `Text` (or `Slot`) through unchanged.
 //! field::field(input("Email", &value).on_input(Message::Changed))
 //!     .label(text::label("Email"))
 //!     .error(text::error("This email is already taken."));
@@ -64,7 +64,7 @@ use icedxdy_core::Theme;
 use icedxdy_core::theme::field::Card;
 use icedxdy_core::theme::field::CardActive;
 
-use crate::component::{Component, IntoElement};
+use crate::compose::{Compose, Slot};
 use animated_card::AnimatedCard;
 
 // Re-export the crate-root [`icedxdy::Orientation`] (and its bare variants)
@@ -85,12 +85,12 @@ pub use icedxdy_core::Vertical;
 ///
 /// Shape: `transformation-method` (per the OPAQUE guide) — the constructor
 /// is born from the inner content widget; builder methods carry forward state;
-/// `into_element` consumes `self` into the final layout.
+/// `compose` consumes `self` into the final layout.
 pub struct Field<'a, Message> {
-    label: Option<Component<'a, Message>>,
-    content: Component<'a, Message>,
-    description: Option<Component<'a, Message>>,
-    error: Option<Component<'a, Message>>,
+    label: Option<Slot<'a, Message>>,
+    content: Slot<'a, Message>,
+    description: Option<Slot<'a, Message>>,
+    error: Option<Slot<'a, Message>>,
     orientation: Orientation,
     /// `Some(true)` = card + active tint; `Some(false)` = card + inactive border;
     /// `None` = no card wrapper.
@@ -105,7 +105,7 @@ pub struct Field<'a, Message> {
 /// group-specific CSS variants are intentionally deferred until the matching
 /// checkbox/radio group primitives exist.
 pub struct Group<'a, Message> {
-    children: Vec<Component<'a, Message>>,
+    children: Vec<Slot<'a, Message>>,
     spacing: f32,
     width: Length,
 }
@@ -114,7 +114,7 @@ pub struct Group<'a, Message> {
 ///
 /// The input widget is the only required argument. Add a label,
 /// description, or error message via the builder methods.
-pub fn field<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Field<'a, Message> {
+pub fn field<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Field<'a, Message> {
     Field {
         label: None,
         content: content.into(),
@@ -129,7 +129,7 @@ pub fn field<'a, Message: 'a>(content: impl Into<Component<'a, Message>>) -> Fie
 
 /// Create a [`Group`] wrapping related fields.
 pub fn group<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Component<'a, Message>>,
+    children: impl IntoIterator<Item = Slot<'a, Message>>,
 ) -> Group<'a, Message> {
     Group {
         children: children.into_iter().collect(),
@@ -140,7 +140,7 @@ pub fn group<'a, Message: 'a>(
 
 impl<'a, Message: 'a> Field<'a, Message> {
     /// Set the field label. Plain strings auto-style as `text::label`
-    /// (`text-sm font-medium`); pre-styled `Text` or `Component` values
+    /// (`text-sm font-medium`); pre-styled `Text` or `Slot` values
     /// pass through unchanged.
     pub fn label(mut self, label: impl IntoLabel<'a, Message>) -> Self {
         self.label = Some(label.into_label());
@@ -223,18 +223,18 @@ impl<'a, Message: 'a> From<Group<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(g: Group<'a, Message>) -> Self {
-        Box::new(g).into_element()
+        Box::new(g).compose()
     }
 }
 
-impl<'a, Message: 'a> From<Group<'a, Message>> for Component<'a, Message> {
-    fn from(g: Group<'a, Message>) -> Self {
-        Component::new(g)
+impl<'a, Message: 'a> From<Group<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Group<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: 'a> IntoElement<Message> for Group<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: 'a> Compose<Message> for Group<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -245,7 +245,7 @@ impl<'a, Message: 'a> IntoElement<Message> for Group<'a, Message> {
         } = *self;
 
         let elements: Vec<iced_core::Element<'a, Message, Theme, Renderer>> =
-            children.into_iter().map(Component::into_iced).collect();
+            children.into_iter().map(Slot::compose).collect();
 
         iced_widget::Column::with_children(elements)
             .spacing(spacing)
@@ -285,18 +285,18 @@ impl<'a, Message: Clone + 'a> From<Field<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(f: Field<'a, Message>) -> Self {
-        Box::new(f).into_element()
+        Box::new(f).compose()
     }
 }
 
-impl<'a, Message: Clone + 'a> From<Field<'a, Message>> for Component<'a, Message> {
-    fn from(f: Field<'a, Message>) -> Self {
-        Component::new(f)
+impl<'a, Message: Clone + 'a> From<Field<'a, Message>> for Slot<'a, Message> {
+    fn from(widget: Field<'a, Message>) -> Self {
+        Slot::new(widget)
     }
 }
 
-impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
-    fn into_element<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
+impl<'a, Message: Clone + 'a> Compose<Message> for Field<'a, Message> {
+    fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,
     {
@@ -311,34 +311,22 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
             width,
         } = *self;
 
-        // Read toggle_target BEFORE consuming content. Field uses this to wrap
-        // the rendered label in mouse_area, matching shadcn's `<label for>`
-        // click-target semantic. Message: Clone is already on the impl.
-        let toggle_target: Option<Message> = content.toggle_target().cloned();
-
         // Build the inner layout depending on orientation.
         let inner: iced_core::Element<'a, Message, Theme, Renderer> = match orientation {
             Orientation::Vertical => {
                 // shadcn `field.tsx` line 55: `flex w-full gap-2` — 8px between
                 // every present slot. Composition follows the conditional-push
-                // pattern `alert::Alert::into_element` uses.
+                // pattern `alert::Alert::compose` uses.
                 let mut col = iced_widget::Column::new().spacing(8);
                 if let Some(label) = label {
-                    let label_element = label.into_iced();
-                    let label_element = match toggle_target.as_ref() {
-                        Some(target) => iced_widget::mouse_area(label_element)
-                            .on_press(target.clone())
-                            .boxed(),
-                        None => label_element,
-                    };
-                    col = col.push(label_element);
+                    col = col.push(label.compose());
                 }
-                col = col.push(content.into_iced());
+                col = col.push(content.compose());
                 if let Some(description) = description {
-                    col = col.push(description.into_iced());
+                    col = col.push(description.compose());
                 }
                 if let Some(error) = error {
-                    col = col.push(error.into_iced());
+                    col = col.push(error.compose());
                 }
                 col.boxed()
             }
@@ -363,28 +351,16 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
                         iced_core::Alignment::Center
                     };
 
-                    let content_element = content.into_iced();
+                    let content_element = content.compose();
                     let mut right = iced_widget::Column::new().spacing(2);
                     if let Some(label) = label {
-                        // Wrap label in mouse_area when a toggle target is
-                        // present — mirrors shadcn's `<FieldLabel htmlFor>`
-                        // that fires a synthetic click on the linked control.
-                        // ONLY the label is wrapped; description and error are
-                        // passive text (no htmlFor in shadcn's cascade).
-                        let label_element = label.into_iced();
-                        let label_element = match toggle_target.as_ref() {
-                            Some(target) => iced_widget::mouse_area(label_element)
-                                .on_press(target.clone())
-                                .boxed(),
-                            None => label_element,
-                        };
-                        right = right.push(label_element);
+                        right = right.push(label.compose());
                     }
                     if let Some(description) = description {
-                        right = right.push(description.into_iced());
+                        right = right.push(description.compose());
                     }
                     if let Some(error) = error {
-                        right = right.push(error.into_iced());
+                        right = right.push(error.compose());
                     }
                     iced_widget::Row::new()
                         .spacing(8)
@@ -397,7 +373,7 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
                     iced_widget::Row::new()
                         .spacing(8)
                         .align_y(iced_core::Alignment::Center)
-                        .push(content.into_iced())
+                        .push(content.compose())
                         .boxed()
                 }
             }
@@ -449,11 +425,11 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
 // Hybrid string / pre-styled intermediary traits
 //
 // Each slot accepts either a plain string (auto-styled with the matching
-// typography helper) or a pre-styled `Text<'a>` / `Component<'a, Message>`.
+// typography helper) or a pre-styled `Text<'a>` / `Slot<'a, Message>`.
 // Implemented as three separate marker traits — one per slot — with concrete
-// impls per acceptable input type. No blanket `impl<T: Into<Component>>`,
+// impls per acceptable input type. No blanket `impl<T: Into<Slot>>`,
 // because that would conflict with the auto-styling impls on `&str` /
-// `String` (a string is `Into<Component>` via the bare-text path that
+// `String` (a string is `Into<Slot>` via the bare-text path that
 // skips the typography helper).
 //
 // Trait names are deliberately `IntoLabel` / `IntoDescription` / `IntoError`
@@ -463,31 +439,31 @@ impl<'a, Message: Clone + 'a> IntoElement<Message> for Field<'a, Message> {
 // ---------------------------------------------------------------------------
 
 /// Convert a value into a [`Field`] label slot. Plain strings are auto-styled
-/// as `text::label`; pre-styled `Text` / `Component` values pass through.
+/// as `text::label`; pre-styled `Text` / `Slot` values pass through.
 pub trait IntoLabel<'a, Message> {
-    fn into_label(self) -> Component<'a, Message>;
+    fn into_label(self) -> Slot<'a, Message>;
 }
 
 impl<'a, Message: 'a> IntoLabel<'a, Message> for &'a str {
-    fn into_label(self) -> Component<'a, Message> {
+    fn into_label(self) -> Slot<'a, Message> {
         crate::text::label(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoLabel<'a, Message> for String {
-    fn into_label(self) -> Component<'a, Message> {
+    fn into_label(self) -> Slot<'a, Message> {
         crate::text::label(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoLabel<'a, Message> for crate::text::Text<'a> {
-    fn into_label(self) -> Component<'a, Message> {
+    fn into_label(self) -> Slot<'a, Message> {
         self.into()
     }
 }
 
-impl<'a, Message: 'a> IntoLabel<'a, Message> for Component<'a, Message> {
-    fn into_label(self) -> Component<'a, Message> {
+impl<'a, Message: 'a> IntoLabel<'a, Message> for Slot<'a, Message> {
+    fn into_label(self) -> Slot<'a, Message> {
         self
     }
 }
@@ -495,29 +471,29 @@ impl<'a, Message: 'a> IntoLabel<'a, Message> for Component<'a, Message> {
 /// Convert a value into a [`Field`] description slot. Plain strings are
 /// auto-styled as `text::muted`; pre-styled values pass through.
 pub trait IntoDescription<'a, Message> {
-    fn into_description(self) -> Component<'a, Message>;
+    fn into_description(self) -> Slot<'a, Message>;
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for &'a str {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         crate::text::muted(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for String {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         crate::text::muted(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoDescription<'a, Message> for crate::text::Text<'a> {
-    fn into_description(self) -> Component<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         self.into()
     }
 }
 
-impl<'a, Message: 'a> IntoDescription<'a, Message> for Component<'a, Message> {
-    fn into_description(self) -> Component<'a, Message> {
+impl<'a, Message: 'a> IntoDescription<'a, Message> for Slot<'a, Message> {
+    fn into_description(self) -> Slot<'a, Message> {
         self
     }
 }
@@ -525,29 +501,29 @@ impl<'a, Message: 'a> IntoDescription<'a, Message> for Component<'a, Message> {
 /// Convert a value into a [`Field`] error slot. Plain strings are
 /// auto-styled as `text::error`; pre-styled values pass through.
 pub trait IntoError<'a, Message> {
-    fn into_error(self) -> Component<'a, Message>;
+    fn into_error(self) -> Slot<'a, Message>;
 }
 
 impl<'a, Message: 'a> IntoError<'a, Message> for &'a str {
-    fn into_error(self) -> Component<'a, Message> {
+    fn into_error(self) -> Slot<'a, Message> {
         crate::text::error(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoError<'a, Message> for String {
-    fn into_error(self) -> Component<'a, Message> {
+    fn into_error(self) -> Slot<'a, Message> {
         crate::text::error(self).into()
     }
 }
 
 impl<'a, Message: 'a> IntoError<'a, Message> for crate::text::Text<'a> {
-    fn into_error(self) -> Component<'a, Message> {
+    fn into_error(self) -> Slot<'a, Message> {
         self.into()
     }
 }
 
-impl<'a, Message: 'a> IntoError<'a, Message> for Component<'a, Message> {
-    fn into_error(self) -> Component<'a, Message> {
+impl<'a, Message: 'a> IntoError<'a, Message> for Slot<'a, Message> {
+    fn into_error(self) -> Slot<'a, Message> {
         self
     }
 }
@@ -556,10 +532,10 @@ impl<'a, Message: 'a> IntoError<'a, Message> for Component<'a, Message> {
 mod tests {
     //! Composition-shape coverage for the alert-style builder loop.
     //!
-    //! These tests inspect the builder fields BEFORE `into_element` runs —
+    //! These tests inspect the builder fields BEFORE `compose` runs —
     //! once an iced widget is produced, the slot identities are erased.
-    //! Asserting on the `Option<Component>` shape here proves the conditional-
-    //! push pattern in `into_element` won't try to render empty slots.
+    //! Asserting on the `Option<Slot>` shape here proves the conditional-
+    //! push pattern in `compose` won't try to render empty slots.
 
     use crate::field;
 
