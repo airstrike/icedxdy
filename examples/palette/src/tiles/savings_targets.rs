@@ -13,7 +13,6 @@ use crate::{Message, State};
 
 const ORDER_TYPES: &[&str] = &["Market Order", "Limit Order", "Stop Order"];
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     row![targets_card(), buy_card(state)]
         .spacing(40)

@@ -11,7 +11,6 @@ use icedxdy::{Component, Space, Theme};
 
 use crate::{KitchenMode, KitchenScene, Message, State};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let modes = toggle_group([
         mode_item(state, KitchenMode::Hue, "Hue"),

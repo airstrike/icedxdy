@@ -9,7 +9,6 @@ use icedxdy::{Theme, card};
 use super::api_gap;
 use crate::{Message, State};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     card::card(
         column![

@@ -10,7 +10,6 @@ use icedxdy::{Theme, card, radius};
 
 use crate::{Message, State};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let copy = text::muted(
         "Over time, this smooths out the average cost of your investments. \

@@ -9,7 +9,6 @@ use icedxdy::{Component, Theme, card};
 use super::api_gap;
 use crate::{Message, ReceivingMethod, State};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let account = field::field(
         input("", &state.receiving_account_holder)

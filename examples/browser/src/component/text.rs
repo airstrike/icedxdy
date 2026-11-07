@@ -136,7 +136,6 @@ impl TextPage {
     }
 }
 
-#[granita::reloadable]
 impl page::Page for TextPage {
     fn page_index(&self) -> usize {
         self.state.page_index

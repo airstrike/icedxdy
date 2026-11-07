@@ -25,7 +25,6 @@ const X_ICON: &[u8] = br##"
 </svg>
 "##;
 
-#[granita::preview(state = State::dark(), group = "preview-01")]
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let header = card::header("Payout Threshold")
         .description("Set the minimum balance required before a payout is triggered.")

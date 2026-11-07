@@ -11,7 +11,6 @@ use icedxdy::{Space, Theme, card};
 use super::api_gap;
 use crate::{Message, State, icon};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let action = row![
         api_gap::marker(),

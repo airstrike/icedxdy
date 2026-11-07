@@ -38,7 +38,6 @@ const NOTIFICATIONS: &[Notification] = &[
     },
 ];
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let select_all_state = match state.notification_settings.len() {
         0 => checkbox::State::Unchecked,

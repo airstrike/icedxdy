@@ -146,7 +146,6 @@ fn header_example<'a>() -> Component<'a, Message> {
     .into()
 }
 
-#[granita::reloadable]
 impl page::Page for SidebarPage {
     fn page_index(&self) -> usize {
         self.state.page_index

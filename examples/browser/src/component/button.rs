@@ -168,7 +168,6 @@ fn view(id: &str) -> Component<'static, Message> {
     }
 }
 
-#[granita::reloadable]
 impl page::Page for ButtonPage {
     fn page_index(&self) -> usize {
         self.state.page_index

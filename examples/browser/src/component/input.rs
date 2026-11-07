@@ -130,7 +130,6 @@ impl InputPage {
     }
 }
 
-#[granita::reloadable]
 impl page::Page for InputPage {
     fn page_index(&self) -> usize {
         self.state.page_index

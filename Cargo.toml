@@ -66,37 +66,12 @@ tree-sitter = "0.26"
 tree-sitter-highlight = "0.26"
 tree-sitter-rust = "0.24"
 
-[profile.dev]
-rpath = true
-
 # Optimize dependencies (built once, cached) while the workspace crates stay at
 # the default dev opt-level for fast incremental recompiles. The per-frame
 # widget walk lives mostly in deps (iced/wgpu/icedxdy_widget), so this is the
-# big lever for dev-loop runtime cost without slowing reload compiles.
+# big lever for dev-loop runtime cost without slowing incremental compiles.
 [profile.dev.package."*"]
 opt-level = 3
-
-# Opt OUT of the cascade-dylib promotion — tree-sitter ships C source built
-# by its build.rs (`cc` archive of `ts_*` symbols). When the cascade
-# promotes tree-sitter to dylib, the C archive doesn't make it across the
-# dylib boundary and tree-sitter-highlight fails to link
-# (`Undefined symbol: _ts_query_cursor_next_capture`). Forcing rlib keeps
-# the C objects bundled the way the build script expects.
-#
-# Stock cargo emits a one-line "unused manifest key" warning per entry
-# and otherwise ignores them; the forked cargo (`-Z cascade-dylib`)
-# reads them as opt-outs from the runtime-closure promotion.
-[profile.dev.package.tree-sitter]
-crate-type = ["lib"]
-
-[profile.dev.package.tree-sitter-highlight]
-crate-type = ["lib"]
-
-[profile.dev.package.tree-sitter-language]
-crate-type = ["lib"]
-
-[profile.dev.package.tree-sitter-rust]
-crate-type = ["lib"]
 
 [patch.crates-io]
 iced = { git = "https://github.com/airstrike/iced.git", branch = "dev", features = ["qr_code"] }

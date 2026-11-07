@@ -13,7 +13,6 @@ const CARD_HEIGHT: f32 = 276.0;
 const CARD_PADDING_Y: f32 = 16.0;
 const CONTENT_HEIGHT: f32 = CARD_HEIGHT - CARD_PADDING_Y * 2.0;
 
-#[granita::preview(state = State::dark(), group = "preview-01")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let content = empty::empty()
         .padding(16)

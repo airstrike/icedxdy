@@ -10,7 +10,6 @@ use icedxdy::{Space, Theme};
 
 use crate::{Message, ShadePosition, State};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let shades = toggle_group([
         shade_item(state, ShadePosition::Open, "Open"),

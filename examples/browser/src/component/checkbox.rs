@@ -111,7 +111,6 @@ impl CheckboxPage {
     }
 }
 
-#[granita::reloadable]
 impl page::Page for CheckboxPage {
     fn page_index(&self) -> usize {
         self.state.page_index

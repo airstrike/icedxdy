@@ -186,7 +186,6 @@ fn build_accordion<'a>(
         .into()
 }
 
-#[granita::reloadable]
 impl page::Page for AccordionPage {
     fn page_index(&self) -> usize {
         self.state.page_index

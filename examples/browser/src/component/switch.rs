@@ -84,7 +84,6 @@ impl SwitchPage {
     }
 }
 
-#[granita::reloadable]
 impl page::Page for SwitchPage {
     fn page_index(&self) -> usize {
         self.state.page_index

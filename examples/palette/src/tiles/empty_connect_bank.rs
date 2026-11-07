@@ -9,7 +9,6 @@ use icedxdy::widget::{button, column, empty};
 
 use crate::{Message, State, icon};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let content = empty::empty()
         .padding(16)

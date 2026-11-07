@@ -17,7 +17,6 @@ const CURRENCIES: &[&str] = &[
     "JPY — Japanese Yen",
 ];
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     let currency = field::field(select::trigger("USD — United States Dollar", CURRENCIES))
         .label("Default Currency")

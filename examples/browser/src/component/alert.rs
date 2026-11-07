@@ -101,7 +101,6 @@ fn demo<'a>() -> Component<'a, Message> {
     .into()
 }
 
-#[granita::reloadable]
 impl page::Page for AlertPage {
     fn page_index(&self) -> usize {
         self.state.page_index

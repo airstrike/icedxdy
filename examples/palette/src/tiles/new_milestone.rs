@@ -8,7 +8,6 @@ use icedxdy::{Theme, card};
 
 use crate::{Message, State};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let goal = field::field(
         input("e.g. New Car, Home Downpayment", &state.new_milestone_goal)

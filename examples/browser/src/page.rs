@@ -203,7 +203,6 @@ pub enum Message {
 }
 
 /// Object-safe trait for a component page.
-#[granita::reloadable]
 pub trait Page: Send {
     fn meta(&self) -> &'static Meta;
     fn blocks(&self) -> &'static [Block];
@@ -415,10 +414,9 @@ fn render_example<'a>(
 
 /// Render shadcn's example-card chrome: an optional depth-aware heading
 /// (`h2`/`h3`) and muted description, then the bordered card — a 288px
-/// preview surface over an optional collapsible code block. Shared by
-/// the page renderer and the standalone `#[granita::preview]` cards
-/// under `component/`. An empty `title` selects the hero form: no
-/// heading, and a `min_height` preview surface so tall content grows.
+/// preview surface over an optional collapsible code block. An empty
+/// `title` selects the hero form: no heading, and a `min_height` preview
+/// surface so tall content grows.
 pub fn example_card<'a>(
     depth: u8,
     title: &'a str,
@@ -475,8 +473,7 @@ pub fn example_card<'a>(
 /// The collapsible code panel beneath a preview. Until expanded it is
 /// clipped to [`COLLAPSED_CODE_HEIGHT`] under a fade overlay carrying
 /// the "View Code" button; once expanded it shows the full snippet with
-/// a top-right copy button. Split out of [`render_example`] so
-/// `#[granita::preview]` cards reuse the exact chrome.
+/// a top-right copy button.
 pub fn code_panel<'a>(
     page_index: usize,
     block_pos: usize,

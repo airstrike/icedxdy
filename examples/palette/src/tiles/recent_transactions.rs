@@ -70,7 +70,6 @@ enum Kind {
     Transport,
 }
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     card::card(
         column![

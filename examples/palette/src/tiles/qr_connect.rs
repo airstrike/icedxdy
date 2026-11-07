@@ -11,7 +11,6 @@ use icedxdy::{Component, Theme};
 
 use crate::{Message, State};
 
-#[granita::preview(state = State::dark(), group = "preview-01")]
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let qr: Component<'_, Message> = match &state.qr_connect {
         Some(data) => container(qr_code(data).total_size(160.0).style(|_| qr_code::Style {

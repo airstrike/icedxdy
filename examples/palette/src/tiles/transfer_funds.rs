@@ -19,7 +19,6 @@ const TO_ACCOUNTS: &[&str] = &[
     "Investment (··3349) — $18,200.00",
 ];
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let amount = field::field(
         input("", &state.transfer_amount)

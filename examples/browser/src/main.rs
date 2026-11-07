@@ -1,6 +1,5 @@
 use browser::{Browser, font, icon};
 
-#[granita::app(theme = icedxdy::Theme)]
 fn main() -> iced::Result {
     iced::application(Browser::new, Browser::update, Browser::view)
         .title("icedxdy \u{2022} components browser")

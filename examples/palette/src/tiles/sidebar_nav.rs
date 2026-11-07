@@ -8,7 +8,6 @@ use icedxdy::{Component, Theme, card};
 
 use crate::{Message, State, icon};
 
-#[granita::preview(state = State::dark(), group = "preview-02")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     row![
         nav_card([

@@ -96,7 +96,6 @@ impl FieldPage {
     }
 }
 
-#[granita::reloadable]
 impl page::Page for FieldPage {
     fn page_index(&self) -> usize {
         self.state.page_index

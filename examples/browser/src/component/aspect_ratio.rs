@@ -89,7 +89,6 @@ fn image_placeholder<'a>() -> iced::Element<'a, Message, Theme> {
         .into()
 }
 
-#[granita::reloadable]
 impl page::Page for AspectRatioPage {
     fn page_index(&self) -> usize {
         self.state.page_index

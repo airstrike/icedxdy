@@ -14,7 +14,6 @@ use icedxdy::{Component, Space};
 use super::api_gap;
 use crate::{Message, State};
 
-#[granita::preview(state = State::dark(), group = "preview-01")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let chart = column![
         api_gap::panel(

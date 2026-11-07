@@ -14,7 +14,6 @@ pub mod font;
 pub mod fonts;
 pub mod icon;
 pub mod page;
-pub mod probe;
 
 use iced::widget::column;
 use iced::{Element, Subscription, Task};
@@ -124,7 +123,6 @@ impl Browser {
     }
 }
 
-#[granita::preview(name = "Progress", bind = ("Loading", 30.0))]
 fn splash<'a>(message: &str, progress_value: f32) -> Element<'a, Message, Theme> {
     center(
         column![
@@ -139,5 +137,3 @@ fn splash<'a>(message: &str, progress_value: f32) -> Element<'a, Message, Theme>
     )
     .into()
 }
-
-granita::previews!();

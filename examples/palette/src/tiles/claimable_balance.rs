@@ -12,7 +12,6 @@ use icedxdy::{Component, Theme, Vertical};
 
 use crate::{Message, State};
 
-#[granita::preview(state = State::dark(), group = "preview-01")]
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let pending = badge::outline(
         row![dot(), text::small("Pending Setup")]
