@@ -27,10 +27,10 @@
 use iced_core::Length;
 use iced_core::text::IntoFragment;
 use iced_widget::Column;
-use iced_widget::Renderer;
 use iced_widget::Row;
 use iced_widget::container::Container;
 use iced_widget::text::LineHeight;
+use iced_widget::{Renderer, Widget};
 
 use crate::Gap;
 use crate::Padding;
@@ -45,12 +45,15 @@ use crate::widget::rule;
 use crate::widget::space;
 use crate::widget::text;
 
+/// The boxed element a card slot holds.
+type Element<'a, Message> = iced_core::Element<'a, Message, Theme, Renderer>;
+
 /// Card root — wraps content with shadcn's card surface (bg-card + ring +
 /// rounded corners).
 pub fn card<'a, Message>(
-    content: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
-) -> Container<'a, Message, Theme, Renderer> {
-    Container::new(content)
+    content: impl Into<Element<'a, Message>>,
+) -> Container<'a, Element<'a, Message>, Theme> {
+    Container::new(content.into())
         .clip(true)
         .style(|t| container::card(t).into())
 }
@@ -142,9 +145,7 @@ impl<'a, Message: 'a> Header<'a, Message> {
     }
 }
 
-impl<'a, Message: 'a> From<Header<'a, Message>>
-    for iced_core::Element<'a, Message, Theme, Renderer>
-{
+impl<'a, Message: 'a> From<Header<'a, Message>> for Element<'a, Message> {
     fn from(h: Header<'a, Message>) -> Self {
         let Header {
             title,
@@ -153,7 +154,7 @@ impl<'a, Message: 'a> From<Header<'a, Message>>
         } = h;
 
         // Stack title above (optional) description in a column with gap-1.
-        let mut text_col: Column<'a, Message, Theme, Renderer> =
+        let mut text_col: Column<Element<'a, Message>> =
             Column::new().spacing(Gap::G1).width(Length::Fill);
         text_col = text_col.push(title.into_iced());
         if let Some(d) = description {
@@ -163,27 +164,27 @@ impl<'a, Message: 'a> From<Header<'a, Message>>
         // When an action is present, place it at the end of a row so it sits
         // flush against the right edge of the inner padded rect — the iced
         // analog of shadcn's `col-start-2 ... justify-self-end` grid pin.
-        let padded_inner: iced_core::Element<'a, Message, Theme, Renderer> = match action {
+        let padded_inner: Element<'a, Message> = match action {
             Some(a) => Row::new()
-                .push(text_col)
-                .push(space::horizontal())
+                .push(text_col.boxed())
+                .push(space::horizontal().boxed())
                 .push(a.into_iced())
                 .align_y(iced_core::Alignment::Start)
                 .width(Length::Fill)
-                .into(),
-            None => text_col.into(),
+                .boxed(),
+            None => text_col.boxed(),
         };
 
         iced_widget::container(padded_inner)
             .padding(Padding::X4)
             .width(Length::Fill)
-            .into()
+            .boxed()
     }
 }
 
 impl<'a, Message: 'a> From<Header<'a, Message>> for Component<'a, Message> {
     fn from(h: Header<'a, Message>) -> Self {
-        let element: iced_core::Element<'a, Message, Theme, Renderer> = h.into();
+        let element: Element<'a, Message> = h.into();
         Component::from(element)
     }
 }
@@ -262,41 +263,38 @@ pub fn header_simple<'a, Message: 'a>(title: impl IntoTitle<'a, Message>) -> Hea
 
 /// Card content section (`px-4` only).
 pub fn content<'a, Message: 'a>(
-    child: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
-) -> Container<'a, Message, Theme, Renderer> {
-    Container::new(child)
+    child: impl Into<Element<'a, Message>>,
+) -> Container<'a, Element<'a, Message>, Theme> {
+    Container::new(child.into())
         .padding(Padding::X4)
         .width(Length::Fill)
 }
 
 /// Card footer section. Caller composes the inner shape (row of buttons,
 /// stacked column, etc.); `footer` applies nova's muted footer surface.
-pub fn footer<'a, Message: 'a>(
-    child: impl Into<iced_core::Element<'a, Message, Theme, Renderer>>,
-) -> Component<'a, Message> {
-    let line: iced_core::Element<'a, Message, Theme, Renderer> =
-        rule::horizontal(1).style(footer_rule_style()).into();
+pub fn footer<'a, Message: 'a>(child: impl Into<Element<'a, Message>>) -> Component<'a, Message> {
+    let line: Element<'a, Message> = rule::horizontal(1).style(footer_rule_style()).boxed();
 
-    let body = Container::new(child)
+    let body = Container::new(child.into())
         .padding(Padding::P4)
         .width(Length::Fill)
         .style(|t| footer_style(t).into());
 
-    let footer: iced_core::Element<'a, Message, Theme, Renderer> = Column::new()
+    let footer: Element<'a, Message> = Column::new()
         .push(line)
-        .push(body)
+        .push(body.boxed())
         .width(Length::Fill)
-        .into();
+        .boxed();
 
     Component::from(footer)
 }
 
 /// Card footer as a row of children with 8px (`gap-2`) spacing.
 pub fn footer_row<'a, Message: 'a>(
-    children: impl IntoIterator<Item = iced_core::Element<'a, Message, Theme, Renderer>>,
+    children: impl IntoIterator<Item = Element<'a, Message>>,
 ) -> Component<'a, Message> {
     let row = Row::with_children(children).spacing(Gap::G2);
-    footer(row)
+    footer(row.boxed())
 }
 
 fn footer_style(theme: &Theme) -> Style {
