@@ -2,6 +2,7 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/contribution-history.tsx`.
 
+use iced::Widget;
 use iced::{Center, Fill, Padding};
 use icedxdy::Theme;
 use icedxdy::card;
@@ -56,7 +57,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn month(label: &'static str) -> Component<'static, Message> {

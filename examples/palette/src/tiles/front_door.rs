@@ -2,6 +2,7 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/front-door.tsx`.
 
+use iced::Widget;
 use iced::{Fill, Right};
 use icedxdy::core::Border;
 use icedxdy::theme::container::Style;
@@ -47,7 +48,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn camera_style(theme: &Theme) -> Style {

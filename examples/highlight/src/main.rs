@@ -11,7 +11,7 @@
 //! for everything user-driven.
 
 use iced::widget::column;
-use iced::{Element, Subscription, Task};
+use iced::{Element, Subscription, Task, Widget};
 use icedxdy::widget::markdown::highlighter;
 use icedxdy::widget::{center, text};
 use icedxdy::{Theme, theme};
@@ -107,7 +107,7 @@ impl Highlights {
                 splash(&format!("Loading theme '{slug}'\u{2026}"))
             }
             Highlights::Failed(msg) => splash(msg),
-            Highlights::Ready(app) => app.view().map(Message::App),
+            Highlights::Ready(app) => app.view().map(Message::App).boxed(),
         }
     }
 
@@ -133,9 +133,12 @@ impl Highlights {
 
 fn splash<'a>(message: &str) -> Element<'a, Message, Theme> {
     center(
-        column![text::h1("highlight"), text::muted(message.to_owned())]
-            .spacing(8)
-            .align_x(iced::Center),
+        column![
+            Element::from(text::h1("highlight")),
+            Element::from(text::muted(message.to_owned()))
+        ]
+        .spacing(8)
+        .align_x(iced::Center),
     )
     .into()
 }

@@ -7,8 +7,8 @@
 //! keyboard nav, no-op). Lifecycle messages (catalog/theme loaded) live
 //! on the loader side and arrive here only as construction inputs.
 
-use iced::widget::{combo_box, scrollable};
-use iced::{Element, Fill, Font, Pixels, Subscription, Task, keyboard};
+use iced::widget::{column, combo_box, scrollable};
+use iced::{Element, Fill, Font, Length, Pixels, Subscription, Task, Widget, keyboard};
 use iced_widget::stack;
 use icedxdy::widget::markdown::highlighter;
 use icedxdy::widget::text;
@@ -139,26 +139,30 @@ impl App {
             ..markdown::Settings::with_style(style)
         };
 
-        let code = markdown::view_with(&self.items, settings, self).map(|_| Message::Noop);
+        let code = markdown::view_with(&self.items, settings, self)
+            .map(|_| Message::Noop)
+            .boxed();
 
         let code_card = stack![
-            container(code)
-                .padding(16)
-                .width(Fill)
-                .class(theme::container::CodeBlock),
-            label
+            Element::from(
+                container(code)
+                    .padding(16)
+                    .width(Fill)
+                    .class(theme::container::CodeBlock)
+            ),
+            label.map(Element::from)
         ];
 
         let count = text::muted(self.map.populated_count());
 
-        let body = iced::widget::column![picker, code_card, count]
+        let body = column![picker, code_card, Element::from(count)]
             .spacing(20)
             .padding(24)
-            .max_width(900);
+            .width(Length::Fit.max(900));
 
-        scrollable(container(body).center_x(Fill))
+        scrollable(Element::from(container(body).center_x(Fill)))
             .height(Fill)
-            .into()
+            .boxed()
     }
 
     pub fn subscription() -> Subscription<Message> {

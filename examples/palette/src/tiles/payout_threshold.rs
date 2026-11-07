@@ -2,6 +2,7 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/payout-threshold.tsx`.
 
+use iced::Widget;
 use iced::widget::{space, svg};
 use iced::{Bottom, Center, Fill, Padding};
 use icedxdy::card;
@@ -92,7 +93,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn close_icon() -> Component<'static, Message> {

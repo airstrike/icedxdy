@@ -3,6 +3,7 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/new-milestone.tsx`.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::widget::{button, column, field, input, row};
 use icedxdy::{Theme, card};
 
@@ -60,5 +61,5 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }

@@ -3,6 +3,7 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/notification-settings.tsx`.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::widget::checkbox;
 use icedxdy::widget::{button, column, field};
 use icedxdy::{Theme, card};
@@ -69,7 +70,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn notification_field(state: &State, n: &Notification) -> icedxdy::Component<'static, Message> {

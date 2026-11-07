@@ -3,6 +3,7 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/kitchen-island.tsx`.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::card;
 use icedxdy::core::{Border, Color, oklch};
 use icedxdy::theme;
@@ -67,7 +68,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn mode_item(

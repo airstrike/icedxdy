@@ -6,6 +6,7 @@
 //! container.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::core::style::{destructive, outline};
@@ -85,5 +86,5 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }

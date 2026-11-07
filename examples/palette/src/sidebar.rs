@@ -300,12 +300,14 @@ fn dot_style(theme: &Theme) -> Style {
 fn foreground_text_style() -> iced_widget::text::StyleFn<'static, Theme> {
     Box::new(|theme| iced_widget::text::Style {
         color: Some(theme.sidebar.foreground.into()),
+        selection: None,
     })
 }
 
 fn muted_text_style() -> iced_widget::text::StyleFn<'static, Theme> {
     Box::new(|theme| iced_widget::text::Style {
         color: Some(theme.muted.foreground.into()),
+        selection: None,
     })
 }
 

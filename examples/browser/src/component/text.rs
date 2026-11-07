@@ -1,3 +1,4 @@
+use iced::Element;
 // TODO: API Reference section once a table widget lands.
 //
 // The live Typography page is a styling guide rather than a component-with-
@@ -10,6 +11,7 @@
 //
 // Intentional skips per CLAUDE.md: typography-rtl (RTL).
 
+use iced::Widget;
 use iced::widget::column;
 use iced::{Fill, Task};
 use icedxdy::Size::Sm;
@@ -172,70 +174,70 @@ impl page::Page for TextPage {
         match id {
             // Article hero — verbatim shadcn `typography-demo.tsx`.
             "demo" => column![
-                text::h1("Taxing Laughter: The Joke Tax Chronicles"),
-                text::lead(
+                Element::from(text::h1("Taxing Laughter: The Joke Tax Chronicles")),
+                Element::from(text::lead(
                     "Once upon a time, in a far-off land, there was a very lazy king \
                      who spent all day lounging on his throne. One day, his advisors \
                      came to him with a problem: the kingdom was running out of money."
-                ),
-                text::h2("The King's Plan"),
-                text::p(
+                )),
+                Element::from(text::h2("The King's Plan")),
+                Element::from(text::p(
                     "The king thought long and hard, and finally came up with a \
                      brilliant plan: he would tax the jokes in the kingdom."
-                ),
-                text::blockquote(
+                )),
+                Element::from(text::blockquote(
                     "\"After all,\" he said, \"everyone enjoys a good joke, so it's \
                      only fair that they should pay for the privilege.\""
-                ),
-                text::h3("The Joke Tax"),
-                text::p(
+                )),
+                Element::from(text::h3("The Joke Tax")),
+                Element::from(text::p(
                     "The king's subjects were not amused. They grumbled and \
                      complained, but the king was firm:"
-                ),
-                text::list([
+                )),
+                Element::from(text::list([
                     "1st level of puns: 5 gold coins",
                     "2nd level of jokes: 10 gold coins",
                     "3rd level of one-liners : 20 gold coins",
-                ]),
-                text::p(
+                ])),
+                Element::from(text::p(
                     "As a result, people stopped telling jokes, and the kingdom \
                      fell into a gloom. But there was one person who refused to let \
                      the king's foolishness get him down: a court jester named \
                      Jokester."
-                ),
-                text::h3("Jokester's Revolt"),
-                text::p(
+                )),
+                Element::from(text::h3("Jokester's Revolt")),
+                Element::from(text::p(
                     "Jokester began sneaking into the castle in the middle of the \
                      night and leaving jokes all over the place: under the king's \
                      pillow, in his soup, even in the royal toilet. The king was \
                      furious, but he couldn't seem to stop Jokester."
-                ),
-                text::p(
+                )),
+                Element::from(text::p(
                     "And then, one day, the people of the kingdom discovered that \
                      the jokes left by Jokester were so funny that they couldn't \
                      help but laugh. And once they started laughing, they couldn't \
                      stop."
-                ),
-                text::h3("The People's Rebellion"),
-                text::p(
+                )),
+                Element::from(text::h3("The People's Rebellion")),
+                Element::from(text::p(
                     "The people of the kingdom, feeling uplifted by the laughter, \
                      started to tell jokes and puns again, and soon the entire \
                      kingdom was in on the joke."
-                ),
+                )),
                 table_card(),
-                text::p(
+                Element::from(text::p(
                     "The king, seeing how much happier his subjects were, realized \
                      the error of his ways and repealed the joke tax. Jokester was \
                      declared a hero, and the kingdom lived happily ever after."
-                ),
-                text::p(
+                )),
+                Element::from(text::p(
                     "The moral of the story is: never underestimate the power of a \
                      good laugh and always be careful of bad ideas."
-                ),
+                )),
             ]
             .spacing(16)
             .width(Fill)
-            .into(),
+            .boxed(),
 
             // h1 — `text-center` per nova `typography-h1.tsx`
             "h1" => container(text::h1("Taxing Laughter: The Joke Tax Chronicles"))
@@ -289,9 +291,9 @@ impl page::Page for TextPage {
 /// Wrap an h2 with a 1px horizontal rule underneath — the iced equivalent
 /// of nova's `border-b pb-2 ...` cascade on `<h2>`.
 fn h2_with_border<'a>(content: &'a str) -> iced::Element<'a, Message, Theme> {
-    column![text::h2(content), rule::horizontal(1)]
+    column![Element::from(text::h2(content)), rule::horizontal(1)]
         .spacing(8)
-        .into()
+        .boxed()
 }
 
 /// Wrap inline_code in a small container with bg-muted + padding + small
@@ -311,15 +313,15 @@ fn table_card<'a>() -> iced::Element<'a, Message, Theme> {
         ("Full", "Ecstatic"),
     ];
 
-    let header = |label| text::p(label).bold().into();
+    let header = |label| Element::from(text::p(label).bold());
 
     let columns = [
         table::column(Some(header("King's Treasury")), |row: &(_, _)| {
-            text::p(row.0)
+            Element::from(text::p(row.0))
         })
         .width(Fill),
         table::column(Some(header("People's happiness")), |row: &(_, _)| {
-            text::p(row.1)
+            Element::from(text::p(row.1))
         })
         .width(Fill),
     ];
@@ -330,5 +332,5 @@ fn table_card<'a>() -> iced::Element<'a, Message, Theme> {
         .padding_y(8)
         .separator(1)
         .border(1)
-        .into()
+        .boxed()
 }

@@ -8,6 +8,7 @@
 //! card-bounded list), button (ghost), text variants (p / xs / small),
 //! rule (vertical thin), container, row, column.
 
+use iced::Widget;
 use iced::widget::space;
 use iced::{Center, Fill};
 use icedxdy::Component;
@@ -107,9 +108,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .flat_map(|(i, tx)| {
             let mut items: Vec<Component<'_, Message>> = Vec::new();
             if i > 0 {
-                items.push(Component::from(
-                    iced::Element::from(separator::horizontal()),
-                ));
+                items.push(Component::from(separator::horizontal().boxed()));
             }
             items.push(tx_row(tx));
             items
@@ -131,7 +130,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     )
     .width(Fill)
     .height(386.0)
-    .into()
+    .boxed()
 }
 
 fn tx_row(tx: &Tx) -> Component<'_, Message> {
@@ -158,6 +157,7 @@ fn tx_row(tx: &Tx) -> Component<'_, Message> {
             } else {
                 t.destructive.base.into()
             }),
+            selection: None,
         });
     let amount_text = text::small(amount).medium().style(amount_style);
 

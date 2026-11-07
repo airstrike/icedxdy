@@ -22,6 +22,7 @@
 use iced::Alignment::Center;
 use iced::Fill;
 use iced::Task;
+use iced::Widget;
 use iced::widget::stack;
 
 use icedxdy::card;
@@ -244,7 +245,7 @@ impl page::Page for CardPage {
                 .padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4))
                 .width(Fill))
                 .width(384.0)
-                .into()
+                .boxed()
             }
 
             // Small: header (title + description) + content (paragraph) +
@@ -268,7 +269,7 @@ impl page::Page for CardPage {
             .padding(iced::Padding::ZERO.top(Gap::G4).bottom(Gap::G4))
             .width(Fill))
             .width(384.0)
-            .into(),
+            .boxed(),
 
             // Image: image (16:9) with a 35% black tint overlay above the
             // header (Featured badge action + title + description) + footer
@@ -295,7 +296,7 @@ impl page::Page for CardPage {
                 .width(Fill))
                 .width(384.0)
                 .clip(true)
-                .into()
+                .boxed()
             }
 
             _ => unreachable!("unknown card preview id: {id}"),

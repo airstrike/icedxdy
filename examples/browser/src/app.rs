@@ -1,3 +1,5 @@
+use iced::Element;
+use iced::Widget;
 use iced::mouse::Interaction;
 use iced::widget::{column, combo_box, row, space, stack, svg};
 use icedxdy::widget::scrollable;
@@ -279,10 +281,11 @@ impl App {
             .on_press(Message::ToggleTheme);
 
         let nav = row(NavSection::ALL.iter().copied().map(|section| {
-            button::ghost(section.label())
-                .size(Size::Sm)
-                .on_press(Message::NavSelect(section))
-                .into()
+            Element::from(
+                button::ghost(section.label())
+                    .size(Size::Sm)
+                    .on_press(Message::NavSelect(section)),
+            )
         }))
         .spacing(0)
         .align_y(Center);
@@ -292,7 +295,7 @@ impl App {
             nav,
             space::horizontal(),
             font_selector,
-            theme_toggle
+            Element::from(theme_toggle)
         ]
         .spacing(8)
         .padding(16)
@@ -308,12 +311,13 @@ impl App {
         .align_y(Center);
 
         let sidebar_items = column(self.pages.iter().enumerate().map(|(i, page)| {
-            sidebar::menu_button(page.meta().title)
-                .size(MenuButtonSize::Docs)
-                .inset(1)
-                .active(i == self.current_page)
-                .on_press(Message::SelectPage(i))
-                .into()
+            Element::from(
+                sidebar::menu_button(page.meta().title)
+                    .size(MenuButtonSize::Docs)
+                    .inset(1)
+                    .active(i == self.current_page)
+                    .on_press(Message::SelectPage(i)),
+            )
         }))
         .width(Fill);
 
@@ -321,7 +325,7 @@ impl App {
         // header(16) + branding(24) + row_spacing(8) + button_pad_l(10)
         //   - inset(1) - item_pad_l(8) = 49.
         let sidebar_scrollable = scrollable::scrollable(
-            column![sidebar_header, sidebar_items]
+            column![Element::from(sidebar_header), sidebar_items]
                 .padding(iced::Padding::ZERO.top(24).right(8).bottom(8).left(49))
                 .width(272),
         )
@@ -351,12 +355,12 @@ impl App {
                     ..Style::default()
                 }
             });
-        let fade_overlay = column![top_fade, space::vertical()]
+        let fade_overlay = column![Element::from(top_fade), space::vertical()]
             .width(Fill)
             .height(Fill);
 
         let sidebar = sidebar::fixed(
-            stack![sidebar_scrollable, fade_overlay]
+            stack![Element::from(sidebar_scrollable), fade_overlay]
                 .width(272)
                 .height(Fill),
         )
@@ -390,18 +394,18 @@ impl App {
             .on_press(Message::SelectPage((curr + 1).min(total.saturating_sub(1))));
 
         let title_row = row![
-            title,
+            Element::from(title),
             space::horizontal(),
-            row![prev_btn, next_btn].spacing(8),
+            row![Element::from(prev_btn), Element::from(next_btn)].spacing(8),
         ]
         .spacing(8)
         .align_y(iced::Alignment::Start);
-        let page_header = column![title_row, description].spacing(8);
+        let page_header = column![title_row, Element::from(description)].spacing(8);
 
         let (page_body, page_nav) = page::view(current, &self.snippet_viewer);
 
         let content = container(
-            column![page_header, container(page_body).width(Fill)]
+            column![page_header, Element::from(container(page_body).width(Fill))]
                 .spacing(24)
                 .padding(32)
                 .width(700),
@@ -428,11 +432,16 @@ impl App {
         }) as rule::StyleFn<'_, Theme>);
 
         let body = if let Some(nav) = page_nav {
-            row![sidebar, sidebar_divider, main, nav]
-                .width(Fill)
-                .height(Fill)
+            row![
+                Element::from(sidebar),
+                sidebar_divider,
+                Element::from(main),
+                Element::from(nav)
+            ]
+            .width(Fill)
+            .height(Fill)
         } else {
-            row![sidebar, sidebar_divider, main]
+            row![Element::from(sidebar), sidebar_divider, Element::from(main)]
                 .width(Fill)
                 .height(Fill)
         };
@@ -440,6 +449,6 @@ impl App {
         column![header, separator::horizontal(), body]
             .width(Fill)
             .height(Fill)
-            .into()
+            .boxed()
     }
 }

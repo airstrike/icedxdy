@@ -2,6 +2,7 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/qr-connect.tsx`.
 
+use iced::Widget;
 use iced::{Center, Color, Fill, Padding};
 use icedxdy::card;
 use icedxdy::core::{Border, oklch};
@@ -70,7 +71,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn qr_shell_style(_theme: &Theme) -> Style {

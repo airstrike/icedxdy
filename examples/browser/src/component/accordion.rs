@@ -8,6 +8,7 @@
 // Intentional skips per CLAUDE.md: accordion-rtl (RTL not applicable to
 // iced).
 
+use iced::Widget;
 use std::collections::HashSet;
 
 use iced::Task;
@@ -444,7 +445,7 @@ impl page::Page for AccordionPage {
                 use icedxdy::widget::column;
                 let stack = column![header, body];
 
-                card(stack).max_width(384.0).width(iced::Fill).into()
+                card(stack).width(iced::Fill.max(384.0)).boxed()
             }
 
             _ => unreachable!("unknown accordion preview id: {id}"),

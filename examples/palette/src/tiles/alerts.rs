@@ -7,6 +7,7 @@
 //! destructive variants; the rest are thematic containers).
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::Component;
 use icedxdy::card;
 use icedxdy::core::{Border, Color, Palette};
@@ -53,7 +54,7 @@ pub fn view() -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 /// A small alert-shaped block painted in a tint that the stock alert

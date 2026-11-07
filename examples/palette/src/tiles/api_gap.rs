@@ -3,6 +3,7 @@
 //! These are intentionally explicit: a tile may be present in the grid while
 //! still documenting which icedxdy primitive is missing before it can be LPP.
 
+use iced::Widget;
 use iced::{Center, Fill};
 use icedxdy::core::Border;
 use icedxdy::theme;
@@ -89,7 +90,7 @@ pub fn missing(
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn gap_row(gap: &'static str) -> Component<'static, Message> {

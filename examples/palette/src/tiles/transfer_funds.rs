@@ -2,6 +2,7 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/transfer-funds.tsx`.
 
+use iced::Widget;
 use iced::widget::space;
 use iced::{Center, Fill};
 use icedxdy::widget::{button, column, container, field, input, item, row, rule, text};
@@ -76,7 +77,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn money_row<'a>(label: &'static str, value: &'a str, strong: bool) -> Component<'a, Message> {

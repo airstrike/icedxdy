@@ -2,6 +2,7 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/claimable-balance.tsx`.
 
+use iced::Widget;
 use iced::widget::space;
 use iced::{Center, Fill};
 use icedxdy::card;
@@ -57,7 +58,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn money_row(

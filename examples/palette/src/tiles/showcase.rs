@@ -1,5 +1,8 @@
 //! `/create` preview showcase cards from the shadcn reference.
 
+use iced::Element;
+
+use iced::Widget;
 use iced::widget::{space, stack};
 use iced::{Center, Fill};
 use iced_widget::button::Status;
@@ -277,7 +280,7 @@ fn panel<'a>(
     card::card(container(body.into()).padding(16).width(Fill).height(Fill))
         .width(Fill)
         .height(height)
-        .into()
+        .boxed()
 }
 
 fn skeleton_line(width: f32, height: f32) -> Skeleton<'static, Message> {
@@ -298,7 +301,10 @@ fn name_input(state: &State) -> Component<'_, Message> {
         .align_x(iced::Right)
         .align_y(Center);
 
-    stack![input, trailing].width(Fill).height(32.0).into()
+    stack![Element::from(input), Element::from(trailing)]
+        .width(Fill)
+        .height(32.0)
+        .into()
 }
 
 fn textarea_placeholder() -> Component<'static, Message> {

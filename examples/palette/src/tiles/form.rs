@@ -6,6 +6,7 @@
 //! column, container.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::Component;
 use icedxdy::Theme;
 use icedxdy::card;
@@ -96,5 +97,5 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }

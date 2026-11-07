@@ -7,7 +7,6 @@ fn main() -> iced::Result {
         .antialiasing(true)
         .subscription(Browser::subscription)
         .theme(Browser::theme)
-        .font(icon::FONT)
-        .font(font::GEIST_MONO)
+        .fonts([icon::FONT, font::GEIST_MONO])
         .run()
 }

@@ -3,6 +3,7 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/receiving-method.tsx`.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::widget::{button, column, field, input, radio, text};
 use icedxdy::{Component, Theme, card};
 
@@ -63,7 +64,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn method_card(

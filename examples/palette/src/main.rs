@@ -5,6 +5,6 @@ fn main() -> iced::Result {
         .title("icedxdy • palette demo")
         .window_size([1280.0, 860.0])
         .theme(State::theme)
-        .font(icon::FONT)
+        .fonts([icon::FONT])
         .run()
 }

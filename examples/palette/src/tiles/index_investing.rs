@@ -3,6 +3,7 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/index-investing.tsx`.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::core::Border;
 use icedxdy::theme::container::Style;
 use icedxdy::widget::{column, container, text};
@@ -32,7 +33,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     )
     .width(Fill)
     .style(index_card_style)
-    .into()
+    .boxed()
 }
 
 fn index_card_style(theme: &Theme) -> iced_widget::container::Style {

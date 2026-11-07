@@ -3,6 +3,7 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/loading-card.tsx`.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::card;
 use icedxdy::widget::{Skeleton, column, row, skeleton};
 use icedxdy::{Space, Theme};
@@ -28,10 +29,10 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .spacing(Space::U4)
     .width(Fill);
 
-    card::card(card::content(body))
+    card::card(card::content(body).boxed())
         .width(Fill)
         .height(190.0)
-        .into()
+        .boxed()
 }
 
 fn line(width: f32, height: f32) -> Skeleton<'static, Message> {

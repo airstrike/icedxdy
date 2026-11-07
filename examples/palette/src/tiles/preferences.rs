@@ -2,6 +2,7 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/preferences.tsx`.
 
+use iced::Widget;
 use iced::widget::space;
 use iced::{Center, Fill};
 use icedxdy::widget::{button, column, field, row, switch};
@@ -64,5 +65,5 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }

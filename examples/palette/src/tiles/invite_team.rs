@@ -1,6 +1,7 @@
 //! Invite Team — email + role picker + Invite, plus a small members list.
 
 use iced::Fill;
+use iced::Widget;
 use iced::widget::space;
 use icedxdy::card;
 use icedxdy::theme;
@@ -64,7 +65,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     )
     .width(Fill)
     .height(312.0)
-    .into()
+    .boxed()
 }
 
 fn member_row(m: &Member) -> Component<'static, Message> {

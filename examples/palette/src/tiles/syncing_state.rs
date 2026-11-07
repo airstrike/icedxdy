@@ -3,6 +3,7 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/syncing-state.tsx`.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::Theme;
 use icedxdy::card;
 use icedxdy::widget::{button, column, empty, spinner};
@@ -22,5 +23,5 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
 
     card::card(column![content].padding([16, 0]).width(Fill))
         .width(Fill)
-        .into()
+        .boxed()
 }

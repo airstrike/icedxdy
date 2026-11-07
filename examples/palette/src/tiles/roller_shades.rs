@@ -3,6 +3,7 @@
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/roller-shades.tsx`.
 
 use iced::Fill;
+use iced::Widget;
 use icedxdy::card;
 use icedxdy::theme;
 use icedxdy::widget::{column, row, switch, text, toggle_group};
@@ -51,7 +52,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .width(Fill),
     )
     .width(Fill)
-    .into()
+    .boxed()
 }
 
 fn shade_item(

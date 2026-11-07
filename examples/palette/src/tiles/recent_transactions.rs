@@ -2,6 +2,7 @@
 //!
 //! Source: shadcn `registry/bases/radix/blocks/preview-02/cards/recent-transactions.tsx`.
 
+use iced::Widget;
 use iced::{Center, Fill, Right};
 use icedxdy::card;
 use icedxdy::core::Border;
@@ -86,9 +87,8 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
         .padding(Y4)
         .width(Fill),
     )
-    .width(Fill)
-    .max_width(WIDTH)
-    .into()
+    .width(Fill.max(WIDTH))
+    .boxed()
 }
 
 fn transactions_table() -> Component<'static, Message> {

@@ -1,6 +1,7 @@
 //! Environment variables — pinned KEY chip + value, with Edit/Deploy footer.
 
 use iced::Fill;
+use iced::Widget;
 use iced::widget::space;
 use icedxdy::card;
 use icedxdy::widget::{button, column, container, input, row};
@@ -48,7 +49,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     )
     .width(Fill)
     .height(273.0)
-    .into()
+    .boxed()
 }
 
 fn env_row<'a>(

@@ -9,6 +9,8 @@
 //! The root scrollable opts into both axes; tiles that genuinely need
 //! horizontal overflow (transactions, etc.) wrap their own.
 
+use iced::Element;
+
 use std::collections::HashSet;
 use std::f32::consts::PI;
 
@@ -404,13 +406,15 @@ impl State {
         .style(preview_frame);
 
         let preview = stack![
-            preview,
-            container(page_switcher(self.preview_page))
-                .width(Fill)
-                .height(Fill)
-                .padding(12)
-                .align_x(Right)
-                .align_y(Bottom)
+            Element::from(preview),
+            Element::from(
+                container(page_switcher(self.preview_page))
+                    .width(Fill)
+                    .height(Fill)
+                    .padding(12)
+                    .align_x(Right)
+                    .align_y(Bottom)
+            )
         ]
         .width(Fill)
         .height(Fill);

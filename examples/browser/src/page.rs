@@ -1,3 +1,5 @@
+use iced::Element;
+use iced::Widget;
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 
@@ -336,11 +338,11 @@ fn walk_blocks<'a>(
         // covers the entire block (heading + description + card or md body).
         // For Block::Group, the sensor wraps ONLY the heading — children
         // get their own subsequent flat indices and their own sensors.
-        let sensored = sensor(container(body).id(block_id).width(Fill))
+        let sensored = sensor(Element::from(container(body).id(block_id).width(Fill)))
             .on_show(move |_| super::Message::Page(pi, Message::BlockShown(i)))
             .on_hide(super::Message::Page(pi, Message::BlockHidden(i)))
             .anticipate(50);
-        items.push(sensored.into());
+        items.push(sensored.boxed());
 
         if let Block::Group { children, .. } = block {
             walk_blocks(children, depth + 1, page, viewer, st, pi, flat_idx, items);
@@ -377,7 +379,7 @@ fn render_md<'a>(
             col = col.push(loading);
         }
     };
-    col.into()
+    col.boxed()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -467,7 +469,7 @@ pub fn example_card<'a>(
         col = col.push(d);
     }
     col = col.push(card_el);
-    col.into()
+    col.boxed()
 }
 
 /// The collapsible code panel beneath a preview. Until expanded it is
@@ -502,7 +504,7 @@ pub fn code_panel<'a>(
             .width(Fill)
             .height(Fill);
 
-        stack![inner, copy_corner].into()
+        stack![Element::from(inner), Element::from(copy_corner)].boxed()
     } else {
         let truncated = inner.max_height(COLLAPSED_CODE_HEIGHT).clip(true);
 
@@ -518,7 +520,7 @@ pub fn code_panel<'a>(
             .center(Fill)
             .style(code_fade_overlay)
             .height(COLLAPSED_CODE_HEIGHT);
-        stack![truncated, overlay].into()
+        stack![Element::from(truncated), Element::from(overlay)].boxed()
     }
 }
 
@@ -649,8 +651,8 @@ fn toc<'a>(page: &'a dyn Page) -> Component<'a, super::Message> {
     // entries hit ~28-30px line height with `text-sm` + `gap-2`, so the
     // raw button stack already lands in the right ballpark without an
     // extra inter-item spacing nudge.
-    column![header]
-        .push(column(nav_items).spacing(2))
+    column![Element::from(header)]
+        .push(column(nav_items).spacing(2).boxed())
         .spacing(16)
         .padding([24, 8])
         .width(220)
@@ -677,6 +679,7 @@ pub fn snippet<'a>(
     settings.style.inline_code_size = Pixels(13.0);
     markdown::view_with(items, settings, viewer)
         .map(move |url| super::Message::Page(page_index, Message::LinkClicked(url)))
+        .boxed()
         .into()
 }
 
@@ -777,7 +780,7 @@ impl<'a> markdown::Viewer<'a, markdown::Uri, Theme, iced::Renderer> for SnippetV
                 .on_link_click(Self::on_link_click)
                 .font(settings.style.code_block_font)
                 .size(settings.code_size)
-                .into()
+                .boxed()
         }));
 
         // Code-size-relative horizontal scrollbar — explicitly chunkier
