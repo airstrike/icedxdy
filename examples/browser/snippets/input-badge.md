@@ -2,7 +2,7 @@
 use icedxdy::widget::{badge, field, input, row, space, text, Component};
 
 field(
-    input("https://api.example.com/webhook", &self.value)
+    input("https://api.example.com/webhook").value(&self.value)
         .on_input(Message::Changed)
         .width(Fill),
 )

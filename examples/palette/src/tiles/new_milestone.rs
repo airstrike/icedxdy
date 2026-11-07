@@ -11,7 +11,8 @@ use crate::{Message, State};
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let goal = field::field(
-        input("e.g. New Car, Home Downpayment", &state.new_milestone_goal)
+        input("e.g. New Car, Home Downpayment")
+            .value(&state.new_milestone_goal)
             .on_input(Message::NewMilestoneGoalChanged)
             .width(Fill),
     )
@@ -19,7 +20,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .width(Fill);
 
     let amount = field::field(
-        input("", &state.new_milestone_amount)
+        input("")
+            .value(&state.new_milestone_amount)
             .on_input(Message::NewMilestoneAmountChanged)
             .width(Fill),
     )
@@ -27,7 +29,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .width(Fill);
 
     let date = field::field(
-        input("", &state.new_milestone_date)
+        input("")
+            .value(&state.new_milestone_date)
             .on_input(Message::NewMilestoneDateChanged)
             .width(Fill),
     )

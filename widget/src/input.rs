@@ -8,13 +8,14 @@
 //! ```ignore
 //! use icedxdy::widget::input;
 //!
-//! input("Email", &self.email).on_input(Message::EmailChanged)
+//! input("Email").value(&self.email).on_input(Message::EmailChanged)
 //! ```
 
 use crate::Size;
 use crate::component::{Component, IntoElement};
 use crate::text_input;
 use crate::text_input::element::from_core;
+use iced_core::text::{Fragment, IntoFragment};
 use iced_core::{Length, Padding};
 use iced_widget::Renderer;
 use iced_widget::Widget;
@@ -29,8 +30,8 @@ use icedxdy_core::theme;
 /// always-Some `.on_input(...)` builder, so the natural pattern is to omit
 /// the call entirely.
 pub struct Input<'a, Message> {
-    placeholder: &'a str,
-    value: &'a str,
+    placeholder: Fragment<'a>,
+    value: Fragment<'a>,
     size: Size,
     width: Length,
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
@@ -40,11 +41,15 @@ pub struct Input<'a, Message> {
     style: Option<theme::text_input::StyleFn<'a, Theme>>,
 }
 
-/// Create an [`Input`] with the given placeholder and current value.
-pub fn input<'a, Message: Clone + 'a>(placeholder: &'a str, value: &'a str) -> Input<'a, Message> {
+/// Create an empty [`Input`] with the given placeholder.
+///
+/// Both the placeholder and the [`value`](Input::value) accept owned or
+/// borrowed text, so an input can be built from state a view does not
+/// outlive (an iced `Component`'s view, for one).
+pub fn input<'a, Message: Clone + 'a>(placeholder: impl IntoFragment<'a>) -> Input<'a, Message> {
     Input {
-        placeholder,
-        value,
+        placeholder: placeholder.into_fragment(),
+        value: Fragment::Borrowed(""),
         size: Size::Default,
         width: Length::Shrink,
         on_input: None,
@@ -56,6 +61,12 @@ pub fn input<'a, Message: Clone + 'a>(placeholder: &'a str, value: &'a str) -> I
 }
 
 impl<'a, Message: Clone + 'a> Input<'a, Message> {
+    /// Set the current value, owned or borrowed.
+    pub fn value(mut self, value: impl IntoFragment<'a>) -> Self {
+        self.value = value.into_fragment();
+        self
+    }
+
     /// Set the size variant.
     pub fn size(mut self, size: impl Into<Size>) -> Self {
         self.size = size.into();
@@ -140,7 +151,7 @@ impl<'a, Message: Clone + 'a> From<Input<'a, Message>>
         let padding = input.padding();
 
         let mut ti: text_input::TextInput<'a, Message, Theme, Renderer> =
-            text_input::TextInput::new(input.placeholder, input.value)
+            text_input::TextInput::new(&input.placeholder, &input.value)
                 .padding(padding)
                 .size(text_size)
                 .width(input.width)

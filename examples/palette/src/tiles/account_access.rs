@@ -12,7 +12,8 @@ use crate::{Message, State, icon};
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let email = field::field(
-        input("", &state.account_email)
+        input("")
+            .value(&state.account_email)
             .on_input(Message::AccountEmailChanged)
             .width(Fill),
     )
@@ -20,7 +21,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .width(Fill);
 
     let password = field::field(
-        input("", &state.account_password)
+        input("")
+            .value(&state.account_password)
             .on_input(Message::AccountPasswordChanged)
             .width(Fill),
     )

@@ -2,7 +2,7 @@
 use icedxdy::widget::{button, input};
 
 row![
-    input("Search...", &self.value)
+    input("Search...").value(&self.value)
         .on_input(Message::Changed)
         .width(Fill),
     button("Search")

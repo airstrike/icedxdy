@@ -22,7 +22,8 @@ const TO_ACCOUNTS: &[&str] = &[
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let amount = field::field(
-        input("", &state.transfer_amount)
+        input("")
+            .value(&state.transfer_amount)
             .on_input(Message::TransferAmountChanged)
             .width(Fill),
     )

@@ -288,7 +288,8 @@ fn skeleton_line(width: f32, height: f32) -> Skeleton<'static, Message> {
 }
 
 fn name_input(state: &State) -> Component<'_, Message> {
-    let input = input("Name", &state.showcase_name)
+    let input = input("Name")
+        .value(&state.showcase_name)
         .width(Fill)
         .style(control_input_style())
         .on_input(Message::ShowcaseNameChanged)

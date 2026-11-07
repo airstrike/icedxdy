@@ -155,7 +155,8 @@ impl page::Page for FieldPage {
             // multi-Field demo form.
             "demo" => container(
                 field(
-                    input("1234 5678 9012 3456", &self.demo_value)
+                    input("1234 5678 9012 3456")
+                        .value(&self.demo_value)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_DEMO, v))
                         })
@@ -175,7 +176,8 @@ impl page::Page for FieldPage {
             // (no iced context propagation; per minimap §"Out of scope").
             "input-with-error" => container(
                 field(
-                    input("you@example.com", &self.error_value)
+                    input("you@example.com")
+                        .value(&self.error_value)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_ERROR, v))
                         })

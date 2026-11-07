@@ -183,7 +183,8 @@ impl page::Page for InputPage {
             // Demo (hero): Field+Label+Input+Description for an "API Key"
             // form. Verbatim shadcn `input-demo.tsx`.
             "demo" => field(
-                input("sk-...", &self.demo_value)
+                input("sk-...")
+                    .value(&self.demo_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_DEMO, v)))
                     .width(Fill),
             )
@@ -195,14 +196,16 @@ impl page::Page for InputPage {
             // Basic: simple input with placeholder. Width 320 matches nova's
             // form input width — Input now defaults to Length::Shrink, so set
             // it explicitly here.
-            "basic" => input("Enter text", &self.basic_value)
+            "basic" => input("Enter text")
+                .value(&self.basic_value)
                 .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_BASIC, v)))
                 .width(320)
                 .into(),
 
             // Field: input with label "Username" and description.
             "field" => field(
-                input("Enter your username", &self.field_value)
+                input("Enter your username")
+                    .value(&self.field_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_FIELD, v)))
                     .width(Fill),
             )
@@ -212,7 +215,7 @@ impl page::Page for InputPage {
             .into(),
 
             // Disabled — no `.on_input(...)` call ⇒ widget is disabled.
-            "disabled" => field(input("Email", "").width(Fill))
+            "disabled" => field(input("Email").width(Fill))
                 .label("Email")
                 .description("This field is currently disabled.")
                 .width(320)
@@ -221,7 +224,8 @@ impl page::Page for InputPage {
             // Invalid: destructive border + destructive focus ring
             // (aria-invalid). First-class `theme::text_input::Invalid`.
             "invalid" => field(
-                input("Error", &self.invalid_value)
+                input("Error")
+                    .value(&self.invalid_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INVALID, v)))
                     .width(Fill)
                     .style(theme::text_input::Invalid),
@@ -233,7 +237,8 @@ impl page::Page for InputPage {
 
             // Inline: input + button side by side.
             "inline" => row![
-                input("Search...", &self.inline_value)
+                input("Search...")
+                    .value(&self.inline_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INLINE, v)))
                     .width(Fill),
                 button("Search").on_press(Message::Page(pi, page::Message::Noop)),
@@ -244,7 +249,8 @@ impl page::Page for InputPage {
 
             // Required: rich-text label with a destructive asterisk.
             "required" => field(
-                input("This field is required", &self.required_value)
+                input("This field is required")
+                    .value(&self.required_value)
                     .on_input(move |v| {
                         Message::Page(pi, page::Message::InputChanged(F_REQUIRED, v))
                     })
@@ -261,7 +267,8 @@ impl page::Page for InputPage {
             // Badge: a label with a trailing `Beta` badge pushed flush right
             // (shadcn `ml-auto`). Verbatim shadcn `input-badge.tsx`.
             "badge" => field(
-                input("https://api.example.com/webhook", &self.badge_value)
+                input("https://api.example.com/webhook")
+                    .value(&self.badge_value)
                     .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_BADGE, v)))
                     .width(Fill),
             )

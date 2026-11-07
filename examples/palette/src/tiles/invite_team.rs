@@ -35,7 +35,8 @@ const MEMBERS: &[Member] = &[
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let invite_row = row![
-        input("email@example.com", &state.invite_email)
+        input("email@example.com")
+            .value(&state.invite_email)
             .width(Fill)
             .on_input(Message::InviteEmailChanged)
             .on_submit(Message::Noop),

@@ -51,7 +51,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
         .collect();
     let nav = Row::with_children(nav_items).spacing(0).align_y(Center);
 
-    let search_input: Input<'_, Message> = input("Search documentation...", "")
+    let search_input: Input<'_, Message> = input("Search documentation...")
         .width(Fill)
         .on_input(|_| Message::Noop)
         .on_submit(Message::Noop)

@@ -2,7 +2,7 @@
 use icedxdy::widget::{field, input};
 
 field(
-    input("1234 5678 9012 3456", &self.value)
+    input("1234 5678 9012 3456").value(&self.value)
         .on_input(Message::Changed)
         .width(Fill),
 )

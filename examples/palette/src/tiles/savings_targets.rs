@@ -50,7 +50,8 @@ fn targets_card() -> Component<'static, Message> {
 
 fn buy_card(state: &State) -> Component<'_, Message> {
     let amount = field::field(
-        input("", &state.buy_investment_amount)
+        input("")
+            .value(&state.buy_investment_amount)
             .on_input(Message::BuyInvestmentAmountChanged)
             .width(Fill),
     )

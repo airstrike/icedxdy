@@ -12,7 +12,8 @@ use crate::{Message, ReceivingMethod, State};
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let account = field::field(
-        input("", &state.receiving_account_holder)
+        input("")
+            .value(&state.receiving_account_holder)
             .on_input(Message::ReceivingAccountHolderChanged)
             .width(Fill),
     )
@@ -32,7 +33,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .width(Fill);
 
     let routing = field::field(
-        input("", &state.receiving_routing)
+        input("")
+            .value(&state.receiving_routing)
             .on_input(Message::ReceivingRoutingChanged)
             .width(Fill),
     )

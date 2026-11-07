@@ -64,11 +64,12 @@ fn env_row<'a>(
 }
 
 fn readonly_input(value: &'static str) -> Component<'static, Message> {
-    input("", value).width(Fill).into()
+    input("").value(value).width(Fill).into()
 }
 
 fn active_input<'a>(value: &'a str, on_input: fn(String) -> Message) -> Component<'a, Message> {
-    input("", value)
+    input("")
+        .value(value)
         .width(Fill)
         .on_input(on_input)
         .on_submit(Message::Noop)

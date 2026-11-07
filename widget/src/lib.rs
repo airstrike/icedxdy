@@ -208,9 +208,11 @@ pub fn avatar<'a, Message: 'a>(image: Option<iced_widget::image::Handle>) -> Ava
     avatar::avatar(image)
 }
 
-/// Create an [`Input`].
-pub fn input<'a, Message: Clone + 'a>(placeholder: &'a str, value: &'a str) -> Input<'a, Message> {
-    input::input(placeholder, value)
+/// Create an empty [`Input`] with the given placeholder.
+pub fn input<'a, Message: Clone + 'a>(
+    placeholder: impl iced_core::text::IntoFragment<'a>,
+) -> Input<'a, Message> {
+    input::input(placeholder)
 }
 
 /// Create a [`Checkbox`] in the given state.

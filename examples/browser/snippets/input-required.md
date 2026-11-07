@@ -5,7 +5,7 @@ use icedxdy::widget::rich_text::span;
 use icedxdy::widget::{field, input, text, Component};
 
 field(
-    input("This field is required", &self.value)
+    input("This field is required").value(&self.value)
         .on_input(Message::Changed)
         .width(Fill),
 )

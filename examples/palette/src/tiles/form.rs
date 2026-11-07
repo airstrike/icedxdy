@@ -19,7 +19,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     let email_invalid = !state.email.contains('@');
 
     let mut email_field = field(
-        input("you@example.com", &state.email)
+        input("you@example.com")
+            .value(&state.email)
             .on_input(Message::EmailChanged)
             .on_submit(Message::SaveForm)
             .width(Fill),
@@ -33,7 +34,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     }
 
     let name_field = field(
-        input("Display name", &state.name)
+        input("Display name")
+            .value(&state.name)
             .on_input(Message::NameChanged)
             .on_submit(Message::SaveForm)
             .width(Fill),

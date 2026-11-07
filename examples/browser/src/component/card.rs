@@ -182,7 +182,7 @@ impl page::Page for CardPage {
             // max-w-sm = 24rem = 384px.
             "demo" => {
                 let email_field: Component<'_, Message> = field(
-                    input("m@example.com", &self.demo_email)
+                    input("m@example.com").value(&self.demo_email)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_DEMO_EMAIL, v))
                         })
@@ -205,7 +205,7 @@ impl page::Page for CardPage {
                 .into();
 
                 let password_field: Component<'_, Message> = field(
-                    input("", &self.demo_password)
+                    input("").value(&self.demo_password)
                         .on_input(move |v| {
                             Message::Page(pi, page::Message::InputChanged(F_DEMO_PASSWORD, v))
                         })
