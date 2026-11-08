@@ -29,7 +29,7 @@ use iced_core::alignment::{Horizontal, Vertical};
 use iced_widget::Renderer;
 use icedxdy_core::Theme;
 
-use crate::button::{self, Button};
+use crate::button;
 use crate::compose::{Compose, Slot};
 use crate::row::Row;
 use crate::text::{self, Text};
@@ -122,7 +122,7 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Link<'a, Message> {
             button.style(button::Ghost)
         };
 
-        pressable(button, self.on_press).into()
+        button.on_press_maybe(self.on_press).into()
     }
 }
 
@@ -213,9 +213,10 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Step<'a, Message> {
             Direction::Next => [label, icon],
         };
 
-        let button = button::button(Row::with_children(children)).style(button::Ghost);
-
-        pressable(button, on_press).into()
+        button::button(Row::with_children(children))
+            .style(button::Ghost)
+            .on_press_maybe(on_press)
+            .into()
     }
 }
 
@@ -265,15 +266,5 @@ impl<'a, Message: 'a> Compose<Message> for Ellipsis<'a, Message> {
 impl<'a, Message: 'a> From<Ellipsis<'a, Message>> for Slot<'a, Message> {
     fn from(ellipsis: Ellipsis<'a, Message>) -> Self {
         Slot::new(ellipsis)
-    }
-}
-
-fn pressable<'a, Message: Clone + 'a>(
-    button: Button<'a, Message>,
-    on_press: Option<Message>,
-) -> Button<'a, Message> {
-    match on_press {
-        Some(message) => button.on_press(message),
-        None => button,
     }
 }
