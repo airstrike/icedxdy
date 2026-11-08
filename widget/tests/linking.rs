@@ -4,13 +4,16 @@
 //! Children are fixed-size blocks clicked by position, so the checks do not
 //! depend on text shaping in the headless renderer.
 
+use iced_core::keyboard::key::Named;
 use iced_core::time::Instant;
 use iced_core::{Element, Event, Point, window};
 use iced_test::simulator::{self, simulator};
 use iced_widget::{Renderer, Space};
 use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
-use icedxdy_widget::{Slot, button, checkbox, collapsible, column, field, switch};
+use icedxdy_widget::{
+    Slot, button, checkbox, collapsible, column, dialog, field, row, sidebar, switch, tabs,
+};
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
 
@@ -20,6 +23,8 @@ enum Message {
     Open(bool),
     Pressed,
     Inner,
+    Panel(&'static str),
+    Tab(String),
 }
 
 /// A fixed-size stand-in for a label or button content.
@@ -167,4 +172,164 @@ fn a_disabled_trigger_does_not_toggle() {
     click(&mut ui, 5.0, 48.0);
 
     assert_eq!(ui.into_messages().count(), 0);
+}
+
+/// Two 56px triggers on a 32px list, and a panel below that publishes its
+/// own name.
+fn two_tabs<'a>() -> icedxdy_widget::Tabs<'a, Message> {
+    tabs(|t| {
+        column![
+            t.list([
+                t.trigger("first", block(40.0, 16.0)),
+                t.trigger("second", block(40.0, 16.0)),
+            ]),
+            t.content(
+                "first",
+                button(block(60.0, 20.0)).on_press(Message::Panel("first"))
+            ),
+            t.content(
+                "second",
+                button(block(60.0, 20.0)).on_press(Message::Panel("second"))
+            ),
+        ]
+        .into()
+    })
+}
+
+#[test]
+fn a_tab_trigger_switches_the_panel() {
+    let element: Element<'_, Message, Theme, Renderer> = two_tabs().default_value("first").into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 5.0, 48.0);
+    click(&mut ui, 80.0, 16.0);
+    click(&mut ui, 5.0, 48.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Panel("first"), Message::Panel("second")]
+    );
+}
+
+#[test]
+fn controlled_tabs_report_the_new_value() {
+    let element: Element<'_, Message, Theme, Renderer> = two_tabs()
+        .value("first")
+        .on_value_change(Message::Tab)
+        .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 80.0, 16.0);
+    click(&mut ui, 5.0, 48.0);
+    click(&mut ui, 10.0, 16.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Tab("second".to_owned()), Message::Panel("first")],
+        "the app owns the value; reselecting the active tab reports nothing"
+    );
+}
+
+/// A dialog whose trigger sits at the window's top left. Its 384px panel is
+/// centered in the 1024×768 window: an inner button at y 352..384 and a
+/// close button below it at y 384..416, both from x 336.
+fn edit_dialog<'a>() -> icedxdy_widget::Dialog<'a, Message> {
+    dialog(
+        |d| d.trigger(button(block(40.0, 20.0))),
+        |d| {
+            column![
+                button(block(60.0, 20.0)).on_press(Message::Inner),
+                d.close(button(block(40.0, 20.0))),
+            ]
+            .into()
+        },
+    )
+    .show_close_button(false)
+}
+
+#[test]
+fn a_dialog_opens_from_its_trigger_and_closes_from_inside() {
+    let element: Element<'_, Message, Theme, Renderer> = edit_dialog().into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 340.0, 360.0);
+    click(&mut ui, 5.0, 16.0);
+    click(&mut ui, 340.0, 360.0);
+    click(&mut ui, 340.0, 400.0);
+
+    // A press inside the overlay changes the component without a message
+    // for the app; the runtime rebuilds the interface after it, as here.
+    let element: Element<'_, Message, Theme, Renderer> = edit_dialog().into();
+    let mut ui = ui.rebuild(element);
+    click(&mut ui, 340.0, 360.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Inner],
+        "the panel shows only between its trigger and its close button"
+    );
+}
+
+#[test]
+fn a_press_outside_or_escape_dismisses_a_controlled_dialog() {
+    let element: Element<'_, Message, Theme, Renderer> = edit_dialog()
+        .open(true)
+        .on_open_change(Message::Open)
+        .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 10.0, 700.0);
+    let _ = ui.simulate([simulator::press_key(Named::Escape, None)]);
+    click(&mut ui, 340.0, 360.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(false), Message::Open(false), Message::Inner],
+        "a controlled dialog asks to close and stays open"
+    );
+}
+
+/// A sidebar holding a button, beside a main area whose first child is the
+/// 28px trigger: at x 256 while the sidebar is open, at x 0 once it slides
+/// away.
+fn layout<'a>() -> sidebar::Provider<'a, Message> {
+    sidebar::provider(|s| {
+        row![
+            s.sidebar(button(block(100.0, 20.0)).on_press(Message::Inner)),
+            column![sidebar::trigger()],
+        ]
+        .into()
+    })
+}
+
+#[test]
+fn a_sidebar_trigger_anywhere_in_the_provider_toggles_it() {
+    let element: Element<'_, Message, Theme, Renderer> = layout().into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 5.0, 16.0);
+    click(&mut ui, 270.0, 14.0);
+    click(&mut ui, 5.0, 16.0);
+    click(&mut ui, 5.0, 16.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Inner, Message::Inner],
+        "closed, the trigger moves under the cursor and reopens the sidebar"
+    );
+}
+
+#[test]
+fn a_controlled_sidebar_reports_the_toggle() {
+    let element: Element<'_, Message, Theme, Renderer> =
+        layout().open(true).on_open_change(Message::Open).into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 270.0, 14.0);
+    click(&mut ui, 5.0, 16.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(false), Message::Inner]
+    );
 }

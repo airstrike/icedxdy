@@ -13,6 +13,7 @@ pub mod collapsible;
 pub mod column;
 pub mod compose;
 pub mod container;
+pub mod dialog;
 pub mod empty;
 pub mod field;
 pub mod input;
@@ -28,6 +29,7 @@ pub mod row;
 pub mod rule;
 pub mod scrollable;
 pub mod separator;
+pub mod sheet;
 pub mod sidebar;
 pub mod size;
 pub mod skeleton;
@@ -36,6 +38,7 @@ pub mod slider;
 pub mod spinner;
 pub mod switch;
 pub mod table;
+pub mod tabs;
 pub mod text;
 pub mod text_input;
 pub mod toggle_group;
@@ -56,6 +59,7 @@ pub use checkbox::Checkbox;
 pub use collapsible::Collapsible;
 pub use column::Column;
 pub use compose::{Compose, Inherited, Slot};
+pub use dialog::Dialog;
 pub use empty::Empty;
 pub use field::Field;
 pub use input::Input;
@@ -69,6 +73,7 @@ pub use skeleton::Skeleton;
 pub use slider::Slider;
 pub use switch::Switch;
 pub use table::Table;
+pub use tabs::Tabs;
 pub use text::Text;
 pub use toggle_group::ToggleGroup;
 pub use weight::Weight;
@@ -226,6 +231,31 @@ pub fn collapsible<'a, Message>(
     body: impl Fn(&collapsible::Handle) -> Slot<'a, Message> + 'a,
 ) -> Collapsible<'a, Message> {
     collapsible::collapsible(body)
+}
+
+/// Create uncontrolled [`Tabs`] whose content is built by `body` from a
+/// [`tabs::Handle`].
+pub fn tabs<'a, Message>(
+    body: impl Fn(&tabs::Handle) -> Slot<'a, Message> + 'a,
+) -> Tabs<'a, Message> {
+    tabs::tabs(body)
+}
+
+/// Create a closed, uncontrolled [`Dialog`]: `trigger` builds what sits in
+/// place, `content` the panel shown while open.
+pub fn dialog<'a, Message>(
+    trigger: impl Fn(&dialog::Handle) -> Slot<'a, Message> + 'a,
+    content: impl Fn(&dialog::Handle) -> Slot<'a, Message> + 'a,
+) -> Dialog<'a, Message> {
+    dialog::dialog(trigger, content)
+}
+
+/// Create a closed, uncontrolled [`sheet::Sheet`] sliding in from the right.
+pub fn sheet<'a, Message>(
+    trigger: impl Fn(&dialog::Handle) -> Slot<'a, Message> + 'a,
+    content: impl Fn(&dialog::Handle) -> Slot<'a, Message> + 'a,
+) -> sheet::Sheet<'a, Message> {
+    sheet::sheet(trigger, content)
 }
 
 /// Create a [`Progress`] bar with the given value (0..=100).

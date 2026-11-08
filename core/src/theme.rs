@@ -13,6 +13,7 @@ pub mod button;
 pub mod checkbox;
 pub mod combo_box;
 pub mod container;
+pub mod dialog;
 pub mod field;
 pub mod float;
 #[cfg(feature = "markdown")]
@@ -30,6 +31,7 @@ pub mod slider;
 pub mod svg;
 pub mod switch;
 pub mod table;
+pub mod tabs;
 pub mod text;
 pub mod text_input;
 pub mod tweak;
