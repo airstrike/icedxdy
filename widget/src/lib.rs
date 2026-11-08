@@ -15,6 +15,7 @@ pub mod column;
 pub mod compose;
 pub mod container;
 pub mod dialog;
+pub mod dropdown_menu;
 pub mod empty;
 pub mod field;
 pub mod input;
@@ -24,6 +25,7 @@ pub mod kbd;
 #[cfg(feature = "markdown")]
 pub mod markdown;
 pub mod marker;
+pub mod menu;
 pub mod native_select;
 pub mod operation;
 pub mod pagination;
@@ -71,6 +73,7 @@ pub use collapsible::Collapsible;
 pub use column::Column;
 pub use compose::{Compose, Inherited, Slot};
 pub use dialog::Dialog;
+pub use dropdown_menu::DropdownMenu;
 pub use empty::Empty;
 pub use field::Field;
 pub use input::Input;
@@ -401,4 +404,13 @@ pub fn popover<'a, Message>(
     content: impl Fn(&popover::Handle) -> Slot<'a, Message> + 'a,
 ) -> Popover<'a, Message> {
     popover::popover(trigger, content)
+}
+
+/// Create a closed, uncontrolled [`DropdownMenu`]: `trigger` builds what
+/// sits in place, `content` the menu shown while open.
+pub fn dropdown_menu<'a, Message>(
+    trigger: impl Fn(&popover::Handle) -> Slot<'a, Message> + 'a,
+    content: impl Fn(&popover::Handle) -> Slot<'a, Message> + 'a,
+) -> DropdownMenu<'a, Message> {
+    dropdown_menu::dropdown_menu(trigger, content)
 }

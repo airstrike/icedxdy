@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// ae13bde6690e11e52277e356b961c6d06bb960f15d840fdc4285a8b133331d37
+// 7caa239031d067a0b2d9834bdb63d445dd63ad288ecc406674b5dfe0aa10535c
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -41,9 +41,11 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("minus", "\u{E11C}"),
     ("moon", "\u{E11E}"),
     ("octagon_x", "\u{E128}"),
+    ("pencil", "\u{E1F9}"),
     ("plus", "\u{E13D}"),
     ("save", "\u{E14D}"),
     ("search", "\u{E151}"),
+    ("share", "\u{E155}"),
     ("shield_alert", "\u{E1FE}"),
     ("star", "\u{E176}"),
     ("sun", "\u{E178}"),
@@ -278,6 +280,13 @@ where
     icon("\u{E128}")
 }
 
+pub fn pencil<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E1F9}")
+}
+
 pub fn plus<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -297,6 +306,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E151}")
+}
+
+pub fn share<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E155}")
 }
 
 pub fn shield_alert<'a, Theme>() -> Text<'a, Theme>

@@ -8,16 +8,16 @@ use std::time::Duration;
 
 use iced_core::keyboard::key::Named;
 use iced_core::time::Instant;
-use iced_core::{Element, Event, Point, window};
+use iced_core::{Element, Event, Point, mouse, window};
 use iced_test::simulator::{self, simulator};
 use iced_widget::{Renderer, Space};
 use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
-    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, dialog, field, popover,
-    radio_group, row, sheet, sidebar, slider, switch, tabs, textarea, toast, toaster, toggle,
-    toggle_group,
+    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, dialog, dropdown_menu,
+    field, menu, popover, radio_group, row, sheet, sidebar, slider, switch, tabs, textarea, toast,
+    toaster, toggle, toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -746,5 +746,93 @@ fn a_press_outside_or_escape_dismisses_a_controlled_popover() {
             Message::Inner
         ],
         "a popover is not modal: the page still gets the press that dismisses it"
+    );
+}
+
+/// A menu whose trigger sits at the window's top left. Its start-aligned,
+/// 128px panel opens 4px under the 32px trigger with `p-1`: 28px items at
+/// y 40..68 (selectable), 68..96 (disabled) and 96..124 (a submenu, whose
+/// panel opens to its right with its first item level with it, from x 132).
+fn account_menu<'a>() -> icedxdy_widget::DropdownMenu<'a, Message> {
+    dropdown_menu(
+        |m| m.trigger(button(block(40.0, 20.0))),
+        |_| {
+            column![
+                menu::item(block(60.0, 20.0)).on_select(Message::Inner),
+                menu::item(block(60.0, 20.0))
+                    .on_select(Message::Checked(true))
+                    .disabled(true),
+                menu::sub(
+                    block(60.0, 20.0),
+                    menu::item(block(60.0, 20.0)).on_select(Message::Pressed),
+                ),
+            ]
+            .into()
+        },
+    )
+    .align(dropdown_menu::Align::Start)
+}
+
+fn hover(ui: &mut Simulator<'_>, x: f32, y: f32) {
+    let position = Point::new(x, y);
+    ui.point_at(position);
+    let _ = ui.simulate([Event::Mouse(mouse::Event::CursorMoved { position })]);
+}
+
+#[test]
+fn a_menu_item_publishes_and_closes_the_menu() {
+    let element: Element<'_, Message, Theme, Renderer> = account_menu().into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 5.0, 16.0);
+    click(&mut ui, 50.0, 80.0);
+    click(&mut ui, 50.0, 54.0);
+
+    let element: Element<'_, Message, Theme, Renderer> = account_menu().into();
+    let mut ui = ui.rebuild(element);
+    click(&mut ui, 50.0, 54.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Inner],
+        "the disabled item does nothing; the selected one closes the menu"
+    );
+}
+
+#[test]
+fn a_menu_is_modal() {
+    let element: Element<'_, Message, Theme, Renderer> = column![
+        account_menu().open(true).on_open_change(Message::Open),
+        Slot::from(Space::new().height(400)),
+        button(block(60.0, 20.0)).on_press(Message::Pressed),
+    ]
+    .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 15.0, 445.0);
+    click(&mut ui, 5.0, 16.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(false), Message::Open(false)],
+        "the page and the trigger only dismiss an open menu"
+    );
+}
+
+#[test]
+fn a_submenu_item_closes_the_whole_menu() {
+    let element: Element<'_, Message, Theme, Renderer> = account_menu()
+        .default_open(true)
+        .on_open_change(Message::Open)
+        .into();
+    let mut ui = simulator(element);
+
+    hover(&mut ui, 50.0, 110.0);
+    hover(&mut ui, 140.0, 110.0);
+    click(&mut ui, 140.0, 110.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Pressed, Message::Open(false)],
     );
 }

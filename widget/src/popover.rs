@@ -166,6 +166,27 @@ impl<'a, Message> Popover<'a, Message> {
         self
     }
 
+    /// Size the panel to its trigger, at least `min_width` wide (a menu's
+    /// `w-(--radix-*-trigger-width) min-w-*`).
+    pub(crate) fn trigger_width(mut self, min_width: f32) -> Self {
+        self.width = None;
+        self.min_width = min_width;
+        self
+    }
+
+    /// Set the panel's padding.
+    pub(crate) fn padding(mut self, padding: impl Into<Padding>) -> Self {
+        self.padding = padding.into();
+        self
+    }
+
+    /// Make the panel modal: the page ignores the pointer while it is open
+    /// (a dropdown menu).
+    pub(crate) fn modal(mut self, modal: bool) -> Self {
+        self.modal = modal;
+        self
+    }
+
     fn is_open(&self, state: &State) -> bool {
         self.open.or(state.open).unwrap_or(self.default_open)
     }

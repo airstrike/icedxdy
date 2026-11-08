@@ -89,10 +89,10 @@ impl App {
 
         use component::{
             accordion, alert, alert_dialog, aspect_ratio, avatar, badge, breadcrumb, button,
-            button_group, card, checkbox, collapsible, dialog, empty, field, input, input_group,
-            item, kbd, label, native_select, pagination, popover, progress, radio_group, separator,
-            sheet, sidebar, skeleton, slider, sonner, spinner, switch, table, tabs, text, textarea,
-            toggle, toggle_group, tooltip,
+            button_group, card, checkbox, collapsible, dialog, dropdown_menu, empty, field, input,
+            input_group, item, kbd, label, native_select, pagination, popover, progress,
+            radio_group, separator, sheet, sidebar, skeleton, slider, sonner, spinner, switch,
+            table, tabs, text, textarea, toggle, toggle_group, tooltip,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
@@ -109,6 +109,7 @@ impl App {
             checkbox::CheckboxPage::new,
             collapsible::CollapsiblePage::new,
             dialog::DialogPage::new,
+            dropdown_menu::DropdownMenuPage::new,
             empty::EmptyPage::new,
             field::FieldPage::new,
             input::InputPage::new,

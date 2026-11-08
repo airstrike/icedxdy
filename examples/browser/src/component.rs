@@ -11,6 +11,7 @@ pub mod card;
 pub mod checkbox;
 pub mod collapsible;
 pub mod dialog;
+pub mod dropdown_menu;
 pub mod empty;
 pub mod field;
 pub mod input;
