@@ -9,7 +9,7 @@ use icedxdy::widget::{button, column, field, row, switch};
 use icedxdy::{Space, Theme, card};
 
 use super::{api_gap, select};
-use crate::{Message, State};
+use crate::Message;
 
 const CURRENCIES: &[&str] = &[
     "USD — United States Dollar",
@@ -18,28 +18,20 @@ const CURRENCIES: &[&str] = &[
     "JPY — Japanese Yen",
 ];
 
-pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
+pub fn view() -> iced::Element<'static, Message, Theme> {
     let currency = field::field(select::trigger("USD — United States Dollar", CURRENCIES))
         .label("Default Currency")
         .width(Fill);
 
-    let public = field::field(
-        switch()
-            .checked(state.preferences_public_stats)
-            .on_checked_change(Message::PreferencesPublicStatsChanged),
-    )
-    .orientation(field::Horizontal)
-    .label("Public Statistics")
-    .description("Allow others to see your total stream count and listening activity");
+    let public = field::field(switch().default_checked(true))
+        .orientation(field::Horizontal)
+        .label("Public Statistics")
+        .description("Allow others to see your total stream count and listening activity");
 
-    let email = field::field(
-        switch()
-            .checked(state.preferences_email_notifications)
-            .on_checked_change(Message::PreferencesEmailNotificationsChanged),
-    )
-    .orientation(field::Horizontal)
-    .label("Email Notifications")
-    .description("Monthly royalty reports and distribution updates");
+    let email = field::field(switch().default_checked(true))
+        .orientation(field::Horizontal)
+        .label("Email Notifications")
+        .description("Monthly royalty reports and distribution updates");
 
     card::card(
         column![

@@ -2,55 +2,40 @@ use icedxdy::Size::*;
 use icedxdy::Slot;
 use icedxdy::widget::{button, row};
 
-use super::Message;
+use crate::Message;
 use crate::icon;
 
 pub fn view<'a>() -> Slot<'a, Message> {
     row![
         row![
-            button("Extra Small")
-                .style(button::Outline)
-                .size(Xs)
-                .on_press(Message::Pressed),
+            button("Extra Small").style(button::Outline).size(Xs),
             button(icon::arrow_up_right())
                 .square()
                 .style(button::Outline)
-                .size(Xs)
-                .on_press(Message::Pressed),
+                .size(Xs),
         ]
         .spacing(8),
         row![
-            button("Small")
-                .style(button::Outline)
-                .size(Sm)
-                .on_press(Message::Pressed),
+            button("Small").style(button::Outline).size(Sm),
             button(icon::arrow_up_right())
                 .square()
                 .style(button::Outline)
-                .size(Sm)
-                .on_press(Message::Pressed),
+                .size(Sm),
         ]
         .spacing(8),
         row![
-            button("Default")
-                .style(button::Outline)
-                .on_press(Message::Pressed),
+            button("Default").style(button::Outline),
             button(icon::arrow_up_right())
                 .square()
-                .style(button::Outline)
-                .on_press(Message::Pressed),
+                .style(button::Outline),
         ]
         .spacing(8),
         row![
-            button("Large")
-                .style(button::Outline)
-                .size(Lg)
-                .on_press(Message::Pressed),
+            button("Large").style(button::Outline).size(Lg),
             button(icon::arrow_up_right())
                 .square()
                 .style(button::Outline)
-                .size(Lg)
-                .on_press(Message::Pressed),
+                .size(Lg),
         ]
         .spacing(8),
     ]

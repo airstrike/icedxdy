@@ -23,14 +23,12 @@ card(column![
     card::content(
         column![
             field(
-                input("m@example.com").value(&self.email)
-                    .on_input(Message::EmailChanged)
+                input("m@example.com")
                     .width(Fill),
             )
             .label("Email"),
             field(
-                input("").value(&self.password)
-                    .on_input(Message::PasswordChanged)
+                input("")
                     .width(Fill),
             )
             .label(password_label),

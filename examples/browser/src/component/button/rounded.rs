@@ -1,7 +1,7 @@
 use icedxdy::Slot;
 use icedxdy::widget::button;
 
-use super::Message;
+use crate::Message;
 use crate::icon;
 
 pub fn view<'a>() -> Slot<'a, Message> {
@@ -9,6 +9,5 @@ pub fn view<'a>() -> Slot<'a, Message> {
         .square()
         .style(button::Outline)
         .rounded()
-        .on_press(Message::Pressed)
         .into()
 }

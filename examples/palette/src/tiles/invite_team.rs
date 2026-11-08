@@ -9,7 +9,7 @@ use icedxdy::widget::column::Column;
 use icedxdy::widget::{avatar, badge, button, column, container, input, row, text};
 use icedxdy::{Slot, Theme};
 
-use crate::{Message, State};
+use crate::Message;
 
 struct Member {
     initials: &'static str,
@@ -33,12 +33,10 @@ const MEMBERS: &[Member] = &[
     },
 ];
 
-pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
+pub fn view() -> iced::Element<'static, Message, Theme> {
     let invite_row = row![
         input("email@example.com")
-            .value(&state.invite_email)
             .width(Fill)
-            .on_input(Message::InviteEmailChanged)
             .on_submit(Message::Noop),
         button("Viewer  \u{25BE}")
             .style(button::Outline)

@@ -8,9 +8,10 @@
 //
 // Intentional skips per CLAUDE.md: progress-rtl (RTL).
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
-use iced::{Fill, Task};
+use iced::widget::component::{Component, component};
+use iced::{Element, Fill, Task, Widget};
 use icedxdy::Theme;
 use icedxdy::widget::{column, container, progress, row, slider, space, text};
 
@@ -61,25 +62,62 @@ const TARGET_VALUE: f32 = 66.0;
 /// timeout in `progress-demo.tsx`.
 const DELAY_MS: u64 = 500;
 
-/// Stable field ids for `ValueChanged` dispatch.
-const F_HERO: usize = 100;
-const F_CONTROLLED: usize = 1;
-
 pub struct ProgressPage {
     state: page::State,
-    /// Current displayed value for the hero bar.
-    value: f32,
-    /// Slider-driven value for the Controlled example.
-    controlled_value: f32,
+    /// When the page last became visible; the hero jumps to its target
+    /// once `DELAY_MS` have passed since.
+    shown_at: Option<Instant>,
 }
 
 impl ProgressPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
             state: page::State::new(page_index, BLOCKS),
-            value: INITIAL_VALUE,
-            controlled_value: 50.0,
+            shown_at: None,
         })
+    }
+
+    fn hero_value(&self) -> f32 {
+        match self.shown_at {
+            Some(at) if at.elapsed() >= Duration::from_millis(DELAY_MS) => TARGET_VALUE,
+            _ => INITIAL_VALUE,
+        }
+    }
+}
+
+/// shadcn `progress-controlled.tsx`: a slider driving a progress bar. The
+/// value is UI state shared by two widgets, so the pair is a user
+/// `Component` holding it, rather than app state.
+struct Controlled;
+
+impl<'a> Component<'a, Message, Theme> for Controlled {
+    type State = Option<f32>;
+    type Event = f32;
+
+    fn update(
+        &self,
+        value: &mut Option<f32>,
+        new: f32,
+        _renderer: &iced::Renderer,
+    ) -> Option<Message> {
+        *value = Some(new);
+        None
+    }
+
+    fn view(&self, value: &Option<f32>) -> impl Widget<f32, Theme> + 'a {
+        let value = value.unwrap_or(50.0);
+
+        Element::from(
+            column![
+                progress(value).width(320),
+                slider(0.0..=100.0)
+                    .value(value)
+                    .on_value_change(|value| value)
+                    .step(1.0_f32)
+                    .width(320),
+            ]
+            .spacing(16),
+        )
     }
 }
 
@@ -105,31 +143,20 @@ impl page::Page for ProgressPage {
     }
 
     fn on_visible(&mut self) -> Task<Message> {
-        // Schedule the hero's 500ms delayed jump to 66.
+        // The hero's 500ms delayed jump to 66: rebuild the view once the
+        // delay has passed.
+        self.shown_at = Some(Instant::now());
         let pi = self.state.page_index;
         Task::perform(
             async {
                 tokio::time::sleep(Duration::from_millis(DELAY_MS)).await;
             },
-            move |_| Message::Page(pi, page::Message::ValueChanged(F_HERO, TARGET_VALUE)),
+            move |_| Message::Page(pi, page::Message::Noop),
         )
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        match event {
-            page::Message::ValueChanged(F_HERO, v) => {
-                self.value = v;
-                Task::none()
-            }
-            page::Message::ValueChanged(F_CONTROLLED, v) => {
-                self.controlled_value = v;
-                Task::none()
-            }
-            _ => Task::none(),
-        }
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -137,12 +164,11 @@ impl page::Page for ProgressPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
-        let pi = self.state.page_index;
         match id {
             // Demo (hero): mirrors nova `progress-demo.tsx`. The bar caps
             // at 450px so it doesn't span the full hero card on wide
             // viewports.
-            "demo" => container(progress(self.value).width(Fill))
+            "demo" => container(progress(self.hero_value()).width(Fill))
                 .max_width(450)
                 .width(Fill)
                 .into(),
@@ -161,19 +187,8 @@ impl page::Page for ProgressPage {
             .width(320)
             .into(),
 
-            // Controlled: progress bar driven by an iced stock slider.
-            "controlled" => column![
-                progress(self.controlled_value).width(320),
-                slider(0.0..=100.0)
-                    .value(self.controlled_value)
-                    .on_value_change(move |v| {
-                        Message::Page(pi, page::Message::ValueChanged(F_CONTROLLED, v))
-                    })
-                    .step(1.0_f32)
-                    .width(320),
-            ]
-            .spacing(16)
-            .into(),
+            // Controlled: progress bar driven by a slider.
+            "controlled" => component(Controlled).boxed(),
 
             _ => unreachable!("unknown progress preview id: {id}"),
         }

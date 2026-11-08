@@ -2,7 +2,7 @@
 use icedxdy::widget::{row, switch, text};
 
 row![
-    switch(false),
+    switch().disabled(true),
     text::muted("Disabled").medium(),
 ]
 .spacing(8)

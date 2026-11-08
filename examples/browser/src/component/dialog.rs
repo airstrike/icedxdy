@@ -89,7 +89,7 @@ impl page::Page for DialogPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
-        self.state.update(&event).unwrap_or_else(Task::none)
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {

@@ -1,11 +1,8 @@
 use icedxdy::Slot;
 use icedxdy::widget::button;
 
-use super::Message;
+use crate::Message;
 
 pub fn view<'a>() -> Slot<'a, Message> {
-    button("Link")
-        .style(button::Link)
-        .on_press(Message::Pressed)
-        .into()
+    button("Link").style(button::Link).into()
 }

@@ -194,13 +194,6 @@ pub enum Message {
     ScrollTo(usize),
     ExpandCode(usize),
     CopyCode(usize),
-    InputChanged(usize, String),
-    /// Float-valued counterpart of `InputChanged`. For sliders and other
-    /// continuous-value pages.
-    ValueChanged(usize, f32),
-    /// Boolean-valued counterpart of `InputChanged`. For checkboxes,
-    /// switches, and other on/off toggles.
-    BoolChanged(usize, bool),
     Noop,
 }
 
@@ -875,7 +868,7 @@ impl State {
         Task::batch(tasks)
     }
 
-    pub fn update(&mut self, event: &Message) -> Option<Task<super::Message>> {
+    pub fn update(&mut self, event: &Message) -> Task<super::Message> {
         use icedxdy::widget::operation::scroll;
 
         match event {
@@ -894,25 +887,26 @@ impl State {
                     self.md_items
                         .insert(*path, Some(markdown::parse(&body).collect()));
                 }
-                Some(Task::none())
+                Task::none()
             }
-            Message::LinkClicked(_) => Some(Task::none()),
+            Message::LinkClicked(_) => Task::none(),
             Message::BlockShown(idx) => {
                 self.visible.insert(*idx);
-                Some(Task::none())
+                Task::none()
             }
             Message::BlockHidden(idx) => {
                 self.visible.remove(idx);
-                Some(Task::none())
+                Task::none()
             }
             Message::ScrollTo(idx) => self
                 .block_ids
                 .get(*idx)
                 .cloned()
-                .map(|id| scroll::scroll_into_view(self.scrollable_id.clone(), id)),
+                .map(|id| scroll::scroll_into_view(self.scrollable_id.clone(), id))
+                .unwrap_or_else(Task::none),
             Message::ExpandCode(idx) => {
                 self.code_expanded.insert(*idx);
-                Some(Task::none())
+                Task::none()
             }
             Message::CopyCode(idx) => {
                 let code = flatten(self.blocks)
@@ -928,13 +922,9 @@ impl State {
                     .map(|raw| extract_code_from_markdown(raw))
                     .unwrap_or_default();
                 let pi = self.page_index;
-                Some(
-                    iced::clipboard::write(code)
-                        .map(move |_| super::Message::Page(pi, Message::Noop)),
-                )
+                iced::clipboard::write(code).map(move |_| super::Message::Page(pi, Message::Noop))
             }
-            Message::Noop => Some(Task::none()),
-            _ => None,
+            Message::Noop => Task::none(),
         }
     }
 }

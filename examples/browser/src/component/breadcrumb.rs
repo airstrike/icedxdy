@@ -78,15 +78,6 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/breadcrumb-api-reference.md"),
 ];
 
-/// Per-page message — each link / ellipsis emits a no-op variant the page
-/// folds into [`page::Message::Noop`]. The shadcn examples don't actually
-/// wire navigation in iced (no router); the message dispatch only exists
-/// to demonstrate the cursor + click affordance.
-#[derive(Debug, Clone)]
-pub enum Message {
-    Pressed,
-}
-
 pub struct BreadcrumbPage {
     state: page::State,
 }
@@ -99,21 +90,21 @@ impl BreadcrumbPage {
     }
 }
 
-fn chevron<'a>() -> Slot<'a, Message> {
+fn chevron<'a>() -> Slot<'a, page::Message> {
     icon::chevron_right().size(14).into()
 }
 
-fn view(id: &str) -> Slot<'static, Message> {
+fn view(id: &str) -> Slot<'static, page::Message> {
     match id {
         // Hero / `breadcrumb-demo.tsx`. shadcn's demo wires the ellipsis up
         // as a DropdownMenu trigger (Documentation / Themes / GitHub items).
         // Without a dropdown widget, we render the same trail with a
-        // clickable ellipsis that dispatches `Message::Pressed` — the
+        // clickable ellipsis that dispatches `page::Message::Noop` — the
         // visual is identical, just no menu opens.
         "demo" => breadcrumb([
-            breadcrumb::link("Home", Message::Pressed),
-            breadcrumb::ellipsis(Some(Message::Pressed)),
-            breadcrumb::link("Components", Message::Pressed),
+            breadcrumb::link("Home", page::Message::Noop),
+            breadcrumb::ellipsis(Some(page::Message::Noop)),
+            breadcrumb::link("Components", page::Message::Noop),
             breadcrumb::page("Breadcrumb"),
         ])
         .separator(chevron)
@@ -121,8 +112,8 @@ fn view(id: &str) -> Slot<'static, Message> {
 
         // Basic — `breadcrumb-basic.tsx`. Three crumbs, default chevron.
         "basic" => breadcrumb([
-            breadcrumb::link("Home", Message::Pressed),
-            breadcrumb::link("Components", Message::Pressed),
+            breadcrumb::link("Home", page::Message::Noop),
+            breadcrumb::link("Components", page::Message::Noop),
             breadcrumb::page("Breadcrumb"),
         ])
         .separator(chevron)
@@ -133,8 +124,8 @@ fn view(id: &str) -> Slot<'static, Message> {
         // our generated set, render a centered Unicode bullet `•` (U+2022)
         // at body size — visually equivalent to lucide's `dot` glyph.
         "separator" => breadcrumb([
-            breadcrumb::link("Home", Message::Pressed),
-            breadcrumb::link("Components", Message::Pressed),
+            breadcrumb::link("Home", page::Message::Noop),
+            breadcrumb::link("Components", page::Message::Noop),
             breadcrumb::page("Breadcrumb"),
         ])
         .separator(|| "\u{2022}".into())
@@ -144,9 +135,9 @@ fn view(id: &str) -> Slot<'static, Message> {
         // Home and Components (no dropdown wired — it's a visual indicator
         // that the trail has been collapsed).
         "ellipsis" => breadcrumb([
-            breadcrumb::link("Home", Message::Pressed),
+            breadcrumb::link("Home", page::Message::Noop),
             breadcrumb::ellipsis(None),
-            breadcrumb::link("Components", Message::Pressed),
+            breadcrumb::link("Components", page::Message::Noop),
             breadcrumb::page("Breadcrumb"),
         ])
         .separator(chevron)
@@ -157,8 +148,8 @@ fn view(id: &str) -> Slot<'static, Message> {
         // no DOM routing primitive, so the visual collapses to the basic
         // example — included separately to mirror the docs page TOC.
         "link" => breadcrumb([
-            breadcrumb::link("Home", Message::Pressed),
-            breadcrumb::link("Components", Message::Pressed),
+            breadcrumb::link("Home", page::Message::Noop),
+            breadcrumb::link("Components", page::Message::Noop),
             breadcrumb::page("Breadcrumb"),
         ])
         .separator(chevron)
@@ -190,10 +181,7 @@ impl page::Page for BreadcrumbPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<crate::Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        Task::none()
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -203,7 +191,7 @@ impl page::Page for BreadcrumbPage {
     fn preview(&self, id: &str) -> iced::Element<'_, crate::Message, Theme> {
         let pi = self.state.page_index;
         view(id)
-            .map(move |_| crate::Message::Page(pi, page::Message::Noop))
+            .map(move |message| crate::Message::Page(pi, message))
             .into()
     }
 }

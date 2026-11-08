@@ -14,9 +14,10 @@
 // Intentional skips: sidebar-rtl (RTL).
 // Examples shipped: sidebar-menu (demo), sidebar-group, sidebar-header.
 
-use iced::Task;
+use iced::widget::component::{Component, component};
+use iced::{Element, Task, Widget};
 
-use icedxdy::widget::{column, sidebar, text};
+use icedxdy::widget::{column, row, sidebar, text};
 use icedxdy::{Slot, Theme};
 
 use crate::page;
@@ -58,26 +59,59 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/sidebar-api-reference.md"),
 ];
 
-#[derive(Debug, Clone)]
-pub enum Message {
-    Select(usize),
-}
-
 pub struct SidebarPage {
     state: page::State,
-    selected: usize,
 }
 
 impl SidebarPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
             state: page::State::new(page_index, BLOCKS),
-            selected: 0,
         })
     }
 }
 
-fn demo<'a>(selected: usize) -> Slot<'a, Message> {
+/// The demo. Which project is active is UI state, so a user `Component`
+/// keeps it; the sidebar's open state lives in its provider, toggled by the
+/// trigger in the inset.
+struct Projects;
+
+impl<'a> Component<'a, crate::Message, Theme> for Projects {
+    type State = usize;
+    type Event = usize;
+
+    fn update(
+        &self,
+        selected: &mut usize,
+        project: usize,
+        _renderer: &iced::Renderer,
+    ) -> Option<crate::Message> {
+        *selected = project;
+        None
+    }
+
+    fn view(&self, selected: &usize) -> impl Widget<usize, Theme> + 'a {
+        let selected = *selected;
+
+        Element::from(sidebar::provider(move |s| {
+            row![
+                s.sidebar(demo(selected)),
+                sidebar::main(
+                    column![
+                        sidebar::trigger(),
+                        text::muted("Press the trigger, or Cmd+B, to toggle the sidebar."),
+                    ]
+                    .spacing(8)
+                    .padding(8),
+                ),
+            ]
+            .height(iced::Fill)
+            .into()
+        }))
+    }
+}
+
+fn demo<'a>(selected: usize) -> Slot<'a, usize> {
     // Mirrors `sidebar-menu.tsx`: a floating sidebar with a "Projects" group
     // and five menu items, the active one highlighted.
     let items: &[&'static str] = &[
@@ -88,13 +122,13 @@ fn demo<'a>(selected: usize) -> Slot<'a, Message> {
         "Feedback",
     ];
 
-    let menu_items: Vec<Slot<'a, Message>> = items
+    let menu_items: Vec<Slot<'a, usize>> = items
         .iter()
         .enumerate()
         .map(|(i, label)| {
             sidebar::menu_item([sidebar::menu_button(*label)
                 .active(i == selected)
-                .on_press(Message::Select(i))
+                .on_press(i)
                 .into()])
             .into()
         })
@@ -110,7 +144,7 @@ fn demo<'a>(selected: usize) -> Slot<'a, Message> {
     .into()
 }
 
-fn group_example<'a>() -> Slot<'a, Message> {
+fn group_example<'a, Message: Clone + 'a>() -> Slot<'a, Message> {
     // Mirrors `sidebar-group.tsx`: a floating sidebar with a "Help" group.
     sidebar::floating(sidebar::content([sidebar::group([
         sidebar::group_label("Help").into(),
@@ -127,7 +161,7 @@ fn group_example<'a>() -> Slot<'a, Message> {
     .into()
 }
 
-fn header_example<'a>() -> Slot<'a, Message> {
+fn header_example<'a, Message: Clone + 'a>() -> Slot<'a, Message> {
     // Mirrors `sidebar-header.tsx`: a floating sidebar with a workspace
     // switcher in the header.
     sidebar::floating(
@@ -168,13 +202,7 @@ impl page::Page for SidebarPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<crate::Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        if let page::Message::ValueChanged(0, v) = event {
-            self.selected = v as usize;
-        }
-        Task::none()
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -182,20 +210,11 @@ impl page::Page for SidebarPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, crate::Message, Theme> {
-        let pi = self.state.page_index;
-        let selected = self.selected;
-        let view: Slot<'_, Message> = match id {
-            "demo" => demo(selected),
-            "group" => group_example(),
-            "header" => header_example(),
+        match id {
+            "demo" => component(Projects).boxed(),
+            "group" => group_example().into(),
+            "header" => header_example().into(),
             _ => unreachable!("unknown sidebar preview id: {id}"),
-        };
-        view.map(move |msg| {
-            let inner = match msg {
-                Message::Select(i) => page::Message::ValueChanged(0, i as f32),
-            };
-            crate::Message::Page(pi, inner)
-        })
-        .into()
+        }
     }
 }

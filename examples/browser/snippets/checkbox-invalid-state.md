@@ -3,8 +3,7 @@ use icedxdy::theme;
 use icedxdy::widget::{checkbox, field, text};
 
 field(
-    checkbox(self.is_checked)
-        .on_toggle(Message::Toggle)
+    checkbox()
         .style(theme::checkbox::Invalid),
 )
 .orientation(field::Horizontal)

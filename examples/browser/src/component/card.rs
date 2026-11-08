@@ -73,23 +73,14 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/card-api-reference.md"),
 ];
 
-// Stable input field ids (independent of block position so reordering blocks
-// doesn't break value routing).
-const F_DEMO_EMAIL: usize = 0;
-const F_DEMO_PASSWORD: usize = 1;
-
 pub struct CardPage {
     state: page::State,
-    demo_email: String,
-    demo_password: String,
 }
 
 impl CardPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
             state: page::State::new(page_index, BLOCKS),
-            demo_email: String::new(),
-            demo_password: String::new(),
         })
     }
 }
@@ -151,20 +142,7 @@ impl page::Page for CardPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        match event {
-            page::Message::InputChanged(field, value) => {
-                match field {
-                    F_DEMO_EMAIL => self.demo_email = value,
-                    F_DEMO_PASSWORD => self.demo_password = value,
-                    _ => {}
-                }
-                Task::none()
-            }
-            _ => Task::none(),
-        }
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -182,10 +160,7 @@ impl page::Page for CardPage {
             // max-w-sm = 24rem = 384px.
             "demo" => {
                 let email_field: Slot<'_, Message> = field(
-                    input("m@example.com").value(&self.demo_email)
-                        .on_input(move |v| {
-                            Message::Page(pi, page::Message::InputChanged(F_DEMO_EMAIL, v))
-                        })
+                    input("m@example.com")
                         .width(Fill),
                 )
                 .label("Email")
@@ -205,10 +180,7 @@ impl page::Page for CardPage {
                 .into();
 
                 let password_field: Slot<'_, Message> = field(
-                    input("").value(&self.demo_password)
-                        .on_input(move |v| {
-                            Message::Page(pi, page::Message::InputChanged(F_DEMO_PASSWORD, v))
-                        })
+                    input("")
                         .width(Fill),
                 )
                 .label(password_label)

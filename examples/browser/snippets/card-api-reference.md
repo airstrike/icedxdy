@@ -26,8 +26,8 @@ Builder for a card header. Title is supplied at construction; description and ac
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.description(content)` | `impl IntoDescription` | `None` | Plain strings auto-style as muted-foreground (`text-sm`); pre-styled `Text` / `Component` pass through. |
-| `.action(content)` | `impl Into<Component>` | `None` | Top-right action — typically a link, button, or badge. The Header pushes it flush-right with `space::horizontal` inside a row (the iced analog of shadcn's `col-start-2 ... justify-self-end` grid pin). |
+| `.description(content)` | `impl IntoDescription` | `None` | Plain strings auto-style as muted-foreground (`text-sm`); pre-styled `Text` / `Slot` pass through. |
+| `.action(content)` | `impl Into<Slot>` | `None` | Top-right action — typically a link, button, or badge. The Header pushes it flush-right with `space::horizontal` inside a row (the iced analog of shadcn's `col-start-2 ... justify-self-end` grid pin). |
 
 ### Section helpers
 
@@ -35,7 +35,7 @@ Builder for a card header. Title is supplied at construction; description and ac
 | --- | --- | --- |
 | `card::title(content)` | `Text<'a>` | `CardTitle`-shaped Text — `text-base font-medium leading-snug`, foreground color. |
 | `card::description(content)` | `Text<'a>` | `CardDescription`-shaped Text — equivalent to `text::muted` but exposed under `card::` so the slot vocabulary mirrors shadcn. |
-| `card::action(content)` | `Component<'a>` | `CardAction`-shaped passthrough — identity today, reserved for any future action-specific styling. |
+| `card::action(content)` | `Slot<'a>` | `CardAction`-shaped passthrough — identity today, reserved for any future action-specific styling. |
 | `card::content(child)` | `Container<'a>` | Card content section (`px-4` only). |
 | `card::footer(child)` | `Container<'a>` | Card footer (`px-4` only). Caller composes the inner shape. |
 | `card::footer_row(children)` | `Container<'a>` | Card footer as a row of children with 8px (`gap-2`) spacing. |
@@ -47,7 +47,7 @@ The header's `.description(...)` builder and the constructor's `title` argument 
 
 - `&str` / `String` — auto-styled via `card::title(...)` / `card::description(...)`.
 - `text::Text<'a>` — pre-styled, passes through unchanged.
-- `Component<'a, Message>` — passes through unchanged.
+- `Slot<'a, Message>` — passes through unchanged.
 
 Shadcn's `Card`/`CardHeader`/`CardTitle`/`CardDescription`/`CardAction`/`CardContent`/`CardFooter` set folds into the helpers above. Restyle via the wrapping `Container`'s `.style(...)` builder or compose your own surface helper.
 

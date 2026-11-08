@@ -60,26 +60,14 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/switch-api-reference.md"),
 ];
 
-// Stable field ids for `BoolChanged` dispatch — independent of block
-// position so reordering blocks doesn't break value routing.
-const F_DEMO: usize = 0;
-const F_DESC: usize = 1;
-const F_INVALID: usize = 2;
-
 pub struct SwitchPage {
     state: page::State,
-    demo: bool,
-    desc: bool,
-    invalid: bool,
 }
 
 impl SwitchPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
             state: page::State::new(page_index, BLOCKS),
-            demo: false,
-            desc: false,
-            invalid: false,
         })
     }
 }
@@ -106,18 +94,7 @@ impl page::Page for SwitchPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        if let page::Message::BoolChanged(field, v) = event {
-            match field {
-                F_DEMO => self.demo = v,
-                F_DESC => self.desc = v,
-                F_INVALID => self.invalid = v,
-                _ => {}
-            }
-        }
-        Task::none()
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -125,11 +102,6 @@ impl page::Page for SwitchPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
-        let pi = self.state.page_index;
-        let toggle = move |field: usize| {
-            move |b: bool| Message::Page(pi, page::Message::BoolChanged(field, b))
-        };
-
         // Each preview is wrapped in a center_x container so it renders
         // horizontally centered within the 288 px card, matching shadcn's
         // centered demo layout. The page-level container already centers
@@ -137,14 +109,9 @@ impl page::Page for SwitchPage {
         let inner: iced::Element<'_, Message, Theme> = match id {
             // Demo (hero): switch + plain inline label. Verbatim from
             // `.nova/apps/v4/examples/radix/switch-demo.tsx`.
-            "demo" => row![
-                switch()
-                    .checked(self.demo)
-                    .on_checked_change(toggle(F_DEMO)),
-                text::label("Airplane Mode"),
-            ]
-            .spacing(8)
-            .into(),
+            "demo" => row![switch(), text::label("Airplane Mode"),]
+                .spacing(8)
+                .into(),
 
             // Description: horizontal field with label + muted description on
             // the LEFT and the switch on the RIGHT. Verbatim from
@@ -164,24 +131,19 @@ impl page::Page for SwitchPage {
                 ]
                 .spacing(2)
                 .width(iced::Fill),
-                switch()
-                    .checked(self.desc)
-                    .on_checked_change(toggle(F_DESC)),
+                switch(),
             ]
             .spacing(8)
             .width(384)
             .into(),
 
-            // Disabled: no `.on_toggle(...)` call ⇒ widget is disabled.
+            // Disabled: `.disabled(true)` on the switch.
             // Disabled label: nova cascades opacity-50 via data-disabled on Field.
             // text::muted approximates the dimming today; text::label (Phase 3)
             // + a proper opacity tweak (Phase 4) will land the exact spec.
-            "disabled" => row![
-                switch().checked(false).disabled(true),
-                text::muted("Disabled").medium(),
-            ]
-            .spacing(8)
-            .into(),
+            "disabled" => row![switch().disabled(true), text::muted("Disabled").medium(),]
+                .spacing(8)
+                .into(),
 
             // Invalid: destructive border via the `theme::switch::Invalid`
             // variant, matching shadcn's `aria-invalid` styling. Layout
@@ -197,10 +159,7 @@ impl page::Page for SwitchPage {
                 ]
                 .spacing(2)
                 .width(iced::Fill),
-                switch()
-                    .checked(self.invalid)
-                    .on_checked_change(toggle(F_INVALID))
-                    .style(theme::switch::Invalid),
+                switch().style(theme::switch::Invalid),
             ]
             .spacing(8)
             .width(384)

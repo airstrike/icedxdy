@@ -66,32 +66,14 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/field-api-reference.md"),
 ];
 
-// Stable field ids for value-routing — independent of block position so
-// reordering blocks doesn't break dispatch.
-const F_DEMO: usize = 0;
-const F_ERROR: usize = 1;
-const F_CHECKBOX: usize = 2;
-const F_SWITCH: usize = 3;
-
 pub struct FieldPage {
     state: page::State,
-    demo_value: String,
-    error_value: String,
-    checkbox_on: bool,
-    switch_on: bool,
 }
 
 impl FieldPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
             state: page::State::new(page_index, BLOCKS),
-            demo_value: String::new(),
-            // Pre-fill with an obviously-invalid value so the error
-            // example's destructive border + error message are visible
-            // on first paint without the user having to type.
-            error_value: String::from("not-an-email"),
-            checkbox_on: false,
-            switch_on: true,
         })
     }
 }
@@ -118,27 +100,7 @@ impl page::Page for FieldPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        match event {
-            page::Message::InputChanged(field, value) => match field {
-                F_DEMO => {
-                    self.demo_value = value;
-                }
-                F_ERROR => {
-                    self.error_value = value;
-                }
-                _ => {}
-            },
-            page::Message::BoolChanged(field, v) => match field {
-                F_CHECKBOX => self.checkbox_on = v,
-                F_SWITCH => self.switch_on = v,
-                _ => {}
-            },
-            _ => {}
-        }
-        Task::none()
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -146,7 +108,6 @@ impl page::Page for FieldPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
-        let pi = self.state.page_index;
         match id {
             // Demo (hero): Field with input + label + description — the
             // canonical Field shape. Mirrors the "Card Number" Field block
@@ -154,16 +115,9 @@ impl page::Page for FieldPage {
             // (lines 44-56) — the simplest representative slice of the
             // multi-Field demo form.
             "demo" => container(
-                field(
-                    input("1234 5678 9012 3456")
-                        .value(&self.demo_value)
-                        .on_input(move |v| {
-                            Message::Page(pi, page::Message::InputChanged(F_DEMO, v))
-                        })
-                        .width(Fill),
-                )
-                .label("Card Number")
-                .description("Enter your 16-digit card number"),
+                field(input("1234 5678 9012 3456").width(Fill))
+                    .label("Card Number")
+                    .description("Enter your 16-digit card number"),
             )
             .width(320)
             .into(),
@@ -177,10 +131,7 @@ impl page::Page for FieldPage {
             "input-with-error" => container(
                 field(
                     input("you@example.com")
-                        .value(&self.error_value)
-                        .on_input(move |v| {
-                            Message::Page(pi, page::Message::InputChanged(F_ERROR, v))
-                        })
+                        .default_value("not-an-email")
                         .width(Fill)
                         .style(theme::text_input::Invalid),
                 )
@@ -195,17 +146,11 @@ impl page::Page for FieldPage {
             // — that example uses orientation="horizontal" which the MVP
             // doesn't ship; here the slots stack vertically.
             "checkbox" => container(
-                field(
-                    checkbox()
-                        .checked(self.checkbox_on)
-                        .on_checked_change(move |v| {
-                            Message::Page(pi, page::Message::BoolChanged(F_CHECKBOX, v))
-                        }),
-                )
-                .label("Sync Desktop & Documents folders")
-                .description(
-                    "Your Desktop & Documents folders are being synced with iCloud Drive.",
-                ),
+                field(checkbox())
+                    .label("Sync Desktop & Documents folders")
+                    .description(
+                        "Your Desktop & Documents folders are being synced with iCloud Drive.",
+                    ),
             )
             .width(320)
             .into(),
@@ -215,15 +160,9 @@ impl page::Page for FieldPage {
             // — that example uses orientation="horizontal" which the MVP
             // doesn't ship; vertical stack here.
             "switch" => container(
-                field(
-                    switch()
-                        .checked(self.switch_on)
-                        .on_checked_change(move |v| {
-                            Message::Page(pi, page::Message::BoolChanged(F_SWITCH, v))
-                        }),
-                )
-                .label("Multi-factor authentication")
-                .description("Require a second verification step at sign-in."),
+                field(switch().default_checked(true))
+                    .label("Multi-factor authentication")
+                    .description("Require a second verification step at sign-in."),
             )
             .width(320)
             .into(),

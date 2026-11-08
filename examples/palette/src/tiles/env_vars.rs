@@ -7,20 +7,18 @@ use icedxdy::card;
 use icedxdy::widget::{button, column, container, input, row};
 use icedxdy::{Slot, Theme};
 
-use crate::{Message, State};
+use crate::Message;
 
-pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
+pub fn view() -> iced::Element<'static, Message, Theme> {
     let rows: Vec<Slot<'_, Message>> = vec![
         env_row(
             "DATABASE_URL",
-            &state.env_database,
-            Message::EnvDatabaseChanged,
+            "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}",
         ),
-        env_row("NEXT_PUBLIC_API", &state.env_api, Message::EnvApiChanged),
+        env_row("NEXT_PUBLIC_API", "https://api.example.com"),
         env_row(
             "STRIPE_SECRET",
-            &state.env_stripe,
-            Message::EnvStripeChanged,
+            "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}",
         ),
     ];
 
@@ -56,12 +54,8 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .boxed()
 }
 
-fn env_row<'a>(
-    key: &'static str,
-    value: &'a str,
-    on_input: fn(String) -> Message,
-) -> Slot<'a, Message> {
-    row![readonly_input(key), active_input(value, on_input),]
+fn env_row<'a>(key: &'static str, value: &'a str) -> Slot<'a, Message> {
+    row![readonly_input(key), active_input(value)]
         .spacing(8)
         .width(Fill)
         .into()
@@ -71,11 +65,10 @@ fn readonly_input(value: &'static str) -> Slot<'static, Message> {
     input("").value(value).width(Fill).into()
 }
 
-fn active_input<'a>(value: &'a str, on_input: fn(String) -> Message) -> Slot<'a, Message> {
+fn active_input<'a>(value: &'a str) -> Slot<'a, Message> {
     input("")
-        .value(value)
+        .default_value(value)
         .width(Fill)
-        .on_input(on_input)
         .on_submit(Message::Noop)
         .into()
 }

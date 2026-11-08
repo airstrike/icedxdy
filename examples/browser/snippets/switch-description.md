@@ -10,7 +10,7 @@ row![
     ]
     .spacing(2)
     .width(iced::Fill),
-    switch(self.is_on).on_toggle(Message::Toggled),
+    switch(),
 ]
 .spacing(8)
 .width(384)

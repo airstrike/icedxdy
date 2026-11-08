@@ -1,7 +1,7 @@
 ```rust
 use icedxdy::widget::{checkbox, field};
 
-field(checkbox(self.is_checked).on_toggle(Message::Toggle))
+field(checkbox().default_checked(true))
     .orientation(field::Horizontal)
     .label("Accept terms and conditions")
     .width(224)

@@ -6,7 +6,7 @@ Constructor for a `Breadcrumb` from any `IntoIterator<Item = breadcrumb::Item>`.
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.separator(factory)` | `Fn() -> Component` | muted `›` glyph | Override the default separator. The closure is called once per gap between adjacent items (Component values are not `Clone`, so a fresh instance is built for each insertion). Pass `\|\| icon::chevron_right().size(14).into()` for lucide-icon parity. |
+| `.separator(factory)` | `Fn() -> Slot` | muted `›` glyph | Override the default separator. The closure is called once per gap between adjacent items (Slot values are not `Clone`, so a fresh instance is built for each insertion). Pass `\|\| icon::chevron_right().size(14).into()` for lucide-icon parity. |
 
 ### Item constructors
 
@@ -36,4 +36,4 @@ Shadcn's link slot carries `transition-colors hover:text-foreground`. We don't y
 | `<BreadcrumbSeparator>` | `.separator(\|\| ...)` builder. |
 | `<BreadcrumbEllipsis>` | `breadcrumb::ellipsis(on_press)` |
 
-Item content is `Component`, so style at the call site (`.size(...)`, `.bold()`, etc.).
+Item content is `Slot`, so style at the call site (`.size(...)`, `.bold()`, etc.).

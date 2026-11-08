@@ -167,15 +167,9 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
         badge("Secondary").style(badge::Secondary),
         badge("Outline").style(badge::Outline),
         space::horizontal(),
-        checkbox()
-            .checked(state.accept_terms)
-            .on_checked_change(Message::AcceptTerms),
-        checkbox()
-            .checked(state.showcase_middle_checkbox)
-            .on_checked_change(Message::SetShowcaseMiddleCheckbox),
-        checkbox()
-            .checked(state.showcase_trailing_checkbox)
-            .on_checked_change(Message::SetShowcaseTrailingCheckbox),
+        checkbox().default_checked(true),
+        checkbox(),
+        checkbox().default_checked(true),
     ]
     .spacing(10)
     .align_y(Center)
@@ -214,11 +208,8 @@ pub fn controls_card(state: &State) -> iced::Element<'_, Message, Theme> {
     let body = column![
         tabs,
         field,
-        slider(0.0..=100.0)
-            .value(state.showcase_slider)
-            .on_value_change(Message::SetShowcaseSlider)
-            .width(Fill),
-        name_input(state),
+        slider(0.0..=100.0).default_value(45.0).width(Fill),
+        name_input(),
         textarea_placeholder(),
         badges,
         footer,
@@ -298,12 +289,10 @@ fn skeleton_line(width: f32, height: f32) -> Skeleton<'static, Message> {
     skeleton().width(width).height(height)
 }
 
-fn name_input(state: &State) -> Slot<'_, Message> {
+fn name_input() -> Slot<'static, Message> {
     let input = input("Name")
-        .value(&state.showcase_name)
         .width(Fill)
         .style(control_input_style())
-        .on_input(Message::ShowcaseNameChanged)
         .on_submit(Message::Noop);
 
     let trailing = container(icon::search().size(16))

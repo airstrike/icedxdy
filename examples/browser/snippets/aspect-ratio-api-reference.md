@@ -2,7 +2,7 @@
 
 ### `aspect_ratio()`
 
-Constructor for an `AspectRatio` wrapper. Takes any `impl Into<Component>` plus a `width / height` ratio (e.g. `16.0 / 9.0` for widescreen, `9.0 / 16.0` for portrait).
+Constructor for an `AspectRatio` wrapper. Takes any `impl Into<Slot>` plus a `width / height` ratio (e.g. `16.0 / 9.0` for widescreen, `9.0 / 16.0` for portrait).
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |

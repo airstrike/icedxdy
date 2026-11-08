@@ -6,7 +6,7 @@ Constructor for an `Avatar` builder. Takes an `Option<image::Handle>` — `Some(
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.fallback(content)` | `impl Into<Component>` | `None` | Content rendered on the muted surface when no image is provided. Typically initials (`"CN"`, `"ER"`) but accepts any `Component` — an icon, a single character, etc. |
+| `.fallback(content)` | `impl Into<Slot>` | `None` | Content rendered on the muted surface when no image is provided. Typically initials (`"CN"`, `"ER"`) but accepts any `Slot` — an icon, a single character, etc. |
 | `.size(size)` | `impl Into<Size>` | `Default` (32px) | Size variant: `avatar::Sm` (24px), `avatar::Default` (32px), `avatar::Lg` (40px). Drives diameter, font size, and badge chip dimensions. |
 
 **Image-load failure caveat.** Shadcn's `AvatarImage` falls back to `AvatarFallback` on runtime image-load failure. Iced's `Image` widget exposes no equivalent event surface, so the fallback only triggers when the caller passes `None` — a `Some(handle)` whose file is broken renders iced's blank/broken-image affordance instead.
@@ -35,7 +35,7 @@ Compose N overlapping avatars into a horizontal group with negative-space overla
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.count(content)` | `impl Into<Component>` | `None` | Trailing count chip after the avatars — pass a string like `"+3"` for the numeric form, or `icon::plus()` for the icon form. Mirrors shadcn's `AvatarGroupCount`. |
+| `.count(content)` | `impl Into<Slot>` | `None` | Trailing count chip after the avatars — pass a string like `"+3"` for the numeric form, or `icon::plus()` for the icon form. Mirrors shadcn's `AvatarGroupCount`. |
 
 Every avatar in a group renders with a 2px outer ring colored to the page background so overlapping avatars read as distinct discs (matches shadcn's `*:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background` cascade). The count chip's geometry mirrors the first avatar's size variant.
 

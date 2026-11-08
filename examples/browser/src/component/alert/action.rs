@@ -2,14 +2,14 @@ use icedxdy::Size;
 use icedxdy::Slot;
 use icedxdy::widget::{alert, button};
 
-use super::Message;
+use crate::Message;
 
 pub fn view<'a>() -> Slot<'a, Message> {
     // shadcn `alert-action.tsx` caps the alert at `max-w-md` (448px).
     alert()
         .title("Dark mode is now available")
         .description("Enable it under your profile settings to get started.")
-        .action(button("Enable").size(Size::Xs).on_press(Message::Pressed))
+        .action(button("Enable").size(Size::Xs))
         .max_width(448)
         .into()
 }

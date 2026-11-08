@@ -1,51 +1,49 @@
 ```rust
-use icedxdy::widget::sidebar;
+use iced::widget::component::{Component, component};
+use icedxdy::widget::{column, row, sidebar, text};
 
-sidebar::floating(
-    sidebar::content([
-        sidebar::group([
-            sidebar::group_label("Projects").into(),
-            sidebar::group_content([
-                sidebar::menu([
-                    sidebar::menu_item([
-                        sidebar::menu_button("Design Engineering")
-                            .active(true)
-                            .on_press(Message::Select(0))
-                            .into(),
-                    ])
-                    .into(),
-                    sidebar::menu_item([
-                        sidebar::menu_button("Sales & Marketing")
-                            .on_press(Message::Select(1))
-                            .into(),
-                    ])
-                    .into(),
-                    sidebar::menu_item([
-                        sidebar::menu_button("Travel")
-                            .on_press(Message::Select(2))
-                            .into(),
-                    ])
-                    .into(),
-                    sidebar::menu_item([
-                        sidebar::menu_button("Support")
-                            .on_press(Message::Select(3))
-                            .into(),
-                    ])
-                    .into(),
-                    sidebar::menu_item([
-                        sidebar::menu_button("Feedback")
-                            .on_press(Message::Select(4))
-                            .into(),
-                    ])
+/// Which project is active is UI state, so a user `Component` keeps it; the
+/// provider keeps whether the sidebar is open.
+struct Projects;
+
+impl<'a> Component<'a, Message, Theme> for Projects {
+    type State = usize;
+    type Event = usize;
+
+    fn update(&self, selected: &mut usize, project: usize, _: &Renderer) -> Option<Message> {
+        *selected = project;
+        None
+    }
+
+    fn view(&self, selected: &usize) -> impl Widget<usize, Theme> + 'a {
+        let selected = *selected;
+
+        Element::from(sidebar::provider(move |s| {
+            row![
+                s.sidebar(sidebar::floating(sidebar::content([sidebar::group([
+                    sidebar::group_label("Projects").into(),
+                    sidebar::group_content([sidebar::menu(
+                        ["Design Engineering", "Sales & Marketing", "Travel", "Support", "Feedback"]
+                            .iter()
+                            .enumerate()
+                            .map(|(i, label)| {
+                                sidebar::menu_item([sidebar::menu_button(*label)
+                                    .active(i == selected)
+                                    .on_press(i)
+                                    .into()])
+                                .into()
+                            }),
+                    )
+                    .into()])
                     .into(),
                 ])
-                .into(),
-            ])
-            .into(),
-        ])
-        .into(),
-    ]),
-)
-.height(288)
-.width(sidebar::WIDTH)
+                .into()]))),
+                sidebar::main(column![sidebar::trigger(), text::muted("Press the trigger, or Cmd+B.")]),
+            ]
+            .into()
+        }))
+    }
+}
+
+component(Projects)
 ```

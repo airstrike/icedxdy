@@ -121,11 +121,6 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/button-api-reference.md"),
 ];
 
-#[derive(Debug, Clone)]
-pub enum Message {
-    Pressed,
-}
-
 pub struct ButtonPage {
     state: page::State,
 }
@@ -138,24 +133,21 @@ impl ButtonPage {
     }
 }
 
-fn demo(pi: usize) -> Slot<'static, crate::Message> {
+fn demo() -> Slot<'static, crate::Message> {
     // Verbatim shadcn `button-demo.tsx`:
     //   <Button variant="outline">Button</Button>
     //   <Button variant="outline" size="icon"><ArrowUpIcon /></Button>
     row![
-        button("Button")
-            .style(button::Outline)
-            .on_press(crate::Message::Page(pi, page::Message::Noop)),
+        button("Button").style(button::Outline),
         button(crate::icon::arrow_up())
             .square()
-            .style(button::Outline)
-            .on_press(crate::Message::Page(pi, page::Message::Noop)),
+            .style(button::Outline),
     ]
     .spacing(8)
     .into()
 }
 
-fn view(id: &str) -> Slot<'static, Message> {
+fn view(id: &str) -> Slot<'static, crate::Message> {
     match id {
         "size" => size::view(),
         "default" => default::view(),
@@ -194,10 +186,7 @@ impl page::Page for ButtonPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<crate::Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        Task::none()
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -205,12 +194,9 @@ impl page::Page for ButtonPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, crate::Message, Theme> {
-        let pi = self.state.page_index;
         if id == "demo" {
-            return demo(pi).into();
+            return demo().into();
         }
-        view(id)
-            .map(move |_| crate::Message::Page(pi, page::Message::Noop))
-            .into()
+        view(id).into()
     }
 }

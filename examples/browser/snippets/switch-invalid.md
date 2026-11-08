@@ -10,8 +10,7 @@ row![
     ]
     .spacing(2)
     .width(iced::Fill),
-    switch(self.is_on)
-        .on_toggle(Message::Toggled)
+    switch()
         .style(theme::switch::Invalid),
 ]
 .spacing(8)

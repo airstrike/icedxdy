@@ -94,38 +94,14 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/input-api-reference.md"),
 ];
 
-// Stable field ids for `InputChanged` dispatch — independent of block
-// position so reordering blocks doesn't break value routing.
-const F_DEMO: usize = 0;
-const F_BASIC: usize = 1;
-const F_FIELD: usize = 2;
-const F_INLINE: usize = 3;
-const F_INVALID: usize = 4;
-const F_REQUIRED: usize = 5;
-const F_BADGE: usize = 6;
-
 pub struct InputPage {
     state: page::State,
-    demo_value: String,
-    basic_value: String,
-    field_value: String,
-    inline_value: String,
-    invalid_value: String,
-    required_value: String,
-    badge_value: String,
 }
 
 impl InputPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
             state: page::State::new(page_index, BLOCKS),
-            demo_value: String::new(),
-            basic_value: String::new(),
-            field_value: String::new(),
-            inline_value: String::new(),
-            invalid_value: String::new(),
-            required_value: String::new(),
-            badge_value: String::new(),
         })
     }
 }
@@ -152,25 +128,7 @@ impl page::Page for InputPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        match event {
-            page::Message::InputChanged(field, value) => {
-                match field {
-                    F_DEMO => self.demo_value = value,
-                    F_BASIC => self.basic_value = value,
-                    F_FIELD => self.field_value = value,
-                    F_INLINE => self.inline_value = value,
-                    F_INVALID => self.invalid_value = value,
-                    F_REQUIRED => self.required_value = value,
-                    F_BADGE => self.badge_value = value,
-                    _ => {}
-                }
-                Task::none()
-            }
-            _ => Task::none(),
-        }
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -182,37 +140,23 @@ impl page::Page for InputPage {
         match id {
             // Demo (hero): Field+Label+Input+Description for an "API Key"
             // form. Verbatim shadcn `input-demo.tsx`.
-            "demo" => field(
-                input("sk-...")
-                    .value(&self.demo_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_DEMO, v)))
-                    .width(Fill),
-            )
-            .label("API Key")
-            .description("Your API key is encrypted and stored securely.")
-            .width(320)
-            .into(),
+            "demo" => field(input("sk-...").width(Fill))
+                .label("API Key")
+                .description("Your API key is encrypted and stored securely.")
+                .width(320)
+                .into(),
 
             // Basic: simple input with placeholder. Width 320 matches nova's
             // form input width — Input now defaults to Length::Shrink, so set
             // it explicitly here.
-            "basic" => input("Enter text")
-                .value(&self.basic_value)
-                .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_BASIC, v)))
-                .width(320)
-                .into(),
+            "basic" => input("Enter text").width(320).into(),
 
             // Field: input with label "Username" and description.
-            "field" => field(
-                input("Enter your username")
-                    .value(&self.field_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_FIELD, v)))
-                    .width(Fill),
-            )
-            .label("Username")
-            .description("Choose a unique username for your account.")
-            .width(320)
-            .into(),
+            "field" => field(input("Enter your username").width(Fill))
+                .label("Username")
+                .description("Choose a unique username for your account.")
+                .width(320)
+                .into(),
 
             // Disabled: nova `disabled` on the input.
             "disabled" => field(input("Email").width(Fill).disabled(true))
@@ -223,24 +167,15 @@ impl page::Page for InputPage {
 
             // Invalid: destructive border + destructive focus ring
             // (aria-invalid). First-class `theme::text_input::Invalid`.
-            "invalid" => field(
-                input("Error")
-                    .value(&self.invalid_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INVALID, v)))
-                    .width(Fill)
-                    .style(theme::text_input::Invalid),
-            )
-            .label("Invalid Input")
-            .description("This field contains validation errors.")
-            .width(320)
-            .into(),
+            "invalid" => field(input("Error").width(Fill).style(theme::text_input::Invalid))
+                .label("Invalid Input")
+                .description("This field contains validation errors.")
+                .width(320)
+                .into(),
 
             // Inline: input + button side by side.
             "inline" => row![
-                input("Search...")
-                    .value(&self.inline_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_INLINE, v)))
-                    .width(Fill),
+                input("Search...").width(Fill),
                 button("Search").on_press(Message::Page(pi, page::Message::Noop)),
             ]
             .spacing(8)
@@ -248,40 +183,28 @@ impl page::Page for InputPage {
             .into(),
 
             // Required: rich-text label with a destructive asterisk.
-            "required" => field(
-                input("This field is required")
-                    .value(&self.required_value)
-                    .on_input(move |v| {
-                        Message::Page(pi, page::Message::InputChanged(F_REQUIRED, v))
-                    })
-                    .width(Fill),
-            )
-            .label(Slot::from(rich_text![
-                span("Required Field ").size(text::size::SM).medium(),
-                span("*").size(text::size::SM).color(Token::Destructive),
-            ]))
-            .description("This field must be filled out.")
-            .width(320)
-            .into(),
+            "required" => field(input("This field is required").width(Fill))
+                .label(Slot::from(rich_text![
+                    span("Required Field ").size(text::size::SM).medium(),
+                    span("*").size(text::size::SM).color(Token::Destructive),
+                ]))
+                .description("This field must be filled out.")
+                .width(320)
+                .into(),
 
             // Badge: a label with a trailing `Beta` badge pushed flush right
             // (shadcn `ml-auto`). Verbatim shadcn `input-badge.tsx`.
-            "badge" => field(
-                input("https://api.example.com/webhook")
-                    .value(&self.badge_value)
-                    .on_input(move |v| Message::Page(pi, page::Message::InputChanged(F_BADGE, v)))
+            "badge" => field(input("https://api.example.com/webhook").width(Fill))
+                .label(Slot::from(
+                    row![
+                        text::label("Webhook URL"),
+                        space::horizontal(),
+                        badge("Beta").style(badge::Secondary),
+                    ]
                     .width(Fill),
-            )
-            .label(Slot::from(
-                row![
-                    text::label("Webhook URL"),
-                    space::horizontal(),
-                    badge("Beta").style(badge::Secondary),
-                ]
-                .width(Fill),
-            ))
-            .width(320)
-            .into(),
+                ))
+                .width(320)
+                .into(),
 
             _ => unreachable!("unknown input preview id: {id}"),
         }

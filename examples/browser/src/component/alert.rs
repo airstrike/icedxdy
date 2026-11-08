@@ -61,11 +61,6 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/alert-api-reference.md"),
 ];
 
-#[derive(Debug, Clone)]
-pub enum Message {
-    Pressed,
-}
-
 pub struct AlertPage {
     state: page::State,
 }
@@ -78,7 +73,7 @@ impl AlertPage {
     }
 }
 
-fn demo<'a>() -> Slot<'a, Message> {
+fn demo<'a>() -> Slot<'a, crate::Message> {
     // Verbatim shadcn `alert-demo.tsx`: two stacked alerts capped at
     // max-w-md (448px). Each alert self-caps via `.max_width(448)`.
     column![
@@ -123,10 +118,7 @@ impl page::Page for AlertPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<crate::Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        Task::none()
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -134,15 +126,13 @@ impl page::Page for AlertPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, crate::Message, Theme> {
-        let pi = self.state.page_index;
-        let view: Slot<'_, Message> = match id {
+        let view: Slot<'_, crate::Message> = match id {
             "demo" => demo(),
             "basic" => default::view(),
             "destructive" => destructive::view(),
             "action" => action::view(),
             _ => unreachable!("unknown alert preview id: {id}"),
         };
-        view.map(move |_| crate::Message::Page(pi, page::Message::Noop))
-            .into()
+        view.into()
     }
 }

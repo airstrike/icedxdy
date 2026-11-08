@@ -8,26 +8,16 @@ use icedxdy::widget::{button, column, field, input, item};
 use icedxdy::{Theme, card};
 
 use super::api_gap;
-use crate::{Message, State, icon};
+use crate::{Message, icon};
 
-pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    let email = field::field(
-        input("")
-            .value(&state.account_email)
-            .on_input(Message::AccountEmailChanged)
-            .width(Fill),
-    )
-    .label("Email Address")
-    .width(Fill);
+pub fn view() -> iced::Element<'static, Message, Theme> {
+    let email = field::field(input("").default_value("artist@studio.inc").width(Fill))
+        .label("Email Address")
+        .width(Fill);
 
-    let password = field::field(
-        input("")
-            .value(&state.account_password)
-            .on_input(Message::AccountPasswordChanged)
-            .width(Fill),
-    )
-    .label("Current Password")
-    .width(Fill);
+    let password = field::field(input("").default_value("***********").width(Fill))
+        .label("Current Password")
+        .width(Fill);
 
     let danger = item::muted([
         item::media_icon(icon::circle_help().size(16)).into(),

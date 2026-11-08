@@ -2,44 +2,42 @@
 
 ### `checkbox()`
 
-Constructor for a `Checkbox` builder. Takes a `State` (`Checked` / `Unchecked` / `Indeterminate`) or a plain `bool` via the `From<bool> for State` impl, so existing call sites like `checkbox(self.is_checked)` keep working.
+Constructor for an unchecked, uncontrolled `Checkbox`. Radix state: the value lives in the widget tree unless the app controls it.
 
 | Builder | Type | Default | Description |
 | --- | --- | --- | --- |
-| `.label(label)` | `impl IntoFragment` | `None` | Optional inline label rendered next to the box. Mirrors the label shadcn pairs `Checkbox` with — clicking the label toggles the checkbox via the embedded `toggle_target` semantic. |
-| `.on_toggle(callback)` | `Fn(bool) -> Message` | `None` | Toggle callback. Without this call the checkbox is disabled (matches iced's no-callback-means-disabled convention). |
-| `.on_toggle_maybe(callback)` | `Option<Fn(bool) -> Message>` | `None` | Conditional callback — `None` disables, `Some(f)` enables. |
+| `.default_checked(state)` | `impl Into<State>` | `Unchecked` | Initial state of an uncontrolled checkbox (shadcn `defaultChecked`). |
+| `.checked(state)` | `impl Into<State>` | uncontrolled | Control the checkbox: it always shows `state` (shadcn `checked`). |
+| `.on_checked_change(f)` | `Fn(bool) -> Message` | `None` | Receives the new checked state on every toggle, in either mode (shadcn `onCheckedChange`). |
+| `.disabled(bool)` | `bool` | `false` | Disable the checkbox. A disabled ancestor (a disabled field) disables it too. |
+| `.label(label)` | `impl IntoFragment` | `None` | Optional inline label rendered next to the box. |
 | `.width(width)` | `impl Into<Length>` | `Length::Shrink` | Outer width. |
-| `.style(style)` | `impl Into<checkbox::StyleFn>` | `theme::checkbox::Default` | Override the style — variant unit structs (`Default`, `Invalid`, `Disabled`) or a hand-rolled `Spec`. The focus ring (Tailwind `ring-*`) is preserved end-to-end via the vendored widget bridge. |
+| `.style(style)` | `impl Into<checkbox::StyleFn>` | `theme::checkbox::Default` | Variant unit structs (`Default`, `Invalid`, `Disabled`) or a hand-rolled `Spec`. The focus ring is preserved end-to-end via the vendored widget bridge. |
 
 ### `checkbox::State`
-
-Domain enum modelling the checked / unchecked / indeterminate triplet — promoted to a first-class type so `Indeterminate` lands without a sentinel-bool dance.
 
 | Variant | Description |
 | --- | --- |
 | `State::Checked` | Renders the check glyph. |
 | `State::Unchecked` | Renders an empty box. |
-| `State::Indeterminate` | Renders a horizontal stroke (the `MinusIcon` shape shadcn uses for indeterminate). Styled identically to `Checked` (both show the primary surface). |
+| `State::Indeterminate` | Renders a horizontal stroke. A click commits it to checked. |
 
-The `From<bool> for State` impl maps `true → Checked`, `false → Unchecked` so bool-shaped call sites flow through unchanged.
+`From<bool> for State` maps `true` to `Checked` and `false` to `Unchecked`.
+
+### Labels
+
+Inside `field(checkbox()).label("...")`, pressing the label toggles the checkbox, like `<FieldLabel htmlFor>`: the field runs the `activate` operation on its control. With `.card()` the whole card is the label, and its tint follows the checkbox.
 
 ### Validation
 
-Apply `theme::checkbox::Invalid` via `.style(...)` to land the destructive border + destructive focus ring (mirrors `aria-invalid` in shadcn). For the full Field-level cascade (label tinted destructive, etc.) wire `text::label("...").style(theme::text::Destructive)` at the call site — see `examples/browser/src/component/checkbox.rs::"invalid-state"`.
-
-### Disabled state
-
-Disabled state follows iced's convention: a checkbox with no `.on_toggle(...)` is disabled. Pair with `text::muted(label)` to approximate shadcn's `data-disabled:opacity-50` cascade on the FieldLabel (a color shift, not a true alpha overlay).
+Apply `theme::checkbox::Invalid` via `.style(...)` to land the destructive border + destructive focus ring (mirrors `aria-invalid` in shadcn).
 
 ### Mapping from shadcn
 
 | Shadcn prop | icedxdy equivalent |
 | --- | --- |
-| `Checkbox.checked` | constructor arg (`State::Checked` / `bool: true`). |
-| `Checkbox.defaultChecked` | initial value of the parent's `bool` state. |
-| `Checkbox.onCheckedChange` | `.on_toggle(callback)`. |
-| `Checkbox.disabled` | omit `.on_toggle(...)`. |
+| `Checkbox.defaultChecked` | `.default_checked(state)`. |
+| `Checkbox.checked` | `.checked(state)`. |
+| `Checkbox.onCheckedChange` | `.on_checked_change(f)`. |
+| `Checkbox.disabled` | `.disabled(true)`. |
 | `Checkbox.aria-invalid` | `.style(theme::checkbox::Invalid)`. |
-
-Identifier hooks live at the iced `Id` layer; restyling collapses into `.style(...)`. Shadcn's `Field`, `FieldLabel`, and `FieldDescription` sub-components compose with this widget via the `field(checkbox(...)).label(...).description(...)` builder.

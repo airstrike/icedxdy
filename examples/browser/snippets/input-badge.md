@@ -1,12 +1,11 @@
 ```rust
-use icedxdy::widget::{badge, field, input, row, space, text, Component};
+use icedxdy::widget::{badge, field, input, row, space, text, Slot};
 
 field(
-    input("https://api.example.com/webhook").value(&self.value)
-        .on_input(Message::Changed)
+    input("https://api.example.com/webhook")
         .width(Fill),
 )
-.label(Component::from(
+.label(Slot::from(
     row![
         text::label("Webhook URL"),
         space::horizontal(),

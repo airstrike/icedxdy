@@ -2,8 +2,7 @@
 use icedxdy::widget::{field, input};
 
 field(
-    input("Enter your username").value(&self.value)
-        .on_input(Message::Changed)
+    input("Enter your username")
         .width(Fill),
 )
 .label("Username")

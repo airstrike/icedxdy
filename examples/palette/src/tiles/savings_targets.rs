@@ -9,12 +9,12 @@ use icedxdy::widget::{button, column, container, field, input, item, progress, r
 use icedxdy::{Slot, Theme, Vertical, card};
 
 use super::{api_gap, select};
-use crate::{Message, State};
+use crate::Message;
 
 const ORDER_TYPES: &[&str] = &["Market Order", "Limit Order", "Stop Order"];
 
-pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    row![targets_card(), buy_card(state)]
+pub fn view() -> iced::Element<'static, Message, Theme> {
+    row![targets_card(), buy_card()]
         .spacing(40)
         .align_y(Center)
         .width(Fill)
@@ -52,15 +52,10 @@ fn targets_card() -> Slot<'static, Message> {
     .into()
 }
 
-fn buy_card(state: &State) -> Slot<'_, Message> {
-    let amount = field::field(
-        input("")
-            .value(&state.buy_investment_amount)
-            .on_input(Message::BuyInvestmentAmountChanged)
-            .width(Fill),
-    )
-    .label("Amount to Invest")
-    .width(Fill);
+fn buy_card() -> Slot<'static, Message> {
+    let amount = field::field(input("").default_value("$ 1,000.00").width(Fill))
+        .label("Amount to Invest")
+        .width(Fill);
 
     let order = field::field(select::trigger("Market Order", ORDER_TYPES))
         .label("Order Type")

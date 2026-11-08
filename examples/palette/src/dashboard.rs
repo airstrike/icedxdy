@@ -50,21 +50,21 @@ fn view_one(state: &State) -> iced::Element<'_, Message, Theme> {
         stack([
             payout_threshold::view(state),
             claimable_balance::view(state),
-            preferences::view(state),
+            preferences::view(),
             savings_progress::view(state),
             kitchen_island::view(state),
         ]),
         stack_width(
             WIDE_COLUMN_WIDTH,
             [
-                savings_targets::view(state),
+                savings_targets::view(),
                 recent_transactions::view(state),
                 nested_middle(state),
                 release_catalog::view(state),
             ]
         ),
         stack([
-            account_access::view(state),
+            account_access::view(),
             card_overview::view(state),
             transfer_funds::view(state),
             cover_art::view(state),
@@ -80,8 +80,8 @@ fn view_one(state: &State) -> iced::Element<'_, Message, Theme> {
         stack([
             stock_performance::view(state),
             empty_explore_catalog::view(state),
-            new_milestone::view(state),
-            social_links::view(state),
+            new_milestone::view(),
+            social_links::view(),
             notification_settings::view(state),
         ]),
     ]
@@ -116,11 +116,7 @@ fn view_two(state: &State) -> iced::Element<'_, Message, Theme> {
             showcase::controls_card(state),
             banner::view(state),
         ]),
-        stack([
-            env_vars::view(state),
-            chart::view(state),
-            invite_team::view(state),
-        ]),
+        stack([env_vars::view(), chart::view(state), invite_team::view(),]),
         stack([
             showcase::skeleton_card(),
             transactions::view(state),

@@ -72,41 +72,14 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/checkbox-api-reference.md"),
 ];
 
-// Stable field ids for `BoolChanged` dispatch — independent of block
-// position so reordering blocks doesn't break value routing.
-const F_BASIC: usize = 0;
-const F_DEMO_TERMS_1: usize = 1;
-const F_DEMO_TERMS_2: usize = 2;
-const F_DEMO_NOTIF_2: usize = 3;
-const F_DESC: usize = 4;
-const F_CHECKED_STATE: usize = 5;
-const F_INVALID_STATE: usize = 6;
-
 pub struct CheckboxPage {
     state: page::State,
-    basic: bool,
-    demo_terms_1: bool,
-    demo_terms_2: bool,
-    demo_notif_2: bool,
-    desc: bool,
-    checked_state: bool,
-    invalid_state: bool,
 }
 
 impl CheckboxPage {
     pub fn new(page_index: usize) -> Box<dyn page::Page> {
         Box::new(Self {
             state: page::State::new(page_index, BLOCKS),
-            basic: false,
-            // Demo-row 2 ships pre-checked (`defaultChecked` in shadcn).
-            demo_terms_1: false,
-            demo_terms_2: true,
-            demo_notif_2: false,
-            // Description ships pre-checked (`defaultChecked` in shadcn).
-            desc: true,
-            // Checked-state preamble ships pre-checked to show the filled state.
-            checked_state: true,
-            invalid_state: false,
         })
     }
 }
@@ -133,22 +106,7 @@ impl page::Page for CheckboxPage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        if let page::Message::BoolChanged(field, v) = event {
-            match field {
-                F_BASIC => self.basic = v,
-                F_DEMO_TERMS_1 => self.demo_terms_1 = v,
-                F_DEMO_TERMS_2 => self.demo_terms_2 = v,
-                F_DEMO_NOTIF_2 => self.demo_notif_2 = v,
-                F_DESC => self.desc = v,
-                F_CHECKED_STATE => self.checked_state = v,
-                F_INVALID_STATE => self.invalid_state = v,
-                _ => {}
-            }
-        }
-        Task::none()
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -156,55 +114,36 @@ impl page::Page for CheckboxPage {
     }
 
     fn preview(&self, id: &str) -> iced::Element<'_, Message, Theme> {
-        let pi = self.state.page_index;
-        let toggle = move |field: usize| {
-            move |b: bool| Message::Page(pi, page::Message::BoolChanged(field, b))
-        };
-
         let preview: iced::Element<'_, Message, Theme> = match id {
             // Demo (hero): 4 stacked horizontal Fields. Verbatim from
             // `.nova/apps/v4/examples/radix/checkbox-demo.tsx` — every row
             // uses horizontal Field orientation (row 4 wrapped in
             // FieldLabel-as-card, expressed via `.card(...)`).
             "demo" => {
-                let notif_2 = self.demo_notif_2;
                 column![
                     // Row 1: simple Field with Label.
-                    field(
-                        checkbox()
-                            .checked(self.demo_terms_1)
-                            .on_checked_change(toggle(F_DEMO_TERMS_1))
-                    )
-                    .orientation(field::Horizontal)
-                    .label("Accept terms and conditions"),
+                    field(checkbox())
+                        .orientation(field::Horizontal)
+                        .label("Accept terms and conditions"),
                     // Row 2: Field with FieldContent (label + description).
-                    field(
-                        checkbox()
-                            .checked(self.demo_terms_2)
-                            .on_checked_change(toggle(F_DEMO_TERMS_2))
-                    )
-                    .orientation(field::Horizontal)
-                    .label("Accept terms and conditions")
-                    .description("By clicking this checkbox, you agree to the terms."),
-                    // Row 3: disabled — no `.on_toggle(...)` resolves to
-                    // `Status::Disabled`. Label rendered muted to approximate
+                    field(checkbox().default_checked(true))
+                        .orientation(field::Horizontal)
+                        .label("Accept terms and conditions")
+                        .description("By clicking this checkbox, you agree to the terms."),
+                    // Row 3: disabled. Label rendered muted to approximate
                     // shadcn's `data-disabled:opacity-50` cascade on the
                     // FieldLabel (color shift, not a true alpha overlay).
-                    field(checkbox().checked(false).disabled(true))
+                    field(checkbox().disabled(true))
                         .orientation(field::Horizontal)
                         .label(text::muted("Enable notifications")),
                     // Row 4: FieldLabel-as-card — bordered + padded card,
                     // primary tint while checked; pressing anywhere on it
                     // toggles the checkbox.
-                    field(
-                        checkbox()
-                            .checked(notif_2)
-                            .on_checked_change(toggle(F_DEMO_NOTIF_2))
-                    )
-                    .orientation(field::Horizontal)
-                    .label("Enable notifications")
-                    .description("You can enable or disable notifications at any time.")
-                    .card(),
+                    field(checkbox())
+                        .orientation(field::Horizontal)
+                        .label("Enable notifications")
+                        .description("You can enable or disable notifications at any time.")
+                        .card(),
                 ]
                 .spacing(20)
                 // nova uses `max-w-sm` (max-width 384px, not fixed). iced
@@ -216,62 +155,45 @@ impl page::Page for CheckboxPage {
 
             // Checked State preamble: interactive checkbox pre-checked to
             // show the primary-filled state. Width 224 matches `w-56`.
-            "checked-state" => field(
-                checkbox()
-                    .checked(self.checked_state)
-                    .on_checked_change(toggle(F_CHECKED_STATE)),
-            )
-            .orientation(field::Horizontal)
-            .label("Accept terms and conditions")
-            .width(224)
-            .into(),
+            "checked-state" => field(checkbox().default_checked(true))
+                .orientation(field::Horizontal)
+                .label("Accept terms and conditions")
+                .width(224)
+                .into(),
 
             // Invalid State preamble: destructive border via
             // `theme::checkbox::Invalid`; label tinted destructive to mirror
             // shadcn's `data-invalid:text-destructive` cascade on FieldLabel.
-            "invalid-state" => field(
-                checkbox()
-                    .checked(self.invalid_state)
-                    .on_checked_change(toggle(F_INVALID_STATE))
-                    .style(theme::checkbox::Invalid),
-            )
-            .orientation(field::Horizontal)
-            .label(text::label("Accept terms and conditions").style(theme::text::Destructive))
-            .width(224)
-            .into(),
+            "invalid-state" => field(checkbox().style(theme::checkbox::Invalid))
+                .orientation(field::Horizontal)
+                .label(text::label("Accept terms and conditions").style(theme::text::Destructive))
+                .width(224)
+                .into(),
 
             // Basic: single Field with Label. Width 224 matches `w-56`.
-            "basic" => field(
-                checkbox()
-                    .checked(self.basic)
-                    .on_checked_change(toggle(F_BASIC)),
-            )
-            .orientation(field::Horizontal)
-            .label("Accept terms and conditions")
-            .width(224)
-            .into(),
+            "basic" => field(checkbox())
+                .orientation(field::Horizontal)
+                .label("Accept terms and conditions")
+                .width(224)
+                .into(),
 
             // Description: pre-checked Field with FieldContent (label +
             // description). Width 288 matches `w-72`. Field's horizontal mode
             // top-aligns automatically when description is present (mirroring
             // shadcn's `has-[>[data-slot=field-content]]:items-start`).
-            "description" => field(
-                checkbox()
-                    .checked(self.desc)
-                    .on_checked_change(toggle(F_DESC)),
-            )
-            .orientation(field::Horizontal)
-            .label("Accept terms and conditions")
-            .description("By clicking this checkbox, you agree to the terms and conditions.")
-            .width(288)
-            .into(),
+            "description" => field(checkbox().default_checked(true))
+                .orientation(field::Horizontal)
+                .label("Accept terms and conditions")
+                .description("By clicking this checkbox, you agree to the terms and conditions.")
+                .width(288)
+                .into(),
 
-            // Disabled: no `.on_toggle(...)` resolves to `Status::Disabled` on
-            // the checkbox. Label uses `text::muted` to approximate shadcn's
+            // Disabled: `.disabled(true)` paints `Status::Disabled` on the
+            // checkbox. Label uses `text::muted` to approximate shadcn's
             // `data-disabled:opacity-50` cascade — a color shift rather than a
             // true alpha overlay (real Field-level data-disabled propagation
             // is deferred until the cascade infra lands).
-            "disabled" => field(checkbox().checked(false).disabled(true))
+            "disabled" => field(checkbox().disabled(true))
                 .orientation(field::Horizontal)
                 .label(text::muted("Enable notifications"))
                 .width(224)

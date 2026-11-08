@@ -7,35 +7,20 @@ use iced::Widget;
 use icedxdy::widget::{button, column, field, input, row};
 use icedxdy::{Theme, card};
 
-use crate::{Message, State};
+use crate::Message;
 
-pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    let goal = field::field(
-        input("e.g. New Car, Home Downpayment")
-            .value(&state.new_milestone_goal)
-            .on_input(Message::NewMilestoneGoalChanged)
-            .width(Fill),
-    )
-    .label("Goal Name")
-    .width(Fill);
+pub fn view() -> iced::Element<'static, Message, Theme> {
+    let goal = field::field(input("e.g. New Car, Home Downpayment").width(Fill))
+        .label("Goal Name")
+        .width(Fill);
 
-    let amount = field::field(
-        input("")
-            .value(&state.new_milestone_amount)
-            .on_input(Message::NewMilestoneAmountChanged)
-            .width(Fill),
-    )
-    .label("Target Amount")
-    .width(Fill);
+    let amount = field::field(input("").default_value("$15,000").width(Fill))
+        .label("Target Amount")
+        .width(Fill);
 
-    let date = field::field(
-        input("")
-            .value(&state.new_milestone_date)
-            .on_input(Message::NewMilestoneDateChanged)
-            .width(Fill),
-    )
-    .label("Target Date")
-    .width(Fill);
+    let date = field::field(input("").default_value("Dec 2025").width(Fill))
+        .label("Target Date")
+        .width(Fill);
 
     card::card(
         column![

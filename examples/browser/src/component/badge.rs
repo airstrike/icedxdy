@@ -61,11 +61,6 @@ pub static BLOCKS: &[page::Block] = &[
     page::Block::Md("examples/browser/snippets/badge-api-reference.md"),
 ];
 
-#[derive(Debug, Clone)]
-pub enum Message {
-    Pressed,
-}
-
 pub struct BadgePage {
     state: page::State,
 }
@@ -78,7 +73,7 @@ impl BadgePage {
     }
 }
 
-fn view(id: &str) -> Slot<'static, Message> {
+fn view(id: &str) -> Slot<'static, page::Message> {
     match id {
         // Demo (hero): 4 variants in a row, verbatim shadcn `badge-demo.tsx`.
         "demo" => row![
@@ -111,11 +106,11 @@ fn view(id: &str) -> Slot<'static, Message> {
         ]
         .spacing(8)
         .into(),
-        "link" => {
-            row![badge!["Open Link", icon::arrow_up_right().size(12)].on_press(Message::Pressed),]
-                .spacing(8)
-                .into()
-        }
+        "link" => row![
+            badge!["Open Link", icon::arrow_up_right().size(12)].on_press(page::Message::Noop),
+        ]
+        .spacing(8)
+        .into(),
         _ => unreachable!("unknown badge preview id: {id}"),
     }
 }
@@ -142,10 +137,7 @@ impl page::Page for BadgePage {
     }
 
     fn update(&mut self, event: page::Message) -> Task<crate::Message> {
-        if let Some(task) = self.state.update(&event) {
-            return task;
-        }
-        Task::none()
+        self.state.update(&event)
     }
 
     fn reset_volatile(&mut self) {
@@ -155,7 +147,7 @@ impl page::Page for BadgePage {
     fn preview(&self, id: &str) -> iced::Element<'_, crate::Message, Theme> {
         let pi = self.state.page_index;
         view(id)
-            .map(move |_| crate::Message::Page(pi, page::Message::Noop))
+            .map(move |message| crate::Message::Page(pi, message))
             .into()
     }
 }

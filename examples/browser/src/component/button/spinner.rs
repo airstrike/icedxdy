@@ -1,7 +1,7 @@
 use icedxdy::Slot;
 use icedxdy::widget::{button, row, spinner};
 
-use super::Message;
+use crate::Message;
 
 pub fn view<'a>() -> Slot<'a, Message> {
     row![

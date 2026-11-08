@@ -1,7 +1,7 @@
 use icedxdy::Slot;
 use icedxdy::widget::alert;
 
-use super::Message;
+use crate::Message;
 use crate::icon;
 
 pub fn view<'a>() -> Slot<'a, Message> {

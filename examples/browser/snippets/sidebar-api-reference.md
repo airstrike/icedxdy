@@ -24,8 +24,8 @@ These return a stock `iced_widget::Container`, so all the standard container bui
 | `sidebar::group_content(content)` | `Container` | Inner container for a group's items. Mirrors shadcn's `SidebarGroupContent`. |
 | `sidebar::separator()` | `Container` | 1px horizontal divider scoped to the sidebar palette. Mirrors shadcn's `SidebarSeparator`. |
 | `sidebar::menu(items)` | `Column` | Vertical list of menu items at consistent spacing. Mirrors shadcn's `SidebarMenu`. |
-| `sidebar::menu_item(content)` | `Component` | Wraps a single menu row (typically a `menu_button`). Mirrors shadcn's `SidebarMenuItem`. |
-| `sidebar::input(...)` | `Component` | Inline search box scoped to the sidebar palette. Mirrors shadcn's `SidebarInput`. |
+| `sidebar::menu_item(content)` | `Slot` | Wraps a single menu row (typically a `menu_button`). Mirrors shadcn's `SidebarMenuItem`. |
+| `sidebar::input(...)` | `Slot` | Inline search box scoped to the sidebar palette. Mirrors shadcn's `SidebarInput`. |
 
 ### `sidebar::menu_button()`
 
@@ -44,31 +44,30 @@ The interactive sidebar menu item — NOT our `Button`. Uses the raw button widg
 | Constructor | Returns | Description |
 | --- | --- | --- |
 | `sidebar::submenu(items)` | `Column` | Indented sub-list under a `menu_item`. Mirrors shadcn's `SidebarMenuSub`. |
-| `sidebar::submenu_item(content)` | `Component` | One row inside a submenu. Mirrors shadcn's `SidebarMenuSubItem`. |
+| `sidebar::submenu_item(content)` | `Slot` | One row inside a submenu. Mirrors shadcn's `SidebarMenuSubItem`. |
 | `sidebar::submenu_button(content)` | `SidebarMenuButton` | Smaller variant of `menu_button` for submenu rows. Mirrors shadcn's `SidebarMenuSubButton`. |
 | `sidebar::menu_action(content)` | `SidebarMenuAction` | Trailing action chip (typically a small icon button) on a menu row. Mirrors shadcn's `SidebarMenuAction`. |
-| `sidebar::menu_badge(content)` | `Component` | Trailing badge (count, status indicator) on a menu row. Mirrors shadcn's `SidebarMenuBadge`. |
+| `sidebar::menu_badge(content)` | `Slot` | Trailing badge (count, status indicator) on a menu row. Mirrors shadcn's `SidebarMenuBadge`. |
 | `sidebar::menu_skeleton()` | `Container` | Loading placeholder for a menu row. Mirrors shadcn's `SidebarMenuSkeleton`. |
 
 ### Layout helpers
 
 | Constructor | Returns | Description |
 | --- | --- | --- |
-| `sidebar::trigger(on_press)` | `SidebarTrigger` | Collapse / expand toggle button (icon-only). Mirrors shadcn's `SidebarTrigger`. |
+| `sidebar::trigger()` | `Slot` | Collapse / expand toggle button (icon-only). Toggles the enclosing `sidebar::provider` from anywhere inside it. Mirrors shadcn's `SidebarTrigger`. |
 | `sidebar::rail(on_press)` | `SidebarRail` | Edge-grab handle for resize / toggle. Mirrors shadcn's `SidebarRail`. |
 | `sidebar::main(content)` | `Container` | The main content area paired with a fixed/floating sidebar. Mirrors shadcn's `SidebarInset` for the flush variants. |
 | `sidebar::main_styled(content)` | `Container` | The main content area paired with `sidebar::inset` — carries the rounded/border/shadow chrome that the inset sidebar drops. |
 
-### State
+### `sidebar::provider(body)`
 
-| Type / const | Description |
-| --- | --- |
-| `sidebar::State` | `{ open: bool, side: Side, collapsible: Collapsible }`. Caller-owned. `.toggle()`, `.is_collapsed()`, `.width()` helpers. |
-| `sidebar::Side` | `Left` / `Right`. Drives the chevron direction and the trigger orientation. |
-| `sidebar::Collapsible` | `Offcanvas` (default — fully hides), `Icon` (collapses to `WIDTH_ICON`), `None`. |
-| `sidebar::WIDTH` | `256.0` — default expanded width. |
-| `sidebar::WIDTH_MOBILE` | `288.0` — mobile expanded width. |
-| `sidebar::WIDTH_ICON` | `48.0` — collapsed icon-only width. |
-| `sidebar::RAIL_WIDTH` | Width of the edge-grab `rail`. |
+An iced `Component` around the whole layout that owns whether the sidebar is open, like `SidebarProvider`. `body` receives a `sidebar::Handle`; `s.sidebar(content)` sizes the sidebar for the current state. Any `sidebar::trigger()` inside, and `Cmd+B` (`Ctrl+B`), toggle it.
 
-Shadcn's `SidebarProvider` context and `useSidebar` hook collapse into caller-owned `sidebar::State` in iced — thread the open/collapsed bool down through the view function rather than reaching for a context. Restyle via `core::theme::sidebar::*` style functions or compose your own surface helper.
+| Builder | Type | Default | Description |
+| --- | --- | --- | --- |
+| `.default_open(bool)` | `bool` | `true` | Whether an uncontrolled sidebar starts open. |
+| `.open(bool)` | `bool` | uncontrolled | Control the sidebar (shadcn `open`). |
+| `.on_open_change(f)` | `Fn(bool) -> Message` | `None` | Receives the new open state (shadcn `onOpenChange`). |
+| `.collapsible(mode)` | `sidebar::Collapsible` | `Offcanvas` | `Offcanvas` hides it, `Icon` shrinks it to `WIDTH_ICON`, `None` never collapses. |
+
+`sidebar::Side` (`Left` / `Right`) and the `WIDTH`, `WIDTH_ICON`, `WIDTH_MOBILE` constants describe the geometry. Restyle via `core::theme::sidebar::*` style functions or compose your own surface helper.

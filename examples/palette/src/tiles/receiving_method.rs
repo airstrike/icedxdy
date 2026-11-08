@@ -11,14 +11,9 @@ use super::api_gap;
 use crate::{Message, ReceivingMethod, State};
 
 pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
-    let account = field::field(
-        input("")
-            .value(&state.receiving_account_holder)
-            .on_input(Message::ReceivingAccountHolderChanged)
-            .width(Fill),
-    )
-    .label("Account Holder Name")
-    .width(Fill);
+    let account = field::field(input("").default_value("Morgan Shah").width(Fill))
+        .label("Account Holder Name")
+        .width(Fill);
 
     let options = column![
         method_card(
@@ -34,8 +29,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
 
     let routing = field::field(
         input("")
-            .value(&state.receiving_routing)
-            .on_input(Message::ReceivingRoutingChanged)
+            .default_value("DE89 3704 0044 0532 0130 00")
             .width(Fill),
     )
     .label("IBAN / Account Number")

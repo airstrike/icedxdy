@@ -3,8 +3,7 @@ use icedxdy::theme;
 use icedxdy::widget::{field, input};
 
 field(
-    input("you@example.com").value(&self.value)
-        .on_input(Message::Changed)
+    input("you@example.com")
         .width(Fill)
         .style(theme::text_input::Invalid),
 )
