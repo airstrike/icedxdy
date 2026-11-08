@@ -13,6 +13,7 @@ pub mod dialog;
 pub mod empty;
 pub mod field;
 pub mod input;
+pub mod item;
 pub mod kbd;
 pub mod pagination;
 pub mod progress;
