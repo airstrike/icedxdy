@@ -17,6 +17,7 @@ pub mod progress;
 pub mod separator;
 pub mod sheet;
 pub mod sidebar;
+pub mod skeleton;
 pub mod switch;
 pub mod tabs;
 pub mod text;

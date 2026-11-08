@@ -1,7 +1,8 @@
 //! Skeleton loading placeholder.
 //!
 //! Mirrors shadcn's `<Skeleton>` primitive: a rounded muted block whose
-//! dimensions are supplied by the call site.
+//! dimensions are supplied by the call site. shadcn's `animate-pulse` is not
+//! ported; the block is static.
 
 use std::marker::PhantomData;
 
@@ -14,6 +15,7 @@ use icedxdy_core::{Border, Radius, Theme, radius};
 use crate::compose::{Compose, Slot};
 use crate::space;
 
+/// A muted placeholder block.
 pub struct Skeleton<'a, Message> {
     width: Length,
     height: Length,
@@ -21,6 +23,8 @@ pub struct Skeleton<'a, Message> {
     _marker: PhantomData<&'a Message>,
 }
 
+/// Create a [`Skeleton`] with `rounded-md` corners and no size; set one
+/// with [`width`](Skeleton::width) and [`height`](Skeleton::height).
 pub fn skeleton<'a, Message: 'a>() -> Skeleton<'a, Message> {
     Skeleton {
         width: Shrink,
@@ -31,16 +35,19 @@ pub fn skeleton<'a, Message: 'a>() -> Skeleton<'a, Message> {
 }
 
 impl<'a, Message: 'a> Skeleton<'a, Message> {
+    /// Set the width.
     pub fn width(mut self, width: impl Into<Length>) -> Self {
         self.width = width.into();
         self
     }
 
+    /// Set the height.
     pub fn height(mut self, height: impl Into<Length>) -> Self {
         self.height = height.into();
         self
     }
 
+    /// Set the corner radius (`u32::MAX as f32` for `rounded-full`).
     pub fn radius(mut self, radius: impl Into<Radius>) -> Self {
         self.radius = radius.into();
         self
