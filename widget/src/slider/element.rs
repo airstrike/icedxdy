@@ -17,15 +17,25 @@ fn from_core(
             color: theme.neutral.ring.alpha(0.5).into(),
             width: 3.0,
         }),
-        widget::Status::Active => None,
+        widget::Status::Active | widget::Status::Disabled => None,
     };
+
+    if status == widget::Status::Disabled {
+        // `data-disabled:opacity-50` on the whole slider.
+        style.rail.backgrounds = (
+            style.rail.backgrounds.0.scale_alpha(0.5),
+            style.rail.backgrounds.1.scale_alpha(0.5),
+        );
+        style.handle.background = style.handle.background.scale_alpha(0.5);
+        style.handle.border_color.a *= 0.5;
+    }
 
     style
 }
 
 fn default(theme: &Theme, status: widget::Status) -> widget::Style {
     let iced_status = match status {
-        widget::Status::Active => slider::Status::Active,
+        widget::Status::Active | widget::Status::Disabled => slider::Status::Active,
         widget::Status::Hovered => slider::Status::Hovered,
         widget::Status::Dragged => slider::Status::Dragged,
     };

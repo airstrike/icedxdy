@@ -7,6 +7,9 @@
 //! use icedxdy::widget::radio;
 //!
 //! radio("Card", Method::Card, Some(self.method), Message::Method)
+//!
+//! // Shown, but cannot be chosen.
+//! radio("Wire", Method::Wire, Some(self.method), Message::Method).disabled(true)
 //! ```
 
 mod widget;
@@ -15,17 +18,21 @@ use iced_core::Pixels;
 use iced_widget::{Renderer, Widget};
 use icedxdy_core::Theme;
 
-use crate::compose::{Compose, Slot};
+use icedxdy_core::theme::radio;
+
+use crate::compose::{Compose, Inherited, Slot};
 
 /// A radio button bound to one value of a set.
 ///
 /// Controlled only: it shows the app's `selected` value and publishes the
 /// message for its own value when chosen, by a click or through a linked
-/// label.
+/// label. It is enabled unless [`disabled`](Self::disabled) or a disabled
+/// ancestor says otherwise.
 pub struct Radio<'a, Message> {
     radio: iced_widget::Radio<'a, Message, Theme>,
     message: Message,
     is_selected: bool,
+    disabled: bool,
 }
 
 /// Create a [`Radio`] for `value`, selected when `selected` holds it.
@@ -43,6 +50,7 @@ where
         radio: iced_widget::radio(label, value, selected, &on_click),
         message: on_click(value),
         is_selected: selected == Some(value),
+        disabled: false,
     }
 }
 
@@ -59,6 +67,13 @@ impl<'a, Message: Clone + 'a> Radio<'a, Message> {
         self
     }
 
+    /// Disable the radio: it keeps showing its selection, cannot be chosen
+    /// and dims to half opacity.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
     /// Set the label's text size.
     pub fn text_size(mut self, text_size: impl Into<Pixels>) -> Self {
         self.radio = self.radio.text_size(text_size);
@@ -70,7 +85,15 @@ impl<'a, Message: Clone + 'a> From<Radio<'a, Message>>
     for iced_core::Element<'a, Message, Theme, Renderer>
 {
     fn from(radio: Radio<'a, Message>) -> Self {
-        widget::Radio::new(radio.radio.boxed(), radio.message, radio.is_selected).boxed()
+        let content = if radio.disabled {
+            radio.radio.style(radio::disabled)
+        } else {
+            radio.radio
+        };
+
+        widget::Radio::new(content.boxed(), radio.message, radio.is_selected)
+            .disabled(radio.disabled)
+            .boxed()
     }
 }
 
@@ -81,6 +104,10 @@ impl<'a, Message: Clone + 'a> From<Radio<'a, Message>> for Slot<'a, Message> {
 }
 
 impl<'a, Message: Clone + 'a> Compose<Message> for Radio<'a, Message> {
+    fn inherit(&mut self, from: &Inherited) {
+        self.disabled |= from.is_disabled();
+    }
+
     fn compose<'b>(self: Box<Self>) -> iced_core::Element<'b, Message, Theme, Renderer>
     where
         Self: 'b,

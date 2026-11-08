@@ -11,8 +11,10 @@ use iced_test::simulator::{self, simulator};
 use iced_widget::{Renderer, Space};
 use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
+use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
-    Slot, button, checkbox, collapsible, column, dialog, field, row, sidebar, switch, tabs,
+    Inherited, Slot, button, checkbox, collapsible, column, dialog, field, row, sidebar, slider,
+    switch, tabs,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -25,6 +27,8 @@ enum Message {
     Inner,
     Panel(&'static str),
     Tab(String),
+    Chose(u8),
+    Value(f32),
 }
 
 /// A fixed-size stand-in for a label or button content.
@@ -111,6 +115,56 @@ fn a_disabled_checkbox_ignores_its_label() {
     click(&mut ui, 10.0, 10.0);
 
     assert_eq!(is_checked(&mut ui), Some(false));
+    assert_eq!(ui.into_messages().count(), 0);
+}
+
+#[test]
+fn a_field_label_chooses_its_radio() {
+    let mut ui = simulator(labelled(radio("", 1, None, Message::Chose)));
+
+    click(&mut ui, 10.0, 10.0);
+
+    assert_eq!(ui.into_messages().collect::<Vec<_>>(), [Message::Chose(1)]);
+}
+
+#[test]
+fn a_radio_under_a_disabled_ancestor_ignores_its_label() {
+    let mut control = Slot::from(radio("", 1, None, Message::Chose));
+    control.inherit(&Inherited::default().with_disabled(true));
+    let mut ui = simulator(labelled(control));
+
+    click(&mut ui, 10.0, 10.0);
+
+    assert_eq!(ui.into_messages().count(), 0);
+}
+
+#[test]
+fn a_slider_publishes_where_it_is_pressed() {
+    let mut ui = simulator(
+        slider(0.0..=100.0)
+            .width(100.0)
+            .on_value_change(Message::Value),
+    );
+
+    click(&mut ui, 50.0, 8.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Value(50.0)]
+    );
+}
+
+#[test]
+fn a_disabled_slider_ignores_presses() {
+    let mut ui = simulator(
+        slider(0.0..=100.0)
+            .width(100.0)
+            .disabled(true)
+            .on_value_change(Message::Value),
+    );
+
+    click(&mut ui, 50.0, 8.0);
+
     assert_eq!(ui.into_messages().count(), 0);
 }
 

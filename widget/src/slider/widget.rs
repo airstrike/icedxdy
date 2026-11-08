@@ -105,6 +105,7 @@ where
     height: f32,
     class: Theme::Class<'a>,
     status: Option<Status>,
+    pub(crate) is_disabled: bool,
 }
 
 impl<'a, T, Message, Theme> Slider<'a, T, Message, Theme>
@@ -132,6 +133,7 @@ where
             height: Self::DEFAULT_HEIGHT,
             class: Theme::default(),
             status: None,
+            is_disabled: false,
         }
     }
 
@@ -156,6 +158,13 @@ where
     /// is dragged.
     pub fn on_value_change(mut self, on_change: impl Fn(T) -> Message + 'a) -> Self {
         self.on_change = Some(Box::new(on_change));
+        self
+    }
+
+    /// Sets whether the [`Slider`] is disabled: it keeps showing its value,
+    /// ignores input and dims to half opacity.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.is_disabled = disabled;
         self
     }
 
@@ -281,6 +290,10 @@ where
         _viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_mut::<State>();
+
+        if self.is_disabled {
+            state.is_dragging = false;
+        }
 
         let mut update = || {
             let current_value = self.value;
@@ -428,13 +441,17 @@ where
             }
         };
 
-        update();
+        if !self.is_disabled {
+            update();
+        }
 
         if !self.is_controlled {
             state.uncontrolled = Some(self.value.as_());
         }
 
-        let current_status = if state.is_dragging {
+        let current_status = if self.is_disabled {
+            Status::Disabled
+        } else if state.is_dragging {
             Status::Dragged
         } else if cursor.is_over(layout.bounds()) {
             Status::Hovered
@@ -597,12 +614,16 @@ where
     fn mouse_interaction(
         &self,
         _tree: &Tree,
-        _layout: Layout,
-        _cursor: mouse::Cursor,
+        layout: Layout,
+        cursor: mouse::Cursor,
         _viewport: &Rectangle,
         _renderer: &Renderer,
     ) -> mouse::Interaction {
-        mouse::Interaction::default()
+        if self.is_disabled && cursor.is_over(layout.bounds()) {
+            mouse::Interaction::NotAllowed
+        } else {
+            mouse::Interaction::default()
+        }
     }
 }
 
@@ -640,6 +661,8 @@ pub enum Status {
     Hovered,
     /// The [`Slider`] is being dragged.
     Dragged,
+    /// The [`Slider`] cannot be interacted with.
+    Disabled,
 }
 
 /// The appearance of a slider.
@@ -802,6 +825,7 @@ impl From<Status> for slider::Status {
             Status::Active => slider::Status::Active,
             Status::Hovered => slider::Status::Hovered,
             Status::Dragged => slider::Status::Dragged,
+            Status::Disabled => slider::Status::Active,
         }
     }
 }
@@ -811,7 +835,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
     let palette = theme.palette();
 
     let color = match status {
-        Status::Active => palette.primary.base.color,
+        Status::Active | Status::Disabled => palette.primary.base.color,
         Status::Hovered => palette.primary.strong.color,
         Status::Dragged => palette.primary.weak.color,
     };

@@ -11,11 +11,13 @@ use crate::core::widget::{Meta, Operation};
 use crate::core::{Element, Event, Layout, Length, Rectangle, Shell, Size, Vector, Widget};
 use crate::operation::control::Control;
 
-/// Wraps a radio button and publishes its message when activated.
+/// Wraps a radio button and publishes its message when activated. A
+/// disabled radio keeps its events from the button and ignores activation.
 pub struct Radio<'a, Message, Theme, Renderer> {
     content: Element<'a, Message, Theme, Renderer>,
     message: Message,
     is_selected: bool,
+    is_disabled: bool,
 }
 
 impl<'a, Message, Theme, Renderer> Radio<'a, Message, Theme, Renderer> {
@@ -29,7 +31,14 @@ impl<'a, Message, Theme, Renderer> Radio<'a, Message, Theme, Renderer> {
             content,
             message,
             is_selected,
+            is_disabled: false,
         }
+    }
+
+    /// Sets whether the radio can be chosen.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.is_disabled = disabled;
+        self
     }
 }
 
@@ -75,8 +84,12 @@ where
         shell: &mut Shell<'_, Message>,
         viewport: &Rectangle,
     ) {
-        if tree.state.downcast_mut::<State>().control.take_activation() {
+        if tree.state.downcast_mut::<State>().control.take_activation() && !self.is_disabled {
             shell.publish(self.message.clone());
+        }
+
+        if self.is_disabled {
+            return;
         }
 
         let (child_layout, child_tree) = layout
@@ -129,6 +142,14 @@ where
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
+        if self.is_disabled {
+            return if cursor.is_over(layout.bounds()) {
+                mouse::Interaction::NotAllowed
+            } else {
+                mouse::Interaction::default()
+            };
+        }
+
         let (child_layout, child_tree) = layout
             .iter(&tree.children)
             .next()

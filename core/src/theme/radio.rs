@@ -75,3 +75,15 @@ pub fn default(theme: &Theme, status: Status) -> iced_widget::radio::Style {
         text_color: None,
     }
 }
+
+/// Disabled radio: the [`default`] look at `disabled:opacity-50`, with the
+/// label in `muted-foreground` like a disabled checkbox or switch.
+pub fn disabled(theme: &Theme, status: Status) -> iced_widget::radio::Style {
+    let mut style = default(theme, status);
+
+    style.background = style.background.scale_alpha(0.5);
+    style.dot_color.a *= 0.5;
+    style.border_color.a *= 0.5;
+    style.text_color = Some(theme.muted.foreground.into());
+    style
+}

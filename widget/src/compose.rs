@@ -291,6 +291,10 @@ where
     T: Copy + num_traits::AsPrimitive<f64> + num_traits::FromPrimitive + 'a,
     Message: Clone + 'a,
 {
+    fn inherit(&mut self, from: &Inherited) {
+        self.is_disabled |= from.is_disabled();
+    }
+
     fn compose<'b>(self: Box<Self>) -> El<'b, Message>
     where
         Self: 'b,
