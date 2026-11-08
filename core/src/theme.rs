@@ -17,6 +17,7 @@ pub mod dialog;
 pub mod empty;
 pub mod field;
 pub mod float;
+pub mod input_group;
 pub mod item;
 pub mod kbd;
 #[cfg(feature = "markdown")]

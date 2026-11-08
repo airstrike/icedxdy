@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 091f07314c3f8e44ac0c290beedd947068d1707d0967bb6544067eafb299eedb
+// e9c5c6db91cd619cf0085e9d821524b13fa677cc4f6a111472845e642e7edca2
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -26,6 +26,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("circle_check", "\u{E226}"),
     ("circle_check_big", "\u{E07C}"),
     ("copy", "\u{E09E}"),
+    ("credit_card", "\u{E0AA}"),
     ("ellipsis", "\u{E0B6}"),
     ("file", "\u{E0C0}"),
     ("folder", "\u{E0D7}"),
@@ -34,11 +35,14 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("inbox", "\u{E0F7}"),
     ("info", "\u{E0F9}"),
     ("italic", "\u{E0FB}"),
+    ("mail", "\u{E10F}"),
     ("minus", "\u{E11C}"),
     ("moon", "\u{E11E}"),
     ("plus", "\u{E13D}"),
     ("save", "\u{E14D}"),
+    ("search", "\u{E151}"),
     ("shield_alert", "\u{E1FE}"),
+    ("star", "\u{E176}"),
     ("sun", "\u{E178}"),
     ("terminal", "\u{E181}"),
     ("underline", "\u{E19A}"),
@@ -164,6 +168,13 @@ where
     icon("\u{E09E}")
 }
 
+pub fn credit_card<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E0AA}")
+}
+
 pub fn ellipsis<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -220,6 +231,13 @@ where
     icon("\u{E0FB}")
 }
 
+pub fn mail<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E10F}")
+}
+
 pub fn minus<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -248,11 +266,25 @@ where
     icon("\u{E14D}")
 }
 
+pub fn search<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E151}")
+}
+
 pub fn shield_alert<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E1FE}")
+}
+
+pub fn star<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E176}")
 }
 
 pub fn sun<'a, Theme>() -> Text<'a, Theme>

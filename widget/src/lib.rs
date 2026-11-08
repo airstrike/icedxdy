@@ -17,6 +17,7 @@ pub mod dialog;
 pub mod empty;
 pub mod field;
 pub mod input;
+pub mod input_group;
 pub mod item;
 pub mod kbd;
 #[cfg(feature = "markdown")]
@@ -69,6 +70,7 @@ pub use dialog::Dialog;
 pub use empty::Empty;
 pub use field::Field;
 pub use input::Input;
+pub use input_group::InputGroup;
 pub use item::{Item, Media};
 pub use kbd::Kbd;
 pub use native_select::NativeSelect;
@@ -252,6 +254,13 @@ pub fn native_select<'a, Message>(
 /// Create an empty, uncontrolled [`Textarea`] showing `placeholder`.
 pub fn textarea<'a, Message>(placeholder: impl Into<String>) -> Textarea<'a, Message> {
     textarea::textarea(placeholder)
+}
+
+/// Create an [`InputGroup`] around `control`, an Input or a Textarea.
+pub fn input_group<'a, Message>(
+    control: impl Into<input_group::Control<'a, Message>>,
+) -> InputGroup<'a, Message> {
+    input_group::input_group(control)
 }
 
 /// Create an [`Alert`].
