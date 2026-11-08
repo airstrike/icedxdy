@@ -234,9 +234,11 @@ where
                         Size::new(width, window.height),
                     )
                 }
+                // `h-auto`, at most half the window (shadcn's sheet-side
+                // example caps top and bottom sheets at `max-h-[50vh]`).
                 Placement::Side(Side::Top | Side::Bottom) => layout::Limits::new(
                     Size::new(window.width, 0.0),
-                    Size::new(window.width, window.height),
+                    Size::new(window.width, window.height / 2.0),
                 ),
             };
 

@@ -326,10 +326,15 @@ impl<'a, Message: Clone + 'static> Component<'a, Message, Theme, Renderer> for D
                 Placement::Center { .. } => {
                     Container::new(content).width(Fill).style(dialog::content)
                 }
-                Placement::Side(_) => Container::new(content)
+                // A left or right sheet spans the window's height; a top or
+                // bottom one takes its content's (`h-auto`).
+                Placement::Side(Side::Left | Side::Right) => Container::new(content)
                     .width(Fill)
                     .height(Fill)
                     .style(dialog::sheet),
+                Placement::Side(Side::Top | Side::Bottom) => {
+                    Container::new(content).width(Fill).style(dialog::sheet)
+                }
             };
 
             Slot::from(panel).compose().map(Event::App).boxed()
