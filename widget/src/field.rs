@@ -35,7 +35,8 @@
 //!
 //! Like shadcn's `<FieldLabel htmlFor>`, pressing the label activates the
 //! field's control through the [`control`](crate::operation::control)
-//! operations: a checkbox, switch or radio toggles, an input takes focus.
+//! operations: a checkbox, switch, radio or toggle toggles, an input takes
+//! focus.
 //!
 //! # Slot order — Vertical (default)
 //!

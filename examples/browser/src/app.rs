@@ -89,9 +89,9 @@ impl App {
 
         use component::{
             accordion, alert, aspect_ratio, avatar, badge, breadcrumb, button, button_group, card,
-            checkbox, collapsible, dialog, empty, field, input, item, kbd, pagination, progress,
-            separator, sheet, sidebar, skeleton, slider, spinner, switch, table, tabs, text,
-            toggle, tooltip,
+            checkbox, collapsible, dialog, empty, field, input, item, kbd, label, pagination,
+            progress, separator, sheet, sidebar, skeleton, slider, spinner, switch, table, tabs,
+            text, toggle, tooltip,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
@@ -112,6 +112,7 @@ impl App {
             input::InputPage::new,
             item::ItemPage::new,
             kbd::KbdPage::new,
+            label::LabelPage::new,
             pagination::PaginationPage::new,
             progress::ProgressPage::new,
             separator::SeparatorPage::new,

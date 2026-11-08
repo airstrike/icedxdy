@@ -15,6 +15,7 @@ pub mod field;
 pub mod input;
 pub mod item;
 pub mod kbd;
+pub mod label;
 pub mod pagination;
 pub mod progress;
 pub mod separator;

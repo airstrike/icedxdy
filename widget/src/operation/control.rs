@@ -1,15 +1,15 @@
 //! Link widgets to the form controls inside them, the way an HTML
 //! `<label for>` links to its `<input>`.
 //!
-//! A form control (Checkbox, Switch, Radio) keeps a [`Control`] in its tree
-//! state and hands it to every [`Operation`] through
+//! A form control (Checkbox, Switch, Radio, Toggle) keeps a [`Control`] in
+//! its tree state and hands it to every [`Operation`] through
 //! [`Operation::custom`]. A widget that owns a control without knowing its
 //! type (Field, for one) runs the operations below over its content:
 //!
-//! - [`Activate`] presses the first control it reaches. A checkbox, switch
-//!   or radio records the press and acts on it at its next event, toggling
-//!   its uncontrolled value and publishing its change message as if it had
-//!   been clicked. A text input takes focus instead, with the cursor at the
+//! - [`Activate`] presses the first control it reaches. A checkbox, switch,
+//!   radio or toggle records the press and acts on it at its next event,
+//!   toggling its uncontrolled value and publishing its change message as if
+//!   it had been clicked. A text input takes focus instead, with the cursor at the
 //!   end of its value.
 //! - [`Checked`] reads whether the first control it reaches is checked.
 //!
