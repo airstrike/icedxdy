@@ -14,7 +14,7 @@ use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
     Inherited, Slot, button, checkbox, collapsible, column, dialog, field, row, sheet, sidebar,
-    slider, switch, tabs,
+    slider, switch, tabs, toggle,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -164,6 +164,54 @@ fn a_disabled_slider_ignores_presses() {
     );
 
     click(&mut ui, 50.0, 8.0);
+
+    assert_eq!(ui.into_messages().count(), 0);
+}
+
+#[test]
+fn an_uncontrolled_toggle_flips_on_press_and_from_its_label() {
+    let mut ui = simulator(labelled(
+        toggle(block(16.0, 16.0)).on_pressed_change(Message::Checked),
+    ));
+
+    click(&mut ui, 10.0, 36.0);
+    assert_eq!(is_checked(&mut ui), Some(true));
+    click(&mut ui, 10.0, 10.0);
+    assert_eq!(is_checked(&mut ui), Some(false));
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Checked(true), Message::Checked(false)]
+    );
+}
+
+#[test]
+fn a_controlled_toggle_publishes_without_changing() {
+    let mut ui = simulator(labelled(
+        toggle(block(16.0, 16.0))
+            .pressed(true)
+            .on_pressed_change(Message::Checked),
+    ));
+
+    click(&mut ui, 10.0, 36.0);
+
+    assert_eq!(is_checked(&mut ui), Some(true), "the app owns the value");
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Checked(false)]
+    );
+}
+
+#[test]
+fn a_disabled_toggle_ignores_presses() {
+    let mut ui = simulator(labelled(
+        toggle(block(16.0, 16.0))
+            .disabled(true)
+            .on_pressed_change(Message::Checked),
+    ));
+
+    click(&mut ui, 10.0, 36.0);
+    click(&mut ui, 10.0, 10.0);
 
     assert_eq!(ui.into_messages().count(), 0);
 }

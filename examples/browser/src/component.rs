@@ -27,4 +27,5 @@ pub mod switch;
 pub mod table;
 pub mod tabs;
 pub mod text;
+pub mod toggle;
 pub mod tooltip;

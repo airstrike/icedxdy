@@ -91,7 +91,7 @@ impl App {
             accordion, alert, aspect_ratio, avatar, badge, breadcrumb, button, button_group, card,
             checkbox, collapsible, dialog, empty, field, input, item, kbd, pagination, progress,
             separator, sheet, sidebar, skeleton, slider, spinner, switch, table, tabs, text,
-            tooltip,
+            toggle, tooltip,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
@@ -124,6 +124,7 @@ impl App {
             table::TablePage::new,
             tabs::TabsPage::new,
             text::TextPage::new,
+            toggle::TogglePage::new,
             tooltip::TooltipPage::new,
         ];
 

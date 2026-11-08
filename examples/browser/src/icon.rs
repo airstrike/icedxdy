@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 9b56a9ef7271b119874f1021b76f001046c359f6c39408da70f1a67a007da3f9
+// 1bfb305076b3d790c4ac7bfc2f2047bd7255bae65c356d2f8ab04cad80775e4e
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -14,6 +14,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("arrow_up", "\u{E04A}"),
     ("arrow_up_right", "\u{E04D}"),
     ("badge_check", "\u{E241}"),
+    ("bold", "\u{E05D}"),
     ("bookmark", "\u{E060}"),
     ("check", "\u{E06C}"),
     ("chevron_down", "\u{E06D}"),
@@ -32,6 +33,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("git_branch", "\u{E0E2}"),
     ("inbox", "\u{E0F7}"),
     ("info", "\u{E0F9}"),
+    ("italic", "\u{E0FB}"),
     ("minus", "\u{E11C}"),
     ("moon", "\u{E11E}"),
     ("plus", "\u{E13D}"),
@@ -75,6 +77,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E241}")
+}
+
+pub fn bold<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E05D}")
 }
 
 pub fn bookmark<'a, Theme>() -> Text<'a, Theme>
@@ -201,6 +210,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E0F9}")
+}
+
+pub fn italic<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E0FB}")
 }
 
 pub fn minus<'a, Theme>() -> Text<'a, Theme>

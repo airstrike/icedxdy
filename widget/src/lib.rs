@@ -43,6 +43,7 @@ pub mod table;
 pub mod tabs;
 pub mod text;
 pub mod text_input;
+pub mod toggle;
 pub mod toggle_group;
 pub mod tooltip;
 pub mod weight;
@@ -80,6 +81,7 @@ pub use switch::Switch;
 pub use table::Table;
 pub use tabs::Tabs;
 pub use text::Text;
+pub use toggle::Toggle;
 pub use toggle_group::ToggleGroup;
 pub use tooltip::Tooltip;
 pub use weight::Weight;
@@ -204,6 +206,11 @@ pub fn separator() -> separator::Separator {
 /// Create a [`Kbd`] showing `content`.
 pub fn kbd<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Kbd<'a, Message> {
     kbd::kbd(content)
+}
+
+/// Create an off, uncontrolled [`Toggle`] showing `content`.
+pub fn toggle<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Toggle<'a, Message> {
+    toggle::toggle(content)
 }
 
 /// Create a [`Tooltip`] showing `content` while `trigger` is hovered.
