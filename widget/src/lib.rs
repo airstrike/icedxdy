@@ -9,6 +9,7 @@ pub mod badge;
 pub mod breadcrumb;
 pub mod button;
 pub mod checkbox;
+pub mod collapsible;
 pub mod column;
 pub mod compose;
 pub mod container;
@@ -52,6 +53,7 @@ pub use breadcrumb::Breadcrumb;
 pub use button::Button;
 pub use button::ButtonGroup;
 pub use checkbox::Checkbox;
+pub use collapsible::Collapsible;
 pub use column::Column;
 pub use compose::{Compose, Inherited, Slot};
 pub use empty::Empty;
@@ -216,6 +218,14 @@ pub fn input<'a, Message: Clone + 'a>(
 /// Create an unchecked, uncontrolled [`Checkbox`].
 pub fn checkbox<'a, Message: 'a>() -> Checkbox<'a, Message> {
     checkbox::checkbox()
+}
+
+/// Create a closed, uncontrolled [`Collapsible`] whose content is built by
+/// `body` from a [`collapsible::Handle`].
+pub fn collapsible<'a, Message>(
+    body: impl Fn(&collapsible::Handle) -> Slot<'a, Message> + 'a,
+) -> Collapsible<'a, Message> {
+    collapsible::collapsible(body)
 }
 
 /// Create a [`Progress`] bar with the given value (0..=100).

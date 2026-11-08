@@ -51,6 +51,7 @@ iced = "0.15.0-dev"
 iced_core = "0.15.0-dev"
 iced_runtime = "0.15.0-dev"
 iced_selector = "0.15.0-dev"
+iced_test = "0.15.0-dev"
 iced_widget = { version = "0.15.0-dev", features = ["qr_code"] }
 # Sweeten ships an enhanced data-grid `Table` (border, sticky header,
 # header underline) on its `dev` branch. Once `dev` merges to `master`
@@ -78,6 +79,7 @@ iced = { git = "https://github.com/airstrike/iced.git", branch = "dev", features
 iced_core = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 iced_runtime = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 iced_selector = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
+iced_test = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 iced_widget = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 iced_graphics = { git = "https://github.com/airstrike/iced.git", branch = "dev" }
 iced_renderer = { git = "https://github.com/airstrike/iced.git", branch = "dev" }

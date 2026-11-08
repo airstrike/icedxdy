@@ -8,6 +8,7 @@ pub mod button;
 pub mod button_group;
 pub mod card;
 pub mod checkbox;
+pub mod collapsible;
 pub mod field;
 pub mod input;
 pub mod progress;

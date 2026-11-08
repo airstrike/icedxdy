@@ -39,3 +39,6 @@ tree-sitter = { workspace = true, optional = true }
 tree-sitter-highlight = { workspace = true, optional = true }
 tree-sitter-rust = { workspace = true, optional = true }
 unicode-segmentation = "1.11.0"
+
+[dev-dependencies]
+iced_test.workspace = true

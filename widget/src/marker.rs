@@ -8,6 +8,8 @@
 //! pressed, records a signal in its own tree state. The owner forwards every
 //! event to its content and then runs [`drain`] over it, an [`Operation`]
 //! that takes the recorded signals, and acts on them in the same event.
+//! [`Owner`] does exactly that and publishes a message per signal, which is
+//! how an iced `Component` turns its markers into its private events.
 //!
 //! Signals stay in the marker until an owner drains them, so a marker deeper
 //! in the tree is drained by its nearest owner: an owner updates its content
@@ -268,6 +270,179 @@ where
 {
     fn from(marker: Marker<'a, S, Message, Theme, Renderer>) -> Self {
         marker._boxed()
+    }
+}
+
+/// Wraps the content of a marker's owner: after every event it drains the
+/// content's signals of type `S` and publishes `on_signal` for each, in the
+/// same event.
+pub struct Owner<'a, S, Message, Theme, Renderer> {
+    content: Element<'a, Message, Theme, Renderer>,
+    on_signal: Box<dyn Fn(S) -> Message + 'a>,
+}
+
+/// Wrap `content` in an [`Owner`] publishing `on_signal` for the signals its
+/// markers record.
+pub fn owner<'a, S, Message, Theme, Renderer>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+    on_signal: impl Fn(S) -> Message + 'a,
+) -> Owner<'a, S, Message, Theme, Renderer> {
+    Owner {
+        content: content.into(),
+        on_signal: Box::new(on_signal),
+    }
+}
+
+impl<S, Message, Theme, Renderer> Meta for Owner<'_, S, Message, Theme, Renderer> {}
+
+impl<S, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+    for Owner<'_, S, Message, Theme, Renderer>
+where
+    S: Send + 'static,
+    Renderer: crate::core::Renderer,
+{
+    fn diff(&mut self, tree: &mut Tree) {
+        tree.diff_children(std::slice::from_mut(&mut self.content));
+    }
+
+    fn size(&self) -> Size<Length> {
+        self.content.size()
+    }
+
+    fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
+        self.content.layout(&mut tree.children[0], renderer, limits);
+        tree.size = tree.children[0].size;
+    }
+
+    fn update(
+        &mut self,
+        tree: &mut Tree,
+        event: &Event,
+        layout: Layout,
+        cursor: mouse::Cursor,
+        renderer: &Renderer,
+        shell: &mut Shell<'_, Message>,
+        viewport: &Rectangle,
+    ) {
+        let (child_layout, child_tree) = layout
+            .iter_mut(&mut tree.children)
+            .next()
+            .expect("an owner has one child");
+
+        self.content.update(
+            child_tree,
+            event,
+            child_layout,
+            cursor,
+            renderer,
+            shell,
+            viewport,
+        );
+
+        let mut drain = drain::<S>();
+        self.content
+            .operate(child_tree, child_layout, viewport, renderer, &mut drain);
+
+        for signal in drain.into_signals() {
+            shell.publish((self.on_signal)(signal));
+        }
+    }
+
+    fn draw(
+        &self,
+        tree: &Tree,
+        renderer: &mut Renderer,
+        theme: &Theme,
+        style: &renderer::Style,
+        layout: Layout,
+        cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        let (child_layout, child_tree) = layout
+            .iter(&tree.children)
+            .next()
+            .expect("an owner has one child");
+
+        self.content.draw(
+            child_tree,
+            renderer,
+            theme,
+            style,
+            child_layout,
+            cursor,
+            viewport,
+        );
+    }
+
+    fn mouse_interaction(
+        &self,
+        tree: &Tree,
+        layout: Layout,
+        cursor: mouse::Cursor,
+        viewport: &Rectangle,
+        renderer: &Renderer,
+    ) -> mouse::Interaction {
+        let (child_layout, child_tree) = layout
+            .iter(&tree.children)
+            .next()
+            .expect("an owner has one child");
+
+        self.content
+            .mouse_interaction(child_tree, child_layout, cursor, viewport, renderer)
+    }
+
+    fn operate(
+        &mut self,
+        tree: &mut Tree,
+        layout: Layout,
+        viewport: &Rectangle,
+        renderer: &Renderer,
+        operation: &mut dyn Operation,
+    ) {
+        let (child_layout, child_tree) = layout
+            .iter_mut(&mut tree.children)
+            .next()
+            .expect("an owner has one child");
+
+        self.content
+            .operate(child_tree, child_layout, viewport, renderer, operation);
+    }
+
+    fn overlay<'b>(
+        &'b mut self,
+        tree: &'b mut Tree,
+        layout: Layout,
+        renderer: &Renderer,
+        viewport: &Rectangle,
+        translation: Vector,
+        window: Size,
+    ) -> Vec<overlay::Element<'b, Message, Theme, Renderer>> {
+        let (child_layout, child_tree) = layout
+            .iter_mut(&mut tree.children)
+            .next()
+            .expect("an owner has one child");
+
+        self.content.overlay(
+            child_tree,
+            child_layout,
+            renderer,
+            viewport,
+            translation,
+            window,
+        )
+    }
+}
+
+impl<'a, S, Message, Theme, Renderer> From<Owner<'a, S, Message, Theme, Renderer>>
+    for Element<'a, Message, Theme, Renderer>
+where
+    S: Send + 'static,
+    Message: 'a,
+    Theme: 'a,
+    Renderer: crate::core::Renderer + 'a,
+{
+    fn from(owner: Owner<'a, S, Message, Theme, Renderer>) -> Self {
+        owner._boxed()
     }
 }
 

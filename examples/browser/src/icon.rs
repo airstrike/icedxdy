@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 84007cdb3638869b67d13b2a7a7a36592ff1729e16755c2160124ba3e2db4cfd
+// 5fa6638adc2842530212433ea40b8e8393b18edc5280d3d5988d42c491f5d1f1
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -19,11 +19,14 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("chevron_down", "\u{E06D}"),
     ("chevron_right", "\u{E06F}"),
     ("chevron_up", "\u{E070}"),
+    ("chevrons_up_down", "\u{E211}"),
     ("circle_alert", "\u{E077}"),
     ("circle_check", "\u{E226}"),
     ("circle_check_big", "\u{E07C}"),
     ("copy", "\u{E09E}"),
     ("ellipsis", "\u{E0B6}"),
+    ("file", "\u{E0C0}"),
+    ("folder", "\u{E0D7}"),
     ("git_branch", "\u{E0E2}"),
     ("info", "\u{E0F9}"),
     ("minus", "\u{E11C}"),
@@ -31,6 +34,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("plus", "\u{E13D}"),
     ("sun", "\u{E178}"),
     ("terminal", "\u{E181}"),
+    ("x", "\u{E1B2}"),
 ];
 
 pub fn arrow_left<'a, Theme>() -> Text<'a, Theme>
@@ -103,6 +107,13 @@ where
     icon("\u{E070}")
 }
 
+pub fn chevrons_up_down<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E211}")
+}
+
 pub fn circle_alert<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -136,6 +147,20 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E0B6}")
+}
+
+pub fn file<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E0C0}")
+}
+
+pub fn folder<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E0D7}")
 }
 
 pub fn git_branch<'a, Theme>() -> Text<'a, Theme>
@@ -185,6 +210,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E181}")
+}
+
+pub fn x<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E1B2}")
 }
 
 /// Render any Lucide icon by its codepoint string.
