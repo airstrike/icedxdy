@@ -477,6 +477,280 @@ where
     }
 }
 
+/// Wraps content whose markers live in its overlays (a submenu's items):
+/// after every overlay event it takes their signals of type `S` and holds
+/// them in its own state, where its nearest owner drains them like a
+/// marker's.
+pub struct Relay<'a, S, Message, Theme, Renderer> {
+    content: Element<'a, Message, Theme, Renderer>,
+    _signal: std::marker::PhantomData<S>,
+}
+
+/// Wrap `content` in a [`Relay`] for signals of type `S`.
+pub fn relay<'a, S, Message, Theme, Renderer>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+) -> Relay<'a, S, Message, Theme, Renderer> {
+    Relay {
+        content: content.into(),
+        _signal: std::marker::PhantomData,
+    }
+}
+
+impl<S, Message, Theme, Renderer> Meta for Relay<'_, S, Message, Theme, Renderer> {}
+
+impl<S, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+    for Relay<'_, S, Message, Theme, Renderer>
+where
+    S: Send + 'static,
+    Renderer: crate::core::Renderer,
+{
+    fn tag(&self) -> tree::Tag {
+        tree::Tag::of::<Signals<S>>()
+    }
+
+    fn state(&self) -> tree::State {
+        tree::State::new(Signals::<S>(Vec::new()))
+    }
+
+    fn diff(&mut self, tree: &mut Tree) {
+        tree.diff_children(std::slice::from_mut(&mut self.content));
+    }
+
+    fn size(&self) -> Size<Length> {
+        self.content.size()
+    }
+
+    fn layout(&mut self, tree: &mut Tree, renderer: &Renderer, limits: &layout::Limits) {
+        self.content.layout(&mut tree.children[0], renderer, limits);
+        tree.size = tree.children[0].size;
+    }
+
+    fn update(
+        &mut self,
+        tree: &mut Tree,
+        event: &Event,
+        layout: Layout,
+        cursor: mouse::Cursor,
+        renderer: &Renderer,
+        shell: &mut Shell<'_, Message>,
+        viewport: &Rectangle,
+    ) {
+        let (child_layout, child_tree) = layout
+            .iter_mut(&mut tree.children)
+            .next()
+            .expect("a relay has one child");
+
+        self.content.update(
+            child_tree,
+            event,
+            child_layout,
+            cursor,
+            renderer,
+            shell,
+            viewport,
+        );
+    }
+
+    fn draw(
+        &self,
+        tree: &Tree,
+        renderer: &mut Renderer,
+        theme: &Theme,
+        style: &renderer::Style,
+        layout: Layout,
+        cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        let (child_layout, child_tree) = layout
+            .iter(&tree.children)
+            .next()
+            .expect("a relay has one child");
+
+        self.content.draw(
+            child_tree,
+            renderer,
+            theme,
+            style,
+            child_layout,
+            cursor,
+            viewport,
+        );
+    }
+
+    fn mouse_interaction(
+        &self,
+        tree: &Tree,
+        layout: Layout,
+        cursor: mouse::Cursor,
+        viewport: &Rectangle,
+        renderer: &Renderer,
+    ) -> mouse::Interaction {
+        let (child_layout, child_tree) = layout
+            .iter(&tree.children)
+            .next()
+            .expect("a relay has one child");
+
+        self.content
+            .mouse_interaction(child_tree, child_layout, cursor, viewport, renderer)
+    }
+
+    fn operate(
+        &mut self,
+        tree: &mut Tree,
+        layout: Layout,
+        viewport: &Rectangle,
+        renderer: &Renderer,
+        operation: &mut dyn Operation,
+    ) {
+        let signals = tree.state.downcast_mut::<Signals<S>>();
+        operation.custom(None, layout.bounds(), signals);
+
+        let (child_layout, child_tree) = layout
+            .iter_mut(&mut tree.children)
+            .next()
+            .expect("a relay has one child");
+
+        self.content
+            .operate(child_tree, child_layout, viewport, renderer, operation);
+    }
+
+    fn overlay<'b>(
+        &'b mut self,
+        tree: &'b mut Tree,
+        layout: Layout,
+        renderer: &Renderer,
+        viewport: &Rectangle,
+        translation: Vector,
+        window: Size,
+    ) -> Vec<overlay::Element<'b, Message, Theme, Renderer>> {
+        let signals = tree.state.downcast_mut::<Signals<S>>();
+        let (child_layout, child_tree) = layout
+            .iter_mut(&mut tree.children)
+            .next()
+            .expect("a relay has one child");
+
+        let overlays = self.content.overlay(
+            child_tree,
+            child_layout,
+            renderer,
+            viewport,
+            translation,
+            window,
+        );
+
+        if overlays.is_empty() {
+            return overlays;
+        }
+
+        vec![overlay::Element::new(Box::new(Relayed {
+            overlays,
+            signals,
+        }))]
+    }
+}
+
+impl<'a, S, Message, Theme, Renderer> From<Relay<'a, S, Message, Theme, Renderer>>
+    for Element<'a, Message, Theme, Renderer>
+where
+    S: Send + 'static,
+    Message: 'a,
+    Theme: 'a,
+    Renderer: crate::core::Renderer + 'a,
+{
+    fn from(relay: Relay<'a, S, Message, Theme, Renderer>) -> Self {
+        relay._boxed()
+    }
+}
+
+/// A [`Relay`]'s overlays, passed through untouched, whose signals it takes
+/// after every event.
+struct Relayed<'a, 'b, S, Message, Theme, Renderer> {
+    overlays: Vec<overlay::Element<'a, Message, Theme, Renderer>>,
+    signals: &'b mut Signals<S>,
+}
+
+impl<S, Message, Theme, Renderer> overlay::Overlay<Message, Theme, Renderer>
+    for Relayed<'_, '_, S, Message, Theme, Renderer>
+where
+    S: Send + 'static,
+    Renderer: crate::core::Renderer,
+{
+    fn draw(
+        &self,
+        renderer: &mut Renderer,
+        theme: &Theme,
+        style: &renderer::Style,
+        cursor: mouse::Cursor,
+    ) {
+        for overlay in &self.overlays {
+            overlay.as_overlay().draw(renderer, theme, style, cursor);
+        }
+    }
+
+    fn operate(&mut self, renderer: &Renderer, operation: &mut dyn Operation) {
+        for overlay in &mut self.overlays {
+            overlay.as_overlay_mut().operate(renderer, operation);
+        }
+    }
+
+    fn update(
+        &mut self,
+        event: &Event,
+        cursor: mouse::Cursor,
+        renderer: &Renderer,
+        shell: &mut Shell<'_, Message>,
+    ) {
+        for overlay in &mut self.overlays {
+            if shell.is_event_captured() {
+                break;
+            }
+
+            overlay
+                .as_overlay_mut()
+                .update(event, cursor, renderer, shell);
+        }
+
+        let mut drain = drain::<S>();
+
+        for overlay in &mut self.overlays {
+            overlay.as_overlay_mut().operate(renderer, &mut drain);
+        }
+
+        let mut signals = drain.into_signals();
+
+        if !signals.is_empty() {
+            self.signals.0.append(&mut signals);
+            // The owner drains on its next event; ask for one now.
+            shell.request_redraw();
+        }
+    }
+
+    fn mouse_interaction(&self, cursor: mouse::Cursor, renderer: &Renderer) -> mouse::Interaction {
+        self.overlays
+            .iter()
+            .map(|overlay| overlay.as_overlay().mouse_interaction(cursor, renderer))
+            .max()
+            .unwrap_or_default()
+    }
+
+    fn overlay<'c>(
+        &'c mut self,
+        renderer: &Renderer,
+    ) -> Vec<overlay::Element<'c, Message, Theme, Renderer>> {
+        self.overlays
+            .iter_mut()
+            .flat_map(|overlay| overlay.as_overlay_mut().overlay(renderer))
+            .collect()
+    }
+
+    fn index(&self) -> f32 {
+        self.overlays
+            .iter()
+            .map(|overlay| overlay.as_overlay().index())
+            .fold(1.0, f32::max)
+    }
+}
+
 /// An [`Operation`] that takes every signal of type `S` recorded by the
 /// markers it reaches.
 pub struct Drain<S> {
