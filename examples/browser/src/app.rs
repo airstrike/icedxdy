@@ -89,8 +89,8 @@ impl App {
 
         use component::{
             accordion, alert, aspect_ratio, avatar, badge, breadcrumb, button, button_group, card,
-            checkbox, collapsible, dialog, field, input, progress, sheet, sidebar, switch, tabs,
-            text,
+            checkbox, collapsible, dialog, field, input, progress, separator, sheet, sidebar,
+            switch, tabs, text,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
@@ -109,6 +109,7 @@ impl App {
             field::FieldPage::new,
             input::InputPage::new,
             progress::ProgressPage::new,
+            separator::SeparatorPage::new,
             sheet::SheetPage::new,
             sidebar::SidebarPage::new,
             switch::SwitchPage::new,
@@ -455,7 +456,7 @@ impl App {
                 .height(Fill)
         };
 
-        column![header, separator::horizontal(), body]
+        column![header, Element::from(separator()), body]
             .width(Fill)
             .height(Fill)
             .boxed()

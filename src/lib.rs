@@ -11,6 +11,7 @@ pub mod separator;
 // the convenience constructor (for `card(my_content)`) into scope. Same
 // pattern `widget/src/lib.rs` uses for `field` / `checkbox` / `text` / etc.
 pub use card::card;
+pub use separator::separator;
 
 pub use icedxdy_core as core;
 pub use icedxdy_core::padding;

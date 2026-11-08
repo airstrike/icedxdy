@@ -110,7 +110,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         .flat_map(|(i, tx)| {
             let mut items: Vec<Slot<'_, Message>> = Vec::new();
             if i > 0 {
-                items.push(Slot::from(separator::horizontal().boxed()));
+                items.push(Slot::from(separator()));
             }
             items.push(tx_row(tx));
             items
@@ -164,7 +164,7 @@ fn tx_row(tx: &Tx) -> Slot<'_, Message> {
     let amount_text = text::small(amount).medium().style(amount_style);
 
     // 1px thin divider after the avatar — exercises rule::vertical
-    // alongside the separator::horizontal between rows. Wrap the
+    // alongside the separator between rows. Wrap the
     // Fill-height rule in a fixed-height container so the row's
     // shrink height doesn't collapse it to zero.
     let divider: iced::Element<'_, Message, icedxdy::Theme> = rule::vertical(1).into();

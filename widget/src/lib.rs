@@ -190,6 +190,11 @@ pub fn breadcrumb<'a, Message: 'a>(
     breadcrumb::breadcrumb(items)
 }
 
+/// Create a horizontal [`Separator`](separator::Separator).
+pub fn separator() -> separator::Separator {
+    separator::separator()
+}
+
 /// Create an [`Alert`].
 pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
     alert::alert()
