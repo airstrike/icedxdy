@@ -60,6 +60,8 @@ pub struct Dialog<'a, Message> {
     on_open_change: Option<Box<dyn Fn(bool) -> Message + 'a>>,
     placement: Placement,
     show_close_button: bool,
+    dismiss_outside: bool,
+    padding: u16,
     inherited: Inherited,
 }
 
@@ -113,6 +115,8 @@ impl<'a, Message> Dialog<'a, Message> {
             on_open_change: None,
             placement,
             show_close_button: true,
+            dismiss_outside: true,
+            padding: 16,
             inherited: Inherited::default(),
         }
     }
@@ -151,6 +155,19 @@ impl<'a, Message> Dialog<'a, Message> {
         if let Placement::Center { .. } = self.placement {
             self.placement = Placement::Center { max_width };
         }
+        self
+    }
+
+    /// Keep the panel open on a press outside it (an alert dialog).
+    pub(crate) fn dismiss_outside(mut self, dismiss: bool) -> Self {
+        self.dismiss_outside = dismiss;
+        self
+    }
+
+    /// Set the centered panel's padding (`p-4` by default; an alert
+    /// dialog's sections pad themselves).
+    pub(crate) fn padding(mut self, padding: u16) -> Self {
+        self.padding = padding;
         self
     }
 
@@ -290,7 +307,7 @@ impl<'a, Message: Clone + 'static> Component<'a, Message, Theme, Renderer> for D
 
             // nova `p-4` on a dialog; a sheet's sections pad themselves.
             let padding = match self.placement {
-                Placement::Center { .. } => 16,
+                Placement::Center { .. } => self.padding,
                 Placement::Side(_) => 0,
             };
             let content = Container::new(content).width(Fill).padding(padding);
@@ -341,6 +358,7 @@ impl<'a, Message: Clone + 'static> Component<'a, Message, Theme, Renderer> for D
         });
 
         modal::Modal::new(base.into(), panel, self.placement, Event::Close)
+            .dismiss_outside(self.dismiss_outside)
     }
 }
 

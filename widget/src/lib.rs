@@ -2,6 +2,7 @@ use iced_core as core;
 
 pub mod accordion;
 pub mod alert;
+pub mod alert_dialog;
 pub mod animation;
 pub mod aspect_ratio;
 pub mod avatar;
@@ -56,6 +57,7 @@ pub use iced_widget::{QRCode, qr_code};
 
 pub use accordion::Accordion;
 pub use alert::Alert;
+pub use alert_dialog::AlertDialog;
 pub use aspect_ratio::AspectRatio;
 pub use avatar::Avatar;
 pub use badge::Badge;
@@ -261,6 +263,15 @@ pub fn input_group<'a, Message>(
     control: impl Into<input_group::Control<'a, Message>>,
 ) -> InputGroup<'a, Message> {
     input_group::input_group(control)
+}
+
+/// Create a closed, uncontrolled [`AlertDialog`]: `trigger` builds what
+/// sits in place, `content` the panel shown while open.
+pub fn alert_dialog<'a, Message>(
+    trigger: impl Fn(&alert_dialog::Handle) -> Slot<'a, Message> + 'a,
+    content: impl Fn(&alert_dialog::Handle) -> Slot<'a, Message> + 'a,
+) -> AlertDialog<'a, Message> {
+    alert_dialog::alert_dialog(trigger, content)
 }
 
 /// Create an [`Alert`].

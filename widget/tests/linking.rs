@@ -13,8 +13,8 @@ use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
-    Inherited, Slot, button, checkbox, collapsible, column, dialog, field, radio_group, row, sheet,
-    sidebar, slider, switch, tabs, textarea, toggle, toggle_group,
+    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, dialog, field,
+    radio_group, row, sheet, sidebar, slider, switch, tabs, textarea, toggle, toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -493,6 +493,27 @@ fn a_top_sheet_takes_its_contents_height() {
         ui.into_messages().collect::<Vec<_>>(),
         [Message::Open(false)],
         "the panel is 500px tall, past half of the 768px window"
+    );
+}
+
+#[test]
+fn an_alert_dialog_ignores_presses_outside_and_closes_from_cancel() {
+    let element: Element<'_, Message, Theme, Renderer> = alert_dialog(
+        |a| a.trigger(button(block(40.0, 20.0))),
+        |a| a.cancel(button(block(60.0, 20.0))),
+    )
+    .open(true)
+    .on_open_change(Message::Open)
+    .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 10.0, 700.0);
+    click(&mut ui, 340.0, 384.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(false)],
+        "only the cancel button closes it"
     );
 }
 

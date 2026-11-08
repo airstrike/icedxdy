@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// e9c5c6db91cd619cf0085e9d821524b13fa677cc4f6a111472845e642e7edca2
+// 53647c680cdbd3e8e51e4276296083cefc5d71e85d8263cfaefa7a5cb3969282
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -14,6 +14,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("arrow_up", "\u{E04A}"),
     ("arrow_up_right", "\u{E04D}"),
     ("badge_check", "\u{E241}"),
+    ("bluetooth", "\u{E05C}"),
     ("bold", "\u{E05D}"),
     ("bookmark", "\u{E060}"),
     ("check", "\u{E06C}"),
@@ -25,6 +26,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("circle_alert", "\u{E077}"),
     ("circle_check", "\u{E226}"),
     ("circle_check_big", "\u{E07C}"),
+    ("circle_fading_plus", "\u{E5BC}"),
     ("copy", "\u{E09E}"),
     ("credit_card", "\u{E0AA}"),
     ("ellipsis", "\u{E0B6}"),
@@ -45,6 +47,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("star", "\u{E176}"),
     ("sun", "\u{E178}"),
     ("terminal", "\u{E181}"),
+    ("trash_2", "\u{E18E}"),
     ("underline", "\u{E19A}"),
     ("x", "\u{E1B2}"),
 ];
@@ -82,6 +85,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E241}")
+}
+
+pub fn bluetooth<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E05C}")
 }
 
 pub fn bold<'a, Theme>() -> Text<'a, Theme>
@@ -159,6 +169,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E07C}")
+}
+
+pub fn circle_fading_plus<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E5BC}")
 }
 
 pub fn copy<'a, Theme>() -> Text<'a, Theme>
@@ -299,6 +316,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E181}")
+}
+
+pub fn trash_2<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E18E}")
 }
 
 pub fn underline<'a, Theme>() -> Text<'a, Theme>

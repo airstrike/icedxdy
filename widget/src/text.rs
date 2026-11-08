@@ -51,6 +51,7 @@ pub struct Text<'a> {
     line_height: Option<LineHeight>,
     style: Option<StyleFn<'a, Theme>>,
     width: Option<Length>,
+    align_x: Option<iced_core::text::Alignment>,
 }
 
 impl<'a> Text<'a> {
@@ -65,6 +66,7 @@ impl<'a> Text<'a> {
             line_height: None,
             style: None,
             width: None,
+            align_x: None,
         }
     }
 
@@ -112,6 +114,13 @@ impl<'a> Text<'a> {
     /// paragraph copy that should occupy the parent's full width.
     pub fn width(mut self, width: impl Into<Length>) -> Self {
         self.width = Some(width.into());
+        self
+    }
+
+    /// Align the lines within the text's width (`text-center`); pair it
+    /// with `.width(Fill)` so there is room to align in.
+    pub fn align_x(mut self, alignment: impl Into<iced_core::text::Alignment>) -> Self {
+        self.align_x = Some(alignment.into());
         self
     }
 
@@ -167,6 +176,10 @@ impl<'a> Text<'a> {
 
         if let Some(width) = self.width {
             widget = widget.width(width);
+        }
+
+        if let Some(alignment) = self.align_x {
+            widget = widget.align_x(alignment);
         }
 
         widget

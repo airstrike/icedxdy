@@ -88,15 +88,17 @@ impl App {
         let mut tasks: Vec<Task<Message>> = Vec::new();
 
         use component::{
-            accordion, alert, aspect_ratio, avatar, badge, breadcrumb, button, button_group, card,
-            checkbox, collapsible, dialog, empty, field, input, input_group, item, kbd, label,
-            native_select, pagination, progress, radio_group, separator, sheet, sidebar, skeleton,
-            slider, spinner, switch, table, tabs, text, textarea, toggle, toggle_group, tooltip,
+            accordion, alert, alert_dialog, aspect_ratio, avatar, badge, breadcrumb, button,
+            button_group, card, checkbox, collapsible, dialog, empty, field, input, input_group,
+            item, kbd, label, native_select, pagination, progress, radio_group, separator, sheet,
+            sidebar, skeleton, slider, spinner, switch, table, tabs, text, textarea, toggle,
+            toggle_group, tooltip,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
             accordion::AccordionPage::new,
             alert::AlertPage::new,
+            alert_dialog::AlertDialogPage::new,
             aspect_ratio::AspectRatioPage::new,
             avatar::AvatarPage::new,
             badge::BadgePage::new,

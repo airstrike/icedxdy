@@ -61,6 +61,7 @@ pub struct Modal<'a, Message, Theme, Renderer> {
     panel: Option<Element<'a, Message, Theme, Renderer>>,
     placement: Placement,
     on_close: Message,
+    dismiss_outside: bool,
 }
 
 impl<'a, Message, Theme, Renderer> Modal<'a, Message, Theme, Renderer> {
@@ -77,7 +78,15 @@ impl<'a, Message, Theme, Renderer> Modal<'a, Message, Theme, Renderer> {
             panel,
             placement,
             on_close,
+            dismiss_outside: true,
         }
+    }
+
+    /// Whether a press outside the panel dismisses it (on by default; an
+    /// alert dialog only closes from its own actions and `Escape`).
+    pub fn dismiss_outside(mut self, dismiss: bool) -> Self {
+        self.dismiss_outside = dismiss;
+        self
     }
 }
 
@@ -260,6 +269,7 @@ where
                 layout: Layout::new(size).move_to(position),
                 window,
                 on_close: self.on_close.clone(),
+                dismiss_outside: self.dismiss_outside,
             })));
         }
 
@@ -286,6 +296,7 @@ struct Panel<'a, 'b, Message, Theme, Renderer> {
     layout: Layout,
     window: Size,
     on_close: Message,
+    dismiss_outside: bool,
 }
 
 impl<Message, Theme, Renderer> overlay::Overlay<Message, Theme, Renderer>
@@ -363,7 +374,7 @@ where
         match event {
             Event::Mouse(mouse::Event::ButtonPressed(_))
             | Event::Touch(touch::Event::FingerPressed { .. }) => {
-                close |= !cursor.is_over(self.layout.bounds());
+                close |= self.dismiss_outside && !cursor.is_over(self.layout.bounds());
             }
             Event::Keyboard(keyboard::Event::KeyPressed {
                 key: keyboard::Key::Named(key::Named::Escape),

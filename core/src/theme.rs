@@ -7,6 +7,7 @@
 
 pub mod accordion;
 pub mod alert;
+pub mod alert_dialog;
 pub mod avatar;
 pub mod badge;
 pub mod button;
