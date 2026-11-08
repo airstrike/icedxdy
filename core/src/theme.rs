@@ -18,6 +18,7 @@ pub mod empty;
 pub mod field;
 pub mod float;
 pub mod item;
+pub mod kbd;
 #[cfg(feature = "markdown")]
 pub mod markdown;
 pub mod media;

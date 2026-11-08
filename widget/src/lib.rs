@@ -18,6 +18,7 @@ pub mod empty;
 pub mod field;
 pub mod input;
 pub mod item;
+pub mod kbd;
 #[cfg(feature = "markdown")]
 pub mod markdown;
 pub mod marker;
@@ -64,6 +65,7 @@ pub use empty::Empty;
 pub use field::Field;
 pub use input::Input;
 pub use item::{Item, Media};
+pub use kbd::Kbd;
 pub use progress::Progress;
 pub use radio::Radio;
 pub use rich_text::{RichText, Span, rich_text, span};
@@ -193,6 +195,11 @@ pub fn breadcrumb<'a, Message: 'a>(
 /// Create a horizontal [`Separator`](separator::Separator).
 pub fn separator() -> separator::Separator {
     separator::separator()
+}
+
+/// Create a [`Kbd`] showing `content`.
+pub fn kbd<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Kbd<'a, Message> {
+    kbd::kbd(content)
 }
 
 /// Create an [`Alert`].

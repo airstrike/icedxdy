@@ -89,7 +89,7 @@ impl App {
 
         use component::{
             accordion, alert, aspect_ratio, avatar, badge, breadcrumb, button, button_group, card,
-            checkbox, collapsible, dialog, field, input, progress, separator, sheet, sidebar,
+            checkbox, collapsible, dialog, field, input, kbd, progress, separator, sheet, sidebar,
             switch, tabs, text,
         };
 
@@ -108,6 +108,7 @@ impl App {
             dialog::DialogPage::new,
             field::FieldPage::new,
             input::InputPage::new,
+            kbd::KbdPage::new,
             progress::ProgressPage::new,
             separator::SeparatorPage::new,
             sheet::SheetPage::new,
