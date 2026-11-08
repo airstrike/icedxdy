@@ -1,4 +1,4 @@
-//! Tooltip content styling — nova style.
+//! Tooltip content styling - nova style.
 //!
 //! `rounded-md bg-foreground text-background`.
 

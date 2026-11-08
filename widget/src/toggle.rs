@@ -1,4 +1,4 @@
-//! Toggle — shadcn/ui faithful port (Radix `Toggle`).
+//! Toggle - shadcn/ui faithful port (Radix `Toggle`).
 //!
 //! A two-state button: transparent at rest, `bg-muted` while on.
 //!

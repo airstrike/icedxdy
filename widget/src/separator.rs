@@ -1,4 +1,4 @@
-//! Separator — shadcn/ui faithful port (Radix `Separator`).
+//! Separator - shadcn/ui faithful port (Radix `Separator`).
 //!
 //! A 1px `bg-border` line: full width when horizontal (the default), full
 //! height of its row when vertical (`self-stretch`).

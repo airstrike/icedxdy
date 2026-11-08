@@ -1,4 +1,4 @@
-//! Pagination — shadcn/ui faithful port.
+//! Pagination - shadcn/ui faithful port.
 //!
 //! Page navigation: a centered row of ghost buttons, the current page in
 //! outline. shadcn's `Pagination` / `PaginationContent` / `PaginationItem`

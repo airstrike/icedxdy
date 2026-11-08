@@ -1,4 +1,4 @@
-//! Tooltip — shadcn/ui port over iced's tooltip.
+//! Tooltip - shadcn/ui port over iced's tooltip.
 //!
 //! A `text-xs` hint on a `bg-foreground` panel, shown while the pointer is
 //! over its trigger, on the trigger's [`Side`] (top by default).

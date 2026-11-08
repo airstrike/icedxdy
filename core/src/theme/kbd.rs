@@ -1,4 +1,4 @@
-//! Kbd styling — nova style.
+//! Kbd styling - nova style.
 //!
 //! `rounded-sm bg-muted text-muted-foreground`; inside tooltip content,
 //! `bg-background/20 text-background` (`dark:bg-background/10`).
