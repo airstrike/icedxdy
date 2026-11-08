@@ -15,6 +15,7 @@ pub mod column;
 pub mod combobox;
 pub mod compose;
 pub mod container;
+pub mod context_menu;
 pub mod dialog;
 pub mod dropdown_menu;
 pub mod empty;
@@ -76,6 +77,7 @@ pub use collapsible::Collapsible;
 pub use column::Column;
 pub use combobox::Combobox;
 pub use compose::{Compose, Inherited, Slot};
+pub use context_menu::ContextMenu;
 pub use dialog::Dialog;
 pub use dropdown_menu::DropdownMenu;
 pub use empty::Empty;
@@ -441,4 +443,13 @@ pub fn hover_card<'a, Message>(
     content: impl Into<Slot<'a, Message>>,
 ) -> HoverCard<'a, Message> {
     hover_card::hover_card(trigger, content)
+}
+
+/// Create a [`ContextMenu`]: `trigger` builds the area a right press opens
+/// it in, `content` the menu.
+pub fn context_menu<'a, Message>(
+    trigger: impl Fn(&popover::Handle) -> Slot<'a, Message> + 'a,
+    content: impl Fn(&popover::Handle) -> Slot<'a, Message> + 'a,
+) -> ContextMenu<'a, Message> {
+    context_menu::context_menu(trigger, content)
 }

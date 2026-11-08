@@ -15,9 +15,9 @@ use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
-    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, combobox, dialog,
-    dropdown_menu, field, hover_card, menu, popover, radio_group, row, select, sheet, sidebar,
-    slider, switch, tabs, textarea, toast, toaster, toggle, toggle_group,
+    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, combobox, context_menu,
+    dialog, dropdown_menu, field, hover_card, menu, popover, radio_group, row, select, sheet,
+    sidebar, slider, switch, tabs, textarea, toast, toaster, toggle, toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -942,5 +942,34 @@ fn a_hover_card_opens_on_hover_and_welcomes_the_pointer() {
         ui.into_messages().collect::<Vec<_>>(),
         [Message::Open(true), Message::Inner, Message::Open(false)],
         "crossing the gap into the card keeps it open"
+    );
+}
+
+/// A 300x200 context area at the window's top left. A right press at
+/// (100, 50) opens the menu 2px to its right with `p-1`: one 28px item at
+/// y 54..82 from x 106.
+#[test]
+fn a_context_menu_opens_at_the_pointer_and_closes_on_select() {
+    let element: Element<'_, Message, Theme, Renderer> = context_menu(
+        |_| block(300.0, 200.0),
+        |_| {
+            menu::group([menu::item(block(60.0, 20.0))
+                .on_select(Message::Inner)
+                .into()])
+        },
+    )
+    .on_open_change(Message::Open)
+    .into();
+    let mut ui = simulator(element);
+
+    hover(&mut ui, 100.0, 50.0);
+    let _ = ui.simulate([Event::Mouse(mouse::Event::ButtonPressed(
+        mouse::Button::Right,
+    ))]);
+    click(&mut ui, 120.0, 68.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(true), Message::Inner, Message::Open(false)],
     );
 }

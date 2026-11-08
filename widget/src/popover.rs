@@ -193,6 +193,10 @@ impl<'a, Message> Popover<'a, Message> {
 }
 
 impl Handle {
+    pub(crate) fn new(is_open: bool) -> Self {
+        Self { is_open }
+    }
+
     /// Whether the popover is open.
     pub fn is_open(&self) -> bool {
         self.is_open
