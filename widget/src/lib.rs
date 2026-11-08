@@ -23,6 +23,7 @@ pub mod kbd;
 pub mod markdown;
 pub mod marker;
 pub mod operation;
+pub mod pagination;
 pub mod progress;
 pub mod radio;
 pub mod rich_text;
@@ -67,6 +68,7 @@ pub use field::Field;
 pub use input::Input;
 pub use item::{Item, Media};
 pub use kbd::Kbd;
+pub use pagination::Pagination;
 pub use progress::Progress;
 pub use radio::Radio;
 pub use rich_text::{RichText, Span, rich_text, span};
@@ -210,6 +212,13 @@ pub fn tooltip<'a, Message: 'a>(
     content: impl Into<Slot<'a, Message>>,
 ) -> Tooltip<'a, Message> {
     tooltip::tooltip(trigger, content)
+}
+
+/// Create a [`Pagination`] from its items, in order.
+pub fn pagination<'a, Message: 'a>(
+    items: impl IntoIterator<Item = Slot<'a, Message>>,
+) -> Pagination<'a, Message> {
+    pagination::pagination(items)
 }
 
 /// Create an [`Alert`].
