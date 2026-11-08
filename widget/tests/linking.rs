@@ -13,8 +13,8 @@ use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
-    Inherited, Slot, button, checkbox, collapsible, column, dialog, field, row, sidebar, slider,
-    switch, tabs,
+    Inherited, Slot, button, checkbox, collapsible, column, dialog, field, row, sheet, sidebar,
+    slider, switch, tabs,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -281,6 +281,33 @@ fn controlled_tabs_report_the_new_value() {
         ui.into_messages().collect::<Vec<_>>(),
         [Message::Tab("second".to_owned()), Message::Panel("first")],
         "the app owns the value; reselecting the active tab reports nothing"
+    );
+}
+
+#[test]
+fn a_top_sheet_takes_its_contents_height() {
+    let element: Element<'_, Message, Theme, Renderer> = sheet(
+        |s| s.trigger(button(block(40.0, 20.0))),
+        |_| {
+            column![block(100.0, 500.0)]
+                .height(iced_core::Length::Fill)
+                .into()
+        },
+    )
+    .side(sheet::Side::Top)
+    .show_close_button(false)
+    .open(true)
+    .on_open_change(Message::Open)
+    .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 500.0, 450.0);
+    click(&mut ui, 500.0, 600.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(false)],
+        "the panel is 500px tall, past half of the 768px window"
     );
 }
 
