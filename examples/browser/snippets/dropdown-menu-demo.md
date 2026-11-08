@@ -16,11 +16,11 @@ dropdown_menu(
                 menu::item("Team").into(),
                 menu::sub(
                     "Invite users",
-                    column![
-                        menu::item("Email"),
-                        menu::item("Message"),
+                    [
+                        menu::item("Email").into(),
+                        menu::item("Message").into(),
                         menu::separator(),
-                        menu::item("More..."),
+                        menu::item("More...").into(),
                     ],
                 ),
                 menu::item("New Team").shortcut("⌘+T").into(),
@@ -34,6 +34,7 @@ dropdown_menu(
             menu::separator(),
             menu::item("Log out").shortcut("⇧⌘Q"),
         ]
+        .width(Fill)
         .into()
     },
 )

@@ -16,6 +16,7 @@ dropdown_menu(
             menu::item("Support"),
             menu::item("API").disabled(true),
         ]
+        .width(Fill)
         .into()
     },
 )

@@ -8,7 +8,7 @@
 //   yet.
 
 use iced::widget::component::{Component, component};
-use iced::{Element, Task, Widget};
+use iced::{Element, Fill, Task, Widget};
 
 use icedxdy::widget::{button, column, dropdown_menu, menu, row, text};
 use icedxdy::{Slot, Theme};
@@ -220,11 +220,11 @@ impl page::Page for DropdownMenuPage {
                         menu::item("Team").into(),
                         menu::sub(
                             "Invite users",
-                            column![
-                                menu::item("Email"),
-                                menu::item("Message"),
+                            [
+                                menu::item("Email").into(),
+                                menu::item("Message").into(),
                                 menu::separator(),
-                                menu::item("More..."),
+                                menu::item("More...").into(),
                             ],
                         ),
                         menu::item("New Team").shortcut("⌘+T").into(),
@@ -238,6 +238,7 @@ impl page::Page for DropdownMenuPage {
                     menu::separator(),
                     menu::item("Log out").shortcut("⇧⌘Q"),
                 ]
+                .width(Fill)
                 .into()
             })
             .align(dropdown_menu::Align::Start)
@@ -258,6 +259,7 @@ impl page::Page for DropdownMenuPage {
                     menu::item("Support"),
                     menu::item("API").disabled(true),
                 ]
+                .width(Fill)
                 .into()
             })
             .into(),
@@ -268,20 +270,20 @@ impl page::Page for DropdownMenuPage {
                     menu::item("Team").into(),
                     menu::sub(
                         "Invite users",
-                        column![
-                            menu::item("Email"),
-                            menu::item("Message"),
+                        [
+                            menu::item("Email").into(),
+                            menu::item("Message").into(),
                             menu::sub(
                                 "More options",
-                                column![
-                                    menu::item("Calendly"),
-                                    menu::item("Slack"),
+                                [
+                                    menu::item("Calendly").into(),
+                                    menu::item("Slack").into(),
                                     menu::separator(),
-                                    menu::item("Webhook"),
+                                    menu::item("Webhook").into(),
                                 ],
                             ),
                             menu::separator(),
-                            menu::item("Advanced..."),
+                            menu::item("Advanced...").into(),
                         ],
                     ),
                     menu::item("New Team").shortcut("⌘+T").into(),
@@ -301,6 +303,7 @@ impl page::Page for DropdownMenuPage {
                     menu::separator(),
                     menu::item("Log out").shortcut("⇧⌘Q"),
                 ]
+                .width(Fill)
                 .into()
             })
             .into(),
@@ -321,6 +324,7 @@ impl page::Page for DropdownMenuPage {
                         menu::separator(),
                         menu::item(with_icon(icon::trash_2(), "Delete")).style(menu::Destructive),
                     ]
+                    .width(Fill)
                     .into()
                 },
             )

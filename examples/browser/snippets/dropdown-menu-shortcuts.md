@@ -14,6 +14,7 @@ dropdown_menu(
             menu::separator(),
             menu::item("Log out").shortcut("⇧⌘Q"),
         ]
+        .width(Fill)
         .into()
     },
 )

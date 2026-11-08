@@ -23,6 +23,7 @@
 use std::time::Duration;
 
 use iced_core::Length::Fill;
+use iced_core::text::IntoFragment;
 use iced_core::{Alignment, Element, Padding};
 use iced_widget::{Renderer, Space, Widget, anchored};
 use icedxdy_core::Theme;
@@ -134,6 +135,13 @@ impl<'a, Message> Item<'a, Message> {
         self
     }
 
+    /// Whether selecting the item closes the menu through its marker (a
+    /// select closes itself instead).
+    pub(crate) fn closes(mut self, closes: bool) -> Self {
+        self.closes = closes;
+        self
+    }
+
     /// Set the item's variant (`.style(menu::Destructive)`).
     pub fn style(mut self, variant: impl Into<Variant>) -> Self {
         self.variant = variant.into();
@@ -228,7 +236,7 @@ impl<'a, Message: Clone + 'a> From<Item<'a, Message>> for Slot<'a, Message> {
 }
 
 /// A `MenuLabel`: a muted `text-xs font-medium` heading.
-pub fn label<'a, Message: 'a>(label: &'a str) -> Slot<'a, Message> {
+pub fn label<'a, Message: 'a>(label: impl IntoFragment<'a>) -> Slot<'a, Message> {
     Container::new(text::muted(label).size(text::size::XS).medium())
         .padding([4, 6])
         .into()
@@ -252,7 +260,7 @@ pub fn group<'a, Message: 'a>(
 /// while hovered. Selecting an item inside closes the whole menu.
 pub fn sub<'a, Message: Clone + 'a>(
     content: impl Into<Slot<'a, Message>>,
-    items: impl Into<Slot<'a, Message>>,
+    items: impl IntoIterator<Item = Slot<'a, Message>>,
 ) -> Slot<'a, Message> {
     Slot::new(Sub {
         trigger: Item {
@@ -260,7 +268,7 @@ pub fn sub<'a, Message: Clone + 'a>(
             closes: false,
             ..item(content)
         },
-        items: items.into(),
+        items: group(items),
     })
 }
 
@@ -284,7 +292,7 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Sub<'a, Message> {
         // trigger, its first item level with it.
         let panel = Container::new(self.items)
             .padding(4)
-            .min_width(96)
+            .width(Fill)
             .style(content);
 
         let sub = anchored(
@@ -295,6 +303,7 @@ impl<'a, Message: Clone + 'a> Compose<Message> for Sub<'a, Message> {
         .align(anchored::Align::Start)
         .offset(4)
         .align_offset(-4.0)
+        .min_width(96)
         .hover(Duration::ZERO, Duration::from_millis(150));
 
         marker::relay::<Signal, _, _, _>(sub.boxed()).into()

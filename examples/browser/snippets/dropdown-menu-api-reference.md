@@ -24,6 +24,6 @@ A `Popover` holding a menu: as wide as its trigger (at least 128px) unless given
 | `menu::label(text)` | `DropdownMenuLabel`. |
 | `menu::separator()` | `DropdownMenuSeparator`. |
 | `menu::group(children)` | `DropdownMenuGroup`. |
-| `menu::sub(content, items)` | `DropdownMenuSub`: opens `items` to the right while hovered; selecting inside closes the whole menu. |
+| `menu::sub(content, items)` | `DropdownMenuSub`: opens `items` (like `group`'s) to the right while hovered; selecting inside closes the whole menu. |
 
-No keyboard navigation between items and no typeahead yet.
+Give a top-level `column![..]` `.width(Fill)` so every row spans the menu (`menu::group` already does). No keyboard navigation between items and no typeahead yet.

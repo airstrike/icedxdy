@@ -13,6 +13,7 @@ dropdown_menu(
             menu::item(row![icon::trash_2(), text("Delete")].spacing(6))
                 .style(menu::Destructive),
         ]
+        .width(Fill)
         .into()
     },
 )

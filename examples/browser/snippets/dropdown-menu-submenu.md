@@ -1,5 +1,5 @@
 ```rust
-use icedxdy::widget::{button, column, dropdown_menu, menu};
+use icedxdy::widget::{button, dropdown_menu, menu};
 
 dropdown_menu(
     |m| m.trigger(button("Open").style(button::Outline)),
@@ -8,20 +8,20 @@ dropdown_menu(
             menu::item("Team").into(),
             menu::sub(
                 "Invite users",
-                column![
-                    menu::item("Email"),
-                    menu::item("Message"),
+                [
+                    menu::item("Email").into(),
+                    menu::item("Message").into(),
                     menu::sub(
                         "More options",
-                        column![
-                            menu::item("Calendly"),
-                            menu::item("Slack"),
+                        [
+                            menu::item("Calendly").into(),
+                            menu::item("Slack").into(),
                             menu::separator(),
-                            menu::item("Webhook"),
+                            menu::item("Webhook").into(),
                         ],
                     ),
                     menu::separator(),
-                    menu::item("Advanced..."),
+                    menu::item("Advanced...").into(),
                 ],
             ),
             menu::item("New Team").shortcut("⌘+T").into(),

@@ -24,6 +24,7 @@ pub mod pagination;
 pub mod popover;
 pub mod progress;
 pub mod radio_group;
+pub mod select;
 pub mod separator;
 pub mod sheet;
 pub mod sidebar;

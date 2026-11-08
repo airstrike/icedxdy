@@ -91,8 +91,8 @@ impl App {
             accordion, alert, alert_dialog, aspect_ratio, avatar, badge, breadcrumb, button,
             button_group, card, checkbox, collapsible, dialog, dropdown_menu, empty, field, input,
             input_group, item, kbd, label, native_select, pagination, popover, progress,
-            radio_group, separator, sheet, sidebar, skeleton, slider, sonner, spinner, switch,
-            table, tabs, text, textarea, toggle, toggle_group, tooltip,
+            radio_group, select, separator, sheet, sidebar, skeleton, slider, sonner, spinner,
+            switch, table, tabs, text, textarea, toggle, toggle_group, tooltip,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
@@ -122,6 +122,7 @@ impl App {
             popover::PopoverPage::new,
             progress::ProgressPage::new,
             radio_group::RadioGroupPage::new,
+            select::SelectPage::new,
             separator::SeparatorPage::new,
             sheet::SheetPage::new,
             sidebar::SidebarPage::new,

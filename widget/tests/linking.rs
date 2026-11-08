@@ -16,8 +16,8 @@ use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
     Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, dialog, dropdown_menu,
-    field, menu, popover, radio_group, row, sheet, sidebar, slider, switch, tabs, textarea, toast,
-    toaster, toggle, toggle_group,
+    field, menu, popover, radio_group, row, select, sheet, sidebar, slider, switch, tabs, textarea,
+    toast, toaster, toggle, toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -764,7 +764,9 @@ fn account_menu<'a>() -> icedxdy_widget::DropdownMenu<'a, Message> {
                     .disabled(true),
                 menu::sub(
                     block(60.0, 20.0),
-                    menu::item(block(60.0, 20.0)).on_select(Message::Pressed),
+                    [menu::item(block(60.0, 20.0))
+                        .on_select(Message::Pressed)
+                        .into()],
                 ),
             ]
             .into()
@@ -835,4 +837,45 @@ fn a_submenu_item_closes_the_whole_menu() {
         ui.into_messages().collect::<Vec<_>>(),
         [Message::Pressed, Message::Open(false)],
     );
+}
+
+/// A 192px select at the window's top left. Its list opens 4px under the
+/// 32px trigger with `p-1`, so its first item starts at y 40.
+fn fruit<'a>() -> icedxdy_widget::Select<'a, Message> {
+    select([
+        select::item("apple", "Apple"),
+        select::item("banana", "Banana"),
+    ])
+    .placeholder("Select a fruit")
+    .width(192)
+    .on_value_change(Message::Text)
+}
+
+#[test]
+fn a_select_publishes_the_chosen_value_and_closes() {
+    let element: Element<'_, Message, Theme, Renderer> = fruit().into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 10.0, 16.0);
+    click(&mut ui, 96.0, 44.0);
+
+    let element: Element<'_, Message, Theme, Renderer> = fruit().into();
+    let mut ui = ui.rebuild(element);
+    click(&mut ui, 96.0, 44.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Text("apple".to_owned())],
+    );
+}
+
+#[test]
+fn a_disabled_select_does_not_open() {
+    let element: Element<'_, Message, Theme, Renderer> = fruit().disabled(true).into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 10.0, 16.0);
+    click(&mut ui, 96.0, 44.0);
+
+    assert_eq!(ui.into_messages().count(), 0);
 }

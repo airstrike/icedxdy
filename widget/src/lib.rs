@@ -36,6 +36,7 @@ pub mod rich_text;
 pub mod row;
 pub mod rule;
 pub mod scrollable;
+pub mod select;
 pub mod separator;
 pub mod sheet;
 pub mod sidebar;
@@ -87,6 +88,7 @@ pub use progress::Progress;
 pub use radio::Radio;
 pub use rich_text::{RichText, Span, rich_text, span};
 pub use row::Row;
+pub use select::Select;
 pub use size::Size;
 pub use skeleton::Skeleton;
 pub use slider::Slider;
@@ -413,4 +415,11 @@ pub fn dropdown_menu<'a, Message>(
     content: impl Fn(&popover::Handle) -> Slot<'a, Message> + 'a,
 ) -> DropdownMenu<'a, Message> {
     dropdown_menu::dropdown_menu(trigger, content)
+}
+
+/// Create an uncontrolled [`Select`] over `entries`.
+pub fn select<'a, Message>(
+    entries: impl IntoIterator<Item = select::Entry>,
+) -> Select<'a, Message> {
+    select::select(entries)
 }

@@ -23,7 +23,7 @@
 //! pressing the trigger again does too. The panel is built only while open,
 //! so its widgets mount fresh each time, as in Radix.
 
-use iced_core::{Element, Padding, Pixels};
+use iced_core::{Element, Length, Padding, Pixels};
 use iced_widget::anchored;
 use iced_widget::component::{self, Component};
 use iced_widget::{Renderer, Space, Widget};
@@ -312,12 +312,11 @@ impl<'a, Message: 'static> Component<'a, Message, Theme, Renderer> for Popover<'
 
             let panel = Container::new(body)
                 .padding(self.padding)
-                .min_width(self.min_width)
+                .width(match self.width {
+                    Some(width) => Length::Fixed(width),
+                    None => Length::Fill,
+                })
                 .style(content);
-            let panel = match self.width {
-                Some(width) => panel.width(width),
-                None => panel,
-            };
 
             marker::owner(
                 Slot::from(panel).compose().map(Event::App).boxed(),
@@ -335,6 +334,7 @@ impl<'a, Message: 'static> Component<'a, Message, Theme, Renderer> for Popover<'
             } else {
                 anchored::Width::AtLeastAnchor
             })
+            .min_width(self.min_width)
             .open(handle.is_open)
             .modal(self.modal)
             .on_toggle(Event::Set)
