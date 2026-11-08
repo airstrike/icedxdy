@@ -90,7 +90,7 @@ impl App {
         use component::{
             accordion, alert, aspect_ratio, avatar, badge, breadcrumb, button, button_group, card,
             checkbox, collapsible, dialog, field, input, kbd, progress, separator, sheet, sidebar,
-            switch, tabs, text,
+            switch, tabs, text, tooltip,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
@@ -116,6 +116,7 @@ impl App {
             switch::SwitchPage::new,
             tabs::TabsPage::new,
             text::TextPage::new,
+            tooltip::TooltipPage::new,
         ];
 
         for (i, ctor) in constructors.into_iter().enumerate() {

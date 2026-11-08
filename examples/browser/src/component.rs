@@ -20,3 +20,4 @@ pub mod sidebar;
 pub mod switch;
 pub mod tabs;
 pub mod text;
+pub mod tooltip;

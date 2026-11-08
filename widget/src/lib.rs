@@ -43,6 +43,7 @@ pub mod tabs;
 pub mod text;
 pub mod text_input;
 pub mod toggle_group;
+pub mod tooltip;
 pub mod weight;
 
 pub use iced_widget::space;
@@ -78,6 +79,7 @@ pub use table::Table;
 pub use tabs::Tabs;
 pub use text::Text;
 pub use toggle_group::ToggleGroup;
+pub use tooltip::Tooltip;
 pub use weight::Weight;
 
 /// Create a [`Button`] with the given content and default style.
@@ -200,6 +202,14 @@ pub fn separator() -> separator::Separator {
 /// Create a [`Kbd`] showing `content`.
 pub fn kbd<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Kbd<'a, Message> {
     kbd::kbd(content)
+}
+
+/// Create a [`Tooltip`] showing `content` while `trigger` is hovered.
+pub fn tooltip<'a, Message: 'a>(
+    trigger: impl Into<Slot<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
+) -> Tooltip<'a, Message> {
+    tooltip::tooltip(trigger, content)
 }
 
 /// Create an [`Alert`].

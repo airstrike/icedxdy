@@ -39,6 +39,7 @@ pub mod tabs;
 pub mod text;
 pub mod text_input;
 pub mod toggle;
+pub mod tooltip;
 pub mod tweak;
 
 use std::ops::Deref;
