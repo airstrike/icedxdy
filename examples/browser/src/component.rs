@@ -15,6 +15,7 @@ pub mod dialog;
 pub mod dropdown_menu;
 pub mod empty;
 pub mod field;
+pub mod hover_card;
 pub mod input;
 pub mod input_group;
 pub mod item;

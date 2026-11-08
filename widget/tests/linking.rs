@@ -16,8 +16,8 @@ use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
     Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, combobox, dialog,
-    dropdown_menu, field, menu, popover, radio_group, row, select, sheet, sidebar, slider, switch,
-    tabs, textarea, toast, toaster, toggle, toggle_group,
+    dropdown_menu, field, hover_card, menu, popover, radio_group, row, select, sheet, sidebar,
+    slider, switch, tabs, textarea, toast, toaster, toggle, toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -915,4 +915,32 @@ fn escape_closes_a_combobox_list() {
     click(&mut ui, 100.0, 46.0);
 
     assert_eq!(ui.into_messages().collect::<Vec<_>>(), []);
+}
+
+/// A hover card on a trigger at the window's top left, with no delays. Its
+/// 256px card opens 4px under the 32px trigger, shifted into the window:
+/// an inner button at y 46..78 from x 10.
+#[test]
+fn a_hover_card_opens_on_hover_and_welcomes_the_pointer() {
+    let element: Element<'_, Message, Theme, Renderer> = hover_card(
+        button(block(40.0, 20.0)),
+        button(block(60.0, 20.0)).on_press(Message::Inner),
+    )
+    .open_delay(Duration::ZERO)
+    .close_delay(Duration::ZERO)
+    .on_open_change(Message::Open)
+    .into();
+    let mut ui = simulator(element);
+
+    hover(&mut ui, 5.0, 16.0);
+    hover(&mut ui, 30.0, 34.0);
+    hover(&mut ui, 15.0, 60.0);
+    click(&mut ui, 15.0, 60.0);
+    hover(&mut ui, 600.0, 600.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(true), Message::Inner, Message::Open(false)],
+        "crossing the gap into the card keeps it open"
+    );
 }

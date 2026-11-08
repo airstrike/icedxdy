@@ -19,6 +19,7 @@ pub mod dialog;
 pub mod dropdown_menu;
 pub mod empty;
 pub mod field;
+pub mod hover_card;
 pub mod input;
 pub mod input_group;
 pub mod item;
@@ -79,6 +80,7 @@ pub use dialog::Dialog;
 pub use dropdown_menu::DropdownMenu;
 pub use empty::Empty;
 pub use field::Field;
+pub use hover_card::HoverCard;
 pub use input::Input;
 pub use input_group::InputGroup;
 pub use item::{Item, Media};
@@ -431,4 +433,12 @@ pub fn combobox<'a, Message>(
     items: impl IntoIterator<Item = impl Into<String>>,
 ) -> Combobox<'a, Message> {
     combobox::combobox(items)
+}
+
+/// Create a [`HoverCard`] showing `content` while `trigger` is hovered.
+pub fn hover_card<'a, Message>(
+    trigger: impl Into<Slot<'a, Message>>,
+    content: impl Into<Slot<'a, Message>>,
+) -> HoverCard<'a, Message> {
+    hover_card::hover_card(trigger, content)
 }
