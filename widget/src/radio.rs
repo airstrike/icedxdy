@@ -12,6 +12,7 @@
 //! radio("Wire", Method::Wire, Some(self.method), Message::Method).disabled(true)
 //! ```
 
+pub mod group;
 mod widget;
 
 use iced_core::Pixels;
@@ -21,6 +22,8 @@ use icedxdy_core::Theme;
 use icedxdy_core::theme::radio;
 
 use crate::compose::{Compose, Inherited, Slot};
+
+pub use group::{Group, group};
 
 /// A radio button bound to one value of a set.
 ///

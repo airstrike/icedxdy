@@ -16,6 +16,11 @@
 //! (and with it every nested owner) before it drains. Signals are typed, so
 //! owners of different kinds never take each other's.
 //!
+//! A marker can also stand in for a form control ([`Marker::control`]): it
+//! then exposes a [`Control`] to the control operations, so a linked
+//! [`field`](crate::field) label presses it like a click and a field card
+//! reads whether it is checked.
+//!
 //! A child's own handlers still fire. `c.trigger(button("Close").on_press(m))`
 //! publishes `m` and toggles the owner, like Radix's `composeEventHandlers`.
 
@@ -32,6 +37,7 @@ use crate::core::widget::Id;
 use crate::core::widget::tree::{self, Tree};
 use crate::core::widget::{Meta, Operation};
 use crate::core::{Element, Event, Layout, Length, Rectangle, Shell, Size, Vector, Widget};
+use crate::operation::control::Control;
 
 /// What counts as pressing a [`Marker`]'s child.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,6 +55,9 @@ pub struct Marker<'a, S, Message, Theme, Renderer> {
     content: Element<'a, Message, Theme, Renderer>,
     signal: S,
     press: Press,
+    /// Whether the marker is a form control, and if so whether it is
+    /// checked.
+    control: Option<bool>,
 }
 
 /// Wrap `content` in a [`Marker`] recording `signal` when pressed.
@@ -61,6 +70,17 @@ pub fn marker<'a, S, Message, Theme, Renderer>(
         content: content.into(),
         signal,
         press,
+        control: None,
+    }
+}
+
+impl<S, Message, Theme, Renderer> Marker<'_, S, Message, Theme, Renderer> {
+    /// Make the marker a form control, `checked` or not: a linked label's
+    /// `control::activate` records the signal
+    /// as a press would.
+    pub fn control(mut self, checked: bool) -> Self {
+        self.control = Some(checked);
+        self
     }
 }
 
@@ -68,6 +88,7 @@ pub fn marker<'a, S, Message, Theme, Renderer>(
 struct State<S> {
     is_pressed: bool,
     signals: Signals<S>,
+    control: Control,
 }
 
 /// Signals recorded by a [`Marker`], handed to [`Drain`] through
@@ -90,6 +111,7 @@ where
         tree::State::new(State::<S> {
             is_pressed: false,
             signals: Signals(Vec::new()),
+            control: Control::new(self.control.unwrap_or(false)),
         })
     }
 
@@ -138,6 +160,10 @@ where
         let child_captured = !was_captured && shell.is_event_captured();
         let is_over = cursor.is_over(layout.bounds());
         let state = tree.state.downcast_mut::<State<S>>();
+
+        if state.control.take_activation() && self.control.is_some() {
+            state.signals.0.push(self.signal.clone());
+        }
 
         let pressed = match self.press {
             Press::Captured => child_captured,
@@ -225,6 +251,11 @@ where
     ) {
         let state = tree.state.downcast_mut::<State<S>>();
         operation.custom(None, layout.bounds(), &mut state.signals);
+
+        if let Some(checked) = self.control {
+            state.control.set_checked(checked);
+            operation.custom(None, layout.bounds(), &mut state.control);
+        }
 
         let (child_layout, child_tree) = layout
             .iter_mut(&mut tree.children)

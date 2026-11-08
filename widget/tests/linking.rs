@@ -13,8 +13,8 @@ use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
-    Inherited, Slot, button, checkbox, collapsible, column, dialog, field, row, sheet, sidebar,
-    slider, switch, tabs, toggle,
+    Inherited, Slot, button, checkbox, collapsible, column, dialog, field, radio_group, row, sheet,
+    sidebar, slider, switch, tabs, toggle,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -214,6 +214,48 @@ fn a_disabled_toggle_ignores_presses() {
     click(&mut ui, 10.0, 10.0);
 
     assert_eq!(ui.into_messages().count(), 0);
+}
+
+#[test]
+fn a_radio_group_checks_one_item_at_a_time() {
+    let element: Element<'_, Message, Theme, Renderer> =
+        radio_group(|g| column![g.item("a"), g.item("b")].spacing(8).into())
+            .default_value("a")
+            .on_value_change(Message::Tab)
+            .into();
+    let mut ui = simulator(element);
+
+    assert_eq!(is_checked(&mut ui), Some(true));
+    click(&mut ui, 8.0, 32.0);
+    assert_eq!(
+        is_checked(&mut ui),
+        Some(false),
+        "the first item is unchecked"
+    );
+    click(&mut ui, 8.0, 32.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Tab("b".to_owned())],
+        "choosing the checked item reports nothing"
+    );
+}
+
+#[test]
+fn a_field_label_chooses_its_radio_group_item() {
+    let element: Element<'_, Message, Theme, Renderer> =
+        radio_group(|g| labelled(g.item("b")).into())
+            .value("a")
+            .on_value_change(Message::Tab)
+            .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 10.0, 10.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Tab("b".to_owned())]
+    );
 }
 
 /// A 32px trigger button on top of a content button that publishes

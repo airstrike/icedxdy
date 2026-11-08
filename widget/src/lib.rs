@@ -228,6 +228,14 @@ pub fn pagination<'a, Message: 'a>(
     pagination::pagination(items)
 }
 
+/// Create an uncontrolled [`radio::Group`] whose content is built by
+/// `body` from a [`radio::group::Handle`].
+pub fn radio_group<'a, Message>(
+    body: impl Fn(&radio::group::Handle) -> Slot<'a, Message> + 'a,
+) -> radio::Group<'a, Message> {
+    radio::group(body)
+}
+
 /// Create an [`Alert`].
 pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
     alert::alert()
