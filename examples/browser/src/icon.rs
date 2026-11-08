@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 53647c680cdbd3e8e51e4276296083cefc5d71e85d8263cfaefa7a5cb3969282
+// ae13bde6690e11e52277e356b961c6d06bb960f15d840fdc4285a8b133331d37
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -40,6 +40,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("mail", "\u{E10F}"),
     ("minus", "\u{E11C}"),
     ("moon", "\u{E11E}"),
+    ("octagon_x", "\u{E128}"),
     ("plus", "\u{E13D}"),
     ("save", "\u{E14D}"),
     ("search", "\u{E151}"),
@@ -48,6 +49,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("sun", "\u{E178}"),
     ("terminal", "\u{E181}"),
     ("trash_2", "\u{E18E}"),
+    ("triangle_alert", "\u{E193}"),
     ("underline", "\u{E19A}"),
     ("x", "\u{E1B2}"),
 ];
@@ -269,6 +271,13 @@ where
     icon("\u{E11E}")
 }
 
+pub fn octagon_x<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E128}")
+}
+
 pub fn plus<'a, Theme>() -> Text<'a, Theme>
 where
     Theme: text::Catalog + 'a,
@@ -323,6 +332,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E18E}")
+}
+
+pub fn triangle_alert<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E193}")
 }
 
 pub fn underline<'a, Theme>() -> Text<'a, Theme>

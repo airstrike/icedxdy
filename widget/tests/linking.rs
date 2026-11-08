@@ -4,6 +4,8 @@
 //! Children are fixed-size blocks clicked by position, so the checks do not
 //! depend on text shaping in the headless renderer.
 
+use std::time::Duration;
+
 use iced_core::keyboard::key::Named;
 use iced_core::time::Instant;
 use iced_core::{Element, Event, Point, window};
@@ -14,7 +16,8 @@ use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
     Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, dialog, field,
-    radio_group, row, sheet, sidebar, slider, switch, tabs, textarea, toggle, toggle_group,
+    radio_group, row, sheet, sidebar, slider, switch, tabs, textarea, toast, toaster, toggle,
+    toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -515,6 +518,50 @@ fn an_alert_dialog_ignores_presses_outside_and_closes_from_cancel() {
         [Message::Open(false)],
         "only the cancel button closes it"
     );
+}
+
+/// A toaster whose 40×20 trigger sits at the top left and raises a toast
+/// with an action publishing [`Message::Inner`]. The toast's card sits at
+/// the bottom right; its 16px action button (no text in the null renderer)
+/// spans x 968..984, y 704..728.
+fn toasting<'a>() -> Element<'a, Message, Theme, Renderer> {
+    toaster(toast::trigger(
+        button(block(40.0, 20.0)),
+        toast::toast("Saved").action("Undo", Message::Inner),
+    ))
+    .into()
+}
+
+fn redraw_at(ui: &mut Simulator<'_>, now: Instant) {
+    let _ = ui.simulate([Event::Window(window::Event::RedrawRequested(now))]);
+}
+
+#[test]
+fn a_toast_action_publishes_and_dismisses_the_toast() {
+    let mut ui = simulator(toasting());
+
+    click(&mut ui, 10.0, 10.0);
+    let mut ui = ui.rebuild(toasting());
+    click(&mut ui, 976.0, 716.0);
+    let mut ui = ui.rebuild(toasting());
+    click(&mut ui, 976.0, 716.0);
+
+    assert_eq!(ui.into_messages().collect::<Vec<_>>(), [Message::Inner]);
+}
+
+#[test]
+fn a_toast_times_out_by_itself() {
+    let mut ui = simulator(toasting());
+
+    click(&mut ui, 10.0, 10.0);
+    let mut ui = ui.rebuild(toasting());
+    let now = Instant::now();
+    redraw_at(&mut ui, now);
+    redraw_at(&mut ui, now + Duration::from_secs(5));
+    let mut ui = ui.rebuild(toasting());
+    click(&mut ui, 976.0, 716.0);
+
+    assert_eq!(ui.into_messages().count(), 0, "the toast is gone");
 }
 
 /// A dialog whose trigger sits at the window's top left. Its 384px panel is

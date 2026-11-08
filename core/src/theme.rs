@@ -42,6 +42,7 @@ pub mod tabs;
 pub mod text;
 pub mod text_input;
 pub mod textarea;
+pub mod toast;
 pub mod toggle;
 pub mod tooltip;
 pub mod tweak;

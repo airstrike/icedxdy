@@ -11,7 +11,7 @@ use icedxdy::widget::container;
 use icedxdy::widget::markdown::highlighter::Map;
 use icedxdy::widget::sidebar::MenuButtonSize;
 
-use icedxdy::widget::{button, rule, separator, sidebar, text};
+use icedxdy::widget::{button, rule, separator, sidebar, text, toast, toaster};
 use icedxdy::{Size, Theme, Weight, theme};
 
 const LOGO_BYTES: &[u8] = include_bytes!(concat!(
@@ -91,8 +91,8 @@ impl App {
             accordion, alert, alert_dialog, aspect_ratio, avatar, badge, breadcrumb, button,
             button_group, card, checkbox, collapsible, dialog, empty, field, input, input_group,
             item, kbd, label, native_select, pagination, progress, radio_group, separator, sheet,
-            sidebar, skeleton, slider, spinner, switch, table, tabs, text, textarea, toggle,
-            toggle_group, tooltip,
+            sidebar, skeleton, slider, sonner, spinner, switch, table, tabs, text, textarea,
+            toggle, toggle_group, tooltip,
         };
 
         let constructors: Vec<fn(usize) -> Box<dyn page::Page>> = vec![
@@ -125,6 +125,7 @@ impl App {
             sidebar::SidebarPage::new,
             skeleton::SkeletonPage::new,
             slider::SliderPage::new,
+            sonner::SonnerPage::new,
             spinner::SpinnerPage::new,
             switch::SwitchPage::new,
             table::TablePage::new,
@@ -475,9 +476,23 @@ impl App {
                 .height(Fill)
         };
 
-        column![header, Element::from(separator()), body]
+        // shadcn's `<Toaster />` sits once at the root of the layout.
+        let layout = column![header, Element::from(separator()), body]
             .width(Fill)
-            .height(Fill)
-            .boxed()
+            .height(Fill);
+
+        toaster(layout.boxed())
+            .icons(|kind| {
+                let icon = match kind {
+                    toast::Kind::Default => return None,
+                    toast::Kind::Success => icon::circle_check(),
+                    toast::Kind::Info => icon::info(),
+                    toast::Kind::Warning => icon::triangle_alert(),
+                    toast::Kind::Error => icon::octagon_x(),
+                };
+
+                Some(icon.size(16).into())
+            })
+            .into()
     }
 }

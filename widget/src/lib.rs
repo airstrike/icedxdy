@@ -47,6 +47,7 @@ pub mod tabs;
 pub mod text;
 pub mod text_input;
 pub mod textarea;
+pub mod toast;
 pub mod toggle;
 pub mod toggle_group;
 pub mod tooltip;
@@ -272,6 +273,13 @@ pub fn alert_dialog<'a, Message>(
     content: impl Fn(&alert_dialog::Handle) -> Slot<'a, Message> + 'a,
 ) -> AlertDialog<'a, Message> {
     alert_dialog::alert_dialog(trigger, content)
+}
+
+/// Create a [`toast::Toaster`] showing the toasts raised inside `content`.
+pub fn toaster<'a, Message: 'a>(
+    content: impl Into<Slot<'a, Message>>,
+) -> toast::Toaster<'a, Message> {
+    toast::toaster(content)
 }
 
 /// Create an [`Alert`].
