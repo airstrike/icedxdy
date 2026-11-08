@@ -973,3 +973,22 @@ fn a_context_menu_opens_at_the_pointer_and_closes_on_select() {
         [Message::Open(true), Message::Inner, Message::Open(false)],
     );
 }
+
+#[test]
+fn a_tooltip_shows_while_its_trigger_is_hovered() {
+    let element: Element<'_, Message, Theme, Renderer> = column![
+        Slot::from(Space::new().height(100)),
+        icedxdy_widget::tooltip(button(block(40.0, 20.0)), block(60.0, 20.0))
+            .on_open_change(Message::Open),
+    ]
+    .into();
+    let mut ui = simulator(element);
+
+    hover(&mut ui, 5.0, 116.0);
+    hover(&mut ui, 600.0, 600.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(true), Message::Open(false)],
+    );
+}

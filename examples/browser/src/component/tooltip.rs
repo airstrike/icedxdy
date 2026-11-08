@@ -1,5 +1,5 @@
-// shadcn's tooltip draws an arrow toward its trigger; iced's tooltip has
-// no arrow, so the panel sits 4px from the trigger instead.
+// The tooltip's arrow is drawn in half-pixel rows: iced cannot rotate the
+// `size-2.5` square shadcn uses.
 
 use iced::Task;
 
