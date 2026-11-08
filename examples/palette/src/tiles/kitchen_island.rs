@@ -18,7 +18,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         mode_item(state, KitchenMode::Color, "Color"),
         mode_item(state, KitchenMode::Ambient, "Ambient"),
     ])
-    .variant(toggle_group::Variant::Outline);
+    .style(toggle_group::Outline);
 
     let scenes = toggle_group([
         scene_item(state, KitchenScene::Cooking, "Cooking"),
@@ -27,16 +27,19 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         scene_item(state, KitchenScene::Focus, "Focus"),
     ])
     .size(Size::Sm)
-    .variant(toggle_group::Variant::Outline);
+    .style(toggle_group::Outline);
 
-    let preview = item::muted([
-        item::media_image(color_tile(oklch(0.72, 0.12, 65.0))).into(),
+    let preview = item::item([
+        item::media(color_tile(oklch(0.72, 0.12, 65.0)))
+            .style(item::Image)
+            .into(),
         item::content([
             item::title("Warm Island").into(),
             item::description("Dining scene - 2700K").into(),
         ])
         .into(),
-    ]);
+    ])
+    .style(item::Muted);
 
     card::card(
         column![

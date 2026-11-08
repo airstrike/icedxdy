@@ -103,7 +103,7 @@ fn target(
     status: &'static str,
     amount: &'static str,
 ) -> Slot<'static, Message> {
-    item::muted([
+    item::item([
         item::content([
             text::xs(label)
                 .medium()
@@ -120,6 +120,7 @@ fn target(
             text::small(amount).medium().into(),
         ]),
     ])
+    .style(item::Muted)
     .orientation(Vertical)
     .into()
 }

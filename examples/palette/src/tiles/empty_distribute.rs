@@ -17,7 +17,7 @@ const CONTENT_HEIGHT: f32 = CARD_HEIGHT - CARD_PADDING_Y * 2.0;
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let content = empty::empty()
         .padding(16)
-        .media(empty::media_icon(icon::plus()))
+        .media(empty::media(icon::plus()).style(empty::Icon))
         .title("Distribute Track")
         .description(
             "Upload your first master to start reaching\n\

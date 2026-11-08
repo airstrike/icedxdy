@@ -19,15 +19,18 @@ pub fn view() -> iced::Element<'static, Message, Theme> {
         .label("Current Password")
         .width(Fill);
 
-    let danger = item::muted([
-        item::media_icon(icon::circle_help().size(16)).into(),
+    let danger = item::item([
+        item::media(icon::circle_help().size(16))
+            .style(item::Icon)
+            .into(),
         item::content([
             item::title("Danger Zone").into(),
             item::description("Archive account and remove catalog").into(),
         ])
         .into(),
         icon::arrow_right().size(16).into(),
-    ]);
+    ])
+    .style(item::Muted);
 
     card::card(
         column![

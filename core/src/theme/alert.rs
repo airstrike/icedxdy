@@ -1,7 +1,9 @@
 //! Alert container styling
 //!
 //! `Style` is OKLCH-native — alert reuses container's `Style` field-for-field.
-//! Variant fns + Spec/atom apply tweaks before conversion.
+//! Variant fns + Spec/atom apply tweaks before conversion. A [`Spec`] also
+//! carries the variant's description color, which shadcn sets on the
+//! `alert-description` slot rather than on the alert itself.
 
 use std::ops::Add;
 
@@ -11,7 +13,7 @@ use super::tweak::{Tweak, TweakSet};
 use crate::palette::Palette;
 use crate::style;
 use crate::style::status;
-use crate::{Background, Border, radius};
+use crate::{Background, Border, Color, radius};
 
 // --- Variant fns -------------------------------------------------------------
 
@@ -51,6 +53,17 @@ pub fn destructive(theme: &Theme) -> Style {
     }
 }
 
+/// Default description color: `text-muted-foreground`.
+pub fn default_description(theme: &Theme) -> Color {
+    theme.muted.foreground
+}
+
+/// Destructive description color:
+/// `*:data-[slot=alert-description]:text-destructive/90`.
+pub fn destructive_description(theme: &Theme) -> Color {
+    theme.destructive.base.scale_alpha(0.9)
+}
+
 // --- Variant unit structs ----------------------------------------------------
 
 /// Default alert variant.
@@ -64,17 +77,19 @@ pub struct Destructive;
 // --- Spec --------------------------------------------------------------------
 
 /// An alert style: a base variant function plus a sequence of tweaks
-/// applied at resolve time.
+/// applied at resolve time, and the variant's description color.
 #[derive(Debug, Clone)]
 pub struct Spec {
     variant: fn(&Theme) -> Style,
+    description: fn(&Theme) -> Color,
     tweaks: TweakSet,
 }
 
 impl Spec {
-    fn variant(f: fn(&Theme) -> Style) -> Spec {
+    fn variant(f: fn(&Theme) -> Style, description: fn(&Theme) -> Color) -> Spec {
         Spec {
             variant: f,
+            description,
             tweaks: TweakSet::default(),
         }
     }
@@ -92,17 +107,22 @@ impl Spec {
         }
         style
     }
+
+    /// The color of the alert's description text.
+    pub fn description(&self, theme: &Theme) -> Color {
+        (self.description)(theme)
+    }
 }
 
 impl From<Default> for Spec {
     fn from(_: Default) -> Spec {
-        Spec::variant(default)
+        Spec::variant(default, default_description)
     }
 }
 
 impl From<Destructive> for Spec {
     fn from(_: Destructive) -> Spec {
-        Spec::variant(destructive)
+        Spec::variant(destructive, destructive_description)
     }
 }
 

@@ -34,9 +34,12 @@ pub fn view() -> iced::Element<'static, Message, Theme> {
         "Archive older sessions to reclaim space before exports start failing.",
     );
 
-    let destructive = alert::destructive().title("Payment failed").description(
-        "We couldn't charge the card on file. Update billing to keep this account active.",
-    );
+    let destructive = alert::alert()
+        .title("Payment failed")
+        .description(
+            "We couldn't charge the card on file. Update billing to keep this account active.",
+        )
+        .style(alert::Destructive);
 
     let body: Column<'_, Message> = column([info, success, warning, Slot::from(destructive)])
         .spacing(12)

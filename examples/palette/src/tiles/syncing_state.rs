@@ -13,7 +13,7 @@ use crate::{Message, State};
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let content = empty::empty()
         .padding(16)
-        .media(empty::media_icon(spinner().size(16.0)))
+        .media(empty::media(spinner().size(16.0)).style(empty::Icon))
         .title("Syncing your accounts")
         .description(
             "We're pulling in your latest transactions. This usually takes\n\

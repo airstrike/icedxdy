@@ -13,7 +13,7 @@ use crate::{Message, State, icon};
 pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     let content = empty::empty()
         .padding(16)
-        .media(empty::media_icon(icon::square().size(16)))
+        .media(empty::media(icon::square().size(16)).style(empty::Icon))
         .title("Connect Bank")
         .description(
             "Link your payout method to receive monthly royalty\n\

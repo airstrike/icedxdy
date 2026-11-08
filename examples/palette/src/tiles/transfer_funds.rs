@@ -44,7 +44,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     .label("To Account")
     .width(Fill);
 
-    let summary = item::muted([item::content([
+    let summary = item::item([item::content([
         money_row("Estimated arrival", "Today, Apr 14", false),
         divider(),
         money_row("Transaction fee", "$0.00", false),
@@ -53,6 +53,7 @@ pub fn view(state: &State) -> iced::Element<'_, Message, Theme> {
     ])
     .spacing(12.0)
     .into()])
+    .style(item::Muted)
     .orientation(Vertical);
 
     card::card(

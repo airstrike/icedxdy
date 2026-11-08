@@ -12,4 +12,4 @@ alert()
     .max_width(448)
 ```
 
-Drop the `.icon(...)` call to render a title-and-description-only alert. Drop `.action(...)` for the simple callout. Use `alert::destructive()` (or chain `.destructive()`) for the destructive variant.
+Drop the `.icon(...)` call to render a title-and-description-only alert. Drop `.action(...)` for the simple callout. Use `.style(alert::Destructive)` for the destructive variant.

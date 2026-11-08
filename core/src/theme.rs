@@ -14,10 +14,13 @@ pub mod checkbox;
 pub mod combo_box;
 pub mod container;
 pub mod dialog;
+pub mod empty;
 pub mod field;
 pub mod float;
+pub mod item;
 #[cfg(feature = "markdown")]
 pub mod markdown;
+pub mod media;
 pub mod menu;
 pub mod pick_list;
 pub mod progress_bar;
@@ -34,6 +37,7 @@ pub mod table;
 pub mod tabs;
 pub mod text;
 pub mod text_input;
+pub mod toggle;
 pub mod tweak;
 
 use std::ops::Deref;

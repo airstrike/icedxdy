@@ -2,6 +2,21 @@
 //!
 //! Mirrors shadcn's `Empty` family: a centered empty-state body, optional
 //! media, title/description header, and trailing content slot.
+//!
+//! # Example
+//!
+//! ```ignore
+//! use icedxdy::widget::empty;
+//!
+//! empty::empty()
+//!     .media(empty::media(icon::folder_code()).style(empty::Icon))
+//!     .title("No Projects Yet")
+//!     .description("You haven't created any projects yet.")
+//! ```
+//!
+//! # Variants
+//!
+//! shadcn's `EmptyMedia` `variant` prop is a style: `.style(empty::Icon)`.
 
 use iced_core::Length::Fill;
 use iced_core::Padding;
@@ -10,18 +25,13 @@ use iced_core::text::LineHeight;
 use iced_widget::Renderer;
 use iced_widget::Widget;
 use icedxdy_core::theme::container::Style;
+use icedxdy_core::theme::media::Frame;
 use icedxdy_core::{Border, Gap, Theme, radius};
 
 use crate::compose::{Compose, Inherited, Slot};
 use crate::{Size, text};
 
-/// Empty media variants.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum Variant {
-    #[default]
-    Default,
-    Icon,
-}
+pub use icedxdy_core::theme::empty::Icon;
 
 /// Empty-state root.
 pub struct Empty<'a, Message> {
@@ -137,26 +147,21 @@ impl<'a, Message: 'a> Compose<Message> for Empty<'a, Message> {
 /// Empty media slot.
 pub struct Media<'a, Message> {
     content: Slot<'a, Message>,
-    variant: Variant,
+    frame: Option<Frame>,
 }
 
-/// Create an empty media slot.
+/// Create an unframed empty media slot.
 pub fn media<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
     Media {
         content: content.into(),
-        variant: Variant::Default,
+        frame: None,
     }
 }
 
-/// Create an icon-styled empty media slot.
-pub fn media_icon<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
-    media(content).variant(Variant::Icon)
-}
-
 impl<'a, Message: 'a> Media<'a, Message> {
-    /// Set the media variant.
-    pub fn variant(mut self, variant: Variant) -> Self {
-        self.variant = variant;
+    /// Set the media style: `empty::Icon` puts the content on a muted tile.
+    pub fn style(mut self, frame: impl Into<Frame>) -> Self {
+        self.frame = Some(frame.into());
         self
     }
 }
@@ -184,12 +189,10 @@ impl<'a, Message: 'a> Compose<Message> for Media<'a, Message> {
     where
         Self: 'b,
     {
-        let Media {
-            mut content,
-            variant,
-        } = *self;
+        let Media { mut content, frame } = *self;
 
-        if matches!(variant, Variant::Icon) {
+        // A framed tile sizes its icon (`[&_svg:not([class*='size-'])]:size-4`).
+        if frame.as_ref().is_some_and(|frame| frame.tile().is_some()) {
             content.inherit(&Inherited::default().with_size(Size::Default));
         }
 
@@ -197,11 +200,13 @@ impl<'a, Message: 'a> Compose<Message> for Media<'a, Message> {
             .align_x(Horizontal::Center)
             .align_y(Vertical::Center);
 
-        if matches!(variant, Variant::Icon) {
-            inner = inner
-                .width(32.0)
-                .height(32.0)
-                .style(|theme| media_icon_style(theme).into());
+        if let Some(frame) = frame {
+            if let Some(tile) = frame.tile() {
+                inner = inner.width(tile).height(tile);
+            }
+
+            let paint: iced_widget::container::StyleFn<'_, Theme> = frame.paint().into();
+            inner = inner.clip(frame.clip()).style(paint);
         }
 
         iced_widget::container(inner)
@@ -306,18 +311,6 @@ fn empty_style(_theme: &Theme) -> Style {
     Style {
         border: Border {
             radius: radius::XL.into(),
-            ..Border::default()
-        },
-        ..Style::default()
-    }
-}
-
-fn media_icon_style(theme: &Theme) -> Style {
-    Style {
-        text_color: Some(theme.neutral.foreground),
-        background: Some(theme.muted.base.into()),
-        border: Border {
-            radius: radius::MD.into(),
             ..Border::default()
         },
         ..Style::default()

@@ -17,7 +17,7 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
         shade_item(state, ShadePosition::Half, "Half"),
         shade_item(state, ShadePosition::Closed, "Closed"),
     ])
-    .variant(toggle_group::Variant::Outline)
+    .style(toggle_group::Outline)
     .width(Fill);
 
     card::card(

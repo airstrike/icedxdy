@@ -2,6 +2,24 @@
 //!
 //! Mirrors shadcn's `Item` primitive for compact rows or muted panels inside
 //! cards.
+//!
+//! # Example
+//!
+//! ```ignore
+//! use icedxdy::widget::item;
+//!
+//! item::item([
+//!     item::media(icon::badge_check()).style(item::Icon).into(),
+//!     item::content([item::title("Your profile has been verified.").into()]).into(),
+//! ])
+//! .style(item::Outline)
+//! ```
+//!
+//! # Variants
+//!
+//! shadcn's `variant` props are styles: `.style(item::Outline)` and
+//! `.style(item::Muted)` on the item, `.style(item::Icon)` and
+//! `.style(item::Image)` on its media.
 
 use iced_core::Length::{self, Fill};
 use iced_core::alignment::{Horizontal, Vertical};
@@ -9,20 +27,14 @@ use iced_core::text::LineHeight;
 use iced_core::{Alignment, Padding};
 use iced_widget::Renderer;
 use iced_widget::Widget;
-use icedxdy_core::theme::container::Style;
-use icedxdy_core::{Border, Color, Gap, Orientation, Theme, radius};
+use icedxdy_core::theme::container::Spec;
+use icedxdy_core::theme::media::Frame;
+use icedxdy_core::{Gap, Orientation, Theme};
 
 use crate::compose::{Compose, Slot};
 use crate::text;
 
-/// Item variants.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum Variant {
-    #[default]
-    Default,
-    Outline,
-    Muted,
-}
+pub use icedxdy_core::theme::item::{Default, Icon, Image, Muted, Outline};
 
 /// Item sizes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -36,7 +48,7 @@ pub enum Size {
 /// Item root.
 pub struct Item<'a, Message> {
     children: Vec<Slot<'a, Message>>,
-    variant: Variant,
+    style: Spec,
     size: Size,
     orientation: Orientation,
 }
@@ -47,30 +59,17 @@ pub fn item<'a, Message: 'a>(
 ) -> Item<'a, Message> {
     Item {
         children: children.into_iter().collect(),
-        variant: Variant::Default,
+        style: Default.into(),
         size: Size::Default,
         orientation: Orientation::Horizontal,
     }
 }
 
-/// Create a muted item from children.
-pub fn muted<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Slot<'a, Message>>,
-) -> Item<'a, Message> {
-    item(children).variant(Variant::Muted)
-}
-
-/// Create an outline item from children.
-pub fn outline<'a, Message: 'a>(
-    children: impl IntoIterator<Item = Slot<'a, Message>>,
-) -> Item<'a, Message> {
-    item(children).variant(Variant::Outline)
-}
-
 impl<'a, Message: 'a> Item<'a, Message> {
-    /// Set the item variant.
-    pub fn variant(mut self, variant: Variant) -> Self {
-        self.variant = variant;
+    /// Set the style: a variant (`item::Outline`, `item::Muted`) or a
+    /// tweaked `Spec`.
+    pub fn style(mut self, style: impl Into<Spec>) -> Self {
+        self.style = style.into();
         self
     }
 
@@ -106,7 +105,7 @@ impl<'a, Message: 'a> Compose<Message> for Item<'a, Message> {
     {
         let Item {
             children,
-            variant,
+            style,
             size,
             orientation,
         } = *self;
@@ -149,7 +148,7 @@ impl<'a, Message: 'a> Compose<Message> for Item<'a, Message> {
         crate::container(content)
             .padding(padding)
             .width(Fill)
-            .style(style(variant))
+            .class(style)
             .into()
     }
 }
@@ -233,41 +232,24 @@ pub fn description<'a>(content: impl iced_core::text::IntoFragment<'a>) -> text:
     text::muted(content).line_height(LineHeight::Relative(1.5))
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum MediaVariant {
-    #[default]
-    Default,
-    Icon,
-    Image,
-}
-
 /// Item media slot.
 pub struct Media<'a, Message> {
     content: Slot<'a, Message>,
-    variant: MediaVariant,
+    frame: Option<Frame>,
 }
 
-/// Create an item media slot.
+/// Create an unframed item media slot.
 pub fn media<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
     Media {
         content: content.into(),
-        variant: MediaVariant::Default,
+        frame: None,
     }
 }
 
-/// Create an icon item media slot.
-pub fn media_icon<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
-    media(content).variant(MediaVariant::Icon)
-}
-
-/// Create an image item media slot.
-pub fn media_image<'a, Message: 'a>(content: impl Into<Slot<'a, Message>>) -> Media<'a, Message> {
-    media(content).variant(MediaVariant::Image)
-}
-
 impl<'a, Message: 'a> Media<'a, Message> {
-    pub fn variant(mut self, variant: MediaVariant) -> Self {
-        self.variant = variant;
+    /// Set the media style: `item::Icon` or `item::Image`.
+    pub fn style(mut self, frame: impl Into<Frame>) -> Self {
+        self.frame = Some(frame.into());
         self
     }
 }
@@ -291,21 +273,21 @@ impl<'a, Message: 'a> Compose<Message> for Media<'a, Message> {
     where
         Self: 'b,
     {
-        let Media { content, variant } = *self;
-        let content = content.compose();
+        let Media { content, frame } = *self;
+        let container = crate::container(content.compose())
+            .align_x(Horizontal::Center)
+            .align_y(Vertical::Center);
 
-        match variant {
-            MediaVariant::Default | MediaVariant::Icon => crate::container(content)
-                .align_x(Horizontal::Center)
-                .align_y(Vertical::Center)
-                .into(),
-            MediaVariant::Image => crate::container(content)
-                .width(40.0)
-                .height(40.0)
-                .clip(true)
-                .style(media_image_style)
-                .into(),
-        }
+        let Some(frame) = frame else {
+            return container.into();
+        };
+
+        let container = match frame.tile() {
+            Some(tile) => container.width(tile).height(tile),
+            None => container,
+        };
+
+        container.clip(frame.clip()).class(frame.paint()).into()
     }
 }
 
@@ -353,39 +335,4 @@ fn slot_row<'a, Message: 'a>(
             .boxed();
 
     Slot::from(element)
-}
-
-fn media_image_style(_theme: &Theme) -> Style {
-    Style {
-        border: Border {
-            radius: radius::SM.into(),
-            ..Border::default()
-        },
-        ..Style::default()
-    }
-}
-
-fn style(variant: Variant) -> impl Fn(&Theme) -> Style + 'static {
-    move |theme| {
-        let mut style = Style {
-            border: Border {
-                radius: radius::LG.into(),
-                width: 1.0,
-                color: Color::TRANSPARENT,
-            },
-            ..Style::default()
-        };
-
-        match variant {
-            Variant::Default => {}
-            Variant::Outline => {
-                style.border.color = theme.neutral.border;
-            }
-            Variant::Muted => {
-                style.background = Some(theme.muted.base.alpha(0.5).into());
-            }
-        }
-
-        style
-    }
 }

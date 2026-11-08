@@ -13,30 +13,32 @@
 //!     .title("Heads up!")
 //!     .description("You can add components to your app using the cli.")
 //!
-//! alert::destructive()
+//! alert::alert()
 //!     .icon(icon::circle_alert())
 //!     .title("Payment failed")
 //!     .description("Your payment could not be processed.")
+//!     .style(alert::Destructive)
 //! ```
+//!
+//! # Variants
+//!
+//! shadcn's `variant` prop is a style: `.style(alert::Destructive)`. The
+//! style also decides the description color (muted by default,
+//! `destructive/90` for [`Destructive`]).
 
 use iced_core::alignment::{Horizontal, Vertical};
 use iced_core::text::IntoFragment;
 use iced_core::{Length::*, Padding, Pixels};
 use iced_widget::Renderer;
 use iced_widget::Widget;
-use icedxdy_core::{Theme, theme};
+use iced_widget::text::{Style, StyleFn};
+use icedxdy_core::Theme;
 
 use crate::Size;
 use crate::compose::{Compose, Inherited, Slot};
 use crate::text;
 
-/// Alert variant.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum Variant {
-    #[default]
-    Default,
-    Destructive,
-}
+pub use icedxdy_core::theme::alert::{Default, Destructive, Spec};
 
 /// A callout box with optional icon, title, description, and action.
 pub struct Alert<'a, Message> {
@@ -44,32 +46,20 @@ pub struct Alert<'a, Message> {
     title: Option<text::Text<'a>>,
     description: Option<text::Text<'a>>,
     action: Option<Slot<'a, Message>>,
-    variant: Variant,
+    style: Spec,
     max_width: f32,
 }
 
-/// Create an [`Alert`] with default variant.
+/// Create an [`Alert`] with the default style.
 pub fn alert<'a, Message: 'a>() -> Alert<'a, Message> {
     Alert {
         icon: None,
         title: None,
         description: None,
         action: None,
-        variant: Variant::Default,
+        style: Default.into(),
         max_width: f32::INFINITY,
     }
-}
-
-/// Create an [`Alert`] with the default variant.
-///
-/// Equivalent to [`alert`]; provided for symmetry with the destructive helper.
-pub fn default<'a, Message: 'a>() -> Alert<'a, Message> {
-    alert()
-}
-
-/// Create an [`Alert`] with the destructive variant.
-pub fn destructive<'a, Message: 'a>() -> Alert<'a, Message> {
-    alert().variant(Variant::Destructive)
 }
 
 impl<'a, Message: 'a> Alert<'a, Message> {
@@ -85,8 +75,8 @@ impl<'a, Message: 'a> Alert<'a, Message> {
         self
     }
 
-    /// Set the description text. Rendered at `text-sm` muted in the
-    /// default variant; destructive at alpha 0.9 in the destructive variant.
+    /// Set the description text, rendered at `text-sm` in the style's
+    /// description color.
     pub fn description(mut self, description: impl IntoFragment<'a>) -> Self {
         self.description = Some(text::Text::new(description).size(text::size::SM));
         self
@@ -98,15 +88,11 @@ impl<'a, Message: 'a> Alert<'a, Message> {
         self
     }
 
-    /// Set the variant.
-    pub fn variant(mut self, variant: Variant) -> Self {
-        self.variant = variant;
+    /// Set the style: a variant (`alert::Destructive`) or a tweaked `Spec`
+    /// (`alert::Destructive + Bg(..)`).
+    pub fn style(mut self, style: impl Into<Spec>) -> Self {
+        self.style = style.into();
         self
-    }
-
-    /// Shorthand for `.variant(Variant::Destructive)`.
-    pub fn destructive(self) -> Self {
-        self.variant(Variant::Destructive)
     }
 
     /// Cap the alert's outer width. Defaults to no cap. Mirrors shadcn's
@@ -142,13 +128,17 @@ impl<'a, Message: 'a> Compose<Message> for Alert<'a, Message> {
             title,
             description,
             action,
-            variant,
+            style,
             max_width,
         } = *self;
 
-        let description = description.map(|t| match variant {
-            Variant::Default => t.style(theme::text::Muted),
-            Variant::Destructive => t.style(theme::text::Destructive + theme::tweak::Alpha(0.9)),
+        let description = description.map(|t| {
+            let style = style.clone();
+            let style: StyleFn<'_, Theme> = Box::new(move |theme| Style {
+                color: Some(style.description(theme).into()),
+                ..Style::default()
+            });
+            t.style(style)
         });
 
         let mut text_col: iced_widget::Column<iced_core::Element<'a, Message, Theme, Renderer>> =
@@ -176,10 +166,7 @@ impl<'a, Message: 'a> Compose<Message> for Alert<'a, Message> {
             text_col.boxed()
         };
 
-        let container_style: iced_widget::container::StyleFn<'_, Theme> = match variant {
-            Variant::Default => theme::alert::Default.into(),
-            Variant::Destructive => theme::alert::Destructive.into(),
-        };
+        let card_style: iced_widget::container::StyleFn<'_, Theme> = style.into();
 
         let padding = if action.is_some() {
             Padding {
@@ -200,7 +187,7 @@ impl<'a, Message: 'a> Compose<Message> for Alert<'a, Message> {
         let card = iced_widget::container(body)
             .padding(padding)
             .width(Fill)
-            .style(container_style);
+            .style(card_style);
 
         let outer: iced_core::Element<'a, Message, Theme, Renderer> = match action {
             None => card.boxed(),

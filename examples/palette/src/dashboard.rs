@@ -42,7 +42,7 @@ fn view_one(state: &State) -> iced::Element<'_, Message, Theme> {
             qr_connect::view(state),
             dividend_income::view(state),
             index_investing::view(state),
-            // FIXME(spinner-cpu): perpetual spinner() (via empty::media_icon)
+            // FIXME(spinner-cpu): perpetual spinner() (via an empty::Icon media tile)
             // request_redraw()s every frame → continuous whole-window repaint
             // at idle.
             syncing_state::view(state),

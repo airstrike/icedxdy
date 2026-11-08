@@ -31,7 +31,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     .into();
     let header: Slot<'static, Message> = card::header(header_body).into();
 
-    let totals = item::muted([item::content([
+    let totals = item::item([item::content([
         money_row("Net Royalties", "$0.00", false),
         money_row("Processing Fee", "-$0.00", false),
         divider(),
@@ -39,6 +39,7 @@ pub fn view(_state: &State) -> iced::Element<'static, Message, Theme> {
     ])
     .spacing(12.0)
     .into()])
+    .style(item::Muted)
     .orientation(Vertical);
 
     card::card(

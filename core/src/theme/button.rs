@@ -435,14 +435,14 @@ pub struct Spec {
 }
 
 impl Spec {
-    fn variant(f: fn(&Theme, Status) -> Style) -> Spec {
+    pub(crate) fn variant(f: fn(&Theme, Status) -> Style) -> Spec {
         Spec {
             variant: f,
             tweaks: TweakSet::default(),
         }
     }
 
-    fn push(mut self, t: Tweak) -> Spec {
+    pub(crate) fn push(mut self, t: Tweak) -> Spec {
         self.tweaks.0.push(t);
         self
     }
