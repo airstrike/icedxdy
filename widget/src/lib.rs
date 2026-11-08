@@ -27,6 +27,7 @@ pub mod marker;
 pub mod native_select;
 pub mod operation;
 pub mod pagination;
+pub mod popover;
 pub mod progress;
 pub mod radio;
 pub mod rich_text;
@@ -78,6 +79,7 @@ pub use item::{Item, Media};
 pub use kbd::Kbd;
 pub use native_select::NativeSelect;
 pub use pagination::Pagination;
+pub use popover::Popover;
 pub use progress::Progress;
 pub use radio::Radio;
 pub use rich_text::{RichText, Span, rich_text, span};
@@ -390,4 +392,13 @@ where
     I: IntoIterator<Item = accordion::Item<'a, Message>>,
 {
     accordion::accordion(items)
+}
+
+/// Create a closed, uncontrolled [`Popover`]: `trigger` builds what sits in
+/// place, `content` the panel shown next to it while open.
+pub fn popover<'a, Message>(
+    trigger: impl Fn(&popover::Handle) -> Slot<'a, Message> + 'a,
+    content: impl Fn(&popover::Handle) -> Slot<'a, Message> + 'a,
+) -> Popover<'a, Message> {
+    popover::popover(trigger, content)
 }

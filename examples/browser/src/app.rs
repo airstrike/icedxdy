@@ -90,8 +90,8 @@ impl App {
         use component::{
             accordion, alert, alert_dialog, aspect_ratio, avatar, badge, breadcrumb, button,
             button_group, card, checkbox, collapsible, dialog, empty, field, input, input_group,
-            item, kbd, label, native_select, pagination, progress, radio_group, separator, sheet,
-            sidebar, skeleton, slider, sonner, spinner, switch, table, tabs, text, textarea,
+            item, kbd, label, native_select, pagination, popover, progress, radio_group, separator,
+            sheet, sidebar, skeleton, slider, sonner, spinner, switch, table, tabs, text, textarea,
             toggle, toggle_group, tooltip,
         };
 
@@ -118,6 +118,7 @@ impl App {
             label::LabelPage::new,
             native_select::NativeSelectPage::new,
             pagination::PaginationPage::new,
+            popover::PopoverPage::new,
             progress::ProgressPage::new,
             radio_group::RadioGroupPage::new,
             separator::SeparatorPage::new,

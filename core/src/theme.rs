@@ -27,6 +27,7 @@ pub mod media;
 pub mod menu;
 pub mod native_select;
 pub mod pick_list;
+pub mod popover;
 pub mod progress_bar;
 pub mod qr_code;
 pub mod radio;

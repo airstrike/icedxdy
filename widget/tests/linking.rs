@@ -15,7 +15,7 @@ use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
-    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, dialog, field,
+    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, dialog, field, popover,
     radio_group, row, sheet, sidebar, slider, switch, tabs, textarea, toast, toaster, toggle,
     toggle_group,
 };
@@ -665,5 +665,86 @@ fn a_controlled_sidebar_reports_the_toggle() {
     assert_eq!(
         ui.into_messages().collect::<Vec<_>>(),
         [Message::Open(false), Message::Inner]
+    );
+}
+
+/// A popover whose trigger sits at the window's top left. Its start-aligned
+/// panel opens 4px under the 32px trigger with 10px of padding: an inner
+/// button at y 46..78 and a close button below it at y 78..110, from x 10.
+fn edit_popover<'a>() -> icedxdy_widget::Popover<'a, Message> {
+    popover(
+        |p| p.trigger(button(block(40.0, 20.0))),
+        |p| {
+            column![
+                button(block(60.0, 20.0)).on_press(Message::Inner),
+                p.close(button(block(40.0, 20.0))),
+            ]
+            .into()
+        },
+    )
+    .align(popover::Align::Start)
+}
+
+#[test]
+fn a_popover_opens_from_its_trigger_and_closes_from_inside() {
+    let element: Element<'_, Message, Theme, Renderer> = edit_popover().into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 15.0, 60.0);
+    click(&mut ui, 5.0, 16.0);
+    click(&mut ui, 15.0, 60.0);
+    click(&mut ui, 15.0, 95.0);
+
+    let element: Element<'_, Message, Theme, Renderer> = edit_popover().into();
+    let mut ui = ui.rebuild(element);
+    click(&mut ui, 15.0, 60.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Inner],
+        "the panel shows only between its trigger and its close button"
+    );
+}
+
+#[test]
+fn a_popover_trigger_toggles_it_closed() {
+    let element: Element<'_, Message, Theme, Renderer> = edit_popover()
+        .open(true)
+        .on_open_change(Message::Open)
+        .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 5.0, 16.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Open(false)],
+        "the trigger closes it once, not closed and reopened"
+    );
+}
+
+#[test]
+fn a_press_outside_or_escape_dismisses_a_controlled_popover() {
+    let element: Element<'_, Message, Theme, Renderer> = column![
+        edit_popover().open(true).on_open_change(Message::Open),
+        Slot::from(Space::new().height(400)),
+        button(block(60.0, 20.0)).on_press(Message::Pressed),
+    ]
+    .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 15.0, 445.0);
+    let _ = ui.simulate([simulator::press_key(Named::Escape, None)]);
+    click(&mut ui, 15.0, 60.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [
+            Message::Open(false),
+            Message::Pressed,
+            Message::Open(false),
+            Message::Inner
+        ],
+        "a popover is not modal: the page still gets the press that dismisses it"
     );
 }
