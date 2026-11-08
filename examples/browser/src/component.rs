@@ -10,6 +10,7 @@ pub mod card;
 pub mod checkbox;
 pub mod collapsible;
 pub mod dialog;
+pub mod empty;
 pub mod field;
 pub mod input;
 pub mod kbd;
