@@ -15,9 +15,9 @@ use icedxdy_core::Theme;
 use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
-    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, dialog, dropdown_menu,
-    field, menu, popover, radio_group, row, select, sheet, sidebar, slider, switch, tabs, textarea,
-    toast, toaster, toggle, toggle_group,
+    Inherited, Slot, alert_dialog, button, checkbox, collapsible, column, combobox, dialog,
+    dropdown_menu, field, menu, popover, radio_group, row, select, sheet, sidebar, slider, switch,
+    tabs, textarea, toast, toaster, toggle, toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -878,4 +878,41 @@ fn a_disabled_select_does_not_open() {
     click(&mut ui, 96.0, 44.0);
 
     assert_eq!(ui.into_messages().count(), 0);
+}
+
+/// A 256px combobox at the window's top left; its list opens 6px under the
+/// input with `p-1`, so its first item sits just past y 40.
+fn frameworks<'a>() -> icedxdy_widget::Combobox<'a, Message> {
+    combobox(["Next.js", "Remix", "Astro"]).on_value_change(Message::Text)
+}
+
+#[test]
+fn a_combobox_filters_as_you_type_and_chooses() {
+    let element: Element<'_, Message, Theme, Renderer> = frameworks().into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 50.0, 16.0);
+    let _ = ui.typewrite("as");
+    click(&mut ui, 100.0, 46.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::Text("Astro".to_owned())],
+        "only Astro contains \"as\""
+    );
+}
+
+#[test]
+fn escape_closes_a_combobox_list() {
+    let element: Element<'_, Message, Theme, Renderer> = frameworks().into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 50.0, 16.0);
+    let _ = ui.simulate([simulator::press_key(Named::Escape, None)]);
+
+    let element: Element<'_, Message, Theme, Renderer> = frameworks().into();
+    let mut ui = ui.rebuild(element);
+    click(&mut ui, 100.0, 46.0);
+
+    assert_eq!(ui.into_messages().collect::<Vec<_>>(), []);
 }

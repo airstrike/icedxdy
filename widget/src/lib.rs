@@ -12,6 +12,7 @@ pub mod button;
 pub mod checkbox;
 pub mod collapsible;
 pub mod column;
+pub mod combobox;
 pub mod compose;
 pub mod container;
 pub mod dialog;
@@ -72,6 +73,7 @@ pub use button::ButtonGroup;
 pub use checkbox::Checkbox;
 pub use collapsible::Collapsible;
 pub use column::Column;
+pub use combobox::Combobox;
 pub use compose::{Compose, Inherited, Slot};
 pub use dialog::Dialog;
 pub use dropdown_menu::DropdownMenu;
@@ -422,4 +424,11 @@ pub fn select<'a, Message>(
     entries: impl IntoIterator<Item = select::Entry>,
 ) -> Select<'a, Message> {
     select::select(entries)
+}
+
+/// Create an uncontrolled [`Combobox`] over `items`.
+pub fn combobox<'a, Message>(
+    items: impl IntoIterator<Item = impl Into<String>>,
+) -> Combobox<'a, Message> {
+    combobox::combobox(items)
 }
