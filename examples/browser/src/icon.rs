@@ -1,6 +1,6 @@
 // Generated automatically by iced_lucide at build time.
 // Do not edit manually.
-// 1bfb305076b3d790c4ac7bfc2f2047bd7255bae65c356d2f8ab04cad80775e4e
+// 091f07314c3f8e44ac0c290beedd947068d1707d0967bb6544067eafb299eedb
 use iced::widget::text::{self, Text};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/lucide.ttf");
@@ -41,6 +41,7 @@ pub const ALL_ICONS: &[(&str, &str)] = &[
     ("shield_alert", "\u{E1FE}"),
     ("sun", "\u{E178}"),
     ("terminal", "\u{E181}"),
+    ("underline", "\u{E19A}"),
     ("x", "\u{E1B2}"),
 ];
 
@@ -266,6 +267,13 @@ where
     Theme: text::Catalog + 'a,
 {
     icon("\u{E181}")
+}
+
+pub fn underline<'a, Theme>() -> Text<'a, Theme>
+where
+    Theme: text::Catalog + 'a,
+{
+    icon("\u{E19A}")
 }
 
 pub fn x<'a, Theme>() -> Text<'a, Theme>

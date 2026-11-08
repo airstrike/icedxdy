@@ -13,21 +13,22 @@ use icedxdy::{Slot, Space, Theme};
 use crate::{KitchenMode, KitchenScene, Message, State};
 
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
-    let modes = toggle_group([
-        mode_item(state, KitchenMode::Hue, "Hue"),
-        mode_item(state, KitchenMode::Color, "Color"),
-        mode_item(state, KitchenMode::Ambient, "Ambient"),
-    ])
-    .style(toggle_group::Outline);
+    let mode = state.kitchen_mode;
+    let modes = toggle_group(|| MODES.map(|(_, label)| toggle_group::item(label, label)))
+        .value([label_of(&MODES, mode)])
+        .on_value_change(move |pressed| {
+            Message::SetKitchenMode(chosen(&MODES, &pressed).unwrap_or(mode))
+        })
+        .style(toggle_group::Outline);
 
-    let scenes = toggle_group([
-        scene_item(state, KitchenScene::Cooking, "Cooking"),
-        scene_item(state, KitchenScene::Dining, "Dining"),
-        scene_item(state, KitchenScene::Nightlight, "Nightlight"),
-        scene_item(state, KitchenScene::Focus, "Focus"),
-    ])
-    .size(Size::Sm)
-    .style(toggle_group::Outline);
+    let scene = state.kitchen_scene;
+    let scenes = toggle_group(|| SCENES.map(|(_, label)| toggle_group::item(label, label)))
+        .value([label_of(&SCENES, scene)])
+        .on_value_change(move |pressed| {
+            Message::SetKitchenScene(chosen(&SCENES, &pressed).unwrap_or(scene))
+        })
+        .size(Size::Sm)
+        .style(toggle_group::Outline);
 
     let preview = item::item([
         item::media(color_tile(oklch(0.72, 0.12, 65.0)))
@@ -66,24 +67,35 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn mode_item(
-    state: &State,
-    mode: KitchenMode,
-    label: &'static str,
-) -> toggle_group::Item<'static, Message> {
-    toggle_group::item(label)
-        .selected(state.kitchen_mode == mode)
-        .on_press(Message::SetKitchenMode(mode))
+const MODES: [(KitchenMode, &str); 3] = [
+    (KitchenMode::Hue, "Hue"),
+    (KitchenMode::Color, "Color"),
+    (KitchenMode::Ambient, "Ambient"),
+];
+
+const SCENES: [(KitchenScene, &str); 4] = [
+    (KitchenScene::Cooking, "Cooking"),
+    (KitchenScene::Dining, "Dining"),
+    (KitchenScene::Nightlight, "Nightlight"),
+    (KitchenScene::Focus, "Focus"),
+];
+
+/// The toggle-group value of `current`.
+fn label_of<T: PartialEq>(options: &[(T, &'static str)], current: T) -> &'static str {
+    options
+        .iter()
+        .find(|(option, _)| *option == current)
+        .map_or("", |(_, label)| label)
 }
 
-fn scene_item(
-    state: &State,
-    scene: KitchenScene,
-    label: &'static str,
-) -> toggle_group::Item<'static, Message> {
-    toggle_group::item(label)
-        .selected(state.kitchen_scene == scene)
-        .on_press(Message::SetKitchenScene(scene))
+/// The option a single-mode toggle group pressed, if any.
+fn chosen<T: Copy>(options: &[(T, &'static str)], pressed: &[String]) -> Option<T> {
+    let pressed = pressed.first()?;
+
+    options
+        .iter()
+        .find(|(_, label)| label == pressed)
+        .map(|(option, _)| *option)
 }
 
 fn slider_row(label: &'static str, value: f32) -> Slot<'static, Message> {

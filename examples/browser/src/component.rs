@@ -30,4 +30,5 @@ pub mod table;
 pub mod tabs;
 pub mod text;
 pub mod toggle;
+pub mod toggle_group;
 pub mod tooltip;

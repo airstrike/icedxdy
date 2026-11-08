@@ -175,10 +175,12 @@ where
     radio::radio(label, value, selected, on_click)
 }
 
-/// Create a [`ToggleGroup`] from toggle-group items.
-pub fn toggle_group<'a, Message: Clone + 'a>(
-    items: impl IntoIterator<Item = toggle_group::Item<'a, Message>>,
-) -> ToggleGroup<'a, Message> {
+/// Create an uncontrolled, single-mode [`ToggleGroup`] of the items
+/// `items` builds.
+pub fn toggle_group<'a, Message, I>(items: impl Fn() -> I + 'a) -> ToggleGroup<'a, Message>
+where
+    I: IntoIterator<Item = toggle_group::Item<'a, Message>>,
+{
     toggle_group::toggle_group(items)
 }
 

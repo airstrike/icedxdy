@@ -14,7 +14,7 @@ use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
     Inherited, Slot, button, checkbox, collapsible, column, dialog, field, radio_group, row, sheet,
-    sidebar, slider, switch, tabs, toggle,
+    sidebar, slider, switch, tabs, toggle, toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -29,6 +29,7 @@ enum Message {
     Tab(String),
     Chose(u8),
     Value(f32),
+    PressedSet(Vec<String>),
 }
 
 /// A fixed-size stand-in for a label or button content.
@@ -255,6 +256,68 @@ fn a_field_label_chooses_its_radio_group_item() {
     assert_eq!(
         ui.into_messages().collect::<Vec<_>>(),
         [Message::Tab("b".to_owned())]
+    );
+}
+
+fn two_toggles<'a>() -> icedxdy_widget::ToggleGroup<'a, Message> {
+    toggle_group(|| {
+        [
+            toggle_group::item("a", block(16.0, 16.0)),
+            toggle_group::item("b", block(16.0, 16.0)),
+        ]
+    })
+    .on_value_change(Message::PressedSet)
+}
+
+#[test]
+fn a_single_toggle_group_presses_and_releases_one_item() {
+    let element: Element<'_, Message, Theme, Renderer> = two_toggles().into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 50.0, 16.0);
+    click(&mut ui, 50.0, 16.0);
+    click(&mut ui, 10.0, 16.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [
+            Message::PressedSet(vec!["b".to_owned()]),
+            Message::PressedSet(Vec::new()),
+            Message::PressedSet(vec!["a".to_owned()]),
+        ]
+    );
+}
+
+#[test]
+fn a_multiple_toggle_group_publishes_the_whole_set() {
+    let element: Element<'_, Message, Theme, Renderer> = two_toggles()
+        .mode(toggle_group::Mode::Multiple)
+        .default_value(["a"])
+        .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 50.0, 16.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [Message::PressedSet(vec!["a".to_owned(), "b".to_owned()])]
+    );
+}
+
+#[test]
+fn a_controlled_toggle_group_keeps_the_apps_value() {
+    let element: Element<'_, Message, Theme, Renderer> = two_toggles().value(["a"]).into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 50.0, 16.0);
+    click(&mut ui, 50.0, 16.0);
+
+    assert_eq!(
+        ui.into_messages().collect::<Vec<_>>(),
+        [
+            Message::PressedSet(vec!["b".to_owned()]),
+            Message::PressedSet(vec!["b".to_owned()]),
+        ]
     );
 }
 

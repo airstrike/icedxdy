@@ -12,13 +12,24 @@ use icedxdy::{Space, Theme};
 use crate::{Message, ShadePosition, State};
 
 pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
-    let shades = toggle_group([
-        shade_item(state, ShadePosition::Open, "Open"),
-        shade_item(state, ShadePosition::Half, "Half"),
-        shade_item(state, ShadePosition::Closed, "Closed"),
-    ])
-    .style(toggle_group::Outline)
-    .width(Fill);
+    let position = state.shade_position;
+    let shades = toggle_group(|| POSITIONS.map(|(_, label)| toggle_group::item(label, label)))
+        .value(
+            POSITIONS
+                .iter()
+                .filter(|(option, _)| *option == position)
+                .map(|(_, label)| *label),
+        )
+        .on_value_change(move |pressed| {
+            let chosen = POSITIONS
+                .iter()
+                .find(|(_, label)| pressed.first().is_some_and(|pressed| pressed == label))
+                .map_or(position, |(option, _)| *option);
+
+            Message::SetShadePosition(chosen)
+        })
+        .style(toggle_group::Outline)
+        .width(Fill);
 
     card::card(
         column![
@@ -54,12 +65,8 @@ pub fn view(state: &State) -> iced::Element<'static, Message, Theme> {
     .boxed()
 }
 
-fn shade_item(
-    state: &State,
-    position: ShadePosition,
-    label: &'static str,
-) -> toggle_group::Item<'static, Message> {
-    toggle_group::item(label)
-        .selected(state.shade_position == position)
-        .on_press(Message::SetShadePosition(position))
-}
+const POSITIONS: [(ShadePosition, &str); 3] = [
+    (ShadePosition::Open, "Open"),
+    (ShadePosition::Half, "Half"),
+    (ShadePosition::Closed, "Closed"),
+];
