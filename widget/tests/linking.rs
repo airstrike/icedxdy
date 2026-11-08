@@ -14,7 +14,7 @@ use icedxdy_widget::operation::control;
 use icedxdy_widget::radio::radio;
 use icedxdy_widget::{
     Inherited, Slot, button, checkbox, collapsible, column, dialog, field, radio_group, row, sheet,
-    sidebar, slider, switch, tabs, toggle, toggle_group,
+    sidebar, slider, switch, tabs, textarea, toggle, toggle_group,
 };
 
 type Simulator<'a> = iced_test::Simulator<'a, Message, Theme, Renderer>;
@@ -30,6 +30,7 @@ enum Message {
     Chose(u8),
     Value(f32),
     PressedSet(Vec<String>),
+    Text(String),
 }
 
 /// A fixed-size stand-in for a label or button content.
@@ -319,6 +320,37 @@ fn a_controlled_toggle_group_keeps_the_apps_value() {
             Message::PressedSet(vec!["b".to_owned()]),
         ]
     );
+}
+
+#[test]
+fn an_uncontrolled_textarea_reports_its_edits() {
+    let element: Element<'_, Message, Theme, Renderer> = textarea("")
+        .default_value("a")
+        .on_input(Message::Text)
+        .into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 100.0, 20.0);
+    let _ = ui.typewrite("b");
+
+    // The null renderer's editor keeps no text, so only the edit itself is
+    // observable here.
+    assert!(matches!(
+        ui.into_messages().collect::<Vec<_>>().as_slice(),
+        [Message::Text(_)]
+    ));
+}
+
+#[test]
+fn a_disabled_textarea_ignores_typing() {
+    let element: Element<'_, Message, Theme, Renderer> =
+        textarea("").disabled(true).on_input(Message::Text).into();
+    let mut ui = simulator(element);
+
+    click(&mut ui, 100.0, 20.0);
+    let _ = ui.typewrite("b");
+
+    assert_eq!(ui.into_messages().count(), 0);
 }
 
 /// A 32px trigger button on top of a content button that publishes

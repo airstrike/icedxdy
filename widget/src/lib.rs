@@ -44,6 +44,7 @@ pub mod table;
 pub mod tabs;
 pub mod text;
 pub mod text_input;
+pub mod textarea;
 pub mod toggle;
 pub mod toggle_group;
 pub mod tooltip;
@@ -83,6 +84,7 @@ pub use switch::Switch;
 pub use table::Table;
 pub use tabs::Tabs;
 pub use text::Text;
+pub use textarea::Textarea;
 pub use toggle::Toggle;
 pub use toggle_group::ToggleGroup;
 pub use tooltip::Tooltip;
@@ -245,6 +247,11 @@ pub fn native_select<'a, Message>(
     items: impl IntoIterator<Item = native_select::Item>,
 ) -> NativeSelect<'a, Message> {
     native_select::native_select(items)
+}
+
+/// Create an empty, uncontrolled [`Textarea`] showing `placeholder`.
+pub fn textarea<'a, Message>(placeholder: impl Into<String>) -> Textarea<'a, Message> {
+    textarea::textarea(placeholder)
 }
 
 /// Create an [`Alert`].
