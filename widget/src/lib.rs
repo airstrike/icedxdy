@@ -22,6 +22,7 @@ pub mod kbd;
 #[cfg(feature = "markdown")]
 pub mod markdown;
 pub mod marker;
+pub mod native_select;
 pub mod operation;
 pub mod pagination;
 pub mod progress;
@@ -69,6 +70,7 @@ pub use field::Field;
 pub use input::Input;
 pub use item::{Item, Media};
 pub use kbd::Kbd;
+pub use native_select::NativeSelect;
 pub use pagination::Pagination;
 pub use progress::Progress;
 pub use radio::Radio;
@@ -236,6 +238,13 @@ pub fn radio_group<'a, Message>(
     body: impl Fn(&radio::group::Handle) -> Slot<'a, Message> + 'a,
 ) -> radio::Group<'a, Message> {
     radio::group(body)
+}
+
+/// Create an uncontrolled [`NativeSelect`] over `items`, showing the first.
+pub fn native_select<'a, Message>(
+    items: impl IntoIterator<Item = native_select::Item>,
+) -> NativeSelect<'a, Message> {
+    native_select::native_select(items)
 }
 
 /// Create an [`Alert`].

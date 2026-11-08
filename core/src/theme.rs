@@ -23,6 +23,7 @@ pub mod kbd;
 pub mod markdown;
 pub mod media;
 pub mod menu;
+pub mod native_select;
 pub mod pick_list;
 pub mod progress_bar;
 pub mod qr_code;
