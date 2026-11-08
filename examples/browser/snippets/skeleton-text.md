@@ -7,5 +7,6 @@ column![
     line(3, 4),
 ]
 .spacing(8)
+.width(Fill)
 .max_width(320.0)
 ```

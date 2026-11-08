@@ -14,5 +14,6 @@ column![
     inbox("Muted Variant", "Muted background for secondary content.").style(item::Muted),
 ]
 .spacing(24)
+.width(Fill)
 .max_width(448.0)
 ```

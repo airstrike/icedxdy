@@ -15,5 +15,6 @@ column![
     list_item("Item 3", "Value 3"),
 ]
 .spacing(8)
+.width(Fill)
 .max_width(384.0)
 ```

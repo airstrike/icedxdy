@@ -8,8 +8,10 @@ Column::with_children((0..5).map(|_| {
         skeleton().width(80).height(16),
     ]
     .spacing(16)
+    .width(Fill)
     .into()
 }))
 .spacing(8)
+.width(Fill)
 .max_width(384.0)
 ```

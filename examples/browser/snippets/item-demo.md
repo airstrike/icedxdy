@@ -20,5 +20,6 @@ column![
     .size(item::Size::Sm),
 ]
 .spacing(24)
+.width(Fill)
 .max_width(448.0)
 ```
